@@ -1,0 +1,97 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <Filter Include="assets">
+      <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
+      <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
+    </Filter>
+    <Filter Include="headers">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="source">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
+    </Filter>
+    <Filter Include="headers\precompiledHeaders">
+      <UniqueIdentifier>{8da335fb-c6d5-4390-b80c-45d9953ad136}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Chars">
+      <UniqueIdentifier>{9ae7b37a-5193-48be-b7d8-2729c9900af6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Chars\primary_chars">
+      <UniqueIdentifier>{34cc5605-1550-4fdd-a6aa-ccf38eaa83ca}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Chars\secondary_chars">
+      <UniqueIdentifier>{95369772-87a9-4215-974a-6a0dc710d8ac}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="pch.cpp">
+      <Filter>headers\precompiledHeaders</Filter>
+    </ClCompile>
+    <ClCompile Include="Vulkan and RTX.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="Item.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="HasExperienceLevel.cpp">
+      <Filter>Chars\primary_chars</Filter>
+    </ClCompile>
+    <ClCompile Include="HasInventory.cpp">
+      <Filter>Chars\primary_chars</Filter>
+    </ClCompile>
+    <ClCompile Include="IsEntity.cpp">
+      <Filter>Chars\primary_chars</Filter>
+    </ClCompile>
+    <ClCompile Include="IsMovable.cpp">
+      <Filter>Chars\primary_chars</Filter>
+    </ClCompile>
+    <ClCompile Include="IsCreature.cpp">
+      <Filter>Chars\secondary_chars</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="pch.h">
+      <Filter>headers\precompiledHeaders</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="IsEntity.h">
+      <Filter>Chars\primary_chars</Filter>
+    </ClInclude>
+    <ClInclude Include="HasExperienceLevel.h">
+      <Filter>Chars\primary_chars</Filter>
+    </ClInclude>
+    <ClInclude Include="IsMovable.h">
+      <Filter>Chars\primary_chars</Filter>
+    </ClInclude>
+    <ClInclude Include="HasInventory.h">
+      <Filter>Chars\primary_chars</Filter>
+    </ClInclude>
+    <ClInclude Include="IsCreature.h">
+      <Filter>Chars\secondary_chars</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Item.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <ResourceCompile Include="Vulkan and RTX.rc">
+      <Filter>assets</Filter>
+    </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Image Include="icon1.ico">
+      <Filter>assets</Filter>
+    </Image>
+  </ItemGroup>
+</Project>
