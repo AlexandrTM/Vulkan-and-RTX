@@ -7,8 +7,19 @@ class Camera
 {
 public:
 	Camera();
+	Camera(
+		glm::vec3 lookFrom,
+		glm::vec3 lookAt,
+		glm::vec3 verticalWorldAxis,
+		float verticalFov,
+		uint32_t viewportWidth,
+		uint32_t viewportHeight,
+		double yaw,
+		double pitch,
+		double roll
+	);
 
-	void setWidthHeight(uint32_t width, uint32_t height);
+	void setViewportSize(uint32_t viewportWidth, uint32_t viewportHeight);
 
 	void setLookFrom(glm::vec3 lookFrom);
 	void setLookAt(glm::vec3 lookAt);
@@ -19,10 +30,10 @@ public:
 	glm::vec3 getDirection();
 	float getVerticalFov();
 
-	void setLastX(double lastX);
-	void setLastY(double lastY);
-	double getLastX();
-	double getLastY();
+	void setLastViewportX(double lastViewportX);
+	void setLastViewportY(double lastViewportY);
+	double getLastViewportX();
+	double getLastViewportY();
 
 	void setYaw(double yaw);
 	void setPitch(double pitch);
@@ -34,21 +45,22 @@ public:
 	glm::vec3 getVerticalWorldAxis();
 
 private:
-	uint32_t _width = 800;
-	uint32_t _height = 450;
 
-	glm::vec3 _lookFrom = glm::vec3(0.0f, 2.0f, 0.0f);
-	glm::vec3 _lookAt = glm::vec3(1.0f, 2.0f, 0.0f);
-	glm::vec3 _verticalWorldAxis = glm::vec3(0.0f, 1.0f, 0.0f);
-	glm::vec3 _cameraDirection = glm::normalize(_lookAt - _lookFrom);
+	glm::vec3 _lookFrom;
+	glm::vec3 _lookAt;
+	glm::vec3 _cameraDirection;
+	glm::vec3 _verticalWorldAxis;
 
-	float _verticalFov = 60.0f;
+	float _verticalFov;
 
-	double _lastX = _width / 2;
-	double _lastY = _height / 2;
-	double _yaw = 0.0;
-	double _pitch = 0.0;
-	double _roll = 0.0;
+	uint32_t _viewportWidth;
+	uint32_t _viewportHeight;
+	double _lastViewportX;
+	double _lastViewportY;
+
+	double _yaw;
+	double _pitch;
+	double _roll;
 };
 
 #endif

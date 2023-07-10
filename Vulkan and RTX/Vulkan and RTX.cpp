@@ -538,16 +538,16 @@ private:
 	{
 		if (firstMouse)
 		{
-			camera.setLastX(xpos);
-			camera.setLastY(ypos);
+			camera.setLastViewportX(xpos);
+			camera.setLastViewportY(ypos);
 			firstMouse = false;
 		}
 		double roll = camera.getRoll();
 
-		double xoffset = xpos - camera.getLastX();
-		double yoffset = camera.getLastY() - ypos;
-		camera.setLastX(xpos);
-		camera.setLastY(ypos);
+		double xoffset = xpos - camera.getLastViewportX();
+		double yoffset = camera.getLastViewportY() - ypos;
+		camera.setLastViewportX(xpos);
+		camera.setLastViewportY(ypos);
 
 		xoffset *= sensitivity;
 		yoffset *= sensitivity;
@@ -581,7 +581,7 @@ private:
 	{
 		auto app = reinterpret_cast<VulkanAndRTX*>(glfwGetWindowUserPointer(window));
 		app->framebufferResized = true;
-		camera.setWidthHeight(width, height);
+		camera.setViewportSize(width, height);
 	}
 
 	void movePerson(float deltaTime)
@@ -2193,7 +2193,7 @@ private:
 			}
 		}
 	}
-
+	
 	// for specific queue family
 	void createCommandPool()
 	{
@@ -2495,7 +2495,7 @@ private:
 
 		return extensions;
 	}
-
+	
 	// checking for requested validation layers to be suported by system
 	bool checkValidationLayerSupport()
 	{
