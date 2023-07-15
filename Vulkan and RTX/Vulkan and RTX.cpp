@@ -162,7 +162,7 @@ const std::string TEXTURE_PATH = "textures/texture.png";
 Camera camera;
 
 bool firstMouse = true;
-double sensitivity = 0.1;
+double sensitivity = 0.125;
 
 bool keys[1024];
 
@@ -325,7 +325,7 @@ private:
 		createTextureSampler();
 
 		//loadModel(MODEL_PATH);
-		generateCubicLandscape(30, 30);
+		generateCubicLandscape(30, 30, 1.0f);
 
 		createVertexBuffer();
 		createIndexBuffer();
@@ -569,12 +569,7 @@ private:
 	// mouse wheel handling
 	static void scrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 	{
-		if (camera.getVerticalFov() >= 1.0f && camera.getVerticalFov() <= 78.0f)
-			camera.setVerticalFov(camera.getVerticalFov() - yoffset);
-		if (camera.getVerticalFov() < 1.0f)
-			camera.setVerticalFov(1.0f);
-		if (camera.getVerticalFov() > 78.0f)
-			camera.setVerticalFov(78.0f);
+		camera.setVerticalFov(std::clamp(camera.getVerticalFov() - static_cast<float>(yoffset), 1.0f, 78.0f));
 	}
 	// set "framebufferResized" to "true" if window was resized or moved
 	static void framebufferResizeCallback(GLFWwindow* window, int width, int height)
@@ -586,10 +581,12 @@ private:
 
 	void movePerson(float deltaTime)
 	{
-		float movementSpeed = 2.0 * deltaTime;
+		float movementSpeed = 1.0 * deltaTime;
 
 		glm::vec3 verticalWorldAxis = camera.getVerticalWorldAxis();
 		glm::vec3 cameraDirection = camera.getDirection();
+
+		glm::vec3 rightVector = glm::normalize(glm::cross(cameraDirection, verticalWorldAxis));
 
 		if (keys[GLFW_KEY_LEFT_CONTROL])
 		{
@@ -601,21 +598,27 @@ private:
 		}
 		if (keys[GLFW_KEY_W])
 		{
-			camera.setLookFrom(camera.getLookFrom() + movementSpeed * cameraDirection);
+			camera.setLookFrom(camera.getLookFrom() + movementSpeed * glm::normalize(glm::vec3(
+				cameraDirection.x,
+				0.0f,
+				cameraDirection.z)
+			));
 		}		
 		if (keys[GLFW_KEY_A])
 		{
-			camera.setLookFrom(camera.getLookFrom() - glm::normalize(glm::cross(cameraDirection, verticalWorldAxis)) 
-				* movementSpeed);
+			camera.setLookFrom(camera.getLookFrom() - rightVector * movementSpeed);
 		}
 		if (keys[GLFW_KEY_S])
 		{
-			camera.setLookFrom(camera.getLookFrom() - movementSpeed * cameraDirection);
+			camera.setLookFrom(camera.getLookFrom() - movementSpeed * glm::normalize(glm::vec3(
+				cameraDirection.x,
+				0.0f,
+				cameraDirection.z)
+			));
 		}
 		if (keys[GLFW_KEY_D])
 		{
-			camera.setLookFrom(camera.getLookFrom() + glm::normalize(glm::cross(cameraDirection, verticalWorldAxis)) 
-				* movementSpeed);
+			camera.setLookFrom(camera.getLookFrom() + rightVector * movementSpeed);
 		}
 		if (keys[GLFW_KEY_SPACE])
 		{
@@ -627,52 +630,53 @@ private:
 		}
 	}
 
-	void generateCubicLandscape(size_t landscapeWidth, size_t landscapeLenght)
+	void generateCubicLandscape(size_t landscapeWidth, size_t landscapeLenght, float_t cubeSize)
 	{
 		for (size_t i = 0; i < landscapeWidth; i++)
 		{
 			for (size_t j = 0; j < landscapeLenght; j++)
 			{
 				float random_height = 0.01 * (rand() % 51);
-				generateCube(0.0f + (float)i * 0.5f - landscapeWidth / 4,
+				generateCube(0.0f + (float)i * cubeSize - landscapeWidth / 4,
 							 -2 + random_height,
-							 0.0f + (float)j * 0.5f - landscapeLenght / 4);
+							 0.0f + (float)j * cubeSize - landscapeLenght / 4, 
+							 cubeSize);
 			}
 		}
 	}
 
-	void generateCube(float x, float y, float z)
+	void generateCube(float x, float y, float z, float_t cubeSize)
 	{
 		glm::vec3 basicColor = glm::vec3(0.5f, 0.5f, 0.5f);
 
 		std::vector <Vertex> localVertices(24);
 		#pragma region
-		localVertices[0].pos = { glm::vec3(0.0f, 0.0f, 0.0f) + glm::vec3(x, y, z) };
-		localVertices[1].pos = { glm::vec3(0.5f, 0.0f, 0.0f) + glm::vec3(x, y, z) };
-		localVertices[2].pos = { glm::vec3(0.5f, 0.5f, 0.0f) + glm::vec3(x, y, z) };
-		localVertices[3].pos = { glm::vec3(0.0f, 0.5f, 0.0f) + glm::vec3(x, y, z) };
-		localVertices[4].pos = { glm::vec3(0.0f, 0.0f, 0.5f) + glm::vec3(x, y, z) };
-		localVertices[5].pos = { glm::vec3(0.5f, 0.0f, 0.5f) + glm::vec3(x, y, z) };
-		localVertices[6].pos = { glm::vec3(0.5f, 0.5f, 0.5f) + glm::vec3(x, y, z) };
-		localVertices[7].pos = { glm::vec3(0.0f, 0.5f, 0.5f) + glm::vec3(x, y, z) };
+		localVertices[0].pos =  { glm::vec3(0.0f    , 0.0f    , 0.0f    ) + glm::vec3(x, y, z) };
+		localVertices[1].pos =  { glm::vec3(cubeSize, 0.0f    , 0.0f    ) + glm::vec3(x, y, z) };
+		localVertices[2].pos =  { glm::vec3(cubeSize, cubeSize, 0.0f    ) + glm::vec3(x, y, z) };
+		localVertices[3].pos =  { glm::vec3(0.0f    , cubeSize, 0.0f    ) + glm::vec3(x, y, z) };
+		localVertices[4].pos =  { glm::vec3(0.0f    , 0.0f    , cubeSize) + glm::vec3(x, y, z) };
+		localVertices[5].pos =  { glm::vec3(cubeSize, 0.0f    , cubeSize) + glm::vec3(x, y, z) };
+		localVertices[6].pos =  { glm::vec3(cubeSize, cubeSize, cubeSize) + glm::vec3(x, y, z) };
+		localVertices[7].pos =  { glm::vec3(0.0f    , cubeSize, cubeSize) + glm::vec3(x, y, z) };
 
-		localVertices[8].pos = { glm::vec3(0.0f, 0.0f, 0.0f) + glm::vec3(x, y, z) };
-		localVertices[9].pos = { glm::vec3(0.5f, 0.0f, 0.0f) + glm::vec3(x, y, z) };
-		localVertices[10].pos = { glm::vec3(0.5f, 0.5f, 0.0f) + glm::vec3(x, y, z) };
-		localVertices[11].pos = { glm::vec3(0.0f, 0.5f, 0.0f) + glm::vec3(x, y, z) };
-		localVertices[12].pos = { glm::vec3(0.0f, 0.0f, 0.5f) + glm::vec3(x, y, z) };
-		localVertices[13].pos = { glm::vec3(0.5f, 0.0f, 0.5f) + glm::vec3(x, y, z) };
-		localVertices[14].pos = { glm::vec3(0.5f, 0.5f, 0.5f) + glm::vec3(x, y, z) };
-		localVertices[15].pos = { glm::vec3(0.0f, 0.5f, 0.5f) + glm::vec3(x, y, z) };
+		localVertices[8].pos =  { glm::vec3(0.0f    , 0.0f    , 0.0f    ) + glm::vec3(x, y, z) };
+		localVertices[9].pos =  { glm::vec3(cubeSize, 0.0f    , 0.0f    ) + glm::vec3(x, y, z) };
+		localVertices[10].pos = { glm::vec3(cubeSize, cubeSize, 0.0f    ) + glm::vec3(x, y, z) };
+		localVertices[11].pos = { glm::vec3(0.0f    , cubeSize, 0.0f    ) + glm::vec3(x, y, z) };
+		localVertices[12].pos = { glm::vec3(0.0f    , 0.0f    , cubeSize) + glm::vec3(x, y, z) };
+		localVertices[13].pos = { glm::vec3(cubeSize, 0.0f    , cubeSize) + glm::vec3(x, y, z) };
+		localVertices[14].pos = { glm::vec3(cubeSize, cubeSize, cubeSize) + glm::vec3(x, y, z) };
+		localVertices[15].pos = { glm::vec3(0.0f    , cubeSize, cubeSize) + glm::vec3(x, y, z) };
 
-		localVertices[16].pos = { glm::vec3(0.0f, 0.0f, 0.0f) + glm::vec3(x, y, z) };
-		localVertices[17].pos = { glm::vec3(0.5f, 0.0f, 0.0f) + glm::vec3(x, y, z) };
-		localVertices[18].pos = { glm::vec3(0.5f, 0.5f, 0.0f) + glm::vec3(x, y, z) };
-		localVertices[19].pos = { glm::vec3(0.0f, 0.5f, 0.0f) + glm::vec3(x, y, z) };
-		localVertices[20].pos = { glm::vec3(0.0f, 0.0f, 0.5f) + glm::vec3(x, y, z) };
-		localVertices[21].pos = { glm::vec3(0.5f, 0.0f, 0.5f) + glm::vec3(x, y, z) };
-		localVertices[22].pos = { glm::vec3(0.5f, 0.5f, 0.5f) + glm::vec3(x, y, z) };
-		localVertices[23].pos = { glm::vec3(0.0f, 0.5f, 0.5f) + glm::vec3(x, y, z) };
+		localVertices[16].pos = { glm::vec3(0.0f    , 0.0f    , 0.0f    ) + glm::vec3(x, y, z) };
+		localVertices[17].pos = { glm::vec3(cubeSize, 0.0f    , 0.0f    ) + glm::vec3(x, y, z) };
+		localVertices[18].pos = { glm::vec3(cubeSize, cubeSize, 0.0f    ) + glm::vec3(x, y, z) };
+		localVertices[19].pos = { glm::vec3(0.0f    , cubeSize, 0.0f    ) + glm::vec3(x, y, z) };
+		localVertices[20].pos = { glm::vec3(0.0f    , 0.0f    , cubeSize) + glm::vec3(x, y, z) };
+		localVertices[21].pos = { glm::vec3(cubeSize, 0.0f    , cubeSize) + glm::vec3(x, y, z) };
+		localVertices[22].pos = { glm::vec3(cubeSize, cubeSize, cubeSize) + glm::vec3(x, y, z) };
+		localVertices[23].pos = { glm::vec3(0.0f    , cubeSize, cubeSize) + glm::vec3(x, y, z) };
 		#pragma endregion // pos
 		#pragma region
 		localVertices[0].normal = { glm::vec3(0.0f, 0.0f, -1.0f) };
@@ -684,8 +688,8 @@ private:
 		localVertices[6].normal = { glm::vec3(0.0f, 0.0f, 1.0f) };
 		localVertices[7].normal = { glm::vec3(0.0f, 0.0f, 1.0f) };
 
-		localVertices[8].normal = { glm::vec3(0.0f, -1.0f, 0.0f) };
-		localVertices[9].normal = { glm::vec3(0.0f, -1.0f, 0.0f) };
+		localVertices[8].normal =  { glm::vec3(0.0f, -1.0f, 0.0f) };
+		localVertices[9].normal =  { glm::vec3(0.0f, -1.0f, 0.0f) };
 		localVertices[10].normal = { glm::vec3(0.0f, 1.0f, 0.0f) };
 		localVertices[11].normal = { glm::vec3(0.0f, 1.0f, 0.0f) };
 		localVertices[12].normal = { glm::vec3(0.0f, -1.0f, 0.0f) };
@@ -705,7 +709,7 @@ private:
 		#pragma region
 		for (size_t i = 0; i < localVertices.size(); ++i)
 		{
-			localVertices[i].color = { glm::vec3(1.0) };
+			localVertices[i].color = basicColor;
 		}
 		#pragma endregion // color
 		#pragma region
@@ -1018,7 +1022,7 @@ private:
 
 		throw std::runtime_error("failed to find supported format!");
 	}
-
+	
 	// how to sample through texels of the texture for drawing them on 3D model
 	void createTextureSampler()
 	{
@@ -1706,7 +1710,7 @@ private:
 
 		return indices.isComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy;
 	}
-
+	
 	VkSampleCountFlagBits getMaxUsableSampleCount()
 	{
 		VkPhysicalDeviceProperties physicalDeviceProperties;
@@ -2318,14 +2322,14 @@ private:
 			camera.getVerticalWorldAxis());
 
 		ubo.projection = glm::perspective(glm::radians(camera.getVerticalFov()), 
-			swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 25.0f);
+			swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 32.0f);
 		ubo.projection[1][1] *= -1;
-
+		
 		ubo.sun = glm::vec3(std::cos(timeSinceLaunch / 2) * 3, 3.f, std::sin(timeSinceLaunch / 2) * 3);
 		ubo.viewer = camera.getLookFrom();
 		
 		// add transpose(inverse(ubo.model)) if doing non uniform scaling
-
+		
 		void* data;
 		vkMapMemory(device, uniformBuffersMemory[currentImage], 0, sizeof(ubo), 0, &data);
 		memcpy(data, &ubo, sizeof(ubo));
