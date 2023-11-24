@@ -8,6 +8,7 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <gtx/hash.hpp>
 
+
 // enabling or disabling validation layers
 #ifdef NDEBUG
 const bool enableValidationLayers = false;
@@ -131,10 +132,10 @@ namespace std {
 	template<> struct hash<Vertex> {
 		size_t operator()(Vertex const& vertex) const
 		{
-			auto h1      = hash<glm::vec3>()(vertex.pos);
-			auto h2    = hash<glm::vec3>()(vertex.color);
+			auto h1 = hash<glm::vec3>()(vertex.pos);
+			auto h2 = hash<glm::vec3>()(vertex.color);
 			auto h3 = hash<glm::vec2>()(vertex.texCoord);
-			auto h4   = hash<glm::vec3>()(vertex.normal);
+			auto h4 = hash<glm::vec3>()(vertex.normal);
 
 			return ((((h1 ^ (h2 << 1)) >> 1) ^ (h3 << 1)) >> 1) ^ (h4 << 1);
 		}
@@ -493,17 +494,19 @@ private:
 		// altering mouse sensivity
 		if (key == GLFW_KEY_UP && action == GLFW_PRESS)
 		{
-			if (!(sensitivity > 2.0))
+			/*if (!(sensitivity > 2.0))
 				sensitivity += 0.01;
 			if (sensitivity > 2.0)
-				sensitivity = 2.0;
+				sensitivity = 2.0;*/
+			sensitivity = std::clamp(sensitivity * 1.3, 0.001, 10.0);
 		}
 		if (key == GLFW_KEY_DOWN && action == GLFW_PRESS)
 		{
-			if (!(sensitivity < 0.002))
+			/*if (!(sensitivity < 0.002))
 				sensitivity -= 0.005;
 			if (sensitivity < 0.002)
-				sensitivity = 0.002;
+				sensitivity = 0.002;*/
+			sensitivity = std::clamp(sensitivity * 0.75, 0.001, 10.0);
 		}
 		// changing mipmap level of detail
 		/*if (key == GLFW_KEY_LEFT && action == GLFW_PRESS)
@@ -555,10 +558,10 @@ private:
 		camera.setYaw(camera.getYaw() + xoffset);
 		camera.setPitch(camera.getPitch() + yoffset);
 
-		if (camera.getPitch() > 89.0)
-			camera.setPitch(89.0);
-		if (camera.getPitch() < -89.0)
-			camera.setPitch(-89.0);
+		if (camera.getPitch() > 89.9)
+			camera.setPitch(89.9);
+		if (camera.getPitch() < -89.9)
+			camera.setPitch(-89.9);
 
 		glm::vec3 front{};
 		front.x = cos(glm::radians(camera.getYaw())) * cos(glm::radians(camera.getPitch()));
@@ -569,7 +572,7 @@ private:
 	// mouse wheel handling
 	static void scrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 	{
-		camera.setVerticalFov(std::clamp(camera.getVerticalFov() - static_cast<float>(yoffset), 1.0f, 78.0f));
+		camera.setVerticalFov(std::clamp(camera.getVerticalFov() - static_cast<float>(yoffset), 1.0f, 130.0f));
 	}
 	// set "framebufferResized" to "true" if window was resized or moved
 	static void framebufferResizeCallback(GLFWwindow* window, int width, int height)
@@ -581,7 +584,7 @@ private:
 
 	void movePerson(float deltaTime)
 	{
-		float movementSpeed = 1.0 * deltaTime;
+		float movementSpeed = 2.1 * deltaTime;
 
 		glm::vec3 verticalWorldAxis = camera.getVerticalWorldAxis();
 		glm::vec3 cameraDirection = camera.getDirection();
@@ -2322,7 +2325,7 @@ private:
 			camera.getVerticalWorldAxis());
 
 		ubo.projection = glm::perspective(glm::radians(camera.getVerticalFov()), 
-			swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 32.0f);
+			swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 40.0f);
 		ubo.projection[1][1] *= -1;
 		
 		ubo.sun = glm::vec3(std::cos(timeSinceLaunch / 2) * 3, 3.f, std::sin(timeSinceLaunch / 2) * 3);
@@ -2541,16 +2544,18 @@ private:
 	}
 };
 
-int main()
-{
+int runVulkanAndRTX() {
 	VulkanAndRTX app;
-
 	try {
 		app.run();
+		return EXIT_SUCCESS;
 	}
 	catch (const std::exception& e) {
 		std::cerr << e.what() << std::endl;
 		return EXIT_FAILURE;
 	}
-	return EXIT_SUCCESS;
+}
+
+int main() {
+	return runVulkanAndRTX();
 }

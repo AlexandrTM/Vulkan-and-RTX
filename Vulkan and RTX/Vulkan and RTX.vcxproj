@@ -186,6 +186,7 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="IsCreature.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="Vulkan and RTX.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Vulkan and RTX.rc" />
