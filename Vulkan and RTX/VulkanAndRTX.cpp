@@ -1,6 +1,76 @@
 #include "pch.h"
-#ifndef VULKAN_AND_RTX
-#define VULKAN_AND_RTX
+#include "VulkanAndRTX.h"
+#include "Camera.h"
+
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+#define TINYOBJLOADER_IMPLEMENTATION
+#include <tiny_obj_loader.h>
+
+// enabling or disabling validation layers
+#ifdef NDEBUG
+const bool enableValidationLayers = false;
+#else
+const bool enableValidationLayers = true;
+#endif
+
+// loading validation layers for debugging purposes
+const std::vector<const char*> validationLayers = {
+	"VK_LAYER_KHRONOS_validation"
+};
+
+// needed device extensions
+const std::vector<const char*> deviceExtensions = {
+	VK_KHR_SWAPCHAIN_EXTENSION_NAME
+};
+
+// finding adress "vkCreateDebugUtilsMessengerEXT" function for our "instance" and then executing it
+VkResult CreateDebugUtilsMessengerEXT(VkInstance instance,
+	const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
+	const VkAllocationCallbacks* pAllocator,
+	VkDebugUtilsMessengerEXT* pDebugMessenger)
+{
+	auto func = (PFN_vkCreateDebugUtilsMessengerEXT)
+		// finding adress of the vkCreateDebugUtilsMessengerEXT function
+		vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
+	if (func != nullptr) {
+		return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
+	}
+	else {
+		return VK_ERROR_EXTENSION_NOT_PRESENT;
+	}
+}
+
+// finding adress "vkDestroyDebugUtilsMessengerEXT" function for our "instance" and then executing it
+void DestroyDebugUtilsMessengerEXT(VkInstance instance,
+	VkDebugUtilsMessengerEXT debugMessenger,
+	const VkAllocationCallbacks* pAllocator)
+{
+	auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)
+		// finding adress of the vkDestroyDebugUtilsMessengerEXT function
+		vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
+	if (func != nullptr) {
+		func(instance, debugMessenger, pAllocator);
+	}
+}
+
+#pragma region
+
+uint32_t windowWidth = 800;
+uint32_t windowHeight = 450;
+const int MAX_FRAMES_IN_FLIGHT = 2;
+
+const std::string MODEL_PATH = "models/viking_room.obj";
+const std::string TEXTURE_PATH = "textures/texture.png";
+
+Camera camera;
+
+bool firstMouse = true;
+double sensitivity = 0.125;
+
+bool keys[1024];
+
+#pragma endregion
 
 void VulkanAndRTX::run()
 {
@@ -349,7 +419,7 @@ void VulkanAndRTX::framebufferResizeCallback(GLFWwindow* window, int width, int 
 
 void VulkanAndRTX::movePerson(float deltaTime)
 {
-	float movementSpeed = 2.1 * deltaTime;
+	float movementSpeed = 3.0 * deltaTime;
 
 	glm::vec3 verticalWorldAxis = camera.getVerticalWorldAxis();
 	glm::vec3 cameraDirection = camera.getDirection();
@@ -2297,7 +2367,7 @@ bool VulkanAndRTX::checkValidationLayerSupport()
 
 // function for debugging callbakcs(checking warnings, errors etc)
 // VKAPI_ATTR and VKAPI_CALL ensures that this function signature suitable for Vulkan
-static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanAndRTX::debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+VKAPI_ATTR VkBool32 VKAPI_CALL VulkanAndRTX::debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
 	VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
 	void* pUserData)
 {
@@ -2308,4 +2378,18 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL VulkanAndRTX::debugCallback(VkDebugUtilsMe
 	return VK_FALSE;
 }
 
-#endif // !VULKAN_AND_RTX
+int runVulkanAndRTX() {
+	VulkanAndRTX app;
+	try {
+		app.run();
+		return EXIT_SUCCESS;
+	}
+	catch (const std::exception& e) {
+		std::cerr << e.what() << std::endl;
+		return EXIT_FAILURE;
+	}
+}
+
+int main() {
+	return runVulkanAndRTX();
+}

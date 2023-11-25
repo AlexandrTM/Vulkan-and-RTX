@@ -174,7 +174,8 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
-    <ClCompile Include="Vulkan and RTX.cpp" />
+    <ClCompile Include="Vertex.cpp" />
+    <ClCompile Include="VulkanAndRTX.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
@@ -186,7 +187,8 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="IsCreature.h" />
     <ClInclude Include="resource.h" />
-    <ClInclude Include="Vulkan and RTX.h" />
+    <ClInclude Include="Vertex.h" />
+    <ClInclude Include="VulkanAndRTX.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Vulkan and RTX.rc" />

@@ -30,7 +30,7 @@
     <ClCompile Include="pch.cpp">
       <Filter>headers\precompiled</Filter>
     </ClCompile>
-    <ClCompile Include="Vulkan and RTX.cpp">
+    <ClCompile Include="VulkanAndRTX.cpp">
       <Filter>source</Filter>
     </ClCompile>
     <ClCompile Include="Camera.cpp">
@@ -53,6 +53,9 @@
     </ClCompile>
     <ClCompile Include="IsCreature.cpp">
       <Filter>characteristics\secondary_chars</Filter>
+    </ClCompile>
+    <ClCompile Include="Vertex.cpp">
+      <Filter>source</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -83,7 +86,10 @@
     <ClInclude Include="Item.h">
       <Filter>headers</Filter>
     </ClInclude>
-    <ClInclude Include="Vulkan and RTX.h">
+    <ClInclude Include="VulkanAndRTX.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Vertex.h">
       <Filter>headers</Filter>
     </ClInclude>
   </ItemGroup>
