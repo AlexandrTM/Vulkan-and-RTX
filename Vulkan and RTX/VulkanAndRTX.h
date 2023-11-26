@@ -1,4 +1,5 @@
 #include "pch.h"
+#include "InputHandler.h"
 #include "Vertex.h"
 
 #ifndef VULKAN_AND_RTX_H
@@ -50,12 +51,11 @@ private:
 	VkFormat swapChainImageFormat;
 	VkExtent2D swapChainExtent;
 	std::vector<VkImageView> swapChainImageViews;
+	std::vector<VkFramebuffer> swapChainFramebuffers;
 
 	VkRenderPass renderPass;
-	VkDescriptorSetLayout descriptorSetLayout;
 	VkPipelineLayout pipelineLayout;
 	VkPipeline graphicsPipeline;
-	std::vector<VkFramebuffer> swapChainFramebuffers;
 
 	VkCommandPool commandPool;
 	std::vector<VkCommandBuffer> commandBuffers;
@@ -80,6 +80,7 @@ private:
 	std::vector<VkDeviceMemory> uniformBuffersMemory;
 
 	VkDescriptorPool descriptorPool;
+	VkDescriptorSetLayout descriptorSetLayout;
 	std::vector<VkDescriptorSet> descriptorSets;
 
 	VkImage textureImage;
@@ -97,6 +98,8 @@ private:
 
 	uint32_t mipLevels;
 	VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT;
+
+	InputHandler inputHandler;
 #pragma endregion
 
 public:
@@ -119,15 +122,8 @@ private:
 	// recreating swap chain in some special cases
 	void recreateSwapChain();
 
-	static void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mode);
-	static void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
-	static void mouseCallback(GLFWwindow* window, double xpos, double ypos);
-	// mouse wheel handling
-	static void scrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 	// set "framebufferResized" to "true" if window was resized or moved
-	static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
-
-	void movePerson(float deltaTime);
+	void framebufferResizeCallback(GLFWwindow* window, int width, int height);
 
 	void generateCubicLandscape(size_t landscapeWidth, size_t landscapeLenght, float_t cubeSize);
 

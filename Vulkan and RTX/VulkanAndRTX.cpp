@@ -1,6 +1,7 @@
 #include "pch.h"
 #include "VulkanAndRTX.h"
-#include "Camera.h"
+#include "InputHandler.h"
+#include "Vertex.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -63,13 +64,6 @@ const int MAX_FRAMES_IN_FLIGHT = 2;
 const std::string MODEL_PATH = "models/viking_room.obj";
 const std::string TEXTURE_PATH = "textures/texture.png";
 
-Camera camera;
-
-bool firstMouse = true;
-double sensitivity = 0.125;
-
-bool keys[1024];
-
 #pragma endregion
 
 void VulkanAndRTX::run()
@@ -90,13 +84,8 @@ void VulkanAndRTX::initWindow()
 	glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_FALSE);
 
 	window = glfwCreateWindow(windowWidth, windowHeight, "Vulkan and RTX", nullptr, nullptr);
-	glfwSetWindowUserPointer(window, this);
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-	glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
-	glfwSetMouseButtonCallback(window, mouseButtonCallback);
-	glfwSetCursorPosCallback(window, mouseCallback);
-	glfwSetScrollCallback(window, scrollCallback);
-	glfwSetKeyCallback(window, keyCallback);
+	inputHandler.initializeInputHandler(window);
 
 	GLFWmonitor* monitor = glfwGetPrimaryMonitor();
 	int count;
@@ -201,7 +190,7 @@ void VulkanAndRTX::mainLoop()
 		//std::cout << deltaTime << "\n";
 
 		glfwPollEvents();
-		movePerson(deltaTime);
+		inputHandler.movePerson(deltaTime);
 
 		drawFrame(timeSinceLaunch);
 	}
@@ -313,159 +302,12 @@ void VulkanAndRTX::recreateSwapChain()
 	createDescriptorSets();
 }
 
-void VulkanAndRTX::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mode)
-{
-	if (key >= 0 && key < 1024)
-	{
-		if (action == GLFW_PRESS)
-			keys[key] = true;
-		else if (action == GLFW_RELEASE)
-			keys[key] = false;
-	}
-
-	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-		glfwSetWindowShouldClose(window, GL_TRUE);
-
-	// altering mouse sensivity
-	if (key == GLFW_KEY_UP && action == GLFW_PRESS)
-	{
-		/*if (!(sensitivity > 2.0))
-			sensitivity += 0.01;
-		if (sensitivity > 2.0)
-			sensitivity = 2.0;*/
-		sensitivity = std::clamp(sensitivity * 1.3, 0.001, 10.0);
-	}
-	if (key == GLFW_KEY_DOWN && action == GLFW_PRESS)
-	{
-		/*if (!(sensitivity < 0.002))
-			sensitivity -= 0.005;
-		if (sensitivity < 0.002)
-			sensitivity = 0.002;*/
-		sensitivity = std::clamp(sensitivity * 0.75, 0.001, 10.0);
-	}
-	// changing mipmap level of detail
-	/*if (key == GLFW_KEY_LEFT && action == GLFW_PRESS)
-	{
-		if (!(currentMinMipLevels < 0.0f))
-		{
-			currentMinMipLevels -= 1.0f;
-		}
-		if (currentMinMipLevels < 0.0f)
-		{
-			currentMinMipLevels = 0.0f;
-		}
-	}
-	if (key == GLFW_KEY_RIGHT && action == GLFW_PRESS)
-	{
-		if (!(currentMinMipLevels > 14.0f))
-		{
-			currentMinMipLevels += 1.0f;
-		}
-		if (currentMinMipLevels > 14.0f)
-		{
-			currentMinMipLevels = 14.0f;
-		}
-	}*/
-}
-void VulkanAndRTX::mouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
-{
-	if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
-		camera.setVerticalFov(60.0f);
-}
-void VulkanAndRTX::mouseCallback(GLFWwindow* window, double xpos, double ypos)
-{
-	if (firstMouse)
-	{
-		camera.setLastViewportX(xpos);
-		camera.setLastViewportY(ypos);
-		firstMouse = false;
-	}
-	double roll = camera.getRoll();
-
-	double xoffset = xpos - camera.getLastViewportX();
-	double yoffset = camera.getLastViewportY() - ypos;
-	camera.setLastViewportX(xpos);
-	camera.setLastViewportY(ypos);
-
-	xoffset *= sensitivity;
-	yoffset *= sensitivity;
-
-	camera.setYaw(camera.getYaw() + xoffset);
-	camera.setPitch(camera.getPitch() + yoffset);
-
-	if (camera.getPitch() > 89.9)
-		camera.setPitch(89.9);
-	if (camera.getPitch() < -89.9)
-		camera.setPitch(-89.9);
-
-	glm::vec3 front{};
-	front.x = cos(glm::radians(camera.getYaw())) * cos(glm::radians(camera.getPitch()));
-	front.y = sin(glm::radians(camera.getPitch()));
-	front.z = sin(glm::radians(camera.getYaw())) * cos(glm::radians(camera.getPitch()));
-	camera.setDirection(glm::normalize(front));
-}
-// mouse wheel handling
-void VulkanAndRTX::scrollCallback(GLFWwindow* window, double xoffset, double yoffset)
-{
-	camera.setVerticalFov(std::clamp(camera.getVerticalFov() - static_cast<float>(yoffset), 1.0f, 130.0f));
-}
 // set "framebufferResized" to "true" if window was resized or moved
 void VulkanAndRTX::framebufferResizeCallback(GLFWwindow* window, int width, int height)
 {
 	auto app = reinterpret_cast<VulkanAndRTX*>(glfwGetWindowUserPointer(window));
 	app->framebufferResized = true;
-	camera.setViewportSize(width, height);
-}
-
-void VulkanAndRTX::movePerson(float deltaTime)
-{
-	float movementSpeed = 3.0 * deltaTime;
-
-	glm::vec3 verticalWorldAxis = camera.getVerticalWorldAxis();
-	glm::vec3 cameraDirection = camera.getDirection();
-
-	glm::vec3 rightVector = glm::normalize(glm::cross(cameraDirection, verticalWorldAxis));
-
-	if (keys[GLFW_KEY_LEFT_CONTROL])
-	{
-		movementSpeed *= 1.9;
-	}
-	if (keys[GLFW_KEY_LEFT_ALT])
-	{
-		movementSpeed *= 0.4;
-	}
-	if (keys[GLFW_KEY_W])
-	{
-		camera.setLookFrom(camera.getLookFrom() + movementSpeed * glm::normalize(glm::vec3(
-			cameraDirection.x,
-			0.0f,
-			cameraDirection.z)
-		));
-	}
-	if (keys[GLFW_KEY_A])
-	{
-		camera.setLookFrom(camera.getLookFrom() - rightVector * movementSpeed);
-	}
-	if (keys[GLFW_KEY_S])
-	{
-		camera.setLookFrom(camera.getLookFrom() - movementSpeed * glm::normalize(glm::vec3(
-			cameraDirection.x,
-			0.0f,
-			cameraDirection.z)
-		));
-	}
-	if (keys[GLFW_KEY_D])
-	{
-		camera.setLookFrom(camera.getLookFrom() + rightVector * movementSpeed);
-	}
-	if (keys[GLFW_KEY_SPACE])
-	{
-		camera.setLookFrom(camera.getLookFrom() + verticalWorldAxis * movementSpeed * 0.7f);
-	}
-	if (keys[GLFW_KEY_LEFT_SHIFT])
-	{
-		camera.setLookFrom(camera.getLookFrom() - verticalWorldAxis * movementSpeed * 0.7f);
-	}
+	inputHandler.camera.setViewportSize(width, height);
 }
 
 void VulkanAndRTX::generateCubicLandscape(size_t landscapeWidth, size_t landscapeLenght, float_t cubeSize)
@@ -677,7 +519,7 @@ void VulkanAndRTX::createTextureImage(std::string texturePath)
 {
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;
-
+	
 	int texWidth, texHeight, texChannels;
 	stbi_uc* pixels = stbi_load(texturePath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 	VkDeviceSize imageSize = texWidth * texHeight * 4;
@@ -2156,15 +1998,15 @@ void VulkanAndRTX::updateUniformBuffer(uint32_t currentImage, float timeSinceLau
 	UniformBufferObject ubo{};
 	ubo.model = glm::mat4(1.0f);
 
-	ubo.view = glm::lookAt(camera.getLookFrom(), camera.getLookFrom() + camera.getDirection(),
-		camera.getVerticalWorldAxis());
+	ubo.view = glm::lookAt(inputHandler.camera.getLookFrom(), inputHandler.camera.getLookFrom() + inputHandler.camera.getDirection(),
+		inputHandler.camera.getVerticalWorldAxis());
 
-	ubo.projection = glm::perspective(glm::radians(camera.getVerticalFov()),
+	ubo.projection = glm::perspective(glm::radians(inputHandler.camera.getVerticalFov()),
 		swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 40.0f);
 	ubo.projection[1][1] *= -1;
 
 	ubo.sun = glm::vec3(std::cos(timeSinceLaunch / 2) * 3, 3.f, std::sin(timeSinceLaunch / 2) * 3);
-	ubo.viewer = camera.getLookFrom();
+	ubo.viewer = inputHandler.camera.getLookFrom();
 
 	// add transpose(inverse(ubo.model)) if doing non uniform scaling
 

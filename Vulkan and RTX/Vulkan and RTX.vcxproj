@@ -164,6 +164,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="InputHandler.cpp" />
     <ClCompile Include="IsCreature.cpp" />
     <ClCompile Include="IsEntity.cpp" />
     <ClCompile Include="HasExperienceLevel.cpp" />
@@ -179,6 +180,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
+    <ClInclude Include="InputHandler.h" />
     <ClInclude Include="IsEntity.h" />
     <ClInclude Include="HasExperienceLevel.h" />
     <ClInclude Include="HasInventory.h" />

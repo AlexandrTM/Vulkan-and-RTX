@@ -57,6 +57,9 @@
     <ClCompile Include="Vertex.cpp">
       <Filter>source</Filter>
     </ClCompile>
+    <ClCompile Include="InputHandler.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -90,6 +93,9 @@
       <Filter>headers</Filter>
     </ClInclude>
     <ClInclude Include="Vertex.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="InputHandler.h">
       <Filter>headers</Filter>
     </ClInclude>
   </ItemGroup>
