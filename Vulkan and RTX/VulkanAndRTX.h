@@ -134,8 +134,8 @@ private:
 	// reading bytecode files and returning its bytes
 	static std::vector<char> readFile(const std::string& filename);
 
-	void createTextureImage(std::string texturePath, VkImage* textureImage,
-		VkDeviceMemory* textureImageMemory);
+	void createTextureImage(std::string texturePath, VkImage& textureImage,
+		VkDeviceMemory& textureImageMemory);
 
 	void generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels);
 
@@ -156,9 +156,9 @@ private:
 		VkFormatFeatureFlags features);
 
 	// how to sample through texels of the texture for drawing them on 3D model
-	void createTextureSampler(VkSampler* vkSampler);
+	void createTextureSampler(VkSampler& vkSampler);
 
-	void createTextureImageView(VkImageView* textureImageView);
+	void createTextureImageView(VkImageView& textureImageView);
 
 	VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels);
 
@@ -187,9 +187,11 @@ private:
 	void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
 		VkBuffer& buffer, VkDeviceMemory& bufferMemory);
 
-	void createVertexBuffer();
+	void createVertexBuffer(const std::vector<Vertex>& vertices,
+		VkBuffer& vertexBuffer, VkDeviceMemory& vertexBufferMemory);
 
-	void createIndexBuffer();
+	void createIndexBuffer(const std::vector<uint32_t>& indices,
+		VkBuffer& indexBuffer, VkDeviceMemory& indexBufferMemory);
 
 	void createDescriptorSets();
 
