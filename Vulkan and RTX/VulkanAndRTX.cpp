@@ -145,9 +145,9 @@ void VulkanAndRTX::initVulkan()
 	createDepthResources();
 	createFramebuffers();
 
-	createTextureImage(TEXTURE_PATH);
-	createTextureImageView();
-	createTextureSampler();
+	createTextureImage(TEXTURE_PATH, &textureImage, &textureImageMemory);
+	createTextureImageView(&textureImageView);
+	createTextureSampler(&textureSampler);
 
 	//loadModel(MODEL_PATH);
 	generateCubicLandscape(30, 30, 1.0f);
@@ -515,7 +515,8 @@ std::vector<char> VulkanAndRTX::readFile(const std::string& filename)
 	return buffer;
 }
 
-void VulkanAndRTX::createTextureImage(std::string texturePath)
+void VulkanAndRTX::createTextureImage(std::string texturePath, VkImage *textureImage, 
+	VkDeviceMemory* textureImageMemory)
 {
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;
@@ -540,17 +541,19 @@ void VulkanAndRTX::createTextureImage(std::string texturePath)
 
 	createImage(texWidth, texHeight, mipLevels, VK_SAMPLE_COUNT_1_BIT, VK_FORMAT_R8G8B8A8_SRGB,
 		VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT
-		| VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory);
+		| VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
+		*textureImage, *textureImageMemory);
 
-	transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED,
+	transitionImageLayout(*textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED,
 		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mipLevels);
 
-	copyBufferToImage(stagingBuffer, textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
+	copyBufferToImage(stagingBuffer, *textureImage, 
+		static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
 
 	vkDestroyBuffer(device, stagingBuffer, nullptr);
 	vkFreeMemory(device, stagingBufferMemory, nullptr);
 
-	generateMipmaps(textureImage, VK_FORMAT_R8G8B8A8_SRGB, texWidth, texHeight, mipLevels);
+	generateMipmaps(*textureImage, VK_FORMAT_R8G8B8A8_SRGB, texWidth, texHeight, mipLevels);
 }
 
 void VulkanAndRTX::generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels)
@@ -704,7 +707,7 @@ VkFormat VulkanAndRTX::findSupportedFormat(const std::vector<VkFormat>& candidat
 }
 
 // how to sample through texels of the texture for drawing them on 3D model
-void VulkanAndRTX::createTextureSampler()
+void VulkanAndRTX::createTextureSampler(VkSampler *textureSampler)
 {
 	VkPhysicalDeviceProperties properties{};
 	vkGetPhysicalDeviceProperties(physicalDevice, &properties);
@@ -732,18 +735,19 @@ void VulkanAndRTX::createTextureSampler()
 	samplerInfo.maxLod = static_cast<float>(mipLevels);
 	samplerInfo.mipLodBias = 0.0f;
 
-	if (vkCreateSampler(device, &samplerInfo, nullptr, &textureSampler) != VK_SUCCESS) {
+	if (vkCreateSampler(device, &samplerInfo, nullptr, textureSampler) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create texture sampler!");
 	}
 }
 
-void VulkanAndRTX::createTextureImageView()
+void VulkanAndRTX::createTextureImageView(VkImageView *textureImageView)
 {
-	textureImageView = createImageView(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT,
+	*textureImageView = createImageView(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT,
 		mipLevels);
 }
 
-VkImageView VulkanAndRTX::createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels)
+VkImageView VulkanAndRTX::createImageView(VkImage image, VkFormat format, 
+	VkImageAspectFlags aspectFlags, uint32_t mipLevels)
 {
 	VkImageViewCreateInfo viewInfo{};
 	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;

@@ -134,7 +134,8 @@ private:
 	// reading bytecode files and returning its bytes
 	static std::vector<char> readFile(const std::string& filename);
 
-	void createTextureImage(std::string texturePath);
+	void createTextureImage(std::string texturePath, VkImage* textureImage,
+		VkDeviceMemory* textureImageMemory);
 
 	void generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels);
 
@@ -155,9 +156,9 @@ private:
 		VkFormatFeatureFlags features);
 
 	// how to sample through texels of the texture for drawing them on 3D model
-	void createTextureSampler();
+	void createTextureSampler(VkSampler* vkSampler);
 
-	void createTextureImageView();
+	void createTextureImageView(VkImageView* textureImageView);
 
 	VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels);
 
