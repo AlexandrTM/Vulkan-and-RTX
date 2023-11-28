@@ -462,43 +462,69 @@ void VulkanAndRTX::loadGltfModel(const std::string& filePath) {
 		std::cout << "model not loaded: " + filePath << "\n";
 	}
 
-	//std::vector<Vertex> vertices;
-
 	for (const auto& mesh : model.meshes) {
 		for (const auto& primitive : mesh.primitives) {
+
 			const float* bufferPos = nullptr;
 			const float* bufferNormals = nullptr;
+
 			const float* bufferTexCoordSet0 = nullptr;
 			const float* bufferTexCoordSet1 = nullptr;
 			const float* bufferColorSet0 = nullptr;
 			const void* bufferJoints = nullptr;
 			const float* bufferWeights = nullptr;
 
-
-
 			const auto& attributes = primitive.attributes;
 
 			// Extract POSITION
 			if (attributes.find("POSITION") != attributes.end()) {
-				const tinygltf::Accessor& positionAccessor = model.accessors[primitive.attributes.find("POSITION")->second];
+				const tinygltf::Accessor& positionAccessor = model.accessors[attributes.find("POSITION")->second];
 				const tinygltf::BufferView& posView = model.bufferViews[positionAccessor.bufferView];
 				bufferPos = reinterpret_cast<const float*>(&(model.buffers[posView.buffer].data[positionAccessor.byteOffset + posView.byteOffset]));
 				
-				if (primitive.attributes.find("NORMAL") != primitive.attributes.end()) {
-					const tinygltf::Accessor& normalAccessor = model.accessors[primitive.attributes.find("NORMAL")->second];
+				if (attributes.find("NORMAL") != attributes.end()) {
+					const tinygltf::Accessor& normalAccessor = model.accessors[attributes.find("NORMAL")->second];
 					const tinygltf::BufferView& normalView = model.bufferViews[normalAccessor.bufferView];
 					bufferNormals = reinterpret_cast<const float*>(&(model.buffers[normalView.buffer].data[normalAccessor.byteOffset + normalView.byteOffset]));
 				}
-				
+
 				// Extract INDICES
 				const tinygltf::Accessor& indicesAccessor = model.accessors[primitive.indices > -1 ? primitive.indices : 0];
-				const tinygltf::BufferView& bufferView = model.bufferViews[indicesAccessor.bufferView];
-				const tinygltf::Buffer& buffer = model.buffers[bufferView.buffer];
-				const uint32_t* indicesData = reinterpret_cast<const uint32_t*>(&(buffer.data[indicesAccessor.byteOffset + bufferView.byteOffset]));
-				
-				for (size_t i = 0; i < indicesAccessor.count; ++i) {
-					indices.push_back(indicesData[i]);
+				const tinygltf::BufferView& indicesView = model.bufferViews[indicesAccessor.bufferView];
+				const tinygltf::Buffer& buffer = model.buffers[indicesView.buffer];
+
+				switch (indicesAccessor.componentType)
+				{
+				case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE: {
+					const uint8_t* indicesData = reinterpret_cast<const uint8_t*>
+						(&(buffer.data[indicesAccessor.byteOffset + indicesView.byteOffset]));
+
+					for (size_t i = 0; i < indicesAccessor.count; ++i) {
+						indices.push_back(indicesData[i]);
+					}
+					break;
 				}
+				case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT: {
+					const uint16_t* indicesData = reinterpret_cast<const uint16_t*>
+						(&(buffer.data[indicesAccessor.byteOffset + indicesView.byteOffset]));
+
+					for (size_t i = 0; i < indicesAccessor.count; ++i) {
+						indices.push_back(indicesData[i]);
+					}
+					break;
+				}
+				case TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT: {
+					const uint32_t* indicesData = reinterpret_cast<const uint32_t*>
+						(&(buffer.data[indicesAccessor.byteOffset + indicesView.byteOffset]));
+
+					for (size_t i = 0; i < indicesAccessor.count; ++i) {
+						indices.push_back(indicesData[i]);
+					}
+					break;
+				}
+				default:
+					break;
+				}		
 
 				// Iterate through vertices
 				//std::cout << "vertices: " << positionAccessor.count << "\n";
@@ -506,20 +532,24 @@ void VulkanAndRTX::loadGltfModel(const std::string& filePath) {
 					Vertex vertex{};
 
 					// Extract POSITION
-					vertex.pos = glm::vec3(bufferPos[i * 3], bufferPos[i * 3 + 1], bufferPos[i * 3 + 2]);
+					vertex.pos = glm::vec3(
+						bufferPos[i * 3], 
+						bufferPos[i * 3 + 1], 
+						bufferPos[i * 3 + 2]);
 					vertex.color = { 0.5f, 0.5f, 0.5f };
 					//std::cout << vertex.pos[0] << vertex.pos[1] << vertex.pos[2] << "\n";
 
 					// Extract NORMAL
 					vertex.normal = glm::normalize(glm::vec3(bufferNormals ? glm::vec3(
-						bufferNormals[i * 3], 
+						bufferNormals[i * 3    ], 
 						bufferNormals[i * 3 + 1], 
 						bufferNormals[i * 3 + 2]
 					) : glm::vec3(0.0f)));
-
+					//std::cout << vertex.normal[0] << vertex.normal[1] << vertex.normal[2] << "\n";
+					
 					// Extract TEXCOORD_0
 					/*if (texCoordAccessor) {
-						const float* texCoordData = reinterpret_cast<const float*>(&model.buffers[texCoordAccessor->bufferView].data[texCoordAccessor->byteOffset]);
+						const float* texCoordData = reinterpret_cast<const float*>(&model.buffers[texCoordAccessor->indicesView].data[texCoordAccessor->byteOffset]);
 						vertex.texCoord = glm::vec2(texCoordData[j * 2], texCoordData[j * 2 + 1]);
 					}*/
 
@@ -529,14 +559,12 @@ void VulkanAndRTX::loadGltfModel(const std::string& filePath) {
 
 				// Extract INDICES
 				//if (indicesAccessor) {
-				//	const uint32_t* indicesData = reinterpret_cast<const uint32_t*>(&model.buffers[indicesAccessor->bufferView].data[indicesAccessor->byteOffset]);
+				//	const uint32_t* indicesData = reinterpret_cast<const uint32_t*>(&model.buffers[indicesAccessor->indicesView].data[indicesAccessor->byteOffset]);
 				//	//indices.insert(indices.end(), indicesData, indicesData + indicesAccessor->count);
 				//}
 			}
 		}
 	}
-
-	//return vertices;
 }
 
 // reading bytecode files and returning its bytes

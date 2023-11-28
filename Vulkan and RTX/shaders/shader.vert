@@ -26,7 +26,7 @@ void main() {
 	vec3 reflected = reflect(-toSun, inNormal);
 	//vec3 halfWay = normalize(toSun + toViewer);
 		
-	float directionalLight = min(max(dot(normalSpace, toSun), 0) + 0.5, 1.0);
+	float directionalLight = min(max(dot(normalSpace, toSun), 0) + 0.05, 1.0);
 	
 	float specular = 0.0;
 	
