@@ -117,7 +117,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>O:\SDKforeverything\tinyobjloader-master;O:\SDKforeverything\stb-master;O:\SDKforeverything\VulkanSDK\Include;O:\SDKforeverything\glm-master\glm;O:\SDKforeverything\glfw-3.3.8\include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>O:\SDKforeverything\tinyobjloader-master;O:\SDKforeverything\stb-master;O:\SDKforeverything\VulkanSDK\Include;O:\SDKforeverything\glm-master\glm;O:\SDKforeverything\glfw-3.3.8\include;O:\SDKforeverything\tinygltf-2.8.18</AdditionalIncludeDirectories>
       <Optimization>MaxSpeed</Optimization>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -143,7 +143,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>O:\SDKforeverything\tinyobjloader-master;O:\SDKforeverything\glm-master\glm;O:\SDKforeverything\glfw-3.3.8\include;O:\SDKforeverything\stb-master;O:\SDKforeverything\VulkanSDK\Include</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>O:\SDKforeverything\tinyobjloader-master;O:\SDKforeverything\glm-master\glm;O:\SDKforeverything\glfw-3.3.8\include;O:\SDKforeverything\stb-master;O:\SDKforeverything\VulkanSDK\Include;O:\SDKforeverything\tinygltf-2.8.18</AdditionalIncludeDirectories>
       <Optimization>MaxSpeed</Optimization>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <LanguageStandard>stdcpp20</LanguageStandard>
@@ -177,6 +177,7 @@
     </ClCompile>
     <ClCompile Include="Vertex.cpp" />
     <ClCompile Include="VulkanAndRTX.cpp" />
+    <ClCompile Include="VulkanInitializer.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Camera.h" />
@@ -191,6 +192,7 @@
     <ClInclude Include="resource.h" />
     <ClInclude Include="Vertex.h" />
     <ClInclude Include="VulkanAndRTX.h" />
+    <ClInclude Include="VulkanInitializer.h" />
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Vulkan and RTX.rc" />

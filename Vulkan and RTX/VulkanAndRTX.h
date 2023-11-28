@@ -1,29 +1,10 @@
 #include "pch.h"
+#include "VulkanInitializer.h"
 #include "InputHandler.h"
 #include "Vertex.h"
 
 #ifndef VULKAN_AND_RTX_H
 #define VULKAN_AND_RTX_H
-
-// indicies of queue families
-struct QueueFamilyIndices {
-	// rendering
-	std::optional<uint32_t> graphicsFamily;
-	// presenting rendered images to window surface
-	std::optional<uint32_t> presentFamily;
-
-	bool isComplete()
-	{
-		return graphicsFamily.has_value() && presentFamily.has_value();
-	}
-};
-
-// properties of the swap chain
-struct SwapChainSupportDetails {
-	VkSurfaceCapabilitiesKHR capabilities;
-	std::vector<VkSurfaceFormatKHR> formats;
-	std::vector<VkPresentModeKHR> presentModes;
-};
 
 // MVP matrix and other info for shaders
 struct UniformBufferObject {
@@ -38,13 +19,9 @@ class VulkanAndRTX {
 private:
 #pragma region
 	GLFWwindow* window;
-	VkInstance instance;
-	VkDebugUtilsMessengerEXT debugMessenger;
-	VkSurfaceKHR surface;
-	VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
-	VkDevice device; // logical device
-	VkQueue graphicsQueue;
-	VkQueue presentQueue;
+
+	InputHandler inputHandler;
+	VulkanInitializer vkInit;
 
 	VkSwapchainKHR swapChain;
 	std::vector<VkImage> swapChainImages;
@@ -97,9 +74,6 @@ private:
 	VkImageView colorImageView;
 
 	uint32_t mipLevels;
-	VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT;
-
-	InputHandler inputHandler;
 #pragma endregion
 
 public:
@@ -107,9 +81,9 @@ public:
 
 private:
 	// initializing GLFW and creating window
-	void initWindow();
+	void createWindow();
 
-	void initVulkan();
+	void prepareResources();
 
 	void mainLoop();
 
@@ -204,34 +178,9 @@ private:
 	// creating uniform buffer for each frame in flight
 	void createUniformBuffers();
 
-	void createDescriptorSetLayout();
+	void createDescriptorSetLayout(VkDescriptorSetLayout& descriptorSetLayout);
 
 	void createDescriptorPool();
-
-	// creating instance with debigging checks
-	void createInstance();
-
-	// creating info for debugMessenger
-	void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
-
-	// creating "VkDebugUtilsMessengerEXT" object 
-	// after finding adress of the "vkCreateDebugUtilsMessengerEXT" function
-	// debug messenger is specific for each "instance"
-	void setupDebugMessenger();
-
-	// creating window surface for the specific window
-	void createSurface();
-
-	// picking most wanted GPU for "instance", it also can be CPU or something
-	void pickPhysicalDevice();
-
-	// checks of the GPUs for availabilty of some features
-	bool isDeviceSuitable(VkPhysicalDevice device);
-
-	VkSampleCountFlagBits getMaxUsableSampleCount();
-
-	// it's can be more than 1 logical device for each physical device
-	void createLogicalDevice();
 
 	// creating swap chain with the best properties for current device
 	void createSwapChain();
@@ -271,27 +220,6 @@ private:
 
 	// chosing best swap chain extent(resolution of the images)
 	VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
-
-	// querying swap chain details, they specific for each device
-	SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
-
-	// check for extensions suitability of the GPUs
-	bool checkDeviceExtensionSupport(VkPhysicalDevice device);
-
-	// finding needed queue families
-	QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
-
-	// getting required extensions for GLFW and their number
-	std::vector<const char*> getRequiredExtensions();
-
-	// checking for requested validation layers to be suported by system
-	bool checkValidationLayerSupport();
-
-	// function for debugging callbakcs(checking warnings, errors etc)
-	// VKAPI_ATTR and VKAPI_CALL ensures that this function signature suitable for Vulkan
-	static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-		VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-		void* pUserData);
 };
 
 #endif // !VULKAN_AND_RTX_H
