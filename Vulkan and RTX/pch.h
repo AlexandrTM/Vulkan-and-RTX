@@ -14,8 +14,6 @@
 #include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
 
-#include <tiny_gltf.h>
-
 #include <chrono>
 #include <iostream>
 #include <stdexcept>

@@ -104,7 +104,7 @@ private:
 	void generateCube(float x, float y, float z, float_t cubeSize);
 
 	void loadModel(std::string modelPath);
-
+	void loadGltfModel(const std::string& filePath);
 	// reading bytecode files and returning its bytes
 	static std::vector<char> readFile(const std::string& filename);
 
@@ -132,7 +132,7 @@ private:
 	// how to sample through texels of the texture for drawing them on 3D model
 	void createTextureSampler(VkSampler& vkSampler);
 
-	void createTextureImageView(VkImageView& textureImageView);
+	void createTextureImageView(VkImage& textureImage, VkImageView& textureImageView);
 
 	VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels);
 
