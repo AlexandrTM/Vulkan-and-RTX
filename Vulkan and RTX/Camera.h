@@ -19,6 +19,8 @@ public:
 		double roll
 	);
 
+	void rotate(double xpos, double ypos, double sensitivity);
+
 	void setViewportSize(uint32_t viewportWidth, uint32_t viewportHeight);
 
 	void setLookFrom(glm::vec3 lookFrom);
@@ -45,6 +47,7 @@ public:
 	glm::vec3 getVerticalWorldAxis();
 
 private:
+	bool _firstMouse = true;
 
 	glm::vec3 _lookFrom;
 	glm::vec3 _lookAt;

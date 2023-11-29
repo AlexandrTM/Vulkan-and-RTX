@@ -88,35 +88,7 @@ void InputHandler::mouseButtonCallback(GLFWwindow* window, int button, int actio
 }
 void InputHandler::mouseCallback(GLFWwindow* window, double xpos, double ypos)
 {
-	if (firstMouse)
-	{
-		camera.setLastViewportX(xpos);
-		camera.setLastViewportY(ypos);
-		firstMouse = false;
-	}
-	double roll = camera.getRoll();
-
-	double xoffset = xpos - camera.getLastViewportX();
-	double yoffset = camera.getLastViewportY() - ypos;
-	camera.setLastViewportX(xpos);
-	camera.setLastViewportY(ypos);
-
-	xoffset *= sensitivity;
-	yoffset *= sensitivity;
-
-	camera.setYaw(camera.getYaw() + xoffset);
-	camera.setPitch(camera.getPitch() + yoffset);
-
-	if (camera.getPitch() > 89.9)
-		camera.setPitch(89.9);
-	if (camera.getPitch() < -89.9)
-		camera.setPitch(-89.9);
-
-	glm::vec3 front{};
-	front.x = cos(glm::radians(camera.getYaw())) * cos(glm::radians(camera.getPitch()));
-	front.y = sin(glm::radians(camera.getPitch()));
-	front.z = sin(glm::radians(camera.getYaw())) * cos(glm::radians(camera.getPitch()));
-	camera.setDirection(glm::normalize(front));
+	camera.rotate(xpos, ypos, sensitivity);
 }
 // mouse wheel handling
 void InputHandler::scrollCallback(GLFWwindow* window, double xoffset, double yoffset)

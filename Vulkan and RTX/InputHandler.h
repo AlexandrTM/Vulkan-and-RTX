@@ -6,7 +6,6 @@
 class InputHandler
 {
 private:
-	bool firstMouse = true;
 	double sensitivity = 0.125;
 
 	bool keys[1024] = { 0 };

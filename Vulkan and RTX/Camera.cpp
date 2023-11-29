@@ -49,6 +49,39 @@ Camera::Camera(
 	_roll = roll;
 }
 
+void Camera::rotate(double xpos, double ypos, double sensitivity)
+{
+	if (_firstMouse)
+	{
+		_lastViewportX = xpos;
+		_lastViewportY = ypos;
+		_firstMouse = false;
+	}
+	double roll = _roll;
+
+	double xoffset = xpos - _lastViewportX;
+	double yoffset = _lastViewportY - ypos;
+	_lastViewportX = xpos;
+	_lastViewportY = ypos;
+
+	xoffset *= sensitivity;
+	yoffset *= sensitivity;
+
+	_yaw = _yaw + xoffset;
+	_pitch = _pitch + yoffset;
+
+	if (_pitch > 89.9)
+		_pitch = 89.9;
+	if (_pitch < -89.9)
+		_pitch = -89.9;
+
+	glm::vec3 front{};
+	front.x = cos(glm::radians(_yaw)) * cos(glm::radians(_pitch));
+	front.y = sin(glm::radians(_pitch));
+	front.z = sin(glm::radians(_yaw)) * cos(glm::radians(_pitch));
+	_cameraDirection = glm::normalize(front);
+}
+
 void Camera::setViewportSize(uint32_t viewportWidth, uint32_t viewportHeight) 
 	{ _viewportWidth = viewportWidth, _viewportHeight = viewportHeight; }
 
