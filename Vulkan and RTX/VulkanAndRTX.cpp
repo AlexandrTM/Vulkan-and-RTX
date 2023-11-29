@@ -347,32 +347,32 @@ void VulkanAndRTX::generateCube(float x, float y, float z, float_t cubeSize)
 	}
 #pragma endregion // color
 #pragma region
-	localVertices[0].texCoord = { glm::vec2(0.0f, 0.0f) };
-	localVertices[1].texCoord = { glm::vec2(1.0f, 0.0f) };
-	localVertices[2].texCoord = { glm::vec2(1.0f, 1.0f) };
-	localVertices[3].texCoord = { glm::vec2(0.0f, 1.0f) };
-	localVertices[4].texCoord = { glm::vec2(0.0f, 1.0f) };
-	localVertices[5].texCoord = { glm::vec2(1.0f, 1.0f) };
-	localVertices[6].texCoord = { glm::vec2(1.0f, 0.0f) };
-	localVertices[7].texCoord = { glm::vec2(0.0f, 0.0f) };
+	localVertices[0].texCoord0 = { glm::vec2(0.0f, 0.0f) };
+	localVertices[1].texCoord0 = { glm::vec2(1.0f, 0.0f) };
+	localVertices[2].texCoord0 = { glm::vec2(1.0f, 1.0f) };
+	localVertices[3].texCoord0 = { glm::vec2(0.0f, 1.0f) };
+	localVertices[4].texCoord0 = { glm::vec2(0.0f, 1.0f) };
+	localVertices[5].texCoord0 = { glm::vec2(1.0f, 1.0f) };
+	localVertices[6].texCoord0 = { glm::vec2(1.0f, 0.0f) };
+	localVertices[7].texCoord0 = { glm::vec2(0.0f, 0.0f) };
 
-	localVertices[8].texCoord = { glm::vec2(0.0f, 1.0f) };
-	localVertices[9].texCoord = { glm::vec2(1.0f, 1.0f) };
-	localVertices[10].texCoord = { glm::vec2(1.0f, 0.0f) };
-	localVertices[11].texCoord = { glm::vec2(0.0f, 0.0f) };
-	localVertices[12].texCoord = { glm::vec2(0.0f, 0.0f) };
-	localVertices[13].texCoord = { glm::vec2(1.0f, 0.0f) };
-	localVertices[14].texCoord = { glm::vec2(1.0f, 1.0f) };
-	localVertices[15].texCoord = { glm::vec2(0.0f, 1.0f) };
+	localVertices[8].texCoord0 = { glm::vec2(0.0f, 1.0f) };
+	localVertices[9].texCoord0 = { glm::vec2(1.0f, 1.0f) };
+	localVertices[10].texCoord0 = { glm::vec2(1.0f, 0.0f) };
+	localVertices[11].texCoord0 = { glm::vec2(0.0f, 0.0f) };
+	localVertices[12].texCoord0 = { glm::vec2(0.0f, 0.0f) };
+	localVertices[13].texCoord0 = { glm::vec2(1.0f, 0.0f) };
+	localVertices[14].texCoord0 = { glm::vec2(1.0f, 1.0f) };
+	localVertices[15].texCoord0 = { glm::vec2(0.0f, 1.0f) };
 
-	localVertices[16].texCoord = { glm::vec2(1.0f, 0.0f) };
-	localVertices[17].texCoord = { glm::vec2(0.0f, 0.0f) };
-	localVertices[18].texCoord = { glm::vec2(0.0f, 1.0f) };
-	localVertices[19].texCoord = { glm::vec2(1.0f, 1.0f) };
-	localVertices[20].texCoord = { glm::vec2(0.0f, 0.0f) };
-	localVertices[21].texCoord = { glm::vec2(1.0f, 0.0f) };
-	localVertices[22].texCoord = { glm::vec2(1.0f, 1.0f) };
-	localVertices[23].texCoord = { glm::vec2(0.0f, 1.0f) };
+	localVertices[16].texCoord0 = { glm::vec2(1.0f, 0.0f) };
+	localVertices[17].texCoord0 = { glm::vec2(0.0f, 0.0f) };
+	localVertices[18].texCoord0 = { glm::vec2(0.0f, 1.0f) };
+	localVertices[19].texCoord0 = { glm::vec2(1.0f, 1.0f) };
+	localVertices[20].texCoord0 = { glm::vec2(0.0f, 0.0f) };
+	localVertices[21].texCoord0 = { glm::vec2(1.0f, 0.0f) };
+	localVertices[22].texCoord0 = { glm::vec2(1.0f, 1.0f) };
+	localVertices[23].texCoord0 = { glm::vec2(0.0f, 1.0f) };
 #pragma endregion // texCoord
 
 	uint32_t verticesNum = static_cast<uint32_t>(vertices.size());
@@ -427,7 +427,7 @@ void VulkanAndRTX::loadModel(std::string modelPath)
 				attrib.vertices[3 * index.vertex_index + 2]
 			};
 
-			vertex.texCoord = {
+			vertex.texCoord0 = {
 				attrib.texcoords[2 * index.texcoord_index + 0],
 				1 - attrib.texcoords[2 * index.texcoord_index + 1]
 			};
@@ -453,10 +453,17 @@ void VulkanAndRTX::loadModel(std::string modelPath)
 void VulkanAndRTX::loadGltfModel(const std::string& filePath) {
 	tinygltf::Model model;
 	tinygltf::TinyGLTF loader;
-	std::string err;
-	std::string warn;
+	std::string error;
+	std::string warning;
 
-	bool result = loader.LoadASCIIFromFile(&model, &err, &warn, filePath);
+	bool binary = false;
+	size_t extPos = filePath.rfind('.', filePath.length());
+	if (extPos != std::string::npos) {
+		binary = (filePath.substr(extPos + 1, filePath.length() - extPos) == "glb");
+	}
+
+	bool result = binary ? loader.LoadBinaryFromFile(&model, &error, &warning, filePath.c_str()) 
+						 : loader.LoadASCIIFromFile (&model, &error, &warning, filePath.c_str());
 
 	if (!result) {
 		std::cout << "model not loaded: " + filePath << "\n";
@@ -465,7 +472,7 @@ void VulkanAndRTX::loadGltfModel(const std::string& filePath) {
 	for (const auto& mesh : model.meshes) {
 		for (const auto& primitive : mesh.primitives) {
 
-			const float* bufferPos = nullptr;
+			const float* bufferPositions = nullptr;
 			const float* bufferNormals = nullptr;
 
 			const float* bufferTexCoordSet0 = nullptr;
@@ -480,91 +487,98 @@ void VulkanAndRTX::loadGltfModel(const std::string& filePath) {
 			if (attributes.find("POSITION") != attributes.end()) {
 				const tinygltf::Accessor& positionAccessor = model.accessors[attributes.find("POSITION")->second];
 				const tinygltf::BufferView& posView = model.bufferViews[positionAccessor.bufferView];
-				bufferPos = reinterpret_cast<const float*>(&(model.buffers[posView.buffer].data[positionAccessor.byteOffset + posView.byteOffset]));
+				bufferPositions = reinterpret_cast<const float*>(&(model.buffers[posView.buffer].data[positionAccessor.byteOffset + posView.byteOffset]));
 				
+				// normals
 				if (attributes.find("NORMAL") != attributes.end()) {
 					const tinygltf::Accessor& normalAccessor = model.accessors[attributes.find("NORMAL")->second];
 					const tinygltf::BufferView& normalView = model.bufferViews[normalAccessor.bufferView];
 					bufferNormals = reinterpret_cast<const float*>(&(model.buffers[normalView.buffer].data[normalAccessor.byteOffset + normalView.byteOffset]));
 				}
 
+				// texCoords
+				if (attributes.find("TEXCOORD_0") != attributes.end()) {
+					const tinygltf::Accessor& texCoordsAccessor0 = model.accessors[attributes.find("TEXCOORD_0")->second];
+					const tinygltf::BufferView& texCoordsView0 = model.bufferViews[texCoordsAccessor0.bufferView];
+					bufferTexCoordSet0 = reinterpret_cast<const float*>(&(model.buffers[texCoordsView0.buffer].data[texCoordsAccessor0.byteOffset + texCoordsView0.byteOffset]));
+				}
+				if (attributes.find("TEXCOORD_1") != attributes.end()) {
+					const tinygltf::Accessor& texCoordsAccessor1 = model.accessors[attributes.find("TEXCOORD_1")->second];
+					const tinygltf::BufferView& texCoordsView1 = model.bufferViews[texCoordsAccessor1.bufferView];
+					bufferTexCoordSet1 = reinterpret_cast<const float*>(&(model.buffers[texCoordsView1.buffer].data[texCoordsAccessor1.byteOffset + texCoordsView1.byteOffset]));
+				}
+
 				// Extract INDICES
-				const tinygltf::Accessor& indicesAccessor = model.accessors[primitive.indices > -1 ? primitive.indices : 0];
-				const tinygltf::BufferView& indicesView = model.bufferViews[indicesAccessor.bufferView];
-				const tinygltf::Buffer& buffer = model.buffers[indicesView.buffer];
-
-				switch (indicesAccessor.componentType)
 				{
-				case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE: {
-					const uint8_t* indicesData = reinterpret_cast<const uint8_t*>
-						(&(buffer.data[indicesAccessor.byteOffset + indicesView.byteOffset]));
+					const tinygltf::Accessor& indicesAccessor = model.accessors[primitive.indices > -1 ? primitive.indices : 0];
+					const tinygltf::BufferView& indicesView = model.bufferViews[indicesAccessor.bufferView];
+					const tinygltf::Buffer& buffer = model.buffers[indicesView.buffer];
 
-					for (size_t i = 0; i < indicesAccessor.count; ++i) {
-						indices.push_back(indicesData[i]);
+					const unsigned char* indicesPreData = 
+						&(buffer.data[indicesAccessor.byteOffset + indicesView.byteOffset]);
+
+					switch (indicesAccessor.componentType)
+					{
+					case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE: {
+						const uint8_t* indicesData = reinterpret_cast<const uint8_t*>(indicesPreData);
+
+						for (size_t i = 0; i < indicesAccessor.count; ++i) {
+							indices.push_back(indicesData[i]);
+						}
+						break;
 					}
-					break;
-				}
-				case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT: {
-					const uint16_t* indicesData = reinterpret_cast<const uint16_t*>
-						(&(buffer.data[indicesAccessor.byteOffset + indicesView.byteOffset]));
+					case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT: {
+						const uint16_t* indicesData = reinterpret_cast<const uint16_t*>(indicesPreData);
 
-					for (size_t i = 0; i < indicesAccessor.count; ++i) {
-						indices.push_back(indicesData[i]);
+						for (size_t i = 0; i < indicesAccessor.count; ++i) {
+							indices.push_back(indicesData[i]);
+						}
+						break;
 					}
-					break;
-				}
-				case TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT: {
-					const uint32_t* indicesData = reinterpret_cast<const uint32_t*>
-						(&(buffer.data[indicesAccessor.byteOffset + indicesView.byteOffset]));
+					case TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT: {
+						const uint32_t* indicesData = reinterpret_cast<const uint32_t*>(indicesPreData);
 
-					for (size_t i = 0; i < indicesAccessor.count; ++i) {
-						indices.push_back(indicesData[i]);
+						for (size_t i = 0; i < indicesAccessor.count; ++i) {
+							indices.push_back(indicesData[i]);
+						}
+						break;
 					}
-					break;
-				}
-				default:
-					break;
-				}		
-
+					default:
+						break;
+					}	
+				}	
+				
 				// Iterate through vertices
-				//std::cout << "vertices: " << positionAccessor.count << "\n";
 				for (size_t i = 0; i < positionAccessor.count; ++i) {
 					Vertex vertex{};
 
 					// Extract POSITION
 					vertex.pos = glm::vec3(
-						bufferPos[i * 3], 
-						bufferPos[i * 3 + 1], 
-						bufferPos[i * 3 + 2]);
-					vertex.color = { 0.5f, 0.5f, 0.5f };
-					//std::cout << vertex.pos[0] << vertex.pos[1] << vertex.pos[2] << "\n";
+						bufferPositions[i * 3    ], 
+						bufferPositions[i * 3 + 1], 
+						bufferPositions[i * 3 + 2]);
 
 					// Extract NORMAL
 					vertex.normal = glm::normalize(glm::vec3(bufferNormals ? glm::vec3(
 						bufferNormals[i * 3    ], 
 						bufferNormals[i * 3 + 1], 
-						bufferNormals[i * 3 + 2]
-					) : glm::vec3(0.0f)));
-					//std::cout << vertex.normal[0] << vertex.normal[1] << vertex.normal[2] << "\n";
-					
-					// Extract TEXCOORD_0
-					/*if (texCoordAccessor) {
-						const float* texCoordData = reinterpret_cast<const float*>(&model.buffers[texCoordAccessor->indicesView].data[texCoordAccessor->byteOffset]);
-						vertex.texCoord = glm::vec2(texCoordData[j * 2], texCoordData[j * 2 + 1]);
-					}*/
+						bufferNormals[i * 3 + 2]) : glm::vec3(0.0f)));
 
-					// Add the vertex to the vector
+					vertex.color = { 0.5f, 0.5f, 0.5f };
+					
+					vertex.texCoord0 = bufferTexCoordSet0 ? glm::vec2(
+						bufferTexCoordSet0[i * 2    ], 
+						bufferTexCoordSet0[i * 2 + 1]) : glm::vec3(0.0f);
+					vertex.texCoord1 = bufferTexCoordSet1 ? glm::vec2(
+						bufferTexCoordSet1[i * 2    ], 
+						bufferTexCoordSet1[i * 2 + 1]) : glm::vec3(0.0f);
+
 					vertices.push_back(vertex);
 				}
-
-				// Extract INDICES
-				//if (indicesAccessor) {
-				//	const uint32_t* indicesData = reinterpret_cast<const uint32_t*>(&model.buffers[indicesAccessor->indicesView].data[indicesAccessor->byteOffset]);
-				//	//indices.insert(indices.end(), indicesData, indicesData + indicesAccessor->count);
-				//}
 			}
 		}
 	}
+	//std::cout << "vertices size: " << vertices.size() * sizeof(vertices) << "\n";
 }
 
 // reading bytecode files and returning its bytes
@@ -1292,7 +1306,7 @@ void VulkanAndRTX::createSwapChain()
 
 	VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
 	VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
-	std::cout << "current present mode:" << presentMode << "\n";
+	std::cout << "current present mode: " << presentMode << "\n";
 	VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities);
 
 	uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;

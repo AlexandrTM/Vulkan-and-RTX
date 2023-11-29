@@ -23,12 +23,12 @@ struct SwapChainSupportDetails {
 
 struct VulkanInitializer
 {
-    VkSurfaceKHR surface;
-
     VkInstance instance;
-    VkDebugUtilsMessengerEXT debugMessenger;
-    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
     VkDevice device; // logical device
+    VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+
+    VkDebugUtilsMessengerEXT debugMessenger;
+    VkSurfaceKHR surface;
 
     VkQueue graphicsQueue;
     VkQueue presentQueue;
