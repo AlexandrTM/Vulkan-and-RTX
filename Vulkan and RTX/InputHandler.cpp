@@ -37,24 +37,18 @@ void InputHandler::keyCallback(GLFWwindow* window, int key, int scancode, int ac
 			keys[key] = false;
 	}
 
-	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) 
+	{
 		glfwSetWindowShouldClose(window, GL_TRUE);
+	}
 
 	// altering mouse sensivity
 	if (key == GLFW_KEY_UP && action == GLFW_PRESS)
 	{
-		/*if (!(sensitivity > 2.0))
-			sensitivity += 0.01;
-		if (sensitivity > 2.0)
-			sensitivity = 2.0;*/
 		sensitivity = std::clamp(sensitivity * 1.3, 0.001, 10.0);
 	}
 	if (key == GLFW_KEY_DOWN && action == GLFW_PRESS)
 	{
-		/*if (!(sensitivity < 0.002))
-			sensitivity -= 0.005;
-		if (sensitivity < 0.002)
-			sensitivity = 0.002;*/
 		sensitivity = std::clamp(sensitivity * 0.75, 0.001, 10.0);
 	}
 	// changing mipmap level of detail
@@ -83,8 +77,10 @@ void InputHandler::keyCallback(GLFWwindow* window, int key, int scancode, int ac
 }
 void InputHandler::mouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
 {
-	if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
+	if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) 
+	{
 		camera.setVerticalFov(60.0f);
+	}
 }
 void InputHandler::mouseCallback(GLFWwindow* window, double xpos, double ypos)
 {
