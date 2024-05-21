@@ -14,6 +14,11 @@
 #include <glm.hpp>
 #include <gtc/matrix_transform.hpp>
 
+#include <stb_image_write.h>
+#include <stb_image.h>
+#include <tiny_gltf.h>
+#include <tiny_obj_loader.h>
+
 #include <chrono>
 #include <iostream>
 #include <stdexcept>

@@ -72,6 +72,21 @@
     <ClCompile Include="VulkanAndRTX.cpp">
       <Filter>source\main class split</Filter>
     </ClCompile>
+    <ClCompile Include="ModelManager.cpp">
+      <Filter>source\main class split</Filter>
+    </ClCompile>
+    <ClCompile Include="stb_image_implementation.cpp">
+      <Filter>headers\precompiled</Filter>
+    </ClCompile>
+    <ClCompile Include="stb_image_write_implementation.cpp">
+      <Filter>headers\precompiled</Filter>
+    </ClCompile>
+    <ClCompile Include="tiny_gltf_implementation.cpp">
+      <Filter>headers\precompiled</Filter>
+    </ClCompile>
+    <ClCompile Include="tiny_obj_loader_implementation.cpp">
+      <Filter>headers\precompiled</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
