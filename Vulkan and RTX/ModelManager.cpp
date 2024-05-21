@@ -196,7 +196,7 @@ void VulkanAndRTX::loadGltfModel(const std::string& filePath) {
 	bool binary = false;
 	size_t extPos = filePath.rfind('.', filePath.length());
 	if (extPos != std::string::npos) {
-		binary = (filePath.substr(extPos + 1, filePath.length() - extPos) == "glb");
+		binary = (filePath.substr(extPos + 1, filePath.length() - extPos - 1) == "glb");
 	}
 
 	bool result = binary ? loader.LoadBinaryFromFile(&model, &error, &warning, filePath.c_str())
