@@ -5,12 +5,10 @@
 #include "Vertex.h"
 
 #define TINYGLTF_IMPLEMENTATION
-#define STB_IMAGE_IMPLEMENTATION
+#define TINYOBJLOADER_IMPLEMENTATION
 #define STB_IMAGE_WRITE_IMPLEMENTATION
 #include <tiny_gltf.h>
-#define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
-
 
 #pragma region
 
@@ -89,7 +87,7 @@ void VulkanAndRTX::createWindow()
 void VulkanAndRTX::prepareResources()
 {
 	createSwapChain();
-	createImageViews();
+	createSwapChainImageViews();
 	createRenderPass();
 	createDescriptorSetLayout(descriptorSetLayout);
 	createGraphicsPipeline();
@@ -199,61 +197,6 @@ void VulkanAndRTX::cleanup()
 	glfwDestroyWindow(window);
 
 	glfwTerminate();
-}
-
-// cleaning "out of date" swap chain
-void VulkanAndRTX::cleanupSwapChain()
-{
-	vkDestroyImageView(vkInit.device, depthImageView, nullptr);
-	vkDestroyImage(vkInit.device, depthImage, nullptr);
-	vkFreeMemory(vkInit.device, depthImageMemory, nullptr);
-
-	vkDestroyImageView(vkInit.device, colorImageView, nullptr);
-	vkDestroyImage(vkInit.device, colorImage, nullptr);
-	vkFreeMemory(vkInit.device, colorImageMemory, nullptr);
-
-	for (size_t i = 0; i < swapChainFramebuffers.size(); i++) {
-		vkDestroyFramebuffer(vkInit.device, swapChainFramebuffers[i], nullptr);
-	}
-
-	vkDestroyPipeline(vkInit.device, graphicsPipeline, nullptr);
-	vkDestroyPipelineLayout(vkInit.device, pipelineLayout, nullptr);
-	vkDestroyRenderPass(vkInit.device, renderPass, nullptr);
-
-	for (size_t i = 0; i < swapChainImageViews.size(); i++) {
-		vkDestroyImageView(vkInit.device, swapChainImageViews[i], nullptr);
-	}
-
-	vkDestroySwapchainKHR(vkInit.device, swapChain, nullptr);
-}
-
-// recreating swap chain in some special cases
-void VulkanAndRTX::recreateSwapChain()
-{
-	int width = 0, height = 0;
-	glfwGetFramebufferSize(window, &width, &height);
-	// stops rendering if window out of view
-	while (width == 0 || height == 0) {
-		glfwGetFramebufferSize(window, &width, &height);
-		glfwWaitEvents();
-	}
-
-	// waiting for previous swap chain to stop rendering
-	vkDeviceWaitIdle(vkInit.device);
-
-	cleanupSwapChain();
-
-	createSwapChain();
-	createImageViews();
-	createRenderPass();
-	createGraphicsPipeline();
-	createColorResources();
-	createDepthResources();
-	createFramebuffers();
-	createUniformBuffers();
-	createCommandBuffers();
-	createDescriptorPool();
-	createDescriptorSets();
 }
 
 // set "framebufferResized" to "true" if window was resized or moved
@@ -600,136 +543,6 @@ std::vector<char> VulkanAndRTX::readFile(const std::string& filename)
 	return buffer;
 }
 
-void VulkanAndRTX::createTextureImage(std::string texturePath, VkImage& textureImage, 
-	VkDeviceMemory& textureImageMemory)
-{
-	VkBuffer stagingBuffer;
-	VkDeviceMemory stagingBufferMemory;
-	
-	int texWidth, texHeight, texChannels;
-	stbi_uc* pixels = stbi_load(texturePath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-	VkDeviceSize imageSize = texWidth * texHeight * 4;
-	mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
-
-	if (!pixels) {
-		throw std::runtime_error("failed to load texture image!");
-	}
-
-	createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-		| VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
-
-	void* data;
-	vkMapMemory(vkInit.device, stagingBufferMemory, 0, imageSize, 0, &data);
-	memcpy(data, pixels, static_cast<size_t>(imageSize));
-	vkUnmapMemory(vkInit.device, stagingBufferMemory);
-	stbi_image_free(pixels);
-
-	createImage(texWidth, texHeight, mipLevels, VK_SAMPLE_COUNT_1_BIT, VK_FORMAT_R8G8B8A8_SRGB,
-		VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT
-		| VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
-		textureImage, textureImageMemory);
-
-	transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED,
-		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mipLevels);
-
-	copyBufferToImage(stagingBuffer, textureImage, 
-		static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
-
-	vkDestroyBuffer(vkInit.device, stagingBuffer, nullptr);
-	vkFreeMemory(vkInit.device, stagingBufferMemory, nullptr);
-
-	generateMipmaps(textureImage, VK_FORMAT_R8G8B8A8_SRGB, texWidth, texHeight, mipLevels);
-}
-
-void VulkanAndRTX::generateMipmaps(VkImage image, VkFormat imageFormat, 
-	int32_t texWidth, int32_t texHeight, uint32_t mipLevels)
-{
-	// Check if image format supports linear blitting
-	VkFormatProperties formatProperties;
-	vkGetPhysicalDeviceFormatProperties(vkInit.physicalDevice, imageFormat, &formatProperties);
-
-	if (!(formatProperties.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT)) {
-		throw std::runtime_error("texture image format does not support linear blitting!");
-	}
-
-	VkCommandBuffer commandBuffer = beginSingleTimeCommands();
-
-	VkImageMemoryBarrier barrier{};
-	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
-	barrier.image = image;
-	barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-	barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
-	barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-	barrier.subresourceRange.baseArrayLayer = 0;
-	barrier.subresourceRange.layerCount = 1;
-	barrier.subresourceRange.levelCount = 1;
-
-	int32_t mipWidth = texWidth;
-	int32_t mipHeight = texHeight;
-
-	for (uint32_t i = 1; i < mipLevels; i++) {
-		barrier.subresourceRange.baseMipLevel = i - 1;
-		barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-		barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-		barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-		barrier.dstAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-
-		vkCmdPipelineBarrier(commandBuffer,
-			VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0,
-			0, nullptr,
-			0, nullptr,
-			1, &barrier);
-
-		VkImageBlit blit{};
-		blit.srcOffsets[0] = { 0, 0, 0 };
-		blit.srcOffsets[1] = { mipWidth, mipHeight, 1 };
-		blit.srcSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		blit.srcSubresource.mipLevel = i - 1;
-		blit.srcSubresource.baseArrayLayer = 0;
-		blit.srcSubresource.layerCount = 1;
-		blit.dstOffsets[0] = { 0, 0, 0 };
-		blit.dstOffsets[1] = { mipWidth > 1 ? mipWidth / 2 : 1, mipHeight > 1 ? mipHeight / 2 : 1, 1 };
-		blit.dstSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-		blit.dstSubresource.mipLevel = i;
-		blit.dstSubresource.baseArrayLayer = 0;
-		blit.dstSubresource.layerCount = 1;
-
-		vkCmdBlitImage(commandBuffer,
-			image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
-			image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-			1, &blit,
-			VK_FILTER_LINEAR);
-
-		barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
-		barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		barrier.srcAccessMask = VK_ACCESS_TRANSFER_READ_BIT;
-		barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
-		vkCmdPipelineBarrier(commandBuffer,
-			VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
-			0, nullptr,
-			0, nullptr,
-			1, &barrier);
-
-		if (mipWidth > 1) mipWidth /= 2;
-		if (mipHeight > 1) mipHeight /= 2;
-	}
-
-	barrier.subresourceRange.baseMipLevel = mipLevels - 1;
-	barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-	barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-	barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-	barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
-
-	vkCmdPipelineBarrier(commandBuffer,
-		VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
-		0, nullptr,
-		0, nullptr,
-		1, &barrier);
-
-	endSingleTimeCommands(commandBuffer);
-}
-
 // creating image for MSAA sampling
 void VulkanAndRTX::createColorResources()
 {
@@ -755,103 +568,6 @@ void VulkanAndRTX::createDepthResources()
 
 	transitionImageLayout(depthImage, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED,
 		VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 1);
-}
-
-// check if the format has stencil component
-bool VulkanAndRTX::hasStencilComponent(VkFormat format)
-{
-	return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
-}
-
-// finding most appropriate format for the depth test
-VkFormat VulkanAndRTX::findDepthFormat()
-{
-	return findSupportedFormat(
-		{ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
-		VK_IMAGE_TILING_OPTIMAL,
-		VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
-	);
-}
-
-// finding most desirable format of color for a given situation
-VkFormat VulkanAndRTX::findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling,
-	VkFormatFeatureFlags features)
-{
-	for (VkFormat format : candidates) {
-		VkFormatProperties props;
-		vkGetPhysicalDeviceFormatProperties(vkInit.physicalDevice, format, &props);
-
-		if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features) {
-			return format;
-		}
-		else if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features) {
-			return format;
-		}
-	}
-
-	throw std::runtime_error("failed to find supported format!");
-}
-
-// how to sample through texels of the texture for drawing them on 3D model
-void VulkanAndRTX::createTextureSampler(VkSampler& textureSampler)
-{
-	VkPhysicalDeviceProperties properties{};
-	vkGetPhysicalDeviceProperties(vkInit.physicalDevice, &properties);
-
-	VkSamplerCreateInfo samplerInfo{};
-	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
-	samplerInfo.magFilter = VK_FILTER_LINEAR;
-	samplerInfo.minFilter = VK_FILTER_LINEAR;
-
-	samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
-
-	samplerInfo.anisotropyEnable = VK_TRUE;
-
-	samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
-
-	samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
-	samplerInfo.unnormalizedCoordinates = VK_FALSE;
-	samplerInfo.compareEnable = VK_FALSE;
-	samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
-
-	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
-	samplerInfo.minLod = 0.0f;
-	samplerInfo.maxLod = static_cast<float>(mipLevels);
-	samplerInfo.mipLodBias = 0.0f;
-
-	if (vkCreateSampler(vkInit.device, &samplerInfo, nullptr, &textureSampler) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create texture sampler!");
-	}
-}
-
-void VulkanAndRTX::createTextureImageView(VkImage& textureImage, VkImageView& textureImageView)
-{
-	textureImageView = createImageView(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT,
-		mipLevels);
-}
-
-VkImageView VulkanAndRTX::createImageView(VkImage image, VkFormat format, 
-	VkImageAspectFlags aspectFlags, uint32_t mipLevels)
-{
-	VkImageViewCreateInfo viewInfo{};
-	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-	viewInfo.image = image;
-	viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-	viewInfo.format = format;
-	viewInfo.subresourceRange.aspectMask = aspectFlags;
-	viewInfo.subresourceRange.baseMipLevel = 0;
-	viewInfo.subresourceRange.levelCount = mipLevels;
-	viewInfo.subresourceRange.baseArrayLayer = 0;
-	viewInfo.subresourceRange.layerCount = 1;
-
-	VkImageView imageView;
-	if (vkCreateImageView(vkInit.device, &viewInfo, nullptr, &imageView) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create texture image view!");
-	}
-
-	return imageView;
 }
 
 // transitioning image to the right layout
@@ -1296,74 +1012,6 @@ void VulkanAndRTX::createDescriptorPool()
 
 	if (vkCreateDescriptorPool(vkInit.device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create descriptor pool!");
-	}
-}
-
-// creating swap chain with the best properties for current device
-void VulkanAndRTX::createSwapChain()
-{
-	SwapChainSupportDetails swapChainSupport = vkInit.querySwapChainSupport(vkInit.physicalDevice);
-
-	VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
-	VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
-	std::cout << "current present mode: " << presentMode << "\n";
-	VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities);
-
-	uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
-
-	if (swapChainSupport.capabilities.maxImageCount > 0 &&
-		imageCount > swapChainSupport.capabilities.maxImageCount) {
-		imageCount = swapChainSupport.capabilities.maxImageCount;
-	}
-
-	VkSwapchainCreateInfoKHR createInfo{};
-	createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-	createInfo.surface = vkInit.surface;
-
-	createInfo.minImageCount = imageCount;
-	createInfo.imageFormat = surfaceFormat.format;
-	createInfo.imageColorSpace = surfaceFormat.colorSpace;
-	createInfo.imageExtent = extent;
-	createInfo.imageArrayLayers = 1;
-	createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-
-	QueueFamilyIndices indices = vkInit.findQueueFamilies(vkInit.physicalDevice);
-	uint32_t queueFamilyIndices[] = { indices.graphicsFamily.value(), indices.presentFamily.value() };
-
-	if (indices.graphicsFamily != indices.presentFamily) {
-		createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-		createInfo.queueFamilyIndexCount = 2;
-		createInfo.pQueueFamilyIndices = queueFamilyIndices;
-	}
-	else {
-		createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-	}
-
-	createInfo.preTransform = swapChainSupport.capabilities.currentTransform;
-	createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-	createInfo.clipped = VK_TRUE;
-	createInfo.presentMode = presentMode;
-	swapChainImageFormat = surfaceFormat.format;
-	swapChainExtent = extent;
-
-	if (vkCreateSwapchainKHR(vkInit.device, &createInfo, nullptr, &swapChain) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create swap chain!");
-	}
-
-	// make sure that swap chain image count is adequate
-	vkGetSwapchainImagesKHR(vkInit.device, swapChain, &imageCount, nullptr);
-	swapChainImages.resize(imageCount);
-	// getting images from the swap chain
-	vkGetSwapchainImagesKHR(vkInit.device, swapChain, &imageCount, swapChainImages.data());
-}
-
-void VulkanAndRTX::createImageViews()
-{
-	swapChainImageViews.resize(swapChainImages.size());
-
-	for (uint32_t i = 0; i < swapChainImages.size(); i++) {
-		swapChainImageViews[i] = createImageView(swapChainImages[i], swapChainImageFormat,
-			VK_IMAGE_ASPECT_COLOR_BIT, 1);
 	}
 }
 
@@ -1873,59 +1521,6 @@ VkShaderModule VulkanAndRTX::createShaderModule(const std::vector<char>& code)
 	}
 
 	return shaderModule;
-}
-
-// choosing best surface format(color space and number of bits) for the swap chain
-VkSurfaceFormatKHR VulkanAndRTX::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
-{
-	for (const auto& availableFormat : availableFormats) {
-		if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB &&
-			availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
-			return availableFormat;
-		}
-	}
-
-	return availableFormats[0];
-}
-
-// chosing best present mode to window surface
-VkPresentModeKHR VulkanAndRTX::chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes)
-{
-	for (const auto& availablePresentMode : availablePresentModes) {
-		// unlimited framerate
-		if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
-			return availablePresentMode;
-		}
-		else {
-			// triple buffering
-			return VK_PRESENT_MODE_FIFO_KHR;
-		}
-	}
-	return VK_PRESENT_MODE_IMMEDIATE_KHR;
-}
-
-// chosing best swap chain extent(resolution of the images)
-VkExtent2D VulkanAndRTX::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities)
-{
-	if (capabilities.currentExtent.width != UINT32_MAX) {
-		return capabilities.currentExtent;
-	}
-	else {
-		int width, height;
-		glfwGetFramebufferSize(window, &width, &height);
-
-		VkExtent2D actualExtent = {
-			static_cast<uint32_t>(width),
-			static_cast<uint32_t>(height)
-		};
-
-		actualExtent.width = std::clamp(actualExtent.width, capabilities.minImageExtent.width,
-			capabilities.maxImageExtent.width);
-		actualExtent.height = std::clamp(actualExtent.height, capabilities.minImageExtent.height,
-			capabilities.maxImageExtent.height);
-
-		return actualExtent;
-	}
 }
 
 int runVulkanAndRTX() {

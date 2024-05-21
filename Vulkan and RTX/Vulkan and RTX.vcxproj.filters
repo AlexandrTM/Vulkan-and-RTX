@@ -25,13 +25,13 @@
     <Filter Include="characteristics\secondary_chars">
       <UniqueIdentifier>{95369772-87a9-4215-974a-6a0dc710d8ac}</UniqueIdentifier>
     </Filter>
+    <Filter Include="source\main class split">
+      <UniqueIdentifier>{50fde218-f769-4b55-bca6-7e00c2973f72}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
       <Filter>headers\precompiled</Filter>
-    </ClCompile>
-    <ClCompile Include="VulkanAndRTX.cpp">
-      <Filter>source</Filter>
     </ClCompile>
     <ClCompile Include="Camera.cpp">
       <Filter>source</Filter>
@@ -57,11 +57,20 @@
     <ClCompile Include="Vertex.cpp">
       <Filter>source</Filter>
     </ClCompile>
-    <ClCompile Include="InputHandler.cpp">
-      <Filter>source</Filter>
+    <ClCompile Include="SwapChainManager.cpp">
+      <Filter>source\main class split</Filter>
+    </ClCompile>
+    <ClCompile Include="ImageManager.cpp">
+      <Filter>source\main class split</Filter>
     </ClCompile>
     <ClCompile Include="VulkanInitializer.cpp">
-      <Filter>source</Filter>
+      <Filter>source\main class split</Filter>
+    </ClCompile>
+    <ClCompile Include="InputHandler.cpp">
+      <Filter>source\main class split</Filter>
+    </ClCompile>
+    <ClCompile Include="VulkanAndRTX.cpp">
+      <Filter>source\main class split</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

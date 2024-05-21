@@ -185,7 +185,7 @@ private:
 	// creating swap chain with the best properties for current device
 	void createSwapChain();
 
-	void createImageViews();
+	void createSwapChainImageViews();
 
 	// information about framebuffer attachments, how many color and depth buffers there will
 	// be, how many samples to use for each of them and how their contents should be treated

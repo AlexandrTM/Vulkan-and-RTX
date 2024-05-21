@@ -164,6 +164,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="ImageManager.cpp" />
     <ClCompile Include="InputHandler.cpp" />
     <ClCompile Include="IsCreature.cpp" />
     <ClCompile Include="IsEntity.cpp" />
@@ -175,6 +176,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="SwapChainManager.cpp" />
     <ClCompile Include="Vertex.cpp" />
     <ClCompile Include="VulkanAndRTX.cpp" />
     <ClCompile Include="VulkanInitializer.cpp" />
