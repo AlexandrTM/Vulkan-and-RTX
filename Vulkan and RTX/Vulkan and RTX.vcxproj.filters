@@ -28,6 +28,9 @@
     <Filter Include="source\main class split">
       <UniqueIdentifier>{50fde218-f769-4b55-bca6-7e00c2973f72}</UniqueIdentifier>
     </Filter>
+    <Filter Include="headers\precompiled\implementation macros">
+      <UniqueIdentifier>{11f1ff4e-c158-4bc5-b19f-0398e6c2a40e}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -76,16 +79,19 @@
       <Filter>source\main class split</Filter>
     </ClCompile>
     <ClCompile Include="stb_image_implementation.cpp">
-      <Filter>headers\precompiled</Filter>
+      <Filter>headers\precompiled\implementation macros</Filter>
     </ClCompile>
     <ClCompile Include="stb_image_write_implementation.cpp">
-      <Filter>headers\precompiled</Filter>
+      <Filter>headers\precompiled\implementation macros</Filter>
     </ClCompile>
     <ClCompile Include="tiny_gltf_implementation.cpp">
-      <Filter>headers\precompiled</Filter>
+      <Filter>headers\precompiled\implementation macros</Filter>
     </ClCompile>
     <ClCompile Include="tiny_obj_loader_implementation.cpp">
-      <Filter>headers\precompiled</Filter>
+      <Filter>headers\precompiled\implementation macros</Filter>
+    </ClCompile>
+    <ClCompile Include="BufferManager.cpp">
+      <Filter>source\main class split</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>

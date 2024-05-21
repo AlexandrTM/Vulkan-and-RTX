@@ -18,6 +18,16 @@ struct UniformBufferObject {
 class VulkanAndRTX {
 private:
 #pragma region
+
+	uint32_t windowWidth = 800;
+	uint32_t windowHeight = 450;
+	const int MAX_FRAMES_IN_FLIGHT = 2;
+
+	const std::string MODEL_PATH = "models/model.obj";
+	const std::string TEXTURE_PATH = "textures/texture.png";
+
+#pragma endregion
+#pragma region
 	GLFWwindow* window;
 
 	InputHandler inputHandler;
@@ -195,7 +205,7 @@ private:
 	void createGraphicsPipeline();
 
 	// creating framebuffer from each swap chain image view
-	void createFramebuffers();
+	void createSwapChainFramebuffers();
 
 	// for specific queue family
 	void createCommandPool();
