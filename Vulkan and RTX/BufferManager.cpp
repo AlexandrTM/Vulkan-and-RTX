@@ -84,10 +84,9 @@ void VulkanAndRTX::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkM
 	vkBindBufferMemory(vkInit.device, buffer, bufferMemory, 0);
 }
 
-void VulkanAndRTX::createVertexBuffer(const std::vector<Vertex>& vertices,
-	VkBuffer& vertexBuffer, VkDeviceMemory& vertexBufferMemory)
+void VulkanAndRTX::createVertexBuffer(Model& model)
 {
-	VkDeviceSize bufferSize = sizeof(Vertex) * vertices.size();
+	VkDeviceSize bufferSize = sizeof(Vertex) * model.vertices.size();
 
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;
@@ -96,23 +95,22 @@ void VulkanAndRTX::createVertexBuffer(const std::vector<Vertex>& vertices,
 
 	void* data;
 	vkMapMemory(vkInit.device, stagingBufferMemory, 0, bufferSize, 0, &data);
-	memcpy(data, vertices.data(), (size_t)bufferSize);
+	memcpy(data, model.vertices.data(), (size_t)bufferSize);
 	vkUnmapMemory(vkInit.device, stagingBufferMemory);
 
 	// giving perfomance boost by using device local memory
 	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory);
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, model.vertexBuffer, model.vertexBufferMemory);
 
-	copyBuffer(stagingBuffer, vertexBuffer, bufferSize);
+	copyBuffer(stagingBuffer, model.vertexBuffer, bufferSize);
 
 	vkDestroyBuffer(vkInit.device, stagingBuffer, nullptr);
 	vkFreeMemory(vkInit.device, stagingBufferMemory, nullptr);
 }
 
-void VulkanAndRTX::createIndexBuffer(const std::vector<uint32_t>& indices,
-	VkBuffer& indexBuffer, VkDeviceMemory& indexBufferMemory)
+void VulkanAndRTX::createIndexBuffer(Model &model)
 {
-	VkDeviceSize bufferSize = sizeof(indices[0]) * indices.size();
+	VkDeviceSize bufferSize = sizeof(model.indices[0]) * model.indices.size();
 
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;
@@ -121,13 +119,13 @@ void VulkanAndRTX::createIndexBuffer(const std::vector<uint32_t>& indices,
 
 	void* data;
 	vkMapMemory(vkInit.device, stagingBufferMemory, 0, bufferSize, 0, &data);
-	memcpy(data, indices.data(), (size_t)bufferSize);
+	memcpy(data, model.indices.data(), (size_t)bufferSize);
 	vkUnmapMemory(vkInit.device, stagingBufferMemory);
 
 	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, indexBuffer, indexBufferMemory);
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, model.indexBuffer, model.indexBufferMemory);
 
-	copyBuffer(stagingBuffer, indexBuffer, bufferSize);
+	copyBuffer(stagingBuffer, model.indexBuffer, bufferSize);
 
 	vkDestroyBuffer(vkInit.device, stagingBuffer, nullptr);
 	vkFreeMemory(vkInit.device, stagingBufferMemory, nullptr);

@@ -2,6 +2,7 @@
 #include "VulkanInitializer.h"
 #include "InputHandler.h"
 #include "Vertex.h"
+#include "Model.h"
 
 #ifndef VULKAN_AND_RTX_H
 #define VULKAN_AND_RTX_H
@@ -54,14 +55,7 @@ private:
 
 	bool framebufferResized = false;
 
-	std::vector<Vertex> vertices;
-	std::vector<uint32_t> indices;
-
-	VkBuffer vertexBuffer;
-	VkDeviceMemory vertexBufferMemory;
-
-	VkBuffer indexBuffer;
-	VkDeviceMemory indexBufferMemory;
+	std::vector<Model> models;
 
 	std::vector<VkBuffer> uniformBuffers;
 	std::vector<VkDeviceMemory> uniformBuffersMemory;
@@ -171,11 +165,9 @@ private:
 	void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
 		VkBuffer& buffer, VkDeviceMemory& bufferMemory);
 
-	void createVertexBuffer(const std::vector<Vertex>& vertices,
-		VkBuffer& vertexBuffer, VkDeviceMemory& vertexBufferMemory);
+	void createVertexBuffer(Model& model);
 
-	void createIndexBuffer(const std::vector<uint32_t>& indices,
-		VkBuffer& indexBuffer, VkDeviceMemory& indexBufferMemory);
+	void createIndexBuffer(Model& model);
 
 	void createDescriptorSets();
 

@@ -93,6 +93,12 @@
     <ClCompile Include="BufferManager.cpp">
       <Filter>source\main class split</Filter>
     </ClCompile>
+    <ClCompile Include="Model.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderingManager.cpp">
+      <Filter>source\main class split</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -132,6 +138,9 @@
       <Filter>headers</Filter>
     </ClInclude>
     <ClInclude Include="VulkanInitializer.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="Model.h">
       <Filter>headers</Filter>
     </ClInclude>
   </ItemGroup>

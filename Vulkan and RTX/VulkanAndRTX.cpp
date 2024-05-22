@@ -1,8 +1,5 @@
 #include "pch.h"
 #include "VulkanAndRTX.h"
-#include "VulkanInitializer.h"
-#include "InputHandler.h"
-#include "Vertex.h"
 
 void VulkanAndRTX::run()
 {
@@ -95,8 +92,11 @@ void VulkanAndRTX::prepareResources()
 	//loadModel("models/elipsoid low poly.obj");
 	generateCubicLandscape(15, 15, 1.0f);
 
-	createVertexBuffer(vertices, vertexBuffer, vertexBufferMemory);
-	createIndexBuffer(indices, indexBuffer, indexBufferMemory);
+	for (size_t i = 0; i < models.size(); i++) {
+		createVertexBuffer(models[i]);
+		createIndexBuffer(models[i]);
+	}
+
 	createUniformBuffers();
 
 	createDescriptorPool();
@@ -162,11 +162,13 @@ void VulkanAndRTX::cleanup()
 
 	vkDestroyDescriptorSetLayout(vkInit.device, descriptorSetLayout, nullptr);
 
-	vkDestroyBuffer(vkInit.device, indexBuffer, nullptr);
-	vkFreeMemory(vkInit.device, indexBufferMemory, nullptr);
+	for (size_t i = 0; i < models.size(); i++) {
+		vkDestroyBuffer(vkInit.device, models[i].indexBuffer, nullptr);
+		vkFreeMemory(vkInit.device, models[i].indexBufferMemory, nullptr);
 
-	vkDestroyBuffer(vkInit.device, vertexBuffer, nullptr);
-	vkFreeMemory(vkInit.device, vertexBufferMemory, nullptr);
+		vkDestroyBuffer(vkInit.device, models[i].vertexBuffer, nullptr);
+		vkFreeMemory(vkInit.device, models[i].vertexBufferMemory, nullptr);
+	}
 
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 		vkDestroySemaphore(vkInit.device, renderFinishedSemaphores[i], nullptr);
