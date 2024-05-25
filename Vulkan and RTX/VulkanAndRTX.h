@@ -49,9 +49,9 @@ private:
 
 	VkRenderPass renderPass;
 	VkPipelineLayout objectPipelineLayout;
-	VkPipeline objectPipeline;
+	VkPipeline		 objectPipeline;
 	VkPipelineLayout skyPipelineLayout;
-	VkPipeline skyPipeline;
+	VkPipeline		 skyPipeline;
 
 	VkCommandPool commandPool;
 	std::vector<VkCommandBuffer> commandBuffers;
@@ -63,27 +63,32 @@ private:
 
 	bool framebufferResized = false;
 
-	std::vector<VkBuffer> objectUniformBuffers;
+	std::vector<VkBuffer>       objectUniformBuffers;
 	std::vector<VkDeviceMemory> objectUniformBuffersMemory;
-	std::vector<VkBuffer> skyUniformBuffers;
+	std::vector<VkBuffer>       skyUniformBuffers;
 	std::vector<VkDeviceMemory> skyUniformBuffersMemory;
 
-	VkDescriptorPool descriptorPool;
-	VkDescriptorSetLayout descriptorSetLayout;
-	std::vector<VkDescriptorSet> descriptorSets;
+	VkDescriptorPool             descriptorPool;
+	VkDescriptorSetLayout        descriptorSetLayout;
 
-	VkImage textureImage;
+	struct DescriptorSets {
+		VkDescriptorSet objects;
+		VkDescriptorSet sky;
+	};
+	std::vector<DescriptorSets> descriptorSets;
+
+	VkImage		   textureImage;
 	VkDeviceMemory textureImageMemory;
-	VkImageView textureImageView;
-	VkSampler textureSampler;
+	VkImageView    textureImageView;
+	VkSampler	   textureSampler;
 
-	VkImage depthImage;
+	VkImage        depthImage;
 	VkDeviceMemory depthImageMemory;
-	VkImageView depthImageView;
+	VkImageView    depthImageView;
 
-	VkImage colorImage;
+	VkImage        colorImage;
 	VkDeviceMemory colorImageMemory;
-	VkImageView colorImageView;
+	VkImageView    colorImageView;
 
 	uint32_t mipLevels;
 #pragma endregion
@@ -164,7 +169,7 @@ private:
 		VkImage& image, VkDeviceMemory& imageMemory);
 
 	// finding most appropriate memory type depending on buffer and application properties
-	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
 
 	void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 
@@ -189,7 +194,7 @@ private:
 	// creating uniform buffer for each frame in flight
 	void createUniformBuffers();
 
-	void createDescriptorSetLayout(VkDescriptorSetLayout& descriptorSetLayout);
+	void createDescriptorSetLayout(VkDescriptorSetLayout& descriptorSetLayout) const;
 
 	void createDescriptorPool();
 
@@ -203,7 +208,7 @@ private:
 	void createRenderPass();
 
 	void createPipelineLayout(VkDescriptorSetLayout& descriptorSetLayout, 
-		VkPipelineLayout& pipelineLayout);
+		VkPipelineLayout& pipelineLayout) const;
 
 	// transfering scene to images
 	void createGraphicsPipeline(const std::string& vertexShader,
@@ -225,7 +230,7 @@ private:
 	void updateUniformBuffers(uint32_t currentImage, float timeSinceLaunch);
 
 	// wraping shader
-	VkShaderModule createShaderModule(const std::vector<char>& code);
+	VkShaderModule createShaderModule(const std::vector<char>& code) const;
 
 	// choosing best surface format(color space and number of bits) for the swap chain
 	VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);

@@ -84,7 +84,7 @@ void VulkanAndRTX::createRenderPass()
 }
 
 void VulkanAndRTX::createPipelineLayout(VkDescriptorSetLayout& descriptorSetLayout, 
-	VkPipelineLayout& pipelineLayout)
+	VkPipelineLayout& pipelineLayout) const
 {
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -442,9 +442,15 @@ void VulkanAndRTX::updateUniformBuffers(uint32_t currentImage, float timeSinceLa
 	skyUBO.sun = sun;
 
 	void* data;
-	vkMapMemory(vkInit.device, objectUniformBuffersMemory[currentImage], 0, sizeof(UniformBufferObject), 0, &data);
+	vkMapMemory(vkInit.device, objectUniformBuffersMemory[currentImage], 
+		0, sizeof(UniformBufferObject), 0, &data);
 	memcpy(data, &objectUBO, sizeof(UniformBufferObject));
 	vkUnmapMemory(vkInit.device, objectUniformBuffersMemory[currentImage]);
+
+	vkMapMemory(vkInit.device, skyUniformBuffersMemory[currentImage],
+		0, sizeof(UniformBufferObject), 0, &data);
+	memcpy(data, &skyUBO, sizeof(UniformBufferObject));
+	vkUnmapMemory(vkInit.device, skyUniformBuffersMemory[currentImage]);
 }
 
 // record commands to the command buffer
@@ -485,7 +491,7 @@ void VulkanAndRTX::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t i
 
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, objectPipeline);
 	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, objectPipelineLayout, 0, 1,
-		&descriptorSets[currentFrame], 0, nullptr);
+		&descriptorSets[currentFrame].objects, 0, nullptr);
 
 	for (const auto& model : models.objects) {
 		VkBuffer vertexBuffers[] = { model.vertexBuffer };
