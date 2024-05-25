@@ -351,7 +351,7 @@ void VulkanAndRTX::drawFrame(float timeSinceLaunch)
 
 	// updating MVP matrix
 	//updateUniformBuffer(imageIndex);
-	updateUniformBuffer(currentFrame, timeSinceLaunch);
+	updateUniformBuffers(currentFrame, timeSinceLaunch);
 
 
 	// Only reset the fence if we are submitting work
@@ -407,29 +407,44 @@ void VulkanAndRTX::drawFrame(float timeSinceLaunch)
 }
 
 // updating MVP matrix for every draw call every frame
-void VulkanAndRTX::updateUniformBuffer(uint32_t currentImage, float timeSinceLaunch)
+void VulkanAndRTX::updateUniformBuffers(uint32_t currentImage, float timeSinceLaunch)
 {
-	UniformBufferObject ubo{};
-	ubo.model = glm::mat4(1.0f);
+	glm::mat4 view = glm::lookAt(
+		inputHandler.camera.getLookFrom(),
+		inputHandler.camera.getLookFrom() + inputHandler.camera.getDirection(),
+		inputHandler.camera.getVerticalWorldAxis()
+	);
 
-	ubo.view = glm::lookAt(inputHandler.camera.getLookFrom(), inputHandler.camera.getLookFrom() + inputHandler.camera.getDirection(),
-		inputHandler.camera.getVerticalWorldAxis());
+	glm::mat4 projection = glm::perspective(
+		glm::radians(inputHandler.camera.getVerticalFov()),
+		swapChainExtent.width / (float)swapChainExtent.height, 
+		0.1f, 40.0f
+	);
+	projection[1][1] *= -1;
 
-	ubo.projection = glm::perspective(glm::radians(inputHandler.camera.getVerticalFov()),
-		swapChainExtent.width / (float)swapChainExtent.height, 0.1f, 40.0f);
-	ubo.projection[1][1] *= -1;
-
-	ubo.sun = glm::vec3(std::cos(timeSinceLaunch * glm::two_pi<double>() / 10) * 3,
+	glm::vec3 sun = glm::vec3(std::cos(
+		timeSinceLaunch * glm::two_pi<double>() / 10) * 3,
 		3.f,
-		std::sin(timeSinceLaunch * glm::two_pi<double>() / 10) * 3);
-	ubo.viewer = inputHandler.camera.getLookFrom();
+		std::sin(timeSinceLaunch * glm::two_pi<double>() / 10) * 3
+	);
+
+	objectUBO.model = glm::mat4(1.0f);
+	objectUBO.view = view;
+	objectUBO.projection = projection;
+	objectUBO.sun = sun;
+	objectUBO.viewer = inputHandler.camera.getLookFrom();
 
 	// add transpose(inverse(ubo.model)) if doing non uniform scaling
 
+	skyUBO.model = glm::mat4(glm::mat3(view));
+	skyUBO.view = view;
+	skyUBO.projection = projection;
+	skyUBO.sun = sun;
+
 	void* data;
-	vkMapMemory(vkInit.device, uniformBuffersMemory[currentImage], 0, sizeof(ubo), 0, &data);
-	memcpy(data, &ubo, sizeof(ubo));
-	vkUnmapMemory(vkInit.device, uniformBuffersMemory[currentImage]);
+	vkMapMemory(vkInit.device, objectUniformBuffersMemory[currentImage], 0, sizeof(UniformBufferObject), 0, &data);
+	memcpy(data, &objectUBO, sizeof(UniformBufferObject));
+	vkUnmapMemory(vkInit.device, objectUniformBuffersMemory[currentImage]);
 }
 
 // record commands to the command buffer
@@ -462,17 +477,17 @@ void VulkanAndRTX::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t i
 	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, skyPipelineLayout, 0, 1,
 		&skyDescriptorSets[currentFrame], 0, nullptr);
 
-	VkBuffer skyVertexBuffers[] = { skyVertexBuffer };
+	VkBuffer skyVertexBuffers[] = { models.sky.vertexBuffer };
 	VkDeviceSize skyOffsets[] = { 0 };
 	vkCmdBindVertexBuffers(commandBuffer, 0, 1, skyVertexBuffers, skyOffsets);
-	vkCmdBindIndexBuffer(commandBuffer, skyIndexBuffer, 0, VK_INDEX_TYPE_UINT32);
-	vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(skyIndices.size()), 1, 0, 0, 0);*/
+	vkCmdBindIndexBuffer(commandBuffer, models.sky.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+	vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(models.sky.indices.size()), 1, 0, 0, 0);*/
 
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, objectPipeline);
 	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, objectPipelineLayout, 0, 1,
 		&descriptorSets[currentFrame], 0, nullptr);
 
-	for (const auto& model : models) {
+	for (const auto& model : models.objects) {
 		VkBuffer vertexBuffers[] = { model.vertexBuffer };
 		VkDeviceSize offsets[] = { 0 };
 

@@ -8,7 +8,7 @@ void VulkanAndRTX::run()
 	vkInit.initializeVulkan(window);
 	prepareResources();
 	mainLoop();
-	cleanup();
+	cleanupMemory();
 }
 
 // initializing GLFW and creating window
@@ -103,9 +103,9 @@ void VulkanAndRTX::prepareResources()
 	//loadModel("models/elipsoid low poly.obj");
 	generateCubicLandscape(15, 15, 1.0f);
 
-	for (size_t i = 0; i < models.size(); i++) {
-		createVertexBuffer(models[i]);
-		createIndexBuffer(models[i]);
+	for (size_t i = 0; i < models.objects.size(); i++) {
+		createVertexBuffer(models.objects[i]);
+		createIndexBuffer(models.objects[i]);
 	}
 	//std::cout << "models:" << models.size() << "\n";
 
@@ -153,14 +153,33 @@ void VulkanAndRTX::mainLoop()
 	vkDeviceWaitIdle(vkInit.device);
 }
 
+void VulkanAndRTX::cleanupModels()
+{
+	for (size_t i = 0; i < models.objects.size(); i++) {
+		vkDestroyBuffer(vkInit.device, models.objects[i].indexBuffer, nullptr);
+		vkFreeMemory(vkInit.device, models.objects[i].indexBufferMemory, nullptr);
+
+		vkDestroyBuffer(vkInit.device, models.objects[i].vertexBuffer, nullptr);
+		vkFreeMemory(vkInit.device, models.objects[i].vertexBufferMemory, nullptr);
+	}
+
+	vkDestroyBuffer(vkInit.device, models.sky.indexBuffer, nullptr);
+	vkFreeMemory(vkInit.device, models.sky.indexBufferMemory, nullptr);
+
+	vkDestroyBuffer(vkInit.device, models.sky.vertexBuffer, nullptr);
+	vkFreeMemory(vkInit.device, models.sky.vertexBufferMemory, nullptr);
+}
+
 // emptying RAM
-void VulkanAndRTX::cleanup()
+void VulkanAndRTX::cleanupMemory()
 {
 	cleanupSwapChain();
 
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-		vkDestroyBuffer(vkInit.device, uniformBuffers[i], nullptr);
-		vkFreeMemory(vkInit.device, uniformBuffersMemory[i], nullptr);
+		vkDestroyBuffer (vkInit.device, objectUniformBuffers[i], nullptr);
+		vkFreeMemory    (vkInit.device, objectUniformBuffersMemory[i], nullptr);
+		vkDestroyBuffer (vkInit.device, skyUniformBuffers[i], nullptr);
+		vkFreeMemory    (vkInit.device, skyUniformBuffersMemory[i], nullptr);
 	}
 
 	// will free all allocated descriptor sets from this pool
@@ -174,13 +193,7 @@ void VulkanAndRTX::cleanup()
 
 	vkDestroyDescriptorSetLayout(vkInit.device, descriptorSetLayout, nullptr);
 
-	for (size_t i = 0; i < models.size(); i++) {
-		vkDestroyBuffer(vkInit.device, models[i].indexBuffer, nullptr);
-		vkFreeMemory(vkInit.device, models[i].indexBufferMemory, nullptr);
-
-		vkDestroyBuffer(vkInit.device, models[i].vertexBuffer, nullptr);
-		vkFreeMemory(vkInit.device, models[i].vertexBufferMemory, nullptr);
-	}
+	cleanupModels();
 
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 		vkDestroySemaphore(vkInit.device, renderFinishedSemaphores[i], nullptr);
@@ -254,7 +267,7 @@ void VulkanAndRTX::createDescriptorSets()
 
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 		VkDescriptorBufferInfo bufferInfo{};
-		bufferInfo.buffer = uniformBuffers[i];
+		bufferInfo.buffer = objectUniformBuffers[i];
 		bufferInfo.offset = 0;
 		bufferInfo.range = sizeof(UniformBufferObject);
 		

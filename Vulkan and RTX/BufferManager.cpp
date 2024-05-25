@@ -152,11 +152,15 @@ void VulkanAndRTX::createUniformBuffers()
 {
 	VkDeviceSize bufferSize = sizeof(UniformBufferObject);
 
-	uniformBuffers.resize(MAX_FRAMES_IN_FLIGHT);
-	uniformBuffersMemory.resize(MAX_FRAMES_IN_FLIGHT);
+	objectUniformBuffers.       resize(MAX_FRAMES_IN_FLIGHT);
+	objectUniformBuffersMemory. resize(MAX_FRAMES_IN_FLIGHT);
+	skyUniformBuffers.          resize(MAX_FRAMES_IN_FLIGHT);
+	skyUniformBuffersMemory.    resize(MAX_FRAMES_IN_FLIGHT);
 
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 		createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-			| VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, uniformBuffers[i], uniformBuffersMemory[i]);
+			| VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, objectUniformBuffers[i], objectUniformBuffersMemory[i]);
+		createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+			| VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, skyUniformBuffers[i], skyUniformBuffersMemory[i]);
 	}
 }

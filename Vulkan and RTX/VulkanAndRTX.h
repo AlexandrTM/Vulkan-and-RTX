@@ -7,15 +7,6 @@
 #ifndef VULKAN_AND_RTX_H
 #define VULKAN_AND_RTX_H
 
-// MVP matrix and other info for shaders
-struct UniformBufferObject {
-	alignas(16) glm::mat4 model;
-	alignas(16) glm::mat4 view;
-	alignas(16) glm::mat4 projection;
-	alignas(4)  glm::vec3 sun;
-	alignas(4)  glm::vec3 viewer;
-};
-
 class VulkanAndRTX {
 private:
 #pragma region
@@ -29,6 +20,21 @@ private:
 
 #pragma endregion
 #pragma region
+
+	struct Models {
+		std::vector<Model> objects;
+		Model sky;
+	} models;
+
+	// MVP matrix and other info for shaders
+	struct UniformBufferObject {
+		alignas(16) glm::mat4 model;
+		alignas(16) glm::mat4 view;
+		alignas(16) glm::mat4 projection;
+		alignas(4)  glm::vec3 sun;
+		alignas(4)  glm::vec3 viewer;
+	} objectUBO, skyUBO;
+
 	GLFWwindow* window;
 
 	InputHandler inputHandler;
@@ -57,10 +63,10 @@ private:
 
 	bool framebufferResized = false;
 
-	std::vector<Model> models;
-
-	std::vector<VkBuffer> uniformBuffers;
-	std::vector<VkDeviceMemory> uniformBuffersMemory;
+	std::vector<VkBuffer> objectUniformBuffers;
+	std::vector<VkDeviceMemory> objectUniformBuffersMemory;
+	std::vector<VkBuffer> skyUniformBuffers;
+	std::vector<VkDeviceMemory> skyUniformBuffersMemory;
 
 	VkDescriptorPool descriptorPool;
 	VkDescriptorSetLayout descriptorSetLayout;
@@ -93,8 +99,9 @@ private:
 
 	void mainLoop();
 
+	void cleanupModels();
 	// emptying RAM
-	void cleanup();
+	void cleanupMemory();
 
 	// cleaning "out of date" swap chain
 	void cleanupSwapChain();
@@ -146,8 +153,6 @@ private:
 	void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout,
 		VkImageLayout newLayout, uint32_t mipLevels);
 
-	void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
-
 	// allocating and beginning command buffer helper function
 	VkCommandBuffer beginSingleTimeCommands();
 
@@ -160,6 +165,8 @@ private:
 
 	// finding most appropriate memory type depending on buffer and application properties
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+
+	void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 
 	// copying contents of one buffer to another
 	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
@@ -215,7 +222,7 @@ private:
 	void drawFrame(float timeSinceLaunch);
 
 	// updating MVP matrix for every draw call every frame
-	void updateUniformBuffer(uint32_t currentImage, float timeSinceLaunch);
+	void updateUniformBuffers(uint32_t currentImage, float timeSinceLaunch);
 
 	// wraping shader
 	VkShaderModule createShaderModule(const std::vector<char>& code);

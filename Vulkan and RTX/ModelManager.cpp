@@ -140,7 +140,7 @@ void VulkanAndRTX::generateCube(float x, float y, float z, float_t cubeSize)
 	{
 		model.indices.push_back(localIndices[i]);
 	}
-	models.push_back(model);
+	models.objects.push_back(model);
 }
 
 void VulkanAndRTX::loadModel(const std::string& modelPath)
@@ -188,7 +188,7 @@ void VulkanAndRTX::loadModel(const std::string& modelPath)
 
 			model.indices.push_back(uniqueVertices[vertex]);
 		}
-		models.push_back(model);
+		models.objects.push_back(model);
 	}
 }
 
@@ -321,7 +321,7 @@ void VulkanAndRTX::loadGltfModel(const std::string& modelPath) {
 				}
 			}
 		}
-		models.push_back(model);
+		models.objects.push_back(model);
 	}
 	//std::cout << "vertices size: " << vertices.size() * sizeof(vertices) << "\n";
 }
