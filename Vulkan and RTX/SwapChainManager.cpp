@@ -115,7 +115,10 @@ void VulkanAndRTX::recreateSwapChain()
 	createSwapChain();
 	createSwapChainImageViews();
 	createRenderPass();
-	createGraphicsPipeline();
+	createGraphicsPipeline("shaders/object.vert.spv", "shaders/object.frag.spv", 
+		objectPipeline, objectPipelineLayout);
+	createGraphicsPipeline("shaders/sky.vert.spv", "shaders/sky.frag.spv", 
+		skyPipeline, skyPipelineLayout);
 	createColorResources();
 	createDepthResources();
 	createSwapChainFramebuffers();
@@ -140,8 +143,8 @@ void VulkanAndRTX::cleanupSwapChain()
 		vkDestroyFramebuffer(vkInit.device, swapChainFramebuffers[i], nullptr);
 	}
 
-	vkDestroyPipeline(vkInit.device, graphicsPipeline, nullptr);
-	vkDestroyPipelineLayout(vkInit.device, pipelineLayout, nullptr);
+	vkDestroyPipeline(vkInit.device, objectPipeline, nullptr);
+	vkDestroyPipelineLayout(vkInit.device, objectPipelineLayout, nullptr);
 	vkDestroyRenderPass(vkInit.device, renderPass, nullptr);
 
 	for (size_t i = 0; i < swapChainImageViews.size(); i++) {

@@ -143,7 +143,7 @@ void VulkanAndRTX::generateCube(float x, float y, float z, float_t cubeSize)
 	models.push_back(model);
 }
 
-void VulkanAndRTX::loadModel(std::string modelPath)
+void VulkanAndRTX::loadModel(const std::string& modelPath)
 {
 	Model model;
 
@@ -192,7 +192,7 @@ void VulkanAndRTX::loadModel(std::string modelPath)
 	}
 }
 
-void VulkanAndRTX::loadGltfModel(const std::string& filePath) {
+void VulkanAndRTX::loadGltfModel(const std::string& modelPath) {
 	tinygltf::Model GLTFmodel;
 	Model model;
 
@@ -201,16 +201,16 @@ void VulkanAndRTX::loadGltfModel(const std::string& filePath) {
 	std::string warning;
 
 	bool binary = false;
-	size_t extPos = filePath.rfind('.', filePath.length());
+	size_t extPos = modelPath.rfind('.', modelPath.length());
 	if (extPos != std::string::npos) {
-		binary = (filePath.substr(extPos + 1, filePath.length() - extPos - 1) == "glb");
+		binary = (modelPath.substr(extPos + 1, modelPath.length() - extPos - 1) == "glb");
 	}
 
-	bool result = binary ? loader.LoadBinaryFromFile(&GLTFmodel, &error, &warning, filePath.c_str())
-		: loader.LoadASCIIFromFile(&GLTFmodel, &error, &warning, filePath.c_str());
+	bool result = binary ? loader.LoadBinaryFromFile(&GLTFmodel, &error, &warning, modelPath.c_str())
+		: loader.LoadASCIIFromFile(&GLTFmodel, &error, &warning, modelPath.c_str());
 
 	if (!result) {
-		std::cout << "model not loaded: " + filePath << "\n";
+		std::cout << "model not loaded: " + modelPath << "\n";
 	}
 
 	for (const auto& mesh : GLTFmodel.meshes) {

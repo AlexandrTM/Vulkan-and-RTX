@@ -83,12 +83,30 @@ void VulkanAndRTX::createRenderPass()
 	}
 }
 
-// transfering scene to images
-void VulkanAndRTX::createGraphicsPipeline()
+void VulkanAndRTX::createPipelineLayout(VkDescriptorSetLayout& descriptorSetLayout, 
+	VkPipelineLayout& pipelineLayout)
 {
-	auto vertShaderCode = readFile("shaders/vert.spv");
-	auto fragShaderCode = readFile("shaders/frag.spv");
+	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+	pipelineLayoutInfo.setLayoutCount = 1;
+	pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
+	pipelineLayoutInfo.pushConstantRangeCount = 0;
+	pipelineLayoutInfo.pPushConstantRanges = nullptr;
 
+	if (vkCreatePipelineLayout(vkInit.device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
+		throw std::runtime_error("failed to create pipeline layout!");
+	}
+}
+
+// transfering scene to images
+void VulkanAndRTX::createGraphicsPipeline(const std::string& vertexShader, 
+	const std::string& fragmentShader, VkPipeline& pipeline, VkPipelineLayout& pipelineLayout)
+{
+	auto vertShader = readFile(vertexShader);
+	auto fragShader = readFile(fragmentShader);
+
+	VkShaderModule vertShaderModule = createShaderModule(vertShader);
+	VkShaderModule fragShaderModule = createShaderModule(fragShader);
 
 	/* printing bits */
 	/*std::cout << vertShaderCode.size();
@@ -101,9 +119,6 @@ void VulkanAndRTX::createGraphicsPipeline()
 		std::cout << a << " ";
 		if (j == 12) { j = 0; std::cout << "\n"; }
 	}*/
-
-	VkShaderModule vertShaderModule = createShaderModule(vertShaderCode);
-	VkShaderModule fragShaderModule = createShaderModule(fragShaderCode);
 
 	// Vertex shader stage   (NOT FIXED): moving vertices in relation to the camera
 #pragma region
@@ -277,23 +292,14 @@ void VulkanAndRTX::createGraphicsPipeline()
 		//VK_DYNAMIC_STATE_LINE_WIDTH
 	};
 
+	// altering variables for shaders without their recreation
 	VkPipelineDynamicStateCreateInfo dynamicState{};
 	dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
 	dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
 	dynamicState.pDynamicStates = dynamicStates.data();
-
-	// altering variables for shaders without their recreation
-	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
-	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-	pipelineLayoutInfo.setLayoutCount = 1;
-	pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
-	pipelineLayoutInfo.pushConstantRangeCount = 0; // Optional
-	pipelineLayoutInfo.pPushConstantRanges = nullptr; // Optional
-
-	if (vkCreatePipelineLayout(vkInit.device, &pipelineLayoutInfo, nullptr, &pipelineLayout) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create pipeline layout!");
-	}
 #pragma endregion
+
+	createPipelineLayout(descriptorSetLayout, pipelineLayout);
 
 	// information about all stages
 	VkGraphicsPipelineCreateInfo pipelineInfo{};
@@ -318,7 +324,7 @@ void VulkanAndRTX::createGraphicsPipeline()
 	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
 #pragma endregion
 
-	if (vkCreateGraphicsPipelines(vkInit.device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline) != VK_SUCCESS) {
+	if (vkCreateGraphicsPipelines(vkInit.device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create graphics pipeline!");
 	}
 
@@ -366,7 +372,7 @@ void VulkanAndRTX::drawFrame(float timeSinceLaunch)
 
 	submitInfo.commandBufferCount = 1;
 	submitInfo.pCommandBuffers = &commandBuffers[currentFrame];
-
+	
 	VkSemaphore signalSemaphores[] = { renderFinishedSemaphores[currentFrame] };
 	submitInfo.signalSemaphoreCount = 1;
 	submitInfo.pSignalSemaphores = signalSemaphores;
@@ -452,9 +458,18 @@ void VulkanAndRTX::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t i
 
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, graphicsPipeline);
+	/*vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, skyPipeline);
+	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, skyPipelineLayout, 0, 1,
+		&skyDescriptorSets[currentFrame], 0, nullptr);
 
-	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1,
+	VkBuffer skyVertexBuffers[] = { skyVertexBuffer };
+	VkDeviceSize skyOffsets[] = { 0 };
+	vkCmdBindVertexBuffers(commandBuffer, 0, 1, skyVertexBuffers, skyOffsets);
+	vkCmdBindIndexBuffer(commandBuffer, skyIndexBuffer, 0, VK_INDEX_TYPE_UINT32);
+	vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(skyIndices.size()), 1, 0, 0, 0);*/
+
+	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, objectPipeline);
+	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, objectPipelineLayout, 0, 1,
 		&descriptorSets[currentFrame], 0, nullptr);
 
 	for (const auto& model : models) {

@@ -42,8 +42,10 @@ private:
 	std::vector<VkFramebuffer> swapChainFramebuffers;
 
 	VkRenderPass renderPass;
-	VkPipelineLayout pipelineLayout;
-	VkPipeline graphicsPipeline;
+	VkPipelineLayout objectPipelineLayout;
+	VkPipeline objectPipeline;
+	VkPipelineLayout skyPipelineLayout;
+	VkPipeline skyPipeline;
 
 	VkCommandPool commandPool;
 	std::vector<VkCommandBuffer> commandBuffers;
@@ -65,8 +67,8 @@ private:
 	std::vector<VkDescriptorSet> descriptorSets;
 
 	VkImage textureImage;
-	VkImageView textureImageView;
 	VkDeviceMemory textureImageMemory;
+	VkImageView textureImageView;
 	VkSampler textureSampler;
 
 	VkImage depthImage;
@@ -107,7 +109,7 @@ private:
 
 	void generateCube(float x, float y, float z, float_t cubeSize);
 
-	void loadModel(std::string modelPath);
+	void loadModel(const std::string& filePath);
 	void loadGltfModel(const std::string& filePath);
 	// reading bytecode files and returning its bytes
 	static std::vector<char> readFile(const std::string& filename);
@@ -193,8 +195,12 @@ private:
 	// be, how many samples to use for each of them and how their contents should be treated
 	void createRenderPass();
 
+	void createPipelineLayout(VkDescriptorSetLayout& descriptorSetLayout, 
+		VkPipelineLayout& pipelineLayout);
+
 	// transfering scene to images
-	void createGraphicsPipeline();
+	void createGraphicsPipeline(const std::string& vertexShader,
+		const std::string& fragmentShader, VkPipeline& pipeline, VkPipelineLayout& pipelineLayout);
 
 	// creating framebuffer from each swap chain image view
 	void createSwapChainFramebuffers();

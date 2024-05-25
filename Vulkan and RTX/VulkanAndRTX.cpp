@@ -74,11 +74,22 @@ void VulkanAndRTX::framebufferResizeCallback(GLFWwindow* window, int width, int 
 
 void VulkanAndRTX::prepareResources()
 {
+	//std::chrono::high_resolution_clock::time_point currentTime;
+	//float deltaTime;
+	//std::chrono::high_resolution_clock::time_point previousTime = std::chrono::high_resolution_clock::now();
+	
+	//currentTime = std::chrono::high_resolution_clock::now();
+	//deltaTime = std::chrono::duration<double, std::chrono::seconds::period>(currentTime - previousTime).count();
+	//std::cout << "time to create gpp: " << deltaTime << "\n";
+	
 	createSwapChain();
 	createSwapChainImageViews();
 	createRenderPass();
 	createDescriptorSetLayout(descriptorSetLayout);
-	createGraphicsPipeline();
+	createGraphicsPipeline("shaders/object.vert.spv", "shaders/object.frag.spv", 
+		objectPipeline, objectPipelineLayout);
+	createGraphicsPipeline("shaders/sky.vert.spv", "shaders/sky.frag.spv", 
+		skyPipeline, skyPipelineLayout);
 	createCommandPool();
 	createColorResources();
 	createDepthResources();
@@ -96,6 +107,7 @@ void VulkanAndRTX::prepareResources()
 		createVertexBuffer(models[i]);
 		createIndexBuffer(models[i]);
 	}
+	//std::cout << "models:" << models.size() << "\n";
 
 	createUniformBuffers();
 
@@ -269,8 +281,8 @@ void VulkanAndRTX::createDescriptorSets()
 		descriptorWrites[1].descriptorCount = 1;
 		descriptorWrites[1].pImageInfo = &imageInfo;
 
-		vkUpdateDescriptorSets(vkInit.device, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(),
-			0, nullptr);
+		vkUpdateDescriptorSets(vkInit.device, static_cast<uint32_t>(
+			descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 	}
 }
 
