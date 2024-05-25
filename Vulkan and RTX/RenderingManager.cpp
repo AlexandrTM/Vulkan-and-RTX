@@ -353,13 +353,11 @@ void VulkanAndRTX::drawFrame(float timeSinceLaunch)
 	//updateUniformBuffer(imageIndex);
 	updateUniformBuffers(currentFrame, timeSinceLaunch);
 
-
 	// Only reset the fence if we are submitting work
 	vkResetFences(vkInit.device, 1, &inFlightFences[currentFrame]);
 
 	vkResetCommandBuffer(commandBuffers[currentFrame], /*VkCommandBufferResetFlagBits*/ 0);
 	recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
-
 
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -479,15 +477,15 @@ void VulkanAndRTX::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t i
 
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-	/*vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, skyPipeline);
+	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, skyPipeline);
 	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, skyPipelineLayout, 0, 1,
-		&skyDescriptorSets[currentFrame], 0, nullptr);
+		&descriptorSets[currentFrame].sky, 0, nullptr);
 
 	VkBuffer skyVertexBuffers[] = { models.sky.vertexBuffer };
 	VkDeviceSize skyOffsets[] = { 0 };
 	vkCmdBindVertexBuffers(commandBuffer, 0, 1, skyVertexBuffers, skyOffsets);
 	vkCmdBindIndexBuffer(commandBuffer, models.sky.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-	vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(models.sky.indices.size()), 1, 0, 0, 0);*/
+	vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(models.sky.indices.size()), 1, 0, 0, 0);
 
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, objectPipeline);
 	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, objectPipelineLayout, 0, 1,
