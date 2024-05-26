@@ -423,11 +423,7 @@ void VulkanAndRTX::updateUniformBuffers(uint32_t currentImage, float timeSinceLa
 	);
 	projection[1][1] *= -1;
 
-	glm::vec3 sun = glm::vec3(std::cos(
-		timeSinceLaunch * glm::two_pi<double>() / 10) * 3,
-		3.f,
-		std::sin(timeSinceLaunch * glm::two_pi<double>() / 10) * 3
-	);
+	glm::vec3 sun = calculateSunPosition(timeSinceLaunch);
 
 	objectUBO.model = glm::mat4(1.0f);
 	objectUBO.view = view;
@@ -452,6 +448,41 @@ void VulkanAndRTX::updateUniformBuffers(uint32_t currentImage, float timeSinceLa
 		0, sizeof(UniformBufferObject), 0, &data);
 	memcpy(data, &skyUBO, sizeof(UniformBufferObject));
 	vkUnmapMemory(vkInit.device, skyUniformBuffersMemory[currentImage]);
+}
+
+size_t secondsInDay = static_cast<size_t>(24) * 60;
+double axialTilt = 23.44 * glm::pi<double>() / 180.0;
+double daysInYear = 365.2524;
+
+double observerLatitude = 55.7;
+double observerLongitude = 37.6;
+
+double calculateSunDeclination(double dayOfYear) {
+	return axialTilt * std::sin(glm::two_pi<double>() * (dayOfYear - 81) / daysInYear);
+}
+
+double calculateHourAngle(double timeOfDay, double longitude) {
+	return (std::fmod(timeOfDay + (longitude / glm::two_pi<double>()), 1.0) 
+		- 0.5) * glm::two_pi<double>();
+}
+
+glm::vec3 calculateSunPosition(float timeSinceLaunch)
+{
+	double timeOfDay = std::fmod(timeSinceLaunch, secondsInDay);
+	double currentDay = timeSinceLaunch / secondsInDay;
+	double dayOfYear = std::fmod(currentDay, daysInYear);
+
+	double declination = calculateSunDeclination(dayOfYear);
+	double hourAngle = calculateHourAngle(timeOfDay, observerLongitude);
+
+	double x = std::cos(declination)      * std::sin(hourAngle);
+	double y = std::sin(observerLatitude) * std::sin(declination) +
+			   std::cos(observerLatitude) * std::cos(declination) * std::cos(hourAngle);
+	double z = std::cos(observerLatitude) * std::sin(declination) -
+			   std::sin(observerLatitude) * std::cos(declination) * std::cos(hourAngle);
+
+	return 
+	glm::vec3(x, y, z);
 }
 
 // record commands to the command buffer
@@ -480,27 +511,31 @@ void VulkanAndRTX::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t i
 
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["sky"]);
-	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1,
-		&descriptorSets[currentFrame].sky, 0, nullptr);
+	{
+		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["sky"]);
+		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1,
+			&descriptorSets[currentFrame].sky, 0, nullptr);
 
-	VkBuffer skyVertexBuffers[] = { models.sky.vertexBuffer };
-	VkDeviceSize skyOffsets[] = { 0 };
-	vkCmdBindVertexBuffers(commandBuffer, 0, 1, skyVertexBuffers, skyOffsets);
-	vkCmdBindIndexBuffer(commandBuffer, models.sky.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-	vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(models.sky.indices.size()), 1, 0, 0, 0);
+		VkBuffer skyVertexBuffers[] = { models.sky.vertexBuffer };
+		VkDeviceSize skyOffsets[] = { 0 };
+		vkCmdBindVertexBuffers(commandBuffer, 0, 1, skyVertexBuffers, skyOffsets);
+		vkCmdBindIndexBuffer(commandBuffer, models.sky.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+		vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(models.sky.indices.size()), 1, 0, 0, 0);
+	}
 
-	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["object"]);
-	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1,
-		&descriptorSets[currentFrame].objects, 0, nullptr);
+	{
+		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["object"]);
+		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1,
+			&descriptorSets[currentFrame].objects, 0, nullptr);
 
-	for (const auto& model : models.objects) {
-		VkBuffer vertexBuffers[] = { model.vertexBuffer };
-		VkDeviceSize offsets[] = { 0 };
+		for (const auto& model : models.objects) {
+			VkBuffer vertexBuffers[] = { model.vertexBuffer };
+			VkDeviceSize offsets[] = { 0 };
 
-		vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
-		vkCmdBindIndexBuffer(commandBuffer, model.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-		vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(model.indices.size()), 1, 0, 0, 0);
+			vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+			vkCmdBindIndexBuffer(commandBuffer, model.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+			vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(model.indices.size()), 1, 0, 0, 0);
+		}
 	}
 
 	vkCmdEndRenderPass(commandBuffer);

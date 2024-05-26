@@ -22,7 +22,7 @@ void main() {
 	
 	vec3 normalSpace = normalize(mat3(ubo.model) * normalize(inNormal));
 	
-	vec3 toSun = normalize(ubo.sun - inPosition);
+	vec3 toSun = normalize(ubo.sun/* - inPosition*/);
 	vec3 toViewer = normalize(ubo.viewer - inPosition);
 	vec3 reflected = reflect(-toSun, inNormal);
 	//vec3 halfWay = normalize(toSun + toViewer);
