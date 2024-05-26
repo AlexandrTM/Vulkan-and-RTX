@@ -182,6 +182,7 @@
     <ClCompile Include="RenderingManager.cpp" />
     <ClCompile Include="stb_image_implementation.cpp" />
     <ClCompile Include="stb_image_write_implementation.cpp" />
+    <ClCompile Include="StellarCalculations.cpp" />
     <ClCompile Include="SwapChainManager.cpp" />
     <ClCompile Include="tiny_gltf_implementation.cpp" />
     <ClCompile Include="tiny_obj_loader_implementation.cpp" />
@@ -201,6 +202,7 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="IsCreature.h" />
     <ClInclude Include="resource.h" />
+    <ClInclude Include="StellarCalculations.h" />
     <ClInclude Include="Vertex.h" />
     <ClInclude Include="VulkanAndRTX.h" />
     <ClInclude Include="VulkanInitializer.h" />

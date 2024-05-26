@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "VulkanAndRTX.h"
+#include "StellarCalculations.h"
 
 // information about framebuffer attachments, how many color and depth buffers there will
 // be, how many samples to use for each of them and how their contents should be treated
@@ -423,7 +424,7 @@ void VulkanAndRTX::updateUniformBuffers(uint32_t currentImage, float timeSinceLa
 	);
 	projection[1][1] *= -1;
 
-	glm::vec3 sun = calculateSunPosition(timeSinceLaunch);
+	glm::vec3 sun = StellarCalculations::calculateSunPosition(timeSinceLaunch);
 
 	objectUBO.model = glm::mat4(1.0f);
 	objectUBO.view = view;
@@ -448,41 +449,6 @@ void VulkanAndRTX::updateUniformBuffers(uint32_t currentImage, float timeSinceLa
 		0, sizeof(UniformBufferObject), 0, &data);
 	memcpy(data, &skyUBO, sizeof(UniformBufferObject));
 	vkUnmapMemory(vkInit.device, skyUniformBuffersMemory[currentImage]);
-}
-
-size_t secondsInDay = static_cast<size_t>(24) * 60;
-double axialTilt = 23.44 * glm::pi<double>() / 180.0;
-double daysInYear = 365.2524;
-
-double observerLatitude = 55.7;
-double observerLongitude = 37.6;
-
-double calculateSunDeclination(double dayOfYear) {
-	return axialTilt * std::sin(glm::two_pi<double>() * (dayOfYear - 81) / daysInYear);
-}
-
-double calculateHourAngle(double timeOfDay, double longitude) {
-	return (std::fmod(timeOfDay + (longitude / glm::two_pi<double>()), 1.0) 
-		- 0.5) * glm::two_pi<double>();
-}
-
-glm::vec3 calculateSunPosition(float timeSinceLaunch)
-{
-	double timeOfDay = std::fmod(timeSinceLaunch, secondsInDay);
-	double currentDay = timeSinceLaunch / secondsInDay;
-	double dayOfYear = std::fmod(currentDay, daysInYear);
-
-	double declination = calculateSunDeclination(dayOfYear);
-	double hourAngle = calculateHourAngle(timeOfDay, observerLongitude);
-
-	double x = std::cos(declination)      * std::sin(hourAngle);
-	double y = std::sin(observerLatitude) * std::sin(declination) +
-			   std::cos(observerLatitude) * std::cos(declination) * std::cos(hourAngle);
-	double z = std::cos(observerLatitude) * std::sin(declination) -
-			   std::sin(observerLatitude) * std::cos(declination) * std::cos(hourAngle);
-
-	return 
-	glm::vec3(x, y, z);
 }
 
 // record commands to the command buffer

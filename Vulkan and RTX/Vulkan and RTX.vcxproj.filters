@@ -99,6 +99,9 @@
     <ClCompile Include="RenderingManager.cpp">
       <Filter>source\main class split</Filter>
     </ClCompile>
+    <ClCompile Include="StellarCalculations.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -141,6 +144,9 @@
       <Filter>headers</Filter>
     </ClInclude>
     <ClInclude Include="Model.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="StellarCalculations.h">
       <Filter>headers</Filter>
     </ClInclude>
   </ItemGroup>
