@@ -48,10 +48,9 @@ private:
 	std::vector<VkFramebuffer> swapChainFramebuffers;
 
 	VkRenderPass renderPass;
-	VkPipelineLayout objectPipelineLayout;
-	VkPipeline		 objectPipeline;
-	VkPipelineLayout skyPipelineLayout;
-	VkPipeline		 skyPipeline;
+	VkPipelineLayout pipelineLayout;
+
+	std::unordered_map<std::string, VkPipeline> pipelines;
 
 	VkCommandPool commandPool;
 	std::vector<VkCommandBuffer> commandBuffers;
@@ -68,8 +67,8 @@ private:
 	std::vector<VkBuffer>       skyUniformBuffers;
 	std::vector<VkDeviceMemory> skyUniformBuffersMemory;
 
-	VkDescriptorPool             descriptorPool;
-	VkDescriptorSetLayout        descriptorSetLayout;
+	VkDescriptorPool            descriptorPool;
+	VkDescriptorSetLayout       descriptorSetLayout;
 
 	struct DescriptorSets {
 		VkDescriptorSet objects;
@@ -207,12 +206,11 @@ private:
 	// be, how many samples to use for each of them and how their contents should be treated
 	void createRenderPass();
 
-	void createPipelineLayout(VkDescriptorSetLayout& descriptorSetLayout, 
-		VkPipelineLayout& pipelineLayout) const;
+	void createPipelineLayout(VkDescriptorSetLayout& descriptorSetLayout);
 
 	// transfering scene to images
 	void createGraphicsPipeline(const std::string prefix, const std::string& vertexShader,
-		const std::string& fragmentShader, VkPipeline& pipeline, VkPipelineLayout& pipelineLayout);
+		const std::string& fragmentShader);
 
 	// creating framebuffer from each swap chain image view
 	void createSwapChainFramebuffers();

@@ -83,8 +83,7 @@ void VulkanAndRTX::createRenderPass()
 	}
 }
 
-void VulkanAndRTX::createPipelineLayout(VkDescriptorSetLayout& descriptorSetLayout, 
-	VkPipelineLayout& pipelineLayout) const
+void VulkanAndRTX::createPipelineLayout(VkDescriptorSetLayout& descriptorSetLayout)
 {
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -100,7 +99,7 @@ void VulkanAndRTX::createPipelineLayout(VkDescriptorSetLayout& descriptorSetLayo
 
 // transfering scene to images
 void VulkanAndRTX::createGraphicsPipeline(const std::string prefix, const std::string& vertexShader,
-	const std::string& fragmentShader, VkPipeline& pipeline, VkPipelineLayout& pipelineLayout)
+	const std::string& fragmentShader)
 {
 	auto vertShader = readFile(vertexShader);
 	auto fragShader = readFile(fragmentShader);
@@ -301,7 +300,7 @@ void VulkanAndRTX::createGraphicsPipeline(const std::string prefix, const std::s
 	dynamicState.pDynamicStates = dynamicStates.data();
 #pragma endregion
 
-	createPipelineLayout(descriptorSetLayout, pipelineLayout);
+	createPipelineLayout(descriptorSetLayout);
 
 	// information about all stages
 	VkGraphicsPipelineCreateInfo pipelineInfo{};
@@ -326,9 +325,11 @@ void VulkanAndRTX::createGraphicsPipeline(const std::string prefix, const std::s
 	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
 #pragma endregion
 
+	VkPipeline pipeline{};
 	if (vkCreateGraphicsPipelines(vkInit.device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create graphics pipeline!");
 	}
+	pipelines[prefix] = pipeline;
 
 	vkDestroyShaderModule(vkInit.device, fragShaderModule, nullptr);
 	vkDestroyShaderModule(vkInit.device, vertShaderModule, nullptr);
@@ -479,8 +480,8 @@ void VulkanAndRTX::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t i
 
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, skyPipeline);
-	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, skyPipelineLayout, 0, 1,
+	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["sky"]);
+	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1,
 		&descriptorSets[currentFrame].sky, 0, nullptr);
 
 	VkBuffer skyVertexBuffers[] = { models.sky.vertexBuffer };
@@ -489,8 +490,8 @@ void VulkanAndRTX::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t i
 	vkCmdBindIndexBuffer(commandBuffer, models.sky.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 	vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(models.sky.indices.size()), 1, 0, 0, 0);
 
-	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, objectPipeline);
-	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, objectPipelineLayout, 0, 1,
+	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["object"]);
+	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1,
 		&descriptorSets[currentFrame].objects, 0, nullptr);
 
 	for (const auto& model : models.objects) {
