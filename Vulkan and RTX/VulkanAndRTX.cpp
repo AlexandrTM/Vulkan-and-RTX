@@ -86,9 +86,9 @@ void VulkanAndRTX::prepareResources()
 	createSwapChainImageViews();
 	createRenderPass();
 	createDescriptorSetLayout(descriptorSetLayout);
-	createGraphicsPipeline("shaders/object.vert.spv", "shaders/object.frag.spv", 
+	createGraphicsPipeline("object", "shaders/object.vert.spv", "shaders/object.frag.spv",
 		objectPipeline, objectPipelineLayout);
-	createGraphicsPipeline("shaders/sky.vert.spv", "shaders/sky.frag.spv", 
+	createGraphicsPipeline("sky", "shaders/sky.vert.spv", "shaders/sky.frag.spv",
 		skyPipeline, skyPipelineLayout);
 	createCommandPool();
 	createColorResources();

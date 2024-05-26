@@ -2,7 +2,7 @@
 #include "VulkanAndRTX.h"
 
 // allocating and beginning command buffer helper function
-VkCommandBuffer VulkanAndRTX::beginSingleTimeCommands()
+VkCommandBuffer VulkanAndRTX::beginSingleTimeCommands() const
 {
 	VkCommandBufferAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -23,7 +23,7 @@ VkCommandBuffer VulkanAndRTX::beginSingleTimeCommands()
 }
 
 // ending and submitting command buffer helper function
-void VulkanAndRTX::endSingleTimeCommands(VkCommandBuffer commandBuffer)
+void VulkanAndRTX::endSingleTimeCommands(VkCommandBuffer commandBuffer) const
 {
 	vkEndCommandBuffer(commandBuffer);
 

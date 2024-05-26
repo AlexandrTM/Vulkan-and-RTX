@@ -24,28 +24,28 @@ void VulkanAndRTX::generateCube(float x, float y, float z, float_t cubeSize)
 	Model model;
 
 #pragma region
-	localVertices[0].pos = { glm::vec3(0.0f    , 0.0f    , 0.0f) + glm::vec3(x, y, z) };
-	localVertices[1].pos = { glm::vec3(cubeSize, 0.0f    , 0.0f) + glm::vec3(x, y, z) };
-	localVertices[2].pos = { glm::vec3(cubeSize, cubeSize, 0.0f) + glm::vec3(x, y, z) };
-	localVertices[3].pos = { glm::vec3(0.0f    , cubeSize, 0.0f) + glm::vec3(x, y, z) };
-	localVertices[4].pos = { glm::vec3(0.0f    , 0.0f    , cubeSize) + glm::vec3(x, y, z) };
-	localVertices[5].pos = { glm::vec3(cubeSize, 0.0f    , cubeSize) + glm::vec3(x, y, z) };
-	localVertices[6].pos = { glm::vec3(cubeSize, cubeSize, cubeSize) + glm::vec3(x, y, z) };
-	localVertices[7].pos = { glm::vec3(0.0f    , cubeSize, cubeSize) + glm::vec3(x, y, z) };
-
-	localVertices[8].pos = { glm::vec3(0.0f    , 0.0f    , 0.0f) + glm::vec3(x, y, z) };
-	localVertices[9].pos = { glm::vec3(cubeSize, 0.0f    , 0.0f) + glm::vec3(x, y, z) };
-	localVertices[10].pos = { glm::vec3(cubeSize, cubeSize, 0.0f) + glm::vec3(x, y, z) };
-	localVertices[11].pos = { glm::vec3(0.0f    , cubeSize, 0.0f) + glm::vec3(x, y, z) };
+	localVertices[0].pos  = { glm::vec3(0.0f    , 0.0f    , 0.0f)	  + glm::vec3(x, y, z) };
+	localVertices[1].pos  = { glm::vec3(cubeSize, 0.0f    , 0.0f)	  + glm::vec3(x, y, z) };
+	localVertices[2].pos  = { glm::vec3(cubeSize, cubeSize, 0.0f)     + glm::vec3(x, y, z) };
+	localVertices[3].pos  = { glm::vec3(0.0f    , cubeSize, 0.0f)     + glm::vec3(x, y, z) };
+	localVertices[4].pos  = { glm::vec3(0.0f    , 0.0f    , cubeSize) + glm::vec3(x, y, z) };
+	localVertices[5].pos  = { glm::vec3(cubeSize, 0.0f    , cubeSize) + glm::vec3(x, y, z) };
+	localVertices[6].pos  = { glm::vec3(cubeSize, cubeSize, cubeSize) + glm::vec3(x, y, z) };
+	localVertices[7].pos  = { glm::vec3(0.0f    , cubeSize, cubeSize) + glm::vec3(x, y, z) };
+	
+	localVertices[8].pos  = { glm::vec3(0.0f    , 0.0f    , 0.0f)	  + glm::vec3(x, y, z) };
+	localVertices[9].pos  = { glm::vec3(cubeSize, 0.0f    , 0.0f)	  + glm::vec3(x, y, z) };
+	localVertices[10].pos = { glm::vec3(cubeSize, cubeSize, 0.0f)	  + glm::vec3(x, y, z) };
+	localVertices[11].pos = { glm::vec3(0.0f    , cubeSize, 0.0f)	  + glm::vec3(x, y, z) };
 	localVertices[12].pos = { glm::vec3(0.0f    , 0.0f    , cubeSize) + glm::vec3(x, y, z) };
 	localVertices[13].pos = { glm::vec3(cubeSize, 0.0f    , cubeSize) + glm::vec3(x, y, z) };
 	localVertices[14].pos = { glm::vec3(cubeSize, cubeSize, cubeSize) + glm::vec3(x, y, z) };
 	localVertices[15].pos = { glm::vec3(0.0f    , cubeSize, cubeSize) + glm::vec3(x, y, z) };
 
-	localVertices[16].pos = { glm::vec3(0.0f    , 0.0f    , 0.0f) + glm::vec3(x, y, z) };
-	localVertices[17].pos = { glm::vec3(cubeSize, 0.0f    , 0.0f) + glm::vec3(x, y, z) };
-	localVertices[18].pos = { glm::vec3(cubeSize, cubeSize, 0.0f) + glm::vec3(x, y, z) };
-	localVertices[19].pos = { glm::vec3(0.0f    , cubeSize, 0.0f) + glm::vec3(x, y, z) };
+	localVertices[16].pos = { glm::vec3(0.0f    , 0.0f    , 0.0f)	  + glm::vec3(x, y, z) };
+	localVertices[17].pos = { glm::vec3(cubeSize, 0.0f    , 0.0f)	  + glm::vec3(x, y, z) };
+	localVertices[18].pos = { glm::vec3(cubeSize, cubeSize, 0.0f)	  + glm::vec3(x, y, z) };
+	localVertices[19].pos = { glm::vec3(0.0f    , cubeSize, 0.0f)	  + glm::vec3(x, y, z) };
 	localVertices[20].pos = { glm::vec3(0.0f    , 0.0f    , cubeSize) + glm::vec3(x, y, z) };
 	localVertices[21].pos = { glm::vec3(cubeSize, 0.0f    , cubeSize) + glm::vec3(x, y, z) };
 	localVertices[22].pos = { glm::vec3(cubeSize, cubeSize, cubeSize) + glm::vec3(x, y, z) };
@@ -151,32 +151,32 @@ void VulkanAndRTX::generateSkyCube()
 	Model model;
 
 #pragma region
-	localVertices[0].pos = { glm::vec3(0.0f, 0.0f, 0.0f) };
-	localVertices[1].pos = { glm::vec3(1.0f, 0.0f, 0.0f) };
-	localVertices[2].pos = { glm::vec3(1.0f, 1.0f, 0.0f) };
-	localVertices[3].pos = { glm::vec3(0.0f, 1.0f, 0.0f) };
-	localVertices[4].pos = { glm::vec3(0.0f, 0.0f, 1.0f) };
-	localVertices[5].pos = { glm::vec3(1.0f, 0.0f, 1.0f) };
-	localVertices[6].pos = { glm::vec3(1.0f, 1.0f, 1.0f) };
-	localVertices[7].pos = { glm::vec3(0.0f, 1.0f, 1.0f) };
+	localVertices[0].pos  = { glm::vec3(-1.0f, -1.0f, -1.0f) };
+	localVertices[1].pos  = { glm::vec3( 1.0f, -1.0f, -1.0f) };
+	localVertices[2].pos  = { glm::vec3( 1.0f,  1.0f, -1.0f) };
+	localVertices[3].pos  = { glm::vec3(-1.0f,  1.0f, -1.0f) };
+	localVertices[4].pos  = { glm::vec3(-1.0f, -1.0f,  1.0f) };
+	localVertices[5].pos  = { glm::vec3( 1.0f, -1.0f,  1.0f) };
+	localVertices[6].pos  = { glm::vec3( 1.0f,  1.0f,  1.0f) };
+	localVertices[7].pos  = { glm::vec3(-1.0f,  1.0f,  1.0f) };
 
-	localVertices[8].pos = { glm::vec3(0.0f, 0.0f, 0.0f) };
-	localVertices[9].pos = { glm::vec3(1.0f, 0.0f, 0.0f) };
-	localVertices[10].pos = { glm::vec3(1.0f, 1.0f, 0.0f) };
-	localVertices[11].pos = { glm::vec3(0.0f, 1.0f, 0.0f) };
-	localVertices[12].pos = { glm::vec3(0.0f, 0.0f, 1.0f) };
-	localVertices[13].pos = { glm::vec3(1.0f, 0.0f, 1.0f) };
-	localVertices[14].pos = { glm::vec3(1.0f, 1.0f, 1.0f) };
-	localVertices[15].pos = { glm::vec3(0.0f, 1.0f, 1.0f) };
+	localVertices[8].pos  = { glm::vec3(-1.0f, -1.0f, -1.0f) };
+	localVertices[9].pos  = { glm::vec3( 1.0f, -1.0f, -1.0f) };
+	localVertices[10].pos = { glm::vec3( 1.0f,  1.0f, -1.0f) };
+	localVertices[11].pos = { glm::vec3(-1.0f,  1.0f, -1.0f) };
+	localVertices[12].pos = { glm::vec3(-1.0f, -1.0f,  1.0f) };
+	localVertices[13].pos = { glm::vec3( 1.0f, -1.0f,  1.0f) };
+	localVertices[14].pos = { glm::vec3( 1.0f,  1.0f,  1.0f) };
+	localVertices[15].pos = { glm::vec3(-1.0f,  1.0f,  1.0f) };
 
-	localVertices[16].pos = { glm::vec3(0.0f, 0.0f, 0.0f) };
-	localVertices[17].pos = { glm::vec3(1.0f, 0.0f, 0.0f) };
-	localVertices[18].pos = { glm::vec3(1.0f, 1.0f, 0.0f) };
-	localVertices[19].pos = { glm::vec3(0.0f, 1.0f, 0.0f) };
-	localVertices[20].pos = { glm::vec3(0.0f, 0.0f, 1.0f) };
-	localVertices[21].pos = { glm::vec3(1.0f, 0.0f, 1.0f) };
-	localVertices[22].pos = { glm::vec3(1.0f, 1.0f, 1.0f) };
-	localVertices[23].pos = { glm::vec3(0.0f, 1.0f, 1.0f) };
+	localVertices[16].pos = { glm::vec3(-1.0f, -1.0f, -1.0f) };
+	localVertices[17].pos = { glm::vec3( 1.0f, -1.0f, -1.0f) };
+	localVertices[18].pos = { glm::vec3( 1.0f,  1.0f, -1.0f) };
+	localVertices[19].pos = { glm::vec3(-1.0f,  1.0f, -1.0f) };
+	localVertices[20].pos = { glm::vec3(-1.0f, -1.0f,  1.0f) };
+	localVertices[21].pos = { glm::vec3( 1.0f, -1.0f,  1.0f) };
+	localVertices[22].pos = { glm::vec3( 1.0f,  1.0f,  1.0f) };
+	localVertices[23].pos = { glm::vec3(-1.0f,  1.0f,  1.0f) };
 #pragma endregion // pos
 #pragma region
 	localVertices[0].normal = { glm::vec3(0.0f, 0.0f, -1.0f) };
@@ -242,20 +242,20 @@ void VulkanAndRTX::generateSkyCube()
 #pragma endregion // texCoord
 
 	std::vector<uint32_t> localIndices = {
-		0, 3, 1,
-		1, 3, 2,
-		4, 5, 7,
-		7, 5, 6,
+		1, 3, 0,
+		2, 3, 1,
+		7, 5, 4,
+		6, 5, 7,
 
-		11, 15, 10,
-		10, 15, 14,
-		12, 8, 13,
-		13, 8, 9,
+		10, 15, 11,
+		14, 15, 10,
+		13, 8, 12,
+		9, 8, 13,
 
-		20, 23, 16,
-		16, 23, 19,
-		17, 18, 21,
-		21, 18, 22
+		16, 23, 20,
+		19, 23, 16,
+		21, 18, 17,
+		22, 18, 21
 	};
 
 	// indices and vertices push back

@@ -99,7 +99,7 @@ void VulkanAndRTX::createPipelineLayout(VkDescriptorSetLayout& descriptorSetLayo
 }
 
 // transfering scene to images
-void VulkanAndRTX::createGraphicsPipeline(const std::string& vertexShader, 
+void VulkanAndRTX::createGraphicsPipeline(const std::string prefix, const std::string& vertexShader,
 	const std::string& fragmentShader, VkPipeline& pipeline, VkPipelineLayout& pipelineLayout)
 {
 	auto vertShader = readFile(vertexShader);
@@ -214,9 +214,11 @@ void VulkanAndRTX::createGraphicsPipeline(const std::string& vertexShader,
 
 	VkPipelineDepthStencilStateCreateInfo depthStencil{};
 	depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-	depthStencil.depthTestEnable = VK_TRUE;
-	depthStencil.depthWriteEnable = VK_TRUE;
+	depthStencil.depthTestEnable = (prefix == "sky" ? VK_FALSE : VK_TRUE);
+	depthStencil.depthWriteEnable = (prefix == "sky" ? VK_FALSE : VK_TRUE);
 	depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
+	depthStencil.front = depthStencil.back;
+	depthStencil.back.compareOp = VK_COMPARE_OP_ALWAYS;
 
 	depthStencil.depthBoundsTestEnable = VK_FALSE; // used for the specific depth test range
 	depthStencil.minDepthBounds = 0.0f; // Optional

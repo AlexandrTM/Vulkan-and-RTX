@@ -159,10 +159,10 @@ private:
 		VkImageLayout newLayout, uint32_t mipLevels);
 
 	// allocating and beginning command buffer helper function
-	VkCommandBuffer beginSingleTimeCommands();
+	VkCommandBuffer beginSingleTimeCommands() const;
 
 	// ending and submitting command buffer helper function
-	void endSingleTimeCommands(VkCommandBuffer commandBuffer);
+	void endSingleTimeCommands(VkCommandBuffer commandBuffer) const;
 
 	void createImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkSampleCountFlagBits numSamples,
 		VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties,
@@ -211,7 +211,7 @@ private:
 		VkPipelineLayout& pipelineLayout) const;
 
 	// transfering scene to images
-	void createGraphicsPipeline(const std::string& vertexShader,
+	void createGraphicsPipeline(const std::string prefix, const std::string& vertexShader,
 		const std::string& fragmentShader, VkPipeline& pipeline, VkPipelineLayout& pipelineLayout);
 
 	// creating framebuffer from each swap chain image view
