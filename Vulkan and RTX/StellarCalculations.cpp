@@ -21,6 +21,7 @@ namespace StellarCalculations
 
 	glm::vec3 calculateSunPosition(float timeSinceLaunch)
 	{
+		timeSinceLaunch += secondsInDay / 4;
 		double timeOfDay = std::fmod(timeSinceLaunch, secondsInDay) / secondsInDay;
 		double currentDay = timeSinceLaunch / secondsInDay;
 		double dayOfYear = std::fmod(currentDay, daysInYear);

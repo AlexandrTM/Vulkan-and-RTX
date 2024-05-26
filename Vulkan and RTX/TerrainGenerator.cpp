@@ -3,18 +3,19 @@
 
 TerrainGenerator::TerrainGenerator(size_t seed) : generator(seed) {}
 
-std::vector<std::vector<float>> TerrainGenerator::generateTerrain(size_t size, float roughness) {
+std::vector<std::vector<float>> TerrainGenerator::generateHeightMap(
+    size_t width, size_t height, float roughness) {
     // Initialize the heightmap with zeros
-    std::vector<std::vector<float>> heightmap(size, std::vector<float>(size, 0.0f));
+    std::vector<std::vector<float>> heightmap(width, std::vector<float>(height, 0.0f));
 
     // Set the corner heights randomly
-    heightmap[0][0] = getRandomHeight();
-    heightmap[0][size - 1] = getRandomHeight();
-    heightmap[size - 1][0] = getRandomHeight();
-    heightmap[size - 1][size - 1] = getRandomHeight();
+    heightmap[0        ][0         ] = getRandomHeight();
+    heightmap[0        ][height - 1] = getRandomHeight();
+    heightmap[width - 1][0         ] = getRandomHeight();
+    heightmap[width - 1][height - 1] = getRandomHeight();
 
     // Perform the Diamond-Square algorithm
-    diamondSquare(heightmap, 0, 0, size - 1, size - 1, roughness);
+    diamondSquare(heightmap, 0, 0, width - 1, height - 1, roughness);
 
     return heightmap;
 }
@@ -86,16 +87,16 @@ void TerrainGenerator::generateTerrainMesh(const std::vector<std::vector<float>>
     for (size_t i = 0; i < width - 1; ++i) {
         for (size_t j = 0; j < length - 1; ++j) {
             // Calculate indices for each quad
-            size_t topLeft = static_cast<size_t>(i * length + j);
-            size_t topRight = static_cast<size_t>(topLeft + 1);
-            size_t bottomLeft = static_cast<size_t>((i + 1) * length + j);
+            size_t topLeft     = static_cast<size_t>(i * length + j);
+            size_t topRight    = static_cast<size_t>(topLeft + 1);
+            size_t bottomLeft  = static_cast<size_t>((i + 1) * length + j);
             size_t bottomRight = static_cast<size_t>(bottomLeft + 1);
 
             // Create triangles
             std::vector<size_t> localIndices =
             {
-                topLeft, bottomLeft, topRight,
-                topRight, bottomLeft, bottomRight
+                topRight, bottomLeft, topLeft,
+                bottomRight, bottomLeft, topRight
             };
 
             for (size_t k = 0; k < localIndices.size(); k++)
@@ -107,7 +108,7 @@ void TerrainGenerator::generateTerrainMesh(const std::vector<std::vector<float>>
 
     // Calculate normals
     for (size_t i = 0; i < model.indices.size(); i += 3) {
-        size_t idx0 = model.indices[i];
+        size_t idx0 = model.indices[i    ];
         size_t idx1 = model.indices[i + 1];
         size_t idx2 = model.indices[i + 2];
 
@@ -117,8 +118,8 @@ void TerrainGenerator::generateTerrainMesh(const std::vector<std::vector<float>>
         glm::vec3 normal = glm::normalize(glm::cross(edge1, edge2));
 
         // Assign the same normal to all three vertices of the triangle
-        model.vertices[idx0].normal += normal;
-        model.vertices[idx1].normal += normal;
-        model.vertices[idx2].normal += normal;
+        model.vertices[idx0].normal = normal;
+        model.vertices[idx1].normal = normal;
+        model.vertices[idx2].normal = normal;
     }
 }

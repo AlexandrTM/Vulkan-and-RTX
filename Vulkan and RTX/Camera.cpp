@@ -3,7 +3,7 @@
 
 Camera::Camera() 
 {
-	_lookFrom = glm::vec3(0.0f, 2.0f, 0.0f);
+	_lookFrom = glm::vec3(0.0f, 3.0f, 0.0f);
 	_lookAt = _lookFrom + glm::vec3(1.0f, 0.0f, 0.0f);
 	_cameraDirection = glm::normalize(_lookAt - _lookFrom);
 	_verticalWorldAxis = glm::vec3(0.0f, 1.0f, 0.0f);

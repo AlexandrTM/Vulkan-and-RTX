@@ -7,9 +7,12 @@
 class TerrainGenerator
 {
 public:
-    TerrainGenerator(size_t seed) : generator(seed) {}
+    TerrainGenerator(size_t seed);
 
-    std::vector<std::vector<float>> generateTerrain(size_t size, float roughness);
+    std::vector<std::vector<float>> generateHeightMap(size_t width, size_t height, float roughness);
+
+    void generateTerrainMesh(const std::vector<std::vector<float>>& heightmap,
+        float scale, Model& model);
 
 private:
     std::mt19937 generator;
@@ -23,9 +26,6 @@ private:
 
     // Get a random height value
     float getRandomHeight();
-
-    void generateTerrainMesh(const std::vector<std::vector<float>>& heightmap,
-        float scale, Model& model);
 };
 
 #endif // !TERRAIN_GENERATOR
