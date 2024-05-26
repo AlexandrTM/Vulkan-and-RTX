@@ -9,7 +9,7 @@ class TerrainGenerator
 public:
     TerrainGenerator(size_t seed);
 
-    std::vector<std::vector<float>> generateHeightMap(size_t width, size_t height, float roughness);
+    std::vector<std::vector<float>> generateDiamondHeightMap(size_t width, size_t height, float roughness);
 
     void generateTerrainMesh(float startX, float startZ,
         const std::vector<std::vector<float>>& heightmap, float scale, Model& model);

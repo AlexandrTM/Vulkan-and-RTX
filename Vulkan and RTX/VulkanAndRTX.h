@@ -33,7 +33,7 @@ private:
 		alignas(16) glm::mat4 view;
 		alignas(16) glm::mat4 projection;
 		alignas(4)  glm::vec3 sun;
-		alignas(4)  glm::vec3 viewer;
+		alignas(4)  glm::vec3 observer;
 	} objectUBO, skyUBO;
 
 	std::unique_ptr<TerrainGenerator> terrainGenerator;
@@ -125,7 +125,7 @@ private:
 	void generateTerrain(float startX, float startZ, size_t width, size_t height,
 		float scale, float roughness, size_t seed);
 
-	void loadModel(const std::string& filePath);
+	void loadModelObj(const std::string& filePath);
 	void loadGltfModel(const std::string& filePath);
 	// reading bytecode files and returning its bytes
 	static std::vector<char> readFile(const std::string& filename);

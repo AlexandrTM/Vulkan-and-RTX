@@ -8,7 +8,7 @@ layout(binding = 0) uniform UniformBufferObject {
     mat4 view;
     mat4 proj;
     vec3 sun;
-	vec3 viewer;
+	vec3 observer;
 } ubo;
 
 vec3 getSkyColor(vec3 direction, vec3 sunDirection) {

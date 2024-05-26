@@ -420,7 +420,7 @@ void VulkanAndRTX::updateUniformBuffers(uint32_t currentImage, float timeSinceLa
 	glm::mat4 projection = glm::perspective(
 		glm::radians(inputHandler.camera.getVerticalFov()),
 		swapChainExtent.width / (float)swapChainExtent.height, 
-		0.1f, 40.0f
+		0.1f, 1000.0f
 	);
 	projection[1][1] *= -1;
 
@@ -430,7 +430,7 @@ void VulkanAndRTX::updateUniformBuffers(uint32_t currentImage, float timeSinceLa
 	objectUBO.view = view;
 	objectUBO.projection = projection;
 	objectUBO.sun = sun;
-	objectUBO.viewer = inputHandler.camera.getLookFrom();
+	objectUBO.observer = inputHandler.camera.getLookFrom();
 
 	// add transpose(inverse(ubo.model)) if doing non uniform scaling
 
@@ -438,6 +438,7 @@ void VulkanAndRTX::updateUniformBuffers(uint32_t currentImage, float timeSinceLa
 	skyUBO.view = view;
 	skyUBO.projection = projection;
 	skyUBO.sun = sun;
+	skyUBO.observer = inputHandler.camera.getLookFrom();
 
 	void* data;
 	vkMapMemory(vkInit.device, objectUniformBuffersMemory[currentImage], 

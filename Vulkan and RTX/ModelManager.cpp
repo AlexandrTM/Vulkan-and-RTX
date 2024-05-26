@@ -275,12 +275,12 @@ void VulkanAndRTX::generateTerrain(float startX, float startZ, size_t width, siz
 {
 	Model model;
 	terrainGenerator = std::make_unique<TerrainGenerator>(seed);
-	auto heightmap = terrainGenerator.get()->generateHeightMap(width, height, roughness);
+	auto heightmap = terrainGenerator.get()->generateDiamondHeightMap(width, height, roughness);
 	terrainGenerator.get()->generateTerrainMesh(startX, startZ, heightmap, scale, model);
 	models.objects.push_back(model);
 }
 
-void VulkanAndRTX::loadModel(const std::string& modelPath)
+void VulkanAndRTX::loadModelObj(const std::string& modelPath)
 {
 	Model model;
 

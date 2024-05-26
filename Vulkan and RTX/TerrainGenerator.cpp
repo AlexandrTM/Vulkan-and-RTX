@@ -3,7 +3,7 @@
 
 TerrainGenerator::TerrainGenerator(size_t seed) : generator(seed) {}
 
-std::vector<std::vector<float>> TerrainGenerator::generateHeightMap(
+std::vector<std::vector<float>> TerrainGenerator::generateDiamondHeightMap(
     size_t width, size_t height, float roughness) {
     // Initialize the heightmap with zeros
     std::vector<std::vector<float>> heightmap(width, std::vector<float>(height, 0.0f));
@@ -113,6 +113,7 @@ void TerrainGenerator::generateTerrainMesh(float startX, float startZ,
             model.vertices.push_back(v3);
         }
     }
+    std::cout << "terrain vertices: " << model.vertices.size() << "\n";
 
     // Generate indices
     for (size_t i = 0; i < width; ++i) {

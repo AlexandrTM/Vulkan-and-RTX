@@ -19,6 +19,10 @@
 #include <tiny_gltf.h>
 #include <tiny_obj_loader.h>
 
+#include <imgui.h>
+#include <backends/imgui_impl_glfw.h>
+#include <backends/imgui_impl_vulkan.h>
+
 #include <chrono>
 #include <iostream>
 #include <stdexcept>
