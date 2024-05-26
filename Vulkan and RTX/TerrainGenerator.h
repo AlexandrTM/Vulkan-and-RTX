@@ -11,8 +11,8 @@ public:
 
     std::vector<std::vector<float>> generateHeightMap(size_t width, size_t height, float roughness);
 
-    void generateTerrainMesh(const std::vector<std::vector<float>>& heightmap,
-        float scale, Model& model);
+    void generateTerrainMesh(float startX, float startZ,
+        const std::vector<std::vector<float>>& heightmap, float scale, Model& model);
 
 private:
     std::mt19937 generator;

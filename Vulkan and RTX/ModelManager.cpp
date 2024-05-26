@@ -270,12 +270,13 @@ void VulkanAndRTX::generateSkyCube()
 	models.sky = model;
 }
 
-void VulkanAndRTX::generateTerrain(size_t width, size_t height, float scale, float roughness, size_t seed)
+void VulkanAndRTX::generateTerrain(float startX, float startZ, size_t width, size_t height,
+	float scale, float roughness, size_t seed)
 {
 	Model model;
 	terrainGenerator = std::make_unique<TerrainGenerator>(seed);
 	auto heightmap = terrainGenerator.get()->generateHeightMap(width, height, roughness);
-	terrainGenerator.get()->generateTerrainMesh(heightmap, scale, model);
+	terrainGenerator.get()->generateTerrainMesh(startX, startZ, heightmap, scale, model);
 	models.objects.push_back(model);
 }
 

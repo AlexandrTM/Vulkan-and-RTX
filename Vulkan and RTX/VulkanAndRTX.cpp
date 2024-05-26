@@ -97,11 +97,16 @@ void VulkanAndRTX::prepareResources()
 	createTextureImageView(textureImage, textureImageView);
 	createTextureSampler(textureSampler);
 
-	loadGltfModel("models/elipsoid low poly.gltf");
+	//loadGltfModel("models/elipsoid low poly.gltf");
 	//loadModel("models/elipsoid low poly.obj");
 	//generateCubicLandscape(15, 15, 1.0f);
-	generateTerrain(100, 100, 0.25, 0.0, 1);
+	generateTerrain(0  , 0  , 100, 100, 0.25, 0.0, 1);
+	generateTerrain(-25, 0  , 100, 100, 0.25, 0.0, 1);
+	generateTerrain(0  , -25, 100, 100, 0.25, 0.0, 1);
+	generateTerrain(-25, -25, 100, 100, 0.25, 0.0, 1);
+
 	generateSkyCube();
+
 	createVertexBuffer(models.sky);
 	createIndexBuffer(models.sky);
 

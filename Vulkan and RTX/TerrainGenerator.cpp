@@ -64,30 +64,31 @@ float TerrainGenerator::getRandomHeight() {
     return distribution(generator);
 }
 
-void TerrainGenerator::generateTerrainMesh(const std::vector<std::vector<float>>& heightmap, 
-    float scale, Model& model) {
+void TerrainGenerator::generateTerrainMesh(float startX, float startZ,
+    const std::vector<std::vector<float>>& heightmap, float scale, Model& model) {
     // Calculate terrain dimensions
     size_t width = heightmap.size();
     size_t length = heightmap[0].size();
 
     // Generate vertices
-    for (size_t i = 0; i < width - 1; i++) {
-        for (size_t j = 0; j < length - 1; j++) {
-            float x0 = static_cast<float>(i) * scale;
-            float y0 = heightmap[i][j] * scale;
-            float z0 = static_cast<float>(j) * scale;
+    for (size_t i = 0; i < width; i++) {
+        for (size_t j = 0; j < length; j++) {
+            float x0 = static_cast<float>(i) * scale + startX;
+            float y0 =          heightmap[i][j] * scale;
+            float z0 = static_cast<float>   (j) * scale + startZ;
 
-            float x1 = static_cast<float>(i + 1) * scale;
-            float y1 = heightmap[i + 1][j] * scale;
-            float z1 = static_cast<float>(j) * scale;
+            float x1 = static_cast<float>(i + 1) * scale + startX;
+            float y1 =          heightmap[i == width - 1 ? width - 1 : i + 1][j] * scale;
+            float z1 = static_cast<float>   (j) * scale + startZ;
 
-            float x2 = static_cast<float>(i) * scale;
-            float y2 = heightmap[i][j + 1] * scale;
-            float z2 = static_cast<float>(j + 1) * scale;
+            float x2 = static_cast<float>(i) * scale + startX;
+            float y2 =          heightmap[i][j == length - 1 ? length - 1 : j + 1] * scale;
+            float z2 = static_cast<float>   (j + 1) * scale + startZ;
 
-            float x3 = static_cast<float>(i + 1) * scale;
-            float y3 = heightmap[i + 1][j + 1] * scale;
-            float z3 = static_cast<float>(j + 1) * scale;
+            float x3 = static_cast<float>(i + 1) * scale + startX;
+            float y3 =          heightmap[i == width - 1 ? width - 1 : i + 1]
+                                            [j == length - 1 ? length - 1 : j + 1] * scale;
+            float z3 = static_cast<float>   (j + 1) * scale + startZ;
 
             // Create vertex
             Vertex v0{}, v1{}, v2{}, v3{};
@@ -114,10 +115,10 @@ void TerrainGenerator::generateTerrainMesh(const std::vector<std::vector<float>>
     }
 
     // Generate indices
-    for (size_t i = 0; i < width - 1; ++i) {
-        for (size_t j = 0; j < length - 1; ++j) {
+    for (size_t i = 0; i < width; ++i) {
+        for (size_t j = 0; j < length; ++j) {
             // Calculate indices for each quad
-            size_t topLeft     = static_cast<size_t>(i * (length - 1) + j) * 4;
+            size_t topLeft     = static_cast<size_t>(i * (length) + j) * 4;
             size_t topRight    = static_cast<size_t>(topLeft + 1);
             size_t bottomLeft  = static_cast<size_t>(topLeft + 2);
             size_t bottomRight = static_cast<size_t>(topLeft + 3);
