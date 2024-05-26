@@ -184,6 +184,7 @@
     <ClCompile Include="stb_image_write_implementation.cpp" />
     <ClCompile Include="StellarCalculations.cpp" />
     <ClCompile Include="SwapChainManager.cpp" />
+    <ClCompile Include="TerrainGenerator.cpp" />
     <ClCompile Include="tiny_gltf_implementation.cpp" />
     <ClCompile Include="tiny_obj_loader_implementation.cpp" />
     <ClCompile Include="Vertex.cpp" />
@@ -203,6 +204,7 @@
     <ClInclude Include="IsCreature.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="StellarCalculations.h" />
+    <ClInclude Include="TerrainGenerator.h" />
     <ClInclude Include="Vertex.h" />
     <ClInclude Include="VulkanAndRTX.h" />
     <ClInclude Include="VulkanInitializer.h" />

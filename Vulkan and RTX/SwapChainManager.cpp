@@ -171,7 +171,7 @@ VkSurfaceFormatKHR VulkanAndRTX::chooseSwapSurfaceFormat(const std::vector<VkSur
 VkPresentModeKHR VulkanAndRTX::chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes)
 {
 	for (const auto& availablePresentMode : availablePresentModes) {
-		// unlimited framerate
+		// unlimited framerate VK_PRESENT_MODE_IMMEDIATE_KHR
 		if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
 			return availablePresentMode;
 		}

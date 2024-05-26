@@ -102,6 +102,9 @@
     <ClCompile Include="StellarCalculations.cpp">
       <Filter>source</Filter>
     </ClCompile>
+    <ClCompile Include="TerrainGenerator.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -147,6 +150,9 @@
       <Filter>headers</Filter>
     </ClInclude>
     <ClInclude Include="StellarCalculations.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="TerrainGenerator.h">
       <Filter>headers</Filter>
     </ClInclude>
   </ItemGroup>

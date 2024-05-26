@@ -1,4 +1,5 @@
 #include "pch.h"
+
 #ifndef STELLAR_CALCULATIONS
 #define STELLAR_CALCULATIONS
 
