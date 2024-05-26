@@ -94,7 +94,7 @@ void InputHandler::scrollCallback(GLFWwindow* window, double xoffset, double yof
 
 void InputHandler::movePerson(float deltaTime)
 {
-	float movementSpeed = 3.0 * deltaTime;
+	float movementSpeed = 8.0 * deltaTime;
 
 	glm::vec3 verticalWorldAxis = camera.getVerticalWorldAxis();
 	glm::vec3 cameraDirection = camera.getDirection();

@@ -270,7 +270,7 @@ void VulkanAndRTX::generateSkyCube()
 	models.sky = model;
 }
 
-void VulkanAndRTX::generateTerrain(size_t width, size_t height, float scale, size_t seed, float roughness)
+void VulkanAndRTX::generateTerrain(size_t width, size_t height, float scale, float roughness, size_t seed)
 {
 	Model model;
 	terrainGenerator = std::make_unique<TerrainGenerator>(seed);

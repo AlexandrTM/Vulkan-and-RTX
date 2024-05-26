@@ -9,10 +9,10 @@ std::vector<std::vector<float>> TerrainGenerator::generateHeightMap(
     std::vector<std::vector<float>> heightmap(width, std::vector<float>(height, 0.0f));
 
     // Set the corner heights randomly
-    heightmap[0        ][0         ] = getRandomHeight();
-    heightmap[0        ][height - 1] = getRandomHeight();
-    heightmap[width - 1][0         ] = getRandomHeight();
-    heightmap[width - 1][height - 1] = getRandomHeight();
+    heightmap[0        ][0         ] = roughness == 0.0 ? 0.0 : getRandomHeight();
+    heightmap[0        ][height - 1] = roughness == 0.0 ? 0.0 : getRandomHeight();
+    heightmap[width - 1][0         ] = roughness == 0.0 ? 0.0 : getRandomHeight();
+    heightmap[width - 1][height - 1] = roughness == 0.0 ? 0.0 : getRandomHeight();
 
     // Perform the Diamond-Square algorithm
     diamondSquare(heightmap, 0, 0, width - 1, height - 1, roughness);
@@ -36,10 +36,14 @@ void TerrainGenerator::diamondSquare(std::vector<std::vector<float>>& heightmap,
     heightmap[mx][my] = avg + getRandomOffset(roughness);
 
     // Square step
-    heightmap[x1][my] = (heightmap[x1][y1] + heightmap[x1][y2] + heightmap[mx][my]) / 3.0f + getRandomOffset(roughness);
-    heightmap[mx][y1] = (heightmap[x1][y1] + heightmap[x2][y1] + heightmap[mx][my]) / 3.0f + getRandomOffset(roughness);
-    heightmap[x2][my] = (heightmap[x2][y1] + heightmap[x2][y2] + heightmap[mx][my]) / 3.0f + getRandomOffset(roughness);
-    heightmap[mx][y2] = (heightmap[x1][y2] + heightmap[x2][y2] + heightmap[mx][my]) / 3.0f + getRandomOffset(roughness);
+    heightmap[x1][my] = (heightmap[x1][y1] + heightmap[x1][y2] 
+        + heightmap[mx][my]) / 3.0f + getRandomOffset(roughness);
+    heightmap[mx][y1] = (heightmap[x1][y1] + heightmap[x2][y1] 
+        + heightmap[mx][my]) / 3.0f + getRandomOffset(roughness);
+    heightmap[x2][my] = (heightmap[x2][y1] + heightmap[x2][y2] 
+        + heightmap[mx][my]) / 3.0f + getRandomOffset(roughness);
+    heightmap[mx][y2] = (heightmap[x1][y2] + heightmap[x2][y2] 
+        + heightmap[mx][my]) / 3.0f + getRandomOffset(roughness);
 
     // Recursively apply the algorithm to the four quadrants
     diamondSquare(heightmap, x1, y1, mx, my, roughness);
@@ -67,19 +71,45 @@ void TerrainGenerator::generateTerrainMesh(const std::vector<std::vector<float>>
     size_t length = heightmap[0].size();
 
     // Generate vertices
-    for (size_t i = 0; i < width; i++) {
-        for (size_t j = 0; j < length; j++) {
-            float x = static_cast<float>(i) * scale;
-            float y = heightmap[i][j] * scale;
-            float z = static_cast<float>(j) * scale;
+    for (size_t i = 0; i < width - 1; i++) {
+        for (size_t j = 0; j < length - 1; j++) {
+            float x0 = static_cast<float>(i) * scale;
+            float y0 = heightmap[i][j] * scale;
+            float z0 = static_cast<float>(j) * scale;
+
+            float x1 = static_cast<float>(i + 1) * scale;
+            float y1 = heightmap[i + 1][j] * scale;
+            float z1 = static_cast<float>(j) * scale;
+
+            float x2 = static_cast<float>(i) * scale;
+            float y2 = heightmap[i][j + 1] * scale;
+            float z2 = static_cast<float>(j + 1) * scale;
+
+            float x3 = static_cast<float>(i + 1) * scale;
+            float y3 = heightmap[i + 1][j + 1] * scale;
+            float z3 = static_cast<float>(j + 1) * scale;
 
             // Create vertex
-            Vertex vertex{};
-            vertex.pos = glm::vec3(x, y, z);
-            vertex.color = glm::vec3(0.5f, 0.5f, 0.5f);
-            vertex.texCoord0 = glm::vec2(static_cast<float>(i) / width, static_cast<float>(j) / length);
+            Vertex v0{}, v1{}, v2{}, v3{};
+            v0.pos = glm::vec3(x0, y0, z0);
+            v1.pos = glm::vec3(x1, y1, z1);
+            v2.pos = glm::vec3(x2, y2, z2);
+            v3.pos = glm::vec3(x3, y3, z3);
 
-            model.vertices.push_back(vertex);
+            v0.color = glm::vec3(0.5f, 0.5f, 0.5f);
+            v1.color = glm::vec3(0.5f, 0.5f, 0.5f);
+            v2.color = glm::vec3(0.5f, 0.5f, 0.5f);
+            v3.color = glm::vec3(0.5f, 0.5f, 0.5f);
+
+            v0.texCoord0 = glm::vec2(0.0f, 0.0f);
+            v1.texCoord0 = glm::vec2(1.0f, 0.0f);
+            v2.texCoord0 = glm::vec2(0.0f, 1.0f);
+            v3.texCoord0 = glm::vec2(1.0f, 1.0f);
+
+            model.vertices.push_back(v0);
+            model.vertices.push_back(v1);
+            model.vertices.push_back(v2);
+            model.vertices.push_back(v3);
         }
     }
 
@@ -87,16 +117,16 @@ void TerrainGenerator::generateTerrainMesh(const std::vector<std::vector<float>>
     for (size_t i = 0; i < width - 1; ++i) {
         for (size_t j = 0; j < length - 1; ++j) {
             // Calculate indices for each quad
-            size_t topLeft     = static_cast<size_t>(i * length + j);
+            size_t topLeft     = static_cast<size_t>(i * (length - 1) + j) * 4;
             size_t topRight    = static_cast<size_t>(topLeft + 1);
-            size_t bottomLeft  = static_cast<size_t>((i + 1) * length + j);
-            size_t bottomRight = static_cast<size_t>(bottomLeft + 1);
+            size_t bottomLeft  = static_cast<size_t>(topLeft + 2);
+            size_t bottomRight = static_cast<size_t>(topLeft + 3);
 
             // Create triangles
             std::vector<size_t> localIndices =
             {
-                topRight, bottomLeft, topLeft,
-                bottomRight, bottomLeft, topRight
+                topLeft, bottomLeft, topRight,
+                topRight, bottomLeft, bottomRight
             };
 
             for (size_t k = 0; k < localIndices.size(); k++)

@@ -100,7 +100,7 @@ void VulkanAndRTX::prepareResources()
 	loadGltfModel("models/elipsoid low poly.gltf");
 	//loadModel("models/elipsoid low poly.obj");
 	//generateCubicLandscape(15, 15, 1.0f);
-	generateTerrain(40, 40, 1, 1, 0.5);
+	generateTerrain(100, 100, 0.25, 0.0, 1);
 	generateSkyCube();
 	createVertexBuffer(models.sky);
 	createIndexBuffer(models.sky);

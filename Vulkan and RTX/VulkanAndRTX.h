@@ -122,7 +122,7 @@ private:
 	void generateCubicLandscape(size_t landscapeWidth, size_t landscapeLenght, float_t cubeSize);
 	void generateCube(float x, float y, float z, float_t cubeSize);
 	void generateSkyCube();
-	void generateTerrain(size_t width, size_t height, float scale, size_t seed, float roughness);
+	void generateTerrain(size_t width, size_t height, float scale, float roughness, size_t seed);
 
 	void loadModel(const std::string& filePath);
 	void loadGltfModel(const std::string& filePath);
