@@ -99,12 +99,12 @@ void VulkanAndRTX::prepareResources()
 
 	//loadGltfModel("models/blue_archivekasumizawa_miyu.glb");
 	generateTerrain(-300, -300, 600, 600, 1.0, 0.2, 1);
-	generateCuboid(20.0, 0.0, -10.0, 
-					1.75, 4.75, 1.75, glm::vec3(0.0, 0.7, 0.0));
-	generateCuboid(20.0, 0.0, -0.0,
-					1.75, 4.75, 1.75, glm::vec3(0.52, 0.52, 0.0));
-	generateCuboid(20.0, 0.0, 10.0,
-					1.75, 4.75, 1.75, glm::vec3(0.7, 0.0, 0.0));
+	generateCuboid(20.0, 0.0 , -10.0, 
+				   1.75, 4.75,  1.75, glm::vec3(0.0, 0.7, 0.0));
+	generateCuboid(20.0, 0.0 ,   0.0,
+				   1.75, 4.75,  1.75, glm::vec3(0.52, 0.52, 0.0));
+	generateCuboid(20.0, 0.0 ,  10.0,
+				   1.75, 4.75,  1.75, glm::vec3(0.7, 0.0, 0.0));
 
 	generateSkyCube();
 

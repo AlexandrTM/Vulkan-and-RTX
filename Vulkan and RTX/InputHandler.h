@@ -15,8 +15,11 @@ private:
 public:
 	Camera camera;
 
-	InteractableVolume interactableCuboid = InteractableVolume(
-		glm::vec3(-1.0, 0.0, -1.0), glm::vec3(1.0, 3.0, 1.0));
+	std::vector<InteractableVolume> interactableCuboids = { 
+		InteractableVolume(glm::vec3(20.0, 0.0, -10.0), glm::vec3(21.75, 4.75, -8.25)),
+		InteractableVolume(glm::vec3(20.0, 0.0,   0.0), glm::vec3(21.75, 4.75,  1.75)),
+		InteractableVolume(glm::vec3(20.0, 0.0,  10.0), glm::vec3(21.75, 4.75, 11.75))
+	};
 
 	void initializeInputHandler(GLFWwindow* window);
 

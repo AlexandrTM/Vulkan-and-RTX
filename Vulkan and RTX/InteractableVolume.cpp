@@ -21,6 +21,6 @@ bool InteractableVolume::rayIntersectsCuboid(const glm::vec3& rayOrigin, const g
         return false;
     }
 
-    return true;
+    return (tmin <= maxInteractionDistance);
 }
 

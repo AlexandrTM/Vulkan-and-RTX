@@ -53,9 +53,11 @@ void InputHandler::keyCallback(GLFWwindow* window, int key, int scancode, int ac
 	}
 
 	if (key == GLFW_KEY_E && action == GLFW_RELEASE) {
-		if (interactableCuboid.rayIntersectsCuboid(
-			camera.getLookFrom(), camera.getDirection())) {
-			std::cout << "yes\n";
+		for (size_t i = 0; i < interactableCuboids.size(); i++) {
+			if (interactableCuboids[i].rayIntersectsCuboid(
+				camera.getLookFrom(), camera.getDirection())) {
+				std::cout << "yes\n";
+			}
 		}
 	}
 
