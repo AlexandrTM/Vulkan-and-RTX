@@ -1,7 +1,8 @@
 #include "pch.h"
 #include "InteractableVolume.h"
 
-InteractableVolume::InteractableVolume(glm::vec3 x0, glm::vec3 x1) : bound0(x0), bound1(x1) {}
+InteractableVolume::InteractableVolume(glm::vec3 x0, glm::vec3 x1, std::string name) : 
+    bound0(x0), bound1(x1), name(name) {}
 
 InteractableVolume::InteractableVolume() {}
 

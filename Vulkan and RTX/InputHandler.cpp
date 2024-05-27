@@ -59,6 +59,7 @@ void InputHandler::keyCallback(GLFWwindow* window, int key, int scancode, int ac
 					camera.getLookFrom(), camera.getDirection())) {
 					currentInteractingVolume = &interactableCuboids[i];
 					currentInteractingVolume->isOpen = true;
+					std::cout << currentInteractingVolume->name << "\n";
 				}
 			}
 		}
@@ -97,7 +98,9 @@ void InputHandler::mouseButtonCallback(GLFWwindow* window, int button, int actio
 }
 void InputHandler::mouseCallback(GLFWwindow* window, double xpos, double ypos)
 {
-	camera.rotate(xpos, ypos, sensitivity);
+	if (!currentInteractingVolume) {
+		camera.rotate(xpos, ypos, sensitivity);
+	}
 }
 // mouse wheel handling
 void InputHandler::scrollCallback(GLFWwindow* window, double xoffset, double yoffset)

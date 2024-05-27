@@ -237,6 +237,8 @@ void VulkanAndRTX::mainLoop()
 		ImGui::NewFrame();
 		
 		if(inputHandler.currentInteractingVolume) {
+			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+
 			ImGui::Begin("Hello, world!", &inputHandler.currentInteractingVolume->isOpen);
 			static float f = 0.0f;
 			static int counter = 0;
@@ -255,6 +257,7 @@ void VulkanAndRTX::mainLoop()
 			
 			if (!&inputHandler.currentInteractingVolume->isOpen) {
 				inputHandler.currentInteractingVolume = nullptr;
+				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 			}
 			
 			ImGui::End();
