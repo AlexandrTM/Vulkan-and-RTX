@@ -21,6 +21,8 @@ public:
 		InteractableVolume(glm::vec3(20.0, 0.0,  10.0), glm::vec3(21.75, 4.75, 11.75))
 	};
 
+	InteractableVolume* currentInteractingVolume = nullptr;
+
 	void initializeInputHandler(GLFWwindow* window);
 
 	void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mode);

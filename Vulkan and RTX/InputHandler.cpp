@@ -53,10 +53,13 @@ void InputHandler::keyCallback(GLFWwindow* window, int key, int scancode, int ac
 	}
 
 	if (key == GLFW_KEY_E && action == GLFW_RELEASE) {
-		for (size_t i = 0; i < interactableCuboids.size(); i++) {
-			if (interactableCuboids[i].rayIntersectsCuboid(
-				camera.getLookFrom(), camera.getDirection())) {
-				std::cout << "yes\n";
+		if (currentInteractingVolume == nullptr) {
+			for (size_t i = 0; i < interactableCuboids.size(); i++) {
+				if (interactableCuboids[i].rayIntersectsCuboid(
+					camera.getLookFrom(), camera.getDirection())) {
+					currentInteractingVolume = &interactableCuboids[i];
+					currentInteractingVolume->isOpen = true;
+				}
 			}
 		}
 	}
@@ -105,7 +108,7 @@ void InputHandler::scrollCallback(GLFWwindow* window, double xoffset, double yof
 void InputHandler::movePerson(float deltaTime)
 {
 	float movementSpeed = 8.0 * deltaTime;
-
+	
 	glm::vec3 verticalWorldAxis = camera.getVerticalWorldAxis();
 	glm::vec3 cameraDirection = camera.getDirection();
 

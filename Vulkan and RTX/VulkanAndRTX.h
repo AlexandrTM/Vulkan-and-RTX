@@ -103,11 +103,10 @@ private:
 	// initializing GLFW and creating window
 	void createWindow();
 
-	void SetupVulkanWindow(ImGui_ImplVulkanH_Window* wd, VkSurfaceKHR surface, int width, int height);
+	void setupImguiWindow(ImGui_ImplVulkanH_Window* wd, VkSurfaceKHR surface, 
+		size_t width, size_t height);
 	void setupImGui();
 	void cleanupImGui();
-	void FrameRender(ImGui_ImplVulkanH_Window* wd, ImDrawData* drawData);
-	void FramePresent(ImGui_ImplVulkanH_Window* wd);
 	void check_vk_result(VkResult err);
 
 	void prepareResources();

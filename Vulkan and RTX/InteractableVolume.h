@@ -10,6 +10,7 @@ struct InteractableVolume
 
 	glm::vec3 bound0 = glm::vec3(0.0);
 	glm::vec3 bound1 = glm::vec3(0.0);
+	bool isOpen = false;
 
 	float maxInteractionDistance = 10.0f;
 
