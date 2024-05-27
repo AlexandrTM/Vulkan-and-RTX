@@ -100,7 +100,8 @@ void VulkanAndRTX::prepareResources()
 	//loadGltfModel("models/elipsoid low poly.gltf");
 	//loadModelObj("models/elipsoid low poly.obj");
 
-	generateTerrain(-300, -300, 600, 600, 1.0, 0.2, 1);
+	loadGltfModel("models/blue_archivekasumizawa_miyu.glb");
+	//generateTerrain(-300, -300, 600, 600, 1.0, 0.2, 1);
 
 	generateSkyCube();
 

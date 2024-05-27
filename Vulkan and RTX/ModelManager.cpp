@@ -331,7 +331,6 @@ void VulkanAndRTX::loadModelObj(const std::string& modelPath)
 
 void VulkanAndRTX::loadGltfModel(const std::string& modelPath) {
 	tinygltf::Model GLTFmodel;
-	Model model;
 
 	tinygltf::TinyGLTF loader;
 	std::string error;
@@ -348,10 +347,14 @@ void VulkanAndRTX::loadGltfModel(const std::string& modelPath) {
 
 	if (!result) {
 		std::cout << "model not loaded: " + modelPath << "\n";
+		std::cout << error << "\n";
 	}
 
 	for (const auto& mesh : GLTFmodel.meshes) {
+		Model model;
 		for (const auto& primitive : mesh.primitives) {
+			size_t currentVertex = 0;
+			size_t currentIndex = 0;
 
 			const float* bufferPositions = nullptr;
 			const float* bufferNormals = nullptr;
@@ -398,29 +401,34 @@ void VulkanAndRTX::loadGltfModel(const std::string& modelPath) {
 					const unsigned char* indicesPreData =
 						&(buffer.data[indicesAccessor.byteOffset + indicesView.byteOffset]);
 
+					model.indices.resize(indicesAccessor.count);
+
 					switch (indicesAccessor.componentType)
 					{
 					case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE: {
 						const uint8_t* indicesData = reinterpret_cast<const uint8_t*>(indicesPreData);
 
-						for (size_t i = 0; i < indicesAccessor.count; ++i) {
-							model.indices.push_back(indicesData[i]);
+						for (size_t i = 0; i < indicesAccessor.count; i++) {
+							model.indices[currentIndex] = indicesData[i] + currentVertex;
+							currentIndex += 1;
 						}
 						break;
 					}
 					case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT: {
 						const uint16_t* indicesData = reinterpret_cast<const uint16_t*>(indicesPreData);
-
-						for (size_t i = 0; i < indicesAccessor.count; ++i) {
-							model.indices.push_back(indicesData[i]);
+						
+						for (size_t i = 0; i < indicesAccessor.count; i++) {
+							model.indices[currentIndex] = indicesData[i] + currentVertex;
+							currentIndex += 1;
 						}
 						break;
 					}
 					case TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT: {
 						const uint32_t* indicesData = reinterpret_cast<const uint32_t*>(indicesPreData);
 
-						for (size_t i = 0; i < indicesAccessor.count; ++i) {
-							model.indices.push_back(indicesData[i]);
+						for (size_t i = 0; i < indicesAccessor.count; i++) {
+							model.indices[currentIndex] = indicesData[i] + currentVertex;
+							currentIndex += 1;
 						}
 						break;
 					}
@@ -455,10 +463,19 @@ void VulkanAndRTX::loadGltfModel(const std::string& modelPath) {
 						bufferTexCoordSet1[i * 2 + 1]) : glm::vec3(0.0f);
 
 					model.vertices.push_back(vertex);
+					currentVertex += 1;
 				}
 			}
 		}
 		models.objects.push_back(model);
 	}
-	//std::cout << "vertices size: " << vertices.size() * sizeof(vertices) << "\n";
+	size_t totalVertices = 0;
+	size_t totalIndices = 0;
+	for (size_t i = 0; i < models.objects.size(); i++) {
+		totalVertices += models.objects[i].vertices.size();
+		totalIndices += models.objects[i].indices.size();
+	}
+	std::cout << "vertices: " << totalVertices << " ";
+	std::cout << "indices: " << totalIndices << "\n";
+	std::cout << "models: " << models.objects.size() << "\n";
 }

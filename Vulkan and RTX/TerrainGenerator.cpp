@@ -152,7 +152,7 @@ float TerrainGenerator::perlinNoise(float x, float y, float z) {
     // And add blended results from 4 corners of the square
     float res = lerp(r0, r1, w);
     return res; // result is in range [-1, 1]
-    // return (res + 2) / 2 // result is in range [0, 1]
+    // return (res + 1) / 2 // result is in range [0, 1]
 }
 
 void TerrainGenerator::generateTerrainMesh(float startX, float startZ,
