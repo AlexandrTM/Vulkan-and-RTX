@@ -331,7 +331,7 @@ void VulkanAndRTX::loadModelObj(const std::string& modelPath)
 
 void VulkanAndRTX::loadGltfModel(const std::string& modelPath) {
 	tinygltf::Model GLTFmodel;
-
+	
 	tinygltf::TinyGLTF loader;
 	std::string error;
 	std::string warning;
@@ -469,7 +469,7 @@ void VulkanAndRTX::loadGltfModel(const std::string& modelPath) {
 		}
 		models.objects.push_back(model);
 	}
-	size_t totalVertices = 0;
+	/*size_t totalVertices = 0;
 	size_t totalIndices = 0;
 	for (size_t i = 0; i < models.objects.size(); i++) {
 		totalVertices += models.objects[i].vertices.size();
@@ -477,5 +477,6 @@ void VulkanAndRTX::loadGltfModel(const std::string& modelPath) {
 	}
 	std::cout << "vertices: " << totalVertices << " ";
 	std::cout << "indices: " << totalIndices << "\n";
-	std::cout << "models: " << models.objects.size() << "\n";
+	std::cout << "models: " << models.objects.size() << "\n";*/
+	//std::cout << "textures: " << GLTFmodel.textures.size() << "\n";
 }

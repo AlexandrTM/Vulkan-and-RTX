@@ -97,11 +97,8 @@ void VulkanAndRTX::prepareResources()
 	createTextureImageView(textureImage, textureImageView);
 	createTextureSampler(textureSampler);
 
-	//loadGltfModel("models/elipsoid low poly.gltf");
-	//loadModelObj("models/elipsoid low poly.obj");
-
 	loadGltfModel("models/blue_archivekasumizawa_miyu.glb");
-	//generateTerrain(-300, -300, 600, 600, 1.0, 0.2, 1);
+	generateTerrain(-300, -300, 600, 600, 1.0, 0.2, 1);
 
 	generateSkyCube();
 
@@ -151,11 +148,45 @@ void VulkanAndRTX::mainLoop()
 
 		glfwPollEvents();
 		inputHandler.movePerson(deltaTime);
+		restrictCharacterMovement(inputHandler.camera);
 
 		drawFrame(timeSinceLaunch);
 	}
 
 	vkDeviceWaitIdle(vkInit.device);
+}
+
+void VulkanAndRTX::restrictCharacterMovement(Camera& camera)
+{
+	glm::vec3 cameraPosition = camera.getLookFrom();
+
+	glm::vec3 retrictPoint0 = glm::vec3(35.0, 30.0, 35.0);
+	glm::vec3 retrictPoint1 = glm::vec3(-35.0, 3.0, -35.0);
+
+	if (cameraPosition.x > retrictPoint0.x) {
+		camera.setLookFrom(glm::vec3(retrictPoint0.x, cameraPosition.y, cameraPosition.z));
+		cameraPosition = camera.getLookFrom();
+	}
+	if (cameraPosition.x < retrictPoint1.x) {
+		camera.setLookFrom(glm::vec3(retrictPoint1.x, cameraPosition.y, cameraPosition.z));
+		cameraPosition = camera.getLookFrom();
+	}
+	if (cameraPosition.y > retrictPoint0.y) {
+		camera.setLookFrom(glm::vec3(cameraPosition.x, retrictPoint0.y, cameraPosition.z));
+		cameraPosition = camera.getLookFrom();
+	}
+	if (cameraPosition.y < retrictPoint1.y) {
+		camera.setLookFrom(glm::vec3(cameraPosition.x, retrictPoint1.y, cameraPosition.z));
+		cameraPosition = camera.getLookFrom();
+	}
+	if (cameraPosition.z > retrictPoint0.z) {
+		camera.setLookFrom(glm::vec3(cameraPosition.x, cameraPosition.y, retrictPoint0.z));
+		cameraPosition = camera.getLookFrom();
+	}
+	if (cameraPosition.z < retrictPoint1.z) {
+		camera.setLookFrom(glm::vec3(cameraPosition.x, cameraPosition.y, retrictPoint1.z));
+		cameraPosition = camera.getLookFrom();
+	}
 }
 
 void VulkanAndRTX::cleanupModels()

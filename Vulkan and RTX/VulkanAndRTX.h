@@ -105,6 +105,8 @@ private:
 
 	void mainLoop();
 
+	void restrictCharacterMovement(Camera& camera);
+
 	void cleanupModels();
 	// emptying RAM
 	void cleanupMemory();
