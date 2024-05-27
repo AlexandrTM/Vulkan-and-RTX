@@ -51,6 +51,14 @@ void InputHandler::keyCallback(GLFWwindow* window, int key, int scancode, int ac
 	{
 		sensitivity = std::clamp(sensitivity * 0.75, 0.001, 10.0);
 	}
+
+	if (key == GLFW_KEY_E && action == GLFW_RELEASE) {
+		if (interactableCuboid.rayIntersectsCuboid(
+			camera.getLookFrom(), camera.getDirection())) {
+			std::cout << "yes\n";
+		}
+	}
+
 	// changing mipmap level of detail
 	/*if (key == GLFW_KEY_LEFT && action == GLFW_PRESS)
 	{

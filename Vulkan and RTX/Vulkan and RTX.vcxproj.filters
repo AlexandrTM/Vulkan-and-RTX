@@ -105,6 +105,9 @@
     <ClCompile Include="TerrainGenerator.cpp">
       <Filter>source</Filter>
     </ClCompile>
+    <ClCompile Include="InteractableVolume.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -153,6 +156,9 @@
       <Filter>headers</Filter>
     </ClInclude>
     <ClInclude Include="TerrainGenerator.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="InteractableVolume.h">
       <Filter>headers</Filter>
     </ClInclude>
   </ItemGroup>

@@ -167,6 +167,7 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="ImageManager.cpp" />
     <ClCompile Include="InputHandler.cpp" />
+    <ClCompile Include="InteractableVolume.cpp" />
     <ClCompile Include="IsCreature.cpp" />
     <ClCompile Include="IsEntity.cpp" />
     <ClCompile Include="HasExperienceLevel.cpp" />
@@ -194,6 +195,7 @@
   <ItemGroup>
     <ClInclude Include="Camera.h" />
     <ClInclude Include="InputHandler.h" />
+    <ClInclude Include="InteractableVolume.h" />
     <ClInclude Include="IsEntity.h" />
     <ClInclude Include="HasExperienceLevel.h" />
     <ClInclude Include="HasInventory.h" />

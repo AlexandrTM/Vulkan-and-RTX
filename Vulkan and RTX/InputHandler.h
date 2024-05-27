@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "Camera.h"
+#include "InteractableVolume.h"
 
 #ifndef INPUT_HANDLER_H
 #define INPUT_HANDLER_H
@@ -13,6 +14,9 @@ private:
 
 public:
 	Camera camera;
+
+	InteractableVolume interactableCuboid = InteractableVolume(
+		glm::vec3(-1.0, -1.0, -1.0), glm::vec3(1.0, 1.0, 1.0));
 
 	void initializeInputHandler(GLFWwindow* window);
 
