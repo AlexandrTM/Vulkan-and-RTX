@@ -432,6 +432,11 @@ void VulkanAndRTX::updateUniformBuffers(uint32_t currentImage, float timeSinceLa
 	objectUBO.sun = sun;
 	objectUBO.observer = inputHandler.camera.getLookFrom();
 
+	/*std::cout << "position: "
+		<< objectUBO.observer[0] << " "
+		<< objectUBO.observer[1] << " "
+		<< objectUBO.observer[2] << "\n";*/
+
 	// add transpose(inverse(ubo.model)) if doing non uniform scaling
 
 	skyUBO.model = glm::mat4(glm::mat3(view));

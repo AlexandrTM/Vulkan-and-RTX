@@ -19,11 +19,13 @@ layout(location = 0) out vec4 outColor;
 void main() {
     float visibilityRange = 150.0;
 
-    float distanceToFragment = length(ubo.observer - inPosition);
+    float distanceToFragment = distance(ubo.observer, inPosition);
 
-    outColor = texture(texSampler, inTexCoord0) * vec4(inColor, 1.0);
+    outColor = texture(texSampler, inTexCoord0) * vec4(inColor, 1.0);  
 
     if (distanceToFragment > visibilityRange) {
-        outColor = vec4(1.0, 0.0, 0.0, 1.0);
+        discard;
+    //outColor = vec4(0.0, ubo.observer.x/10, 0.0, 1.0);
     }
+
 }

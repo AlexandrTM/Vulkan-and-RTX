@@ -38,5 +38,6 @@
 #include <array>
 #include <unordered_map>
 #include <random>
+#include <numeric>
 
 #endif

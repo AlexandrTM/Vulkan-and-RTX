@@ -17,7 +17,6 @@ private:
 	const int MAX_FRAMES_IN_FLIGHT = 2;
 
 	const std::string MODEL_PATH = "models/model.obj";
-	const std::string TEXTURE_PATH = "textures/texture.png";
 
 #pragma endregion
 #pragma region
@@ -32,8 +31,8 @@ private:
 		alignas(16) glm::mat4 model;
 		alignas(16) glm::mat4 view;
 		alignas(16) glm::mat4 projection;
-		alignas(4)  glm::vec3 sun;
-		alignas(4)  glm::vec3 observer;
+		alignas(16) glm::vec3 sun;
+		alignas(16) glm::vec3 observer;
 	} objectUBO, skyUBO;
 
 	std::unique_ptr<TerrainGenerator> terrainGenerator;
@@ -122,7 +121,7 @@ private:
 	void generateCubicLandscape(size_t landscapeWidth, size_t landscapeLenght, float_t cubeSize);
 	void generateCube(float x, float y, float z, float_t cubeSize);
 	void generateSkyCube();
-	void generateTerrain(float startX, float startZ, size_t width, size_t height,
+	void generateTerrain(float startX, float startZ, size_t width, size_t length,
 		float scale, float roughness, size_t seed);
 
 	void loadModelObj(const std::string& filePath);

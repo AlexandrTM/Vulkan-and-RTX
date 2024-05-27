@@ -1,23 +1,66 @@
 #include "pch.h"
 #include "TerrainGenerator.h"
 
-TerrainGenerator::TerrainGenerator(size_t seed) : generator(seed) {}
+TerrainGenerator::TerrainGenerator(size_t seed) : generator(seed) 
+{
+    // Initialize the permutation vector with values 0-255
+    permutation.resize(256);
+    std::iota(permutation.begin(), permutation.end(), 0);
+
+    // Shuffle the permutation vector
+    std::shuffle(permutation.begin(), permutation.end(), std::default_random_engine(seed));
+
+    // Duplicate the permutation vector
+    permutation.insert(permutation.end(), permutation.begin(), permutation.end());
+}
 
 std::vector<std::vector<float>> TerrainGenerator::generateDiamondHeightMap(
-    size_t width, size_t height, float roughness) {
+    size_t width, size_t length, float roughness) {
     // Initialize the heightmap with zeros
-    std::vector<std::vector<float>> heightmap(width, std::vector<float>(height, 0.0f));
+    std::vector<std::vector<float>> heightmap(width, std::vector<float>(length, 0.0f));
 
     // Set the corner heights randomly
     heightmap[0        ][0         ] = roughness == 0.0 ? 0.0 : getRandomHeight();
-    heightmap[0        ][height - 1] = roughness == 0.0 ? 0.0 : getRandomHeight();
+    heightmap[0        ][length - 1] = roughness == 0.0 ? 0.0 : getRandomHeight();
     heightmap[width - 1][0         ] = roughness == 0.0 ? 0.0 : getRandomHeight();
-    heightmap[width - 1][height - 1] = roughness == 0.0 ? 0.0 : getRandomHeight();
+    heightmap[width - 1][length - 1] = roughness == 0.0 ? 0.0 : getRandomHeight();
 
     // Perform the Diamond-Square algorithm
-    diamondSquare(heightmap, 0, 0, width - 1, height - 1, roughness);
+    diamondSquare(heightmap, 0, 0, width - 1, length - 1, roughness);
 
     return heightmap;
+}
+
+std::vector<std::vector<float>> TerrainGenerator::generatePerlinHeightMap(size_t width, size_t length, float scale) {
+    std::vector<std::vector<float>> heightmap(width, std::vector<float>(length));
+
+    for (size_t i = 0; i < width; ++i) {
+        for (size_t j = 0; j < length; ++j) {
+            float x = static_cast<float>(i) * scale;
+            float y = static_cast<float>(j) * scale;
+            heightmap[i][j] = perlinNoise(x, y);
+        }
+    }
+
+    return heightmap;
+}
+
+// Generate a pseudo-random gradient vector at each grid point
+float TerrainGenerator::grad(int hash, float x, float y) {
+    // Convert low 4 bits of hash code into 12 gradient directions
+    int h = hash & 15;   // Take the low 4 bits of the hash value
+    float u = h < 8 ? x : y;  // Use x or y based on the value of h
+    float v = h < 4 ? y : (h == 12 || h == 14 ? x : 0);  // Determine v based on h
+    return ((h & 1) == 0 ? u : -u) + ((h & 2) == 0 ? v : -v);  // Calculate dot product
+}
+
+float TerrainGenerator::fade(float t) {
+    return t * t * t * (t * (t * 6 - 15) + 10);
+}
+
+// linear interpolation between a and b with weight t
+float TerrainGenerator::lerp(float a, float b, float t) {
+    return a + t * (b - a);
 }
 
 // Perform the Diamond-Square algorithm recursively
@@ -62,6 +105,31 @@ float TerrainGenerator::getRandomOffset(float roughness) {
 float TerrainGenerator::getRandomHeight() {
     std::uniform_real_distribution<float> distribution(0.0f, 1.0f);
     return distribution(generator);
+}
+
+float TerrainGenerator::perlinNoise(float x, float y) {
+    // Find unit grid cell containing point
+    int X = static_cast<int>(std::floor(x)) & 255;
+    int Y = static_cast<int>(std::floor(y)) & 255;
+
+    // Find relative x, y in grid cell
+    x -= std::floor(x);
+    y -= std::floor(y);
+
+    // Compute fade curves for x, y
+    float u = fade(x);
+    float v = fade(y);
+
+    // Hash coordinates of the 4 square corners
+    int aa = permutation[permutation[X] + Y];
+    int ab = permutation[permutation[X] + Y + 1];
+    int ba = permutation[permutation[X + 1] + Y];
+    int bb = permutation[permutation[X + 1] + Y + 1];
+
+    // And add blended results from 4 corners of the square
+    float res = lerp(v, lerp(u, grad(aa, x, y), grad(ba, x - 1, y)),
+        lerp(u, grad(ab, x, y - 1), grad(bb, x - 1, y - 1)));
+    return (res + 1.0f) / 2.0f; // Scale result to [0, 1]
 }
 
 void TerrainGenerator::generateTerrainMesh(float startX, float startZ,
@@ -113,7 +181,7 @@ void TerrainGenerator::generateTerrainMesh(float startX, float startZ,
             model.vertices.push_back(v3);
         }
     }
-    std::cout << "terrain vertices: " << model.vertices.size() << "\n";
+    //std::cout << "terrain vertices: " << model.vertices.size() << "\n";
 
     // Generate indices
     for (size_t i = 0; i < width; ++i) {
