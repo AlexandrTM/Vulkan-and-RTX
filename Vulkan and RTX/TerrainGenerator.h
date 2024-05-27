@@ -29,10 +29,10 @@ private:
     // Get a random height value
     float getRandomHeight();
 
-    float perlinNoise(float x, float y);
+    float perlinNoise(float x, float y, float z = 0.34567);
     float fade(float t);
     float lerp(float t, float a, float b);
-    float grad(int hash, float x, float y);
+    float grad(size_t hash, float x, float y);
 };
 
 #endif // !TERRAIN_GENERATOR

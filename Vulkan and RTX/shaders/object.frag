@@ -17,11 +17,15 @@ layout(location = 2) in vec2 inTexCoord0;
 layout(location = 0) out vec4 outColor;
 
 void main() {
+    float gamma = 1.3;
     float visibilityRange = 150.0;
 
     float distanceToFragment = distance(ubo.observer, inPosition);
 
-    outColor = texture(texSampler, inTexCoord0) * vec4(inColor, 1.0);  
+    vec4 texColor =  texture(texSampler, inTexCoord0);
+    texColor.rgb = pow(texColor.rgb, vec3(1.0 / gamma));
+
+    outColor = texColor * vec4(inColor, 1.0);  
 
     if (distanceToFragment > visibilityRange) {
         discard;

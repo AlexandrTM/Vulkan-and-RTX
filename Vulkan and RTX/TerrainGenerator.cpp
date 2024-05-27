@@ -36,9 +36,9 @@ std::vector<std::vector<float>> TerrainGenerator::generatePerlinHeightMap(size_t
 
     for (size_t i = 0; i < width; ++i) {
         for (size_t j = 0; j < length; ++j) {
-            float x = static_cast<float>(i) * scale;
-            float y = static_cast<float>(j) * scale;
-            heightmap[i][j] = perlinNoise(x, y);
+            float x = static_cast<float>(i) * scale / 64;
+            float y = static_cast<float>(j) * scale / 64;
+            heightmap[i][j] = perlinNoise(x, y) * 5;
         }
     }
 
@@ -46,9 +46,9 @@ std::vector<std::vector<float>> TerrainGenerator::generatePerlinHeightMap(size_t
 }
 
 // Generate a pseudo-random gradient vector at each grid point
-float TerrainGenerator::grad(int hash, float x, float y) {
+float TerrainGenerator::grad(size_t hash, float x, float y) {
     // Convert low 4 bits of hash code into 12 gradient directions
-    int h = hash & 15;   // Take the low 4 bits of the hash value
+    size_t h = hash & 15;   // Take the low 4 bits of the hash value
     float u = h < 8 ? x : y;  // Use x or y based on the value of h
     float v = h < 4 ? y : (h == 12 || h == 14 ? x : 0);  // Determine v based on h
     return ((h & 1) == 0 ? u : -u) + ((h & 2) == 0 ? v : -v);  // Calculate dot product
@@ -107,29 +107,52 @@ float TerrainGenerator::getRandomHeight() {
     return distribution(generator);
 }
 
-float TerrainGenerator::perlinNoise(float x, float y) {
+float TerrainGenerator::perlinNoise(float x, float y, float z) {
     // Find unit grid cell containing point
-    int X = static_cast<int>(std::floor(x)) & 255;
-    int Y = static_cast<int>(std::floor(y)) & 255;
+    size_t X = static_cast<int>(std::floor(x)) & 255;
+    size_t Y = static_cast<int>(std::floor(y)) & 255;
+    size_t Z = static_cast<int>(std::floor(z)) & 255;
 
     // Find relative x, y in grid cell
     x -= std::floor(x);
     y -= std::floor(y);
+    z -= std::floor(z);
 
     // Compute fade curves for x, y
     float u = fade(x);
     float v = fade(y);
+    float w = fade(z);
 
     // Hash coordinates of the 4 square corners
-    int aa = permutation[permutation[X] + Y];
-    int ab = permutation[permutation[X] + Y + 1];
-    int ba = permutation[permutation[X + 1] + Y];
-    int bb = permutation[permutation[X + 1] + Y + 1];
+    size_t a = (permutation[ X      & 255] + Y) & 255;
+    size_t b = (permutation[(X + 1) & 255] + Y) & 255;
+
+    size_t aa = permutation[permutation[a    ] + Z];
+    size_t ab = permutation[permutation[a + 1] + Z];
+    size_t ba = permutation[permutation[b    ] + Z];
+    size_t bb = permutation[permutation[b + 1] + Z];
+
+    const float p0 = grad(aa, x    , y    );
+    const float p1 = grad(ba, x - 1, y    );
+    const float p2 = grad(ab, x    , y - 1);
+    const float p3 = grad(bb, x - 1, y - 1);
+    const float p4 = grad(aa, x    , y    );
+    const float p5 = grad(ba, x - 1, y    );
+    const float p6 = grad(ab, x    , y - 1);
+    const float p7 = grad(bb, x - 1, y - 1);
+
+    float q0 = lerp(p0, p1, u);
+    float q1 = lerp(p2, p3, u);
+    float q2 = lerp(p4, p5, u);
+    float q3 = lerp(p6, p7, u);
+
+    float r0 = lerp(q0, q1, v);
+    float r1 = lerp(q2, q3, v);
 
     // And add blended results from 4 corners of the square
-    float res = lerp(v, lerp(u, grad(aa, x, y), grad(ba, x - 1, y)),
-        lerp(u, grad(ab, x, y - 1), grad(bb, x - 1, y - 1)));
-    return (res + 1.0f) / 2.0f; // Scale result to [0, 1]
+    float res = lerp(r0, r1, w);
+    return res; // result is in range [-1, 1]
+    // return (res + 2) / 2 // result is in range [0, 1]
 }
 
 void TerrainGenerator::generateTerrainMesh(float startX, float startZ,
@@ -170,10 +193,39 @@ void TerrainGenerator::generateTerrainMesh(float startX, float startZ,
             v2.color = glm::vec3(0.5f, 0.5f, 0.5f);
             v3.color = glm::vec3(0.5f, 0.5f, 0.5f);
 
-            v0.texCoord0 = glm::vec2(0.0f, 0.0f);
+            /*v0.texCoord0 = glm::vec2(0.0f, 0.0f);
             v1.texCoord0 = glm::vec2(1.0f, 0.0f);
             v2.texCoord0 = glm::vec2(0.0f, 1.0f);
-            v3.texCoord0 = glm::vec2(1.0f, 1.0f);
+            v3.texCoord0 = glm::vec2(1.0f, 1.0f);*/
+
+            float metricTextureSize = 10.0f;
+
+            // relative
+            float rx0 = x0 / metricTextureSize;
+            float rx1 = x1 / metricTextureSize;
+            float rx2 = x2 / metricTextureSize;
+            float rx3 = x3 / metricTextureSize;
+            float rz0 = z0 / metricTextureSize;
+            float rz1 = z1 / metricTextureSize;
+            float rz2 = z2 / metricTextureSize;
+            float rz3 = z3 / metricTextureSize;
+
+            // integer part
+            /*float irx0 = std::floor(rx0);
+            float irx1 = std::floor(rx1);
+            float irx2 = std::floor(rx2);
+            float irx3 = std::floor(rx3);
+            float irz0 = std::floor(rz0);
+            float irz1 = std::floor(rz1);
+            float irz2 = std::floor(rz2);
+            float irz3 = std::floor(rz3);*/
+
+            v0.texCoord0 = glm::vec2(rx0, rz0);
+            v1.texCoord0 = glm::vec2(rx1, rz1);
+            v2.texCoord0 = glm::vec2(rx2, rz2);
+            v3.texCoord0 = glm::vec2(rx3, rz3);
+
+            //std::cout << v0.texCoord0[0] << " " << v0.texCoord0[1] << "\n";
 
             model.vertices.push_back(v0);
             model.vertices.push_back(v1);
@@ -181,7 +233,7 @@ void TerrainGenerator::generateTerrainMesh(float startX, float startZ,
             model.vertices.push_back(v3);
         }
     }
-    //std::cout << "terrain vertices: " << model.vertices.size() << "\n";
+    std::cout << "terrain vertices: " << model.vertices.size() << "\n";
 
     // Generate indices
     for (size_t i = 0; i < width; ++i) {
