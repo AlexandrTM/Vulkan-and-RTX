@@ -16,7 +16,7 @@ public:
 	Camera camera;
 
 	InteractableVolume interactableCuboid = InteractableVolume(
-		glm::vec3(-1.0, -1.0, -1.0), glm::vec3(1.0, 1.0, 1.0));
+		glm::vec3(-1.0, 0.0, -1.0), glm::vec3(1.0, 3.0, 1.0));
 
 	void initializeInputHandler(GLFWwindow* window);
 

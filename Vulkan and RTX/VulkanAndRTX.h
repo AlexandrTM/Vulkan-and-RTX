@@ -121,7 +121,9 @@ private:
 	void framebufferResizeCallback(GLFWwindow* window, int width, int height);
 
 	void generateCubicLandscape(size_t landscapeWidth, size_t landscapeLenght, float_t cubeSize);
-	void generateCube(float x, float y, float z, float_t cubeSize);
+	void generateCube(float x, float y, float z, float cubeSize);
+	void generateCuboid(float x, float y, float z,
+		float width, float height, float length, glm::vec3 color);
 	void generateSkyCube();
 	void generateTerrain(float startX, float startZ, size_t width, size_t length,
 		float scale, float roughness, size_t seed);
