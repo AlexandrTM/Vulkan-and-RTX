@@ -83,7 +83,7 @@ void VulkanAndRTX::createSwapChainFramebuffers()
 
 		VkFramebufferCreateInfo framebufferInfo{};
 		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-		framebufferInfo.renderPass = renderPass;
+		framebufferInfo.renderPass = objectRenderPass;
 		framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
 		framebufferInfo.pAttachments = attachments.data();
 		framebufferInfo.width = swapChainExtent.width;
@@ -106,9 +106,11 @@ void VulkanAndRTX::recreateSwapChain()
 		glfwGetFramebufferSize(window, &width, &height);
 		glfwWaitEvents();
 		ImGui_ImplVulkan_SetMinImageCount(MAX_FRAMES_IN_FLIGHT);
-		ImGui_ImplVulkanH_CreateOrResizeWindow(vkInit.instance, vkInit.physicalDevice, vkInit.device, 
+		ImGui_ImplVulkanH_CreateOrResizeWindow(
+			vkInit.instance, vkInit.physicalDevice, vkInit.device, 
 			&vulkanWindow, vkInit.findQueueFamilies(vkInit.physicalDevice).graphicsFamily.value(),
-			nullptr, width, height, MAX_FRAMES_IN_FLIGHT);
+			nullptr, width, height, MAX_FRAMES_IN_FLIGHT
+		);
 		vulkanWindow.FrameIndex = 0;
 	}
 
@@ -119,7 +121,7 @@ void VulkanAndRTX::recreateSwapChain()
 
 	createSwapChain();
 	createSwapChainImageViews();
-	createRenderPass();
+	createRenderPass(objectRenderPass);
 	createGraphicsPipeline("object", "shaders/object.vert.spv", "shaders/object.frag.spv");
 	createGraphicsPipeline("sky", "shaders/sky.vert.spv", "shaders/sky.frag.spv");
 	createColorResources();
@@ -150,7 +152,7 @@ void VulkanAndRTX::cleanupSwapChain()
 		vkDestroyPipeline(vkInit.device, pipeline.second, nullptr);
 	}
 	vkDestroyPipelineLayout(vkInit.device, pipelineLayout, nullptr);
-	vkDestroyRenderPass(vkInit.device, renderPass, nullptr);
+	vkDestroyRenderPass(vkInit.device, objectRenderPass, nullptr);
 
 	for (size_t i = 0; i < swapChainImageViews.size(); i++) {
 		vkDestroyImageView(vkInit.device, swapChainImageViews[i], nullptr);

@@ -4,7 +4,7 @@
 
 // information about framebuffer attachments, how many color and depth buffers there will
 // be, how many samples to use for each of them and how their contents should be treated
-void VulkanAndRTX::createRenderPass()
+void VulkanAndRTX::createRenderPass(VkRenderPass& renderPass)
 {
 	VkAttachmentDescription colorAttachment{};
 	colorAttachment.format = swapChainImageFormat;
@@ -321,13 +321,14 @@ void VulkanAndRTX::createGraphicsPipeline(const std::string prefix, const std::s
 	pipelineInfo.pColorBlendState = &colorBlending;
 	pipelineInfo.pDynamicState = &dynamicState; // Optional
 	pipelineInfo.layout = pipelineLayout;
-	pipelineInfo.renderPass = renderPass;
+	pipelineInfo.renderPass = objectRenderPass;
 	pipelineInfo.subpass = 0;
 	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
 #pragma endregion
 
 	VkPipeline pipeline{};
 	if (vkCreateGraphicsPipelines(vkInit.device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline) != VK_SUCCESS) {
+		std::cout << prefix << " ";
 		throw std::runtime_error("failed to create graphics pipeline!");
 	}
 	pipelines[prefix] = pipeline;
@@ -337,7 +338,7 @@ void VulkanAndRTX::createGraphicsPipeline(const std::string prefix, const std::s
 }
 
 // Creating frames for presentation
-void VulkanAndRTX::drawFrame(float timeSinceLaunch)
+void VulkanAndRTX::drawFrame(float timeSinceLaunch, ImDrawData* draw_data)
 {
 	vkWaitForFences(vkInit.device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
@@ -361,20 +362,17 @@ void VulkanAndRTX::drawFrame(float timeSinceLaunch)
 	vkResetFences(vkInit.device, 1, &inFlightFences[currentFrame]);
 
 	vkResetCommandBuffer(commandBuffers[currentFrame], /*VkCommandBufferResetFlagBits*/ 0);
-	recordCommandBuffer(commandBuffers[currentFrame], imageIndex);
+	recordCommandBuffer(commandBuffers[currentFrame], imageIndex, draw_data);
 
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-
+	submitInfo.waitSemaphoreCount = 1;
 	VkSemaphore waitSemaphores[] = { imageAvailableSemaphores[currentFrame] };
 	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
-	submitInfo.waitSemaphoreCount = 1;
 	submitInfo.pWaitSemaphores = waitSemaphores;
 	submitInfo.pWaitDstStageMask = waitStages;
-
 	submitInfo.commandBufferCount = 1;
-	submitInfo.pCommandBuffers = &commandBuffers[currentFrame];
-	
+	submitInfo.pCommandBuffers = &commandBuffers[currentFrame];	
 	VkSemaphore signalSemaphores[] = { renderFinishedSemaphores[currentFrame] };
 	submitInfo.signalSemaphoreCount = 1;
 	submitInfo.pSignalSemaphores = signalSemaphores;
@@ -385,14 +383,12 @@ void VulkanAndRTX::drawFrame(float timeSinceLaunch)
 
 	VkPresentInfoKHR presentInfo{};
 	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-
 	presentInfo.waitSemaphoreCount = 1;
 	presentInfo.pWaitSemaphores = signalSemaphores;
 
 	VkSwapchainKHR swapChains[] = { swapChain };
 	presentInfo.swapchainCount = 1;
 	presentInfo.pSwapchains = swapChains;
-
 	presentInfo.pImageIndices = &imageIndex;
 
 	result = vkQueuePresentKHR(vkInit.presentQueue, &presentInfo);
@@ -458,7 +454,8 @@ void VulkanAndRTX::updateUniformBuffers(uint32_t currentImage, float timeSinceLa
 }
 
 // record commands to the command buffer
-void VulkanAndRTX::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex)
+void VulkanAndRTX::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, 
+	ImDrawData* draw_data)
 {
 	VkCommandBufferBeginInfo beginInfo{};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -469,7 +466,7 @@ void VulkanAndRTX::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t i
 
 	VkRenderPassBeginInfo renderPassInfo{};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	renderPassInfo.renderPass = renderPass;
+	renderPassInfo.renderPass = objectRenderPass;
 	renderPassInfo.framebuffer = swapChainFramebuffers[imageIndex];
 	renderPassInfo.renderArea.offset = { 0, 0 };
 	renderPassInfo.renderArea.extent = swapChainExtent;
@@ -509,6 +506,8 @@ void VulkanAndRTX::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t i
 			vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(model.indices.size()), 1, 0, 0, 0);
 		}
 	}
+
+	ImGui_ImplVulkan_RenderDrawData(draw_data, commandBuffers[currentFrame]);
 
 	vkCmdEndRenderPass(commandBuffer);
 

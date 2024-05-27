@@ -39,6 +39,7 @@ private:
 
 	GLFWwindow* window;
 	ImGui_ImplVulkanH_Window vulkanWindow;
+	ImGuiIO io;
 
 	InputHandler inputHandler;
 	VulkanInitializer vkInit;
@@ -50,7 +51,7 @@ private:
 	std::vector<VkImageView> swapChainImageViews;
 	std::vector<VkFramebuffer> swapChainFramebuffers;
 
-	VkRenderPass renderPass;
+	VkRenderPass objectRenderPass;
 	VkPipelineLayout pipelineLayout;
 
 	std::unordered_map<std::string, VkPipeline> pipelines;
@@ -103,8 +104,11 @@ private:
 	void createWindow();
 
 	void SetupVulkanWindow(ImGui_ImplVulkanH_Window* wd, VkSurfaceKHR surface, int width, int height);
-
 	void setupImGui();
+	void cleanupImGui();
+	void FrameRender(ImGui_ImplVulkanH_Window* wd, ImDrawData* drawData);
+	void FramePresent(ImGui_ImplVulkanH_Window* wd);
+	void check_vk_result(VkResult err);
 
 	void prepareResources();
 
@@ -115,10 +119,6 @@ private:
 	void cleanupModels();
 	// emptying RAM
 	void cleanupMemory();
-
-	void cleanupImGui();
-
-	void check_vk_result(VkResult err);
 
 	// cleaning "out of date" swap chain
 	void cleanupSwapChain();
@@ -205,7 +205,7 @@ private:
 	void createCommandBuffers();
 
 	// record commands to the command buffer
-	void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+	void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, ImDrawData* draw_data);
 
 	// creating uniform buffer for each frame in flight
 	void createUniformBuffers();
@@ -221,7 +221,7 @@ private:
 
 	// information about framebuffer attachments, how many color and depth buffers there will
 	// be, how many samples to use for each of them and how their contents should be treated
-	void createRenderPass();
+	void createRenderPass(VkRenderPass& renderPass);
 
 	void createPipelineLayout(VkDescriptorSetLayout& descriptorSetLayout);
 
@@ -239,7 +239,7 @@ private:
 	void createSyncObjects();
 
 	// Creating frames for presentation
-	void drawFrame(float timeSinceLaunch);
+	void drawFrame(float timeSinceLaunch, ImDrawData* draw_data);
 
 	// updating MVP matrix for every draw call every frame
 	void updateUniformBuffers(uint32_t currentImage, float timeSinceLaunch);

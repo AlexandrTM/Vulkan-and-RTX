@@ -69,9 +69,9 @@ void VulkanAndRTX::createWindow()
 void VulkanAndRTX::setupImGui() {
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	io = ImGui::GetIO(); (void)io;
 	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
 	ImGui::StyleColorsDark();
 
 	ImGui_ImplGlfw_InitForVulkan(window, true);
@@ -80,11 +80,16 @@ void VulkanAndRTX::setupImGui() {
 	init_info.Instance = vkInit.instance;
 	init_info.PhysicalDevice = vkInit.physicalDevice;
 	init_info.Device = vkInit.device;
+	init_info.QueueFamily = vkInit.findQueueFamilies(vkInit.physicalDevice).graphicsFamily.value();
 	init_info.Queue = vkInit.graphicsQueue;
+	init_info.PipelineCache = nullptr;
 	init_info.DescriptorPool = descriptorPool;
-	init_info.RenderPass = renderPass;
+	init_info.RenderPass = objectRenderPass;
 	init_info.Subpass = 0;
+	init_info.MinImageCount = MAX_FRAMES_IN_FLIGHT;
+	init_info.ImageCount = vulkanWindow.ImageCount;
 	init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+	init_info.Allocator = nullptr;
 	init_info.CheckVkResultFn = [](VkResult err) {
 		if (err != VK_SUCCESS) {
 			std::cerr << "Vulkan error: " << err << std::endl;
@@ -152,7 +157,7 @@ void VulkanAndRTX::prepareResources()
 	
 	createSwapChain();
 	createSwapChainImageViews();
-	createRenderPass();
+	createRenderPass(objectRenderPass);
 	createDescriptorSetLayout(descriptorSetLayout);
 	createGraphicsPipeline("object", "shaders/object.vert.spv", "shaders/object.frag.spv");
 	createGraphicsPipeline("sky", "shaders/sky.vert.spv", "shaders/sky.frag.spv");
@@ -224,43 +229,128 @@ void VulkanAndRTX::mainLoop()
 		inputHandler.movePerson(deltaTime);
 		restrictCharacterMovement(inputHandler.camera);
 
-		drawFrame(timeSinceLaunch);
+		// Start the ImGui frame
+		ImGui_ImplVulkan_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
+
+		// Create a simple window with ImGui
+		//bool windowShow = true;
+		//ImGui::ShowDemoWindow(&windowShow);
+		{
+			static float f = 0.0f;
+			static int counter = 0;
+
+			ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
+
+			ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
+
+			ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+
+			if (ImGui::Button("Button")) {                          // Buttons return true when clicked (most widgets return true when edited/activated)
+				counter++;
+			}
+			ImGui::SameLine();
+			ImGui::Text("counter = %d", counter);
+
+			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+			ImGui::End();
+		}
+		ImGui::Render();
+		ImDrawData* draw_data = ImGui::GetDrawData();
+		//FrameRender(&vulkanWindow, ImGui::GetDrawData());
+		//FramePresent(&vulkanWindow);
+
+		drawFrame(timeSinceLaunch, draw_data);
 	}
 
 	vkDeviceWaitIdle(vkInit.device);
 }
 
-void VulkanAndRTX::restrictCharacterMovement(Camera& camera)
+void VulkanAndRTX::FrameRender(ImGui_ImplVulkanH_Window* wd, ImDrawData* drawData)
 {
-	glm::vec3 cameraPosition = camera.getLookFrom();
+	VkResult err;
 
-	glm::vec3 retrictPoint0 = glm::vec3(35.0, 30.0, 35.0);
-	glm::vec3 retrictPoint1 = glm::vec3(-35.0, 3.0, -35.0);
+	VkSemaphore image_acquired_semaphore = wd->FrameSemaphores[wd->SemaphoreIndex].ImageAcquiredSemaphore;
+	VkSemaphore render_complete_semaphore = wd->FrameSemaphores[wd->SemaphoreIndex].RenderCompleteSemaphore;
+	err = vkAcquireNextImageKHR(vkInit.device, wd->Swapchain, UINT64_MAX, image_acquired_semaphore, VK_NULL_HANDLE, &wd->FrameIndex);
 
-	if (cameraPosition.x > retrictPoint0.x) {
-		camera.setLookFrom(glm::vec3(retrictPoint0.x, cameraPosition.y, cameraPosition.z));
-		cameraPosition = camera.getLookFrom();
+	check_vk_result(err);
+
+	ImGui_ImplVulkanH_Frame* fd = &wd->Frames[wd->FrameIndex];
+	{
+		err = vkWaitForFences(vkInit.device, 1, &fd->Fence, VK_TRUE, UINT64_MAX);    // wait indefinitely instead of periodically checking
+		check_vk_result(err);
+
+		err = vkResetFences(vkInit.device, 1, &fd->Fence);
+		check_vk_result(err);
 	}
-	if (cameraPosition.x < retrictPoint1.x) {
-		camera.setLookFrom(glm::vec3(retrictPoint1.x, cameraPosition.y, cameraPosition.z));
-		cameraPosition = camera.getLookFrom();
+	{
+		err = vkResetCommandPool(vkInit.device, fd->CommandPool, 0);
+		check_vk_result(err);
+		VkCommandBufferBeginInfo info = {};
+		info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		info.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+		err = vkBeginCommandBuffer(fd->CommandBuffer, &info);
+		check_vk_result(err);
 	}
-	if (cameraPosition.y > retrictPoint0.y) {
-		camera.setLookFrom(glm::vec3(cameraPosition.x, retrictPoint0.y, cameraPosition.z));
-		cameraPosition = camera.getLookFrom();
+	{
+		VkRenderPassBeginInfo info = {};
+		info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		info.renderPass = wd->RenderPass;
+		info.framebuffer = fd->Framebuffer;
+		info.renderArea.extent.width = wd->Width;
+		info.renderArea.extent.height = wd->Height;
+		info.clearValueCount = 1;
+		info.pClearValues = &wd->ClearValue;
+		vkCmdBeginRenderPass(fd->CommandBuffer, &info, VK_SUBPASS_CONTENTS_INLINE);
 	}
-	if (cameraPosition.y < retrictPoint1.y) {
-		camera.setLookFrom(glm::vec3(cameraPosition.x, retrictPoint1.y, cameraPosition.z));
-		cameraPosition = camera.getLookFrom();
+
+	// Record dear imgui primitives into command buffer
+	ImGui_ImplVulkan_RenderDrawData(drawData, fd->CommandBuffer);
+
+	// Submit command buffer
+	vkCmdEndRenderPass(fd->CommandBuffer);
+	{
+		VkPipelineStageFlags wait_stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		VkSubmitInfo info = {};
+		info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		info.waitSemaphoreCount = 1;
+		info.pWaitSemaphores = &image_acquired_semaphore;
+		info.pWaitDstStageMask = &wait_stage;
+		info.commandBufferCount = 1;
+		info.pCommandBuffers = &fd->CommandBuffer;
+		info.signalSemaphoreCount = 1;
+		info.pSignalSemaphores = &render_complete_semaphore;
+
+		err = vkEndCommandBuffer(fd->CommandBuffer);
+		check_vk_result(err);
+		err = vkQueueSubmit(vkInit.graphicsQueue, 1, &info, fd->Fence);
+		check_vk_result(err);
 	}
-	if (cameraPosition.z > retrictPoint0.z) {
-		camera.setLookFrom(glm::vec3(cameraPosition.x, cameraPosition.y, retrictPoint0.z));
-		cameraPosition = camera.getLookFrom();
-	}
-	if (cameraPosition.z < retrictPoint1.z) {
-		camera.setLookFrom(glm::vec3(cameraPosition.x, cameraPosition.y, retrictPoint1.z));
-		cameraPosition = camera.getLookFrom();
-	}
+}
+
+void VulkanAndRTX::FramePresent(ImGui_ImplVulkanH_Window* wd)
+{
+	VkSemaphore render_complete_semaphore = wd->FrameSemaphores[wd->SemaphoreIndex].RenderCompleteSemaphore;
+	VkPresentInfoKHR info = {};
+	info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+	info.waitSemaphoreCount = 1;
+	info.pWaitSemaphores = &render_complete_semaphore;
+	info.swapchainCount = 1;
+	info.pSwapchains = &wd->Swapchain;
+	info.pImageIndices = &wd->FrameIndex;
+	VkResult err = vkQueuePresentKHR(vkInit.graphicsQueue, &info);
+	check_vk_result(err);
+	wd->SemaphoreIndex = (wd->SemaphoreIndex + 1) % wd->SemaphoreCount; // Now we can use the next set of semaphores
+}
+
+void VulkanAndRTX::cleanupImGui() {
+	VkResult err = vkDeviceWaitIdle(vkInit.device);
+    check_vk_result(err);
+    ImGui_ImplVulkan_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
 }
 
 void VulkanAndRTX::cleanupModels()
@@ -329,12 +419,37 @@ void VulkanAndRTX::cleanupMemory()
 	glfwTerminate();
 }
 
-void VulkanAndRTX::cleanupImGui() {
-	VkResult err = vkDeviceWaitIdle(vkInit.device);
-    check_vk_result(err);
-    ImGui_ImplVulkan_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
+void VulkanAndRTX::restrictCharacterMovement(Camera& camera)
+{
+	glm::vec3 cameraPosition = camera.getLookFrom();
+
+	glm::vec3 retrictPoint0 = glm::vec3(35.0, 30.0, 35.0);
+	glm::vec3 retrictPoint1 = glm::vec3(-35.0, 3.0, -35.0);
+
+	if (cameraPosition.x > retrictPoint0.x) {
+		camera.setLookFrom(glm::vec3(retrictPoint0.x, cameraPosition.y, cameraPosition.z));
+		cameraPosition = camera.getLookFrom();
+	}
+	if (cameraPosition.x < retrictPoint1.x) {
+		camera.setLookFrom(glm::vec3(retrictPoint1.x, cameraPosition.y, cameraPosition.z));
+		cameraPosition = camera.getLookFrom();
+	}
+	if (cameraPosition.y > retrictPoint0.y) {
+		camera.setLookFrom(glm::vec3(cameraPosition.x, retrictPoint0.y, cameraPosition.z));
+		cameraPosition = camera.getLookFrom();
+	}
+	if (cameraPosition.y < retrictPoint1.y) {
+		camera.setLookFrom(glm::vec3(cameraPosition.x, retrictPoint1.y, cameraPosition.z));
+		cameraPosition = camera.getLookFrom();
+	}
+	if (cameraPosition.z > retrictPoint0.z) {
+		camera.setLookFrom(glm::vec3(cameraPosition.x, cameraPosition.y, retrictPoint0.z));
+		cameraPosition = camera.getLookFrom();
+	}
+	if (cameraPosition.z < retrictPoint1.z) {
+		camera.setLookFrom(glm::vec3(cameraPosition.x, cameraPosition.y, retrictPoint1.z));
+		cameraPosition = camera.getLookFrom();
+	}
 }
 
 void VulkanAndRTX::check_vk_result(VkResult err)
@@ -490,7 +605,7 @@ void VulkanAndRTX::createDescriptorPool()
 {
 	std::array<VkDescriptorPoolSize, 2> poolSizes{};
 	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	poolSizes[0].descriptorCount = 5 * static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+	poolSizes[0].descriptorCount = 7 * static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 	poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	poolSizes[1].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
@@ -498,7 +613,7 @@ void VulkanAndRTX::createDescriptorPool()
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
 	poolInfo.pPoolSizes = poolSizes.data();
-	poolInfo.maxSets = 2 * static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+	poolInfo.maxSets = 3 * static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
 	if (vkCreateDescriptorPool(vkInit.device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create descriptor pool!");
