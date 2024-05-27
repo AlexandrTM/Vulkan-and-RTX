@@ -38,6 +38,7 @@ private:
 	std::unique_ptr<TerrainGenerator> terrainGenerator;
 
 	GLFWwindow* window;
+	ImGui_ImplVulkanH_Window vulkanWindow;
 
 	InputHandler inputHandler;
 	VulkanInitializer vkInit;
@@ -100,6 +101,8 @@ public:
 private:
 	// initializing GLFW and creating window
 	void createWindow();
+
+	void SetupVulkanWindow(ImGui_ImplVulkanH_Window* wd, VkSurfaceKHR surface, int width, int height);
 
 	void setupImGui();
 

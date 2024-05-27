@@ -105,6 +105,11 @@ void VulkanAndRTX::recreateSwapChain()
 	while (width == 0 || height == 0) {
 		glfwGetFramebufferSize(window, &width, &height);
 		glfwWaitEvents();
+		ImGui_ImplVulkan_SetMinImageCount(MAX_FRAMES_IN_FLIGHT);
+		ImGui_ImplVulkanH_CreateOrResizeWindow(vkInit.instance, vkInit.physicalDevice, vkInit.device, 
+			&vulkanWindow, vkInit.findQueueFamilies(vkInit.physicalDevice).graphicsFamily.value(),
+			nullptr, width, height, MAX_FRAMES_IN_FLIGHT);
+		vulkanWindow.FrameIndex = 0;
 	}
 
 	// waiting for previous swap chain to stop rendering
