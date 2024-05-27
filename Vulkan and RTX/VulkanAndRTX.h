@@ -39,7 +39,9 @@ private:
 
 	GLFWwindow* window;
 	ImGui_ImplVulkanH_Window vulkanWindow;
+
 	ImGuiIO io;
+	int inputNumber = 0;
 
 	InputHandler inputHandler;
 	VulkanInitializer vkInit;

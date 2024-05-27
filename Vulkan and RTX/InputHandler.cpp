@@ -59,7 +59,6 @@ void InputHandler::keyCallback(GLFWwindow* window, int key, int scancode, int ac
 					camera.getLookFrom(), camera.getDirection())) {
 					currentInteractingVolume = &interactableCuboids[i];
 					currentInteractingVolume->isOpen = true;
-					std::cout << currentInteractingVolume->name << "\n";
 				}
 			}
 		}

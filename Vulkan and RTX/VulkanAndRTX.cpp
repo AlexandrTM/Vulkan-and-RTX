@@ -173,7 +173,7 @@ void VulkanAndRTX::prepareResources()
 	//loadGltfModel("models/blue_archivekasumizawa_miyu.glb");
 	generateTerrain(-300, -300, 600, 600, 1.0, 0.2, 1);
 	generateCuboid(20.0, 0.0 , -10.0, 
-				   1.75, 4.75,  1.75, glm::vec3(0.0, 0.7, 0.0));
+				   1.75, 4.75,  1.75, glm::vec3(0.0, 0.45, 0.0));
 	generateCuboid(20.0, 0.0 ,   0.0,
 				   1.75, 4.75,  1.75, glm::vec3(0.52, 0.52, 0.0));
 	generateCuboid(20.0, 0.0 ,  10.0,
@@ -236,28 +236,26 @@ void VulkanAndRTX::mainLoop()
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 		
-		if(inputHandler.currentInteractingVolume) {
+		if(inputHandler.currentInteractingVolume && inputHandler.currentInteractingVolume->isOpen) {
 			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 
-			ImGui::Begin("Hello, world!", &inputHandler.currentInteractingVolume->isOpen);
+			bool menuOpen = inputHandler.currentInteractingVolume->isOpen;
+
+			ImGui::Begin((&inputHandler.currentInteractingVolume->name)->c_str(), &menuOpen);
 			static float f = 0.0f;
 			static int counter = 0;
 
-			ImGui::Text("This is some useful text.");        // Display some text (you can use a format strings too)
+			//ImGui::Text((&intVol->name)->c_str());
+			//ImGui::CloseCurrentPopup();
+			ImGui::InputInt("number: ", &inputNumber);
+			//std::cout << inputNumber << "\n";
 
-			ImGui::SliderFloat("float", &f, 0.0f, 1.0f);    // Edit 1 float using a slider from 0.0f to 1.0f
-
-			if (ImGui::Button("Button")) {                  // Buttons return true when clicked (most widgets return true when edited/activated)
-				counter++;
-			}
-			ImGui::SameLine();
-			ImGui::Text("counter = %d", counter);
-
-			ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
-			
-			if (!&inputHandler.currentInteractingVolume->isOpen) {
+			//ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+			if (!menuOpen) {
+				inputHandler.currentInteractingVolume->isOpen = menuOpen;
 				inputHandler.currentInteractingVolume = nullptr;
 				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+				inputNumber = 0;
 			}
 			
 			ImGui::End();
