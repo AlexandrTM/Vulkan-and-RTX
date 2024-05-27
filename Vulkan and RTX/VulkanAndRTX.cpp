@@ -7,6 +7,7 @@ void VulkanAndRTX::run()
 	inputHandler.initializeInputHandler(window);
 	vkInit.initializeVulkan(window);
 	prepareResources();
+	setupImGui();
 	mainLoop();
 	cleanupMemory();
 }
@@ -62,6 +63,34 @@ void VulkanAndRTX::createWindow()
 
 	glfwSetWindowIcon(window, 1, windowIcon);
 #pragma endregion
+}
+
+void VulkanAndRTX::setupImGui() {
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+	io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+	ImGui::StyleColorsDark();
+
+	ImGui_ImplGlfw_InitForVulkan(window, true);
+
+	ImGui_ImplVulkan_InitInfo init_info = {};
+	init_info.Instance = vkInit.instance;
+	init_info.PhysicalDevice = vkInit.physicalDevice;
+	init_info.Device = vkInit.device;
+	init_info.Queue = vkInit.graphicsQueue;
+	init_info.DescriptorPool = descriptorPool;
+	init_info.RenderPass = renderPass;
+	init_info.Subpass = 0;
+	init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+	init_info.CheckVkResultFn = [](VkResult err) {
+		if (err != VK_SUCCESS) {
+			std::cerr << "Vulkan error: " << err << std::endl;
+		}
+	};
+
+	ImGui_ImplVulkan_Init(&init_info);
 }
 
 // set "framebufferResized" to "true" if window was resized or moved
@@ -215,6 +244,8 @@ void VulkanAndRTX::cleanupModels()
 // emptying RAM
 void VulkanAndRTX::cleanupMemory()
 {
+	cleanupImGui();
+
 	cleanupSwapChain();
 
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
@@ -257,6 +288,23 @@ void VulkanAndRTX::cleanupMemory()
 	glfwDestroyWindow(window);
 
 	glfwTerminate();
+}
+
+void VulkanAndRTX::cleanupImGui() {
+	VkResult err = vkDeviceWaitIdle(vkInit.device);
+    check_vk_result(err);
+    ImGui_ImplVulkan_Shutdown();
+    ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+}
+
+void VulkanAndRTX::check_vk_result(VkResult err)
+{
+	if (err == 0)
+		return;
+	fprintf(stderr, "[vulkan] Error: VkResult = %d\n", err);
+	if (err < 0)
+		abort();
 }
 
 // reading bytecode files and returning its bytes

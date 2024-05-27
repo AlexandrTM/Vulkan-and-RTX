@@ -101,6 +101,8 @@ private:
 	// initializing GLFW and creating window
 	void createWindow();
 
+	void setupImGui();
+
 	void prepareResources();
 
 	void mainLoop();
@@ -110,6 +112,10 @@ private:
 	void cleanupModels();
 	// emptying RAM
 	void cleanupMemory();
+
+	void cleanupImGui();
+
+	void check_vk_result(VkResult err);
 
 	// cleaning "out of date" swap chain
 	void cleanupSwapChain();

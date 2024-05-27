@@ -6,6 +6,13 @@
 #include <GLFW/glfw3.h>
 #endif
 
+#ifndef IMGUI_DEFINE_MATH_OPERATORS
+#define IMGUI_DEFINE_MATH_OPERATORS
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_vulkan.h"
+#endif
+
 #define GLM_ENABLE_EXPERIMENTAL
 #include <gtx/hash.hpp>
 
@@ -18,10 +25,6 @@
 #include <stb_image.h>
 #include <tiny_gltf.h>
 #include <tiny_obj_loader.h>
-
-#include <imgui.h>
-#include <backends/imgui_impl_glfw.h>
-#include <backends/imgui_impl_vulkan.h>
 
 #include <chrono>
 #include <iostream>
