@@ -173,9 +173,9 @@ void VulkanAndRTX::prepareResources()
 	//loadGltfModel("models/blue_archivekasumizawa_miyu.glb");
 	generateTerrain(-300, -300, 600, 600, 1.0, 0.2, 1);
 	generateCuboid(20.0, 0.0 , -10.0, 
-				   1.75, 4.75,  1.75, glm::vec3(0.0, 0.45, 0.0));
+				   1.75, 4.75,  1.75, glm::vec3(0.0, 0.4, 0.0));
 	generateCuboid(20.0, 0.0 ,   0.0,
-				   1.75, 4.75,  1.75, glm::vec3(0.52, 0.52, 0.0));
+				   1.75, 4.75,  1.75, glm::vec3(0.57, 0.57, 0.0));
 	generateCuboid(20.0, 0.0 ,  10.0,
 				   1.75, 4.75,  1.75, glm::vec3(0.7, 0.0, 0.0));
 
@@ -238,24 +238,31 @@ void VulkanAndRTX::mainLoop()
 		
 		if(inputHandler.currentInteractingVolume && inputHandler.currentInteractingVolume->isOpen) {
 			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+			//glfwGetCursorPos(window, &lastMousePosX, &lastMousePosY);
 
 			bool menuOpen = inputHandler.currentInteractingVolume->isOpen;
-
 			ImGui::Begin((&inputHandler.currentInteractingVolume->name)->c_str(), &menuOpen);
-			static float f = 0.0f;
-			static int counter = 0;
 
-			//ImGui::Text((&intVol->name)->c_str());
-			//ImGui::CloseCurrentPopup();
-			ImGui::InputInt("number: ", &inputNumber);
+			ImGui::Text("Solve the equation");
+			
+			if (!puzzleGenerated) {
+				puzzleEquation = createPuzzleEquation(
+					inputHandler.currentInteractingVolume->name, puzzleAnswer);
+				puzzleGenerated = true;
+			}
+			ImGui::Text((char*)&puzzleEquation);
+			ImGui::InputInt("Enter the answer: ", &inputNumber);
+
 			//std::cout << inputNumber << "\n";
-
-			//ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / io.Framerate, io.Framerate);
+			//menuOpen = false;
 			if (!menuOpen) {
 				inputHandler.currentInteractingVolume->isOpen = menuOpen;
 				inputHandler.currentInteractingVolume = nullptr;
 				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 				inputNumber = 0;
+				puzzleGenerated = false;
+				
+				//glfwSetCursorPos(window, lastMousePosX / 2, lastMousePosY / 2);
 			}
 			
 			ImGui::End();
@@ -385,6 +392,76 @@ void VulkanAndRTX::check_vk_result(VkResult err)
 	fprintf(stderr, "[vulkan] Error: VkResult = %d\n", err);
 	if (err < 0)
 		abort();
+}
+
+std::string VulkanAndRTX::createPuzzleEquation(std::string name, int& answer)
+{
+	std::stringstream puzzleEquation;
+
+	if (name == "easy") {
+		// Generate an easy equation: a + b or a - b
+		int a = rand() % 10 + 1; // Random number between 1 and 10
+		int b = rand() % 10 + 1;
+		char op = rand() % 2 == 0 ? '+' : '-';
+
+		if (op == '+') {
+			answer = a + b;
+		}
+		else {
+			answer = a - b;
+		}
+
+		puzzleEquation << a << " " << op << " " << b;
+	}
+	else if (name == "medium") {
+		// Generate a medium equation: a * b or a / b (where b divides a evenly)
+		int a = rand() % 10 + 1;
+		int b = rand() % 9 + 1; // Avoid zero to prevent division by zero
+		char op = rand() % 2 == 0 ? '*' : '/';
+		if (op == '/') {
+			// Ensure that the division is an integer division
+			a = a * b; // Adjust 'a' to make it divisible by 'b'
+		}
+
+		if (op == '*') {
+			answer = a * b;
+		}
+		else {
+			a = a * b;
+			answer = a / b;
+		}
+
+		puzzleEquation << a << " " << op << " " << b;
+	}
+	else if (name == "hard") {
+		// Generate a hard equation: (a + b) * c or (a - b) / c (where c divides the result evenly)
+		int a = rand() % 10 + 1;
+		int b = rand() % 10 + 1;
+		int c = rand() % 9 + 1; // Avoid zero to prevent division by zero
+		char op1 = rand() % 2 == 0 ? '+' : '-';
+		char op2 = rand() % 2 == 0 ? '*' : '/';
+		if (op1 == '/' && op2 == '*') {
+			// Ensure that the division is an integer division
+			a = a * b; // Adjust 'a' to make it divisible by 'b'
+		}
+
+		if      (op1 == '+' && op2 == '*') {
+			answer = (a + b) * c;
+		}
+		else if (op1 == '+' && op2 == '/'){
+			answer = (a + b) / c;
+		}
+		else if (op1 == '-' && op2 == '*') {
+			answer = (a - b) * c;
+		}
+		else if (op1 == '-' && op2 == '/') {
+			answer = (a - b) / c;
+		}
+
+		puzzleEquation << "(" << a << " " << op1 << " " << b << ") " << op2 << " " << c;
+	}
+
+	return puzzleEquation.str();
 }
 
 // reading bytecode files and returning its bytes

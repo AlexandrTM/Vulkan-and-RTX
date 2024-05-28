@@ -39,9 +39,13 @@ private:
 
 	GLFWwindow* window;
 	ImGui_ImplVulkanH_Window vulkanWindow;
+	double lastMousePosX, lastMousePosY;
 
 	ImGuiIO io;
 	int inputNumber = 0;
+	bool puzzleGenerated = false;
+	int puzzleAnswer = 0;
+	std::string puzzleEquation;
 
 	InputHandler inputHandler;
 	VulkanInitializer vkInit;
@@ -110,6 +114,7 @@ private:
 	void setupImGui();
 	void cleanupImGui();
 	void check_vk_result(VkResult err);
+	std::string createPuzzleEquation(std::string name, int& answer);
 
 	void prepareResources();
 
