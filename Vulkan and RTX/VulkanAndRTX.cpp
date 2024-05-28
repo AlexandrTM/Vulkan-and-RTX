@@ -248,10 +248,17 @@ void VulkanAndRTX::mainLoop()
 			if (!puzzleGenerated) {
 				puzzleEquation = createPuzzleEquation(
 					inputHandler.currentInteractingVolume->name, puzzleAnswer);
+				std::cout << puzzleAnswer << "\n";
 				puzzleGenerated = true;
 			}
+			//ImGui::Text((char*)&std::to_string(puzzleAnswer));
 			ImGui::Text((char*)&puzzleEquation);
-			ImGui::InputInt("Enter the answer: ", &inputNumber);
+			ImGui::InputInt("Enter the answer: ", &puzzleInput);
+
+			if (puzzleInput == puzzleAnswer) {
+				puzzleInput = 0;
+				puzzleGenerated = false;
+			}
 
 			//std::cout << inputNumber << "\n";
 			//menuOpen = false;
@@ -259,7 +266,7 @@ void VulkanAndRTX::mainLoop()
 				inputHandler.currentInteractingVolume->isOpen = menuOpen;
 				inputHandler.currentInteractingVolume = nullptr;
 				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-				inputNumber = 0;
+				puzzleInput = 0;
 				puzzleGenerated = false;
 				
 				//glfwSetCursorPos(window, lastMousePosX / 2, lastMousePosY / 2);

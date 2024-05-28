@@ -42,7 +42,7 @@ private:
 	double lastMousePosX, lastMousePosY;
 
 	ImGuiIO io;
-	int inputNumber = 0;
+	int puzzleInput = 0;
 	bool puzzleGenerated = false;
 	int puzzleAnswer = 0;
 	std::string puzzleEquation;
