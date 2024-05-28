@@ -407,8 +407,8 @@ std::string VulkanAndRTX::createPuzzleEquation(std::string name, int& answer)
 
 	if (name == "easy") {
 		// Generate an easy equation: a + b or a - b
-		int a = rand() % 10 + 1; // Random number between 1 and 10
-		int b = rand() % 10 + 1;
+		int a = rand() % 50 + 1; // Random number between 1 and 10
+		int b = rand() % 50 + 1;
 		char op = rand() % 2 == 0 ? '+' : '-';
 
 		if (op == '+') {
@@ -422,8 +422,8 @@ std::string VulkanAndRTX::createPuzzleEquation(std::string name, int& answer)
 	}
 	else if (name == "medium") {
 		// Generate a medium equation: a * b or a / b (where b divides a evenly)
-		int a = rand() % 10 + 1;
-		int b = rand() % 9 + 1; // Avoid zero to prevent division by zero
+		int a = rand() % 14 + 1;
+		int b = rand() % 10 + 1; // Avoid zero to prevent division by zero
 		char op = rand() % 2 == 0 ? '*' : '/';
 		if (op == '/') {
 			// Ensure that the division is an integer division
@@ -442,14 +442,22 @@ std::string VulkanAndRTX::createPuzzleEquation(std::string name, int& answer)
 	}
 	else if (name == "hard") {
 		// Generate a hard equation: (a + b) * c or (a - b) / c (where c divides the result evenly)
-		int a = rand() % 10 + 1;
-		int b = rand() % 10 + 1;
-		int c = rand() % 9 + 1; // Avoid zero to prevent division by zero
+		int a = rand() % 12 + 2;
+		int b = rand() % 12 + 2;
+		int c = rand() % 12 + 2; // Avoid zero to prevent division by zero
 		char op1 = rand() % 2 == 0 ? '+' : '-';
 		char op2 = rand() % 2 == 0 ? '*' : '/';
-		if (op1 == '/' && op2 == '*') {
+		if (op2 == '/') {
 			// Ensure that the division is an integer division
-			a = a * b; // Adjust 'a' to make it divisible by 'b'
+			int a_b_sum = (rand() % 12 + 4) * c;
+			if (op1 == '+') {
+				a = (a_b_sum - std::min(rand() % 12 + 4, a_b_sum));
+				b = a_b_sum - a;
+			}
+			else if (op1 == '-') {
+				a = (a_b_sum - std::min(rand() % 12 + 4, a_b_sum));
+				b = a_b_sum + a;
+			}
 		}
 
 		if      (op1 == '+' && op2 == '*') {
@@ -467,7 +475,7 @@ std::string VulkanAndRTX::createPuzzleEquation(std::string name, int& answer)
 
 		puzzleEquation << "(" << a << " " << op1 << " " << b << ") " << op2 << " " << c;
 	}
-
+	
 	return puzzleEquation.str();
 }
 
@@ -687,6 +695,7 @@ VkShaderModule VulkanAndRTX::createShaderModule(const std::vector<char>& code) c
 }
 
 static int runVulkanAndRTX() {
+	srand(static_cast<unsigned>(time(0))); // Seed the random number generator once
 	VulkanAndRTX app;
 	try {
 		app.run();
