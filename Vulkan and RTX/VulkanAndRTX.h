@@ -46,6 +46,7 @@ private:
 	bool puzzleGenerated = false;
 	int puzzleAnswer = 0;
 	std::string puzzleEquation;
+	float timeToSolvePuzzle = 0.0f;
 
 	InputHandler inputHandler;
 	VulkanInitializer vkInit;

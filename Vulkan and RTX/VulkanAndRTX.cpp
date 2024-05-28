@@ -250,8 +250,11 @@ void VulkanAndRTX::mainLoop()
 					inputHandler.currentInteractingVolume->name, puzzleAnswer);
 				std::cout << puzzleAnswer << "\n";
 				puzzleGenerated = true;
+				timeToSolvePuzzle = 6.5f;
 			}
 			//ImGui::Text((char*)&std::to_string(puzzleAnswer));
+			std::string timeStr = std::to_string(timeToSolvePuzzle);
+			ImGui::Text(timeStr.c_str());
 			ImGui::Text((char*)&puzzleEquation);
 			ImGui::InputInt("Enter the answer: ", &puzzleInput);
 
@@ -262,7 +265,7 @@ void VulkanAndRTX::mainLoop()
 
 			//std::cout << inputNumber << "\n";
 			//menuOpen = false;
-			if (!menuOpen) {
+			if (!menuOpen || timeToSolvePuzzle <= 0.0f) {
 				inputHandler.currentInteractingVolume->isOpen = menuOpen;
 				inputHandler.currentInteractingVolume = nullptr;
 				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
@@ -271,10 +274,10 @@ void VulkanAndRTX::mainLoop()
 				
 				//glfwSetCursorPos(window, lastMousePosX / 2, lastMousePosY / 2);
 			}
+			timeToSolvePuzzle -= deltaTime;
 			
 			ImGui::End();
 		}
-
 
 		ImGui::Render();
 		ImDrawData* draw_data = ImGui::GetDrawData();
