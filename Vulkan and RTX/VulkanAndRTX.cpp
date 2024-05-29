@@ -1,13 +1,16 @@
 #include "pch.h"
 #include "VulkanAndRTX.h"
 
+static ImGui_ImplVulkanH_Window g_MainWindowData;
+
 void VulkanAndRTX::run()
 {
 	createWindow();
 	inputHandler.initializeInputHandler(window);
 	vkInit.initializeVulkan(window);
 	prepareResources();
-	setupImguiWindow(&vulkanWindow, vkInit.surface, windowWidth, windowHeight);
+	vulkanWindow = &g_MainWindowData;
+	setupImguiWindow(vulkanWindow, vkInit.surface, windowWidth, windowHeight);
 	setupImGui();
 	mainLoop();
 	cleanupMemory();
@@ -87,7 +90,7 @@ void VulkanAndRTX::setupImGui() {
 	init_info.RenderPass = objectRenderPass;
 	init_info.Subpass = 0;
 	init_info.MinImageCount = MAX_FRAMES_IN_FLIGHT;
-	init_info.ImageCount = vulkanWindow.ImageCount;
+	init_info.ImageCount = vulkanWindow->ImageCount;
 	init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
 	init_info.Allocator = nullptr;
 	init_info.CheckVkResultFn = [](VkResult err) {
@@ -172,12 +175,12 @@ void VulkanAndRTX::prepareResources()
 
 	//loadGltfModel("models/blue_archivekasumizawa_miyu.glb");
 	generateTerrain(-300, -300, 600, 600, 1.0, 0.2, 1);
-	generateCuboid(20.0, 0.0 , -10.0, 
+	/*generateCuboid(20.0, 0.0 , -10.0, 
 				   1.75, 4.75,  1.75, glm::vec3(0.0, 0.4, 0.0));
 	generateCuboid(20.0, 0.0 ,   0.0,
 				   1.75, 4.75,  1.75, glm::vec3(0.57, 0.57, 0.0));
 	generateCuboid(20.0, 0.0 ,  10.0,
-				   1.75, 4.75,  1.75, glm::vec3(0.7, 0.0, 0.0));
+				   1.75, 4.75,  1.75, glm::vec3(0.7, 0.0, 0.0));*/
 
 	generateSkyCube();
 
@@ -229,7 +232,7 @@ void VulkanAndRTX::mainLoop()
 		if (!inputHandler.currentInteractingVolume) {
 			inputHandler.movePerson(deltaTime);
 		}
-		restrictCharacterMovement(inputHandler.camera);
+		//restrictCharacterMovement(inputHandler.camera);
 
 		// Start the ImGui frame
 		ImGui_ImplVulkan_NewFrame();
@@ -308,15 +311,14 @@ void VulkanAndRTX::cleanupModels()
 
 	vkDestroyBuffer(vkInit.device, models.sky.indexBuffer, nullptr);
 	vkFreeMemory(vkInit.device, models.sky.indexBufferMemory, nullptr);
-
-	vkDestroyBuffer(vkInit.device, models.sky.vertexBuffer, nullptr);
-	vkFreeMemory(vkInit.device, models.sky.vertexBufferMemory, nullptr);
 }
 
 // emptying RAM
 void VulkanAndRTX::cleanupMemory()
 {
 	cleanupImGui();
+
+	cleanupModels();
 
 	cleanupSwapChain();
 
@@ -338,7 +340,6 @@ void VulkanAndRTX::cleanupMemory()
 
 	vkDestroyDescriptorSetLayout(vkInit.device, descriptorSetLayout, nullptr);
 
-	cleanupModels();
 
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 		vkDestroySemaphore(vkInit.device, renderFinishedSemaphores[i], nullptr);

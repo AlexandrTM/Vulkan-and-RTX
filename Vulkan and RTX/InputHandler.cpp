@@ -109,7 +109,7 @@ void InputHandler::scrollCallback(GLFWwindow* window, double xoffset, double yof
 
 void InputHandler::movePerson(float deltaTime)
 {
-	float movementSpeed = 8.0 * deltaTime;
+	float movementSpeed = 15.0 * deltaTime;
 	
 	glm::vec3 verticalWorldAxis = camera.getVerticalWorldAxis();
 	glm::vec3 cameraDirection = camera.getDirection();
@@ -154,6 +154,6 @@ void InputHandler::movePerson(float deltaTime)
 	}
 	if (keys[GLFW_KEY_LEFT_SHIFT])
 	{
-		camera.setLookFrom(camera.getLookFrom() - verticalWorldAxis * movementSpeed * 0.7f);
+		camera.setLookFrom(camera.getLookFrom() - verticalWorldAxis * movementSpeed * 0.8f);
 	}
 }

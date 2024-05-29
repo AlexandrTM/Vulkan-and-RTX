@@ -38,7 +38,7 @@ private:
 	std::unique_ptr<TerrainGenerator> terrainGenerator;
 
 	GLFWwindow* window;
-	ImGui_ImplVulkanH_Window vulkanWindow;
+	ImGui_ImplVulkanH_Window* vulkanWindow;
 	double lastMousePosX, lastMousePosY;
 
 	ImGuiIO io;
