@@ -52,7 +52,7 @@ void InputHandler::keyCallback(GLFWwindow* window, int key, int scancode, int ac
 		sensitivity = std::clamp(sensitivity * 0.75, 0.001, 10.0);
 	}
 
-	if (key == GLFW_KEY_E && action == GLFW_RELEASE) {
+	if (key == GLFW_KEY_F && action == GLFW_RELEASE) {
 		if (currentInteractingVolume == nullptr) {
 			for (size_t i = 0; i < interactableCuboids.size(); i++) {
 				if (interactableCuboids[i].rayIntersectsCuboid(

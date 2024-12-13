@@ -16,6 +16,12 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <gtx/hash.hpp>
 
+#include <assimp/Importer.hpp>
+#include <assimp/scene.h>
+#include <assimp/postprocess.h>
+
+#include <meshoptimizer.h>
+
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <glm.hpp>
@@ -43,5 +49,7 @@
 #include <random>
 #include <numeric>
 #include <sstream>
+#include <filesystem>
+//#include <stdint.h>
 
 #endif

@@ -134,7 +134,10 @@ void VulkanAndRTX::setupImguiWindow(ImGui_ImplVulkanH_Window* wd,
 	//printf("[vulkan] Selected PresentMode = %d\n", wd->PresentMode);
 
 	// Create SwapChain, RenderPass, Framebuffer, etc.
+#ifdef NDEBUG
 	IM_ASSERT(g_MinImageCount >= 2);
+#endif // !NDEBUG
+
 	ImGui_ImplVulkanH_CreateOrResizeWindow(vkInit.instance, vkInit.physicalDevice, vkInit.device, wd, 
 		vkInit.findQueueFamilies(vkInit.physicalDevice).graphicsFamily.value(), nullptr, 
 		width, height, MAX_FRAMES_IN_FLIGHT);
@@ -173,8 +176,8 @@ void VulkanAndRTX::prepareResources()
 	createTextureImageView(textureImage, textureImageView);
 	createTextureSampler(textureSampler);
 
-	//loadGltfModel("models/blue_archivekasumizawa_miyu.glb");
-	generateTerrain(-300, -300, 600, 600, 1.0, 0.2, 1);
+	loadGltfModel("models/blue_archivekasumizawa_miyu.glb");
+	generateTerrain(-30, -30, 600, 600, 0.1, 0.1, 1.0, 1);
 	/*generateCuboid(20.0, 0.0 , -10.0, 
 				   1.75, 4.75,  1.75, glm::vec3(0.0, 0.4, 0.0));
 	generateCuboid(20.0, 0.0 ,   0.0,
@@ -182,14 +185,16 @@ void VulkanAndRTX::prepareResources()
 	generateCuboid(20.0, 0.0 ,  10.0,
 				   1.75, 4.75,  1.75, glm::vec3(0.7, 0.0, 0.0));*/
 
-	generateSkyCube();
+	//std::cout << sizeof(intmax_t) << " " << sizeof(uintmax_t) << "\n";
 
-	createVertexBuffer(models.sky);
-	createIndexBuffer(models.sky);
+	createSkyCube();
 
-	for (size_t i = 0; i < models.objects.size(); i++) {
-		createVertexBuffer(models.objects[i]);
-		createIndexBuffer(models.objects[i]);
+	createVertexBuffer(modelsBuffer.sky);
+	createIndexBuffer(modelsBuffer.sky);
+
+	for (size_t i = 0; i < modelsBuffer.models.size(); i++) {
+		createVertexBuffer(modelsBuffer.models[i]);
+		createIndexBuffer(modelsBuffer.models[i]);
 	}
 	//std::cout << "models:" << models.size() << "\n";
 
@@ -206,27 +211,19 @@ void VulkanAndRTX::mainLoop()
 {
 	std::chrono::high_resolution_clock::time_point previousTime = std::chrono::high_resolution_clock::now();
 	std::chrono::high_resolution_clock::time_point currentTime;
-	float deltaTime;
-	float timeSinceLaunch = 0.0f;
+	double deltaTime;
+	double timeSinceLaunch = 0.0f;
 
-	//int counter = 0;
-	//float accumulator = 0;
+	int counter = 0;
+	float accumulator = 0;
+	float fps = 0;
+	bool fpsMenu = false;
 	while (!glfwWindowShouldClose(window)) {
 		// accurate time measurement for synchronization
 		currentTime = std::chrono::high_resolution_clock::now();
 		deltaTime = std::chrono::duration<double, std::chrono::seconds::period>(currentTime - previousTime).count();
 		previousTime = currentTime;
 		timeSinceLaunch += deltaTime;
-
-		/*counter++;
-		accumulator += deltaTime;
-		if (counter == 2000)
-		{
-			std::cout << (1 / accumulator) * 2000 << "\n";
-			counter = 0;
-			accumulator = 0;
-		}*/
-		//std::cout << deltaTime << "\n";
 
 		glfwPollEvents();
 		if (!inputHandler.currentInteractingVolume) {
@@ -239,52 +236,76 @@ void VulkanAndRTX::mainLoop()
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
 		
-		if(inputHandler.currentInteractingVolume && inputHandler.currentInteractingVolume->isOpen) {
-			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-			//glfwGetCursorPos(window, &lastMousePosX, &lastMousePosY);
-
-			bool menuOpen = inputHandler.currentInteractingVolume->isOpen;
-			ImGui::Begin((&inputHandler.currentInteractingVolume->name)->c_str(), &menuOpen);
-
-			ImGui::Text("Solve the equation");
-			
-			if (!puzzleGenerated) {
-				puzzleEquation = createPuzzleEquation(
-					inputHandler.currentInteractingVolume->name, puzzleAnswer);
-				std::cout << puzzleAnswer << "\n";
-				puzzleGenerated = true;
-				timeToSolvePuzzle = 6.5f;
-			}
-			//ImGui::Text((char*)&std::to_string(puzzleAnswer));
-			std::string timeStr = std::to_string(timeToSolvePuzzle);
-			ImGui::Text(timeStr.c_str());
-			ImGui::Text((char*)&puzzleEquation);
-			ImGui::InputInt("Enter the answer: ", &puzzleInput);
-
-			if (puzzleInput == puzzleAnswer) {
-				puzzleInput = 0;
-				puzzleGenerated = false;
+		// fps meter
+		{
+			counter++;
+			accumulator += deltaTime;
+			if (accumulator >= 1.1)
+			{
+				fps = 1 / (accumulator / counter);
+				counter = 0;
+				accumulator = 0;
 			}
 
-			//std::cout << inputNumber << "\n";
-			//menuOpen = false;
-			if (!menuOpen || timeToSolvePuzzle <= 0.0f) {
-				inputHandler.currentInteractingVolume->isOpen = menuOpen;
-				inputHandler.currentInteractingVolume = nullptr;
-				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-				puzzleInput = 0;
-				puzzleGenerated = false;
-				
-				//glfwSetCursorPos(window, lastMousePosX / 2, lastMousePosY / 2);
-			}
-			timeToSolvePuzzle -= deltaTime;
-			
+			ImGui::Begin("fps", &fpsMenu, ImGuiWindowFlags_NoDecoration |
+				ImGuiWindowFlags_NoBackground);
+			ImGui::SetWindowSize(ImVec2(100, 30));
+			ImGui::SetWindowPos(ImVec2(10, 10));
+			//ImGui::SetWindowFontScale(1.0f);
+			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 0, 0, 255));
+			ImGui::Text("%.2f", fps);
+			ImGui::PopStyleColor(); // Pop color style
 			ImGui::End();
+		}
+
+		// interaction menu
+		{
+			if (inputHandler.currentInteractingVolume && inputHandler.currentInteractingVolume->isOpen) {
+				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+				//glfwGetCursorPos(window, &lastMousePosX, &lastMousePosY);
+
+				bool menuOpen = inputHandler.currentInteractingVolume->isOpen;
+				ImGui::Begin((&inputHandler.currentInteractingVolume->name)->c_str(), &menuOpen);
+
+				ImGui::Text("Solve the equation");
+
+				if (!puzzleGenerated) {
+					puzzleEquation = createPuzzleEquation(
+						inputHandler.currentInteractingVolume->name, puzzleAnswer);
+					std::cout << puzzleAnswer << "\n";
+					puzzleGenerated = true;
+					timeToSolvePuzzle = 6.5f;
+				}
+				//ImGui::Text((char*)&std::to_string(puzzleAnswer));
+				std::string timeStr = std::to_string(timeToSolvePuzzle);
+				ImGui::Text(timeStr.c_str());
+				ImGui::Text((char*)&puzzleEquation);
+				ImGui::InputInt("Enter the answer: ", &puzzleInput);
+
+				if (puzzleInput == puzzleAnswer) {
+					puzzleInput = 0;
+					puzzleGenerated = false;
+				}
+
+				//std::cout << inputNumber << "\n";
+				//menuOpen = false;
+				if (!menuOpen || timeToSolvePuzzle <= 0.0f) {
+					inputHandler.currentInteractingVolume->isOpen = menuOpen;
+					inputHandler.currentInteractingVolume = nullptr;
+					glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+					puzzleInput = 0;
+					puzzleGenerated = false;
+
+					//glfwSetCursorPos(window, lastMousePosX / 2, lastMousePosY / 2);
+				}
+				timeToSolvePuzzle -= deltaTime;
+
+				ImGui::End();
+			}
 		}
 
 		ImGui::Render();
 		ImDrawData* draw_data = ImGui::GetDrawData();
-
 		drawFrame(timeSinceLaunch, draw_data);
 	}
 
@@ -301,16 +322,22 @@ void VulkanAndRTX::cleanupImGui() {
 
 void VulkanAndRTX::cleanupModels()
 {
-	for (size_t i = 0; i < models.objects.size(); i++) {
-		vkDestroyBuffer(vkInit.device, models.objects[i].indexBuffer, nullptr);
-		vkFreeMemory(vkInit.device, models.objects[i].indexBufferMemory, nullptr);
-
-		vkDestroyBuffer(vkInit.device, models.objects[i].vertexBuffer, nullptr);
-		vkFreeMemory(vkInit.device, models.objects[i].vertexBufferMemory, nullptr);
+	for (size_t i = 0; i < modelsBuffer.models.size(); i++) {
+		cleanupModel(modelsBuffer.models[i]);
 	}
 
-	vkDestroyBuffer(vkInit.device, models.sky.indexBuffer, nullptr);
-	vkFreeMemory(vkInit.device, models.sky.indexBufferMemory, nullptr);
+	cleanupModel(modelsBuffer.sky);
+}
+
+void VulkanAndRTX::cleanupModel(Model& model) const
+{
+	for (size_t i = 0; i < model.meshes.size(); i++) {
+		vkDestroyBuffer(vkInit.device, model.meshes[i].indexBuffer, nullptr);
+		vkFreeMemory(vkInit.device, model.meshes[i].indexBufferMemory, nullptr);
+
+		vkDestroyBuffer(vkInit.device, model.meshes[i].vertexBuffer, nullptr);
+		vkFreeMemory(vkInit.device, model.meshes[i].vertexBufferMemory, nullptr);
+	}
 }
 
 // emptying RAM
@@ -515,112 +542,6 @@ uint32_t VulkanAndRTX::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags
 	}
 
 	throw std::runtime_error("failed to find suitable memory type!");
-}
-
-void VulkanAndRTX::createDescriptorSets()
-{
-	descriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
-	
-	// object descriptor sets
-	for (size_t i = 0; i < descriptorSets.size(); i++) {
-		VkDescriptorSetAllocateInfo allocInfo{};
-		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-		allocInfo.descriptorPool = descriptorPool;
-		allocInfo.descriptorSetCount = 1;
-		allocInfo.pSetLayouts = &descriptorSetLayout;
-
-		if (vkAllocateDescriptorSets(vkInit.device, &allocInfo, &descriptorSets[i].objects) != VK_SUCCESS) {
-			throw std::runtime_error("failed to allocate descriptor sets!");
-		}
-
-		VkDescriptorBufferInfo bufferInfo{};
-		bufferInfo.buffer = objectUniformBuffers[i];
-		bufferInfo.offset = 0;
-		bufferInfo.range = sizeof(UniformBufferObject);
-		
-		VkDescriptorImageInfo imageInfo{};
-		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		imageInfo.imageView = textureImageView;
-		imageInfo.sampler = textureSampler;
-
-		std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
-
-		descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		descriptorWrites[0].descriptorCount = 1;
-		descriptorWrites[0].dstBinding = 0;
-		descriptorWrites[0].dstSet = descriptorSets[i].objects;
-		descriptorWrites[0].dstArrayElement = 0;
-		descriptorWrites[0].pBufferInfo = &bufferInfo;
-
-		descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		descriptorWrites[1].descriptorCount = 1;
-		descriptorWrites[1].dstBinding = 1;
-		descriptorWrites[1].dstSet = descriptorSets[i].objects;
-		descriptorWrites[1].dstArrayElement = 0;
-		descriptorWrites[1].pImageInfo = &imageInfo;
-
-		vkUpdateDescriptorSets(vkInit.device, static_cast<uint32_t>(descriptorWrites.size()), 
-			descriptorWrites.data(), 0, nullptr);
-	}
-
-	// sky descriptor sets
-	for (size_t i = 0; i < descriptorSets.size(); i++) {
-		VkDescriptorSetAllocateInfo allocInfo{};
-		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-		allocInfo.descriptorPool = descriptorPool;
-		allocInfo.descriptorSetCount = 1;
-		allocInfo.pSetLayouts = &descriptorSetLayout;
-
-		if (vkAllocateDescriptorSets(vkInit.device, &allocInfo, &descriptorSets[i].sky) != VK_SUCCESS) {
-			throw std::runtime_error("failed to allocate descriptor sets!");
-		}
-
-		std::array<VkWriteDescriptorSet, 1> descriptorWrites{};
-
-		VkDescriptorBufferInfo bufferInfo{};
-		bufferInfo.buffer = skyUniformBuffers[i];
-		bufferInfo.offset = 0;
-		bufferInfo.range = sizeof(UniformBufferObject);
-
-		descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		descriptorWrites[0].descriptorCount = 1;
-		descriptorWrites[0].dstBinding = 0;
-		descriptorWrites[0].dstSet = descriptorSets[i].sky;
-		descriptorWrites[0].pBufferInfo = &bufferInfo;
-
-		vkUpdateDescriptorSets(vkInit.device, static_cast<uint32_t>(descriptorWrites.size()),
-			descriptorWrites.data(), 0, nullptr);
-	}
-}
-
-void VulkanAndRTX::createDescriptorSetLayout(VkDescriptorSetLayout& descriptorSetLayout) const
-{
-	VkDescriptorSetLayoutBinding uboLayoutBinding{};
-	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-	uboLayoutBinding.binding = 0;
-	uboLayoutBinding.descriptorCount = 1;
-	uboLayoutBinding.pImmutableSamplers = nullptr; // Optional
-
-	VkDescriptorSetLayoutBinding samplerLayoutBinding{};
-	samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-	samplerLayoutBinding.binding = 1;
-	samplerLayoutBinding.descriptorCount = 1;
-	samplerLayoutBinding.pImmutableSamplers = nullptr; // Optional
-
-	std::array<VkDescriptorSetLayoutBinding, 2> bindings = { uboLayoutBinding, samplerLayoutBinding };
-	VkDescriptorSetLayoutCreateInfo layoutInfo{};
-	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
-	layoutInfo.pBindings = bindings.data();
-
-	if (vkCreateDescriptorSetLayout(vkInit.device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create descriptor set layout!");
-	}
 }
 
 void VulkanAndRTX::createDescriptorPool()

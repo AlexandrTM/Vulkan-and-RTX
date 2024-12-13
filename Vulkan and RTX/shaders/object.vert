@@ -6,6 +6,7 @@ layout(binding = 0) uniform UniformBufferObject {
     mat4 proj;
     vec3 sun;
 	vec3 observer;
+	float visibilityRange;
 } ubo;
 
 layout(location = 0) in vec3 inPosition;

@@ -9,11 +9,13 @@ class TerrainGenerator
 public:
     TerrainGenerator(size_t seed);
 
-    std::vector<std::vector<float>> generateDiamondHeightMap(size_t width, size_t length, float roughness);
-    std::vector<std::vector<float>> generatePerlinHeightMap(size_t width, size_t length, float scale);
+    std::vector<std::vector<float>> generateDiamondHeightMap(size_t width, size_t length, 
+        float roughness);
+    std::vector<std::vector<float>> generatePerlinHeightMap(size_t width, size_t length, 
+        float scale, float height);
 
     void generateTerrainMesh(float startX, float startZ,
-        const std::vector<std::vector<float>>& heightmap, float scale, Model& model);
+        const std::vector<std::vector<float>>& heightmap, float scale, Mesh& mesh);
 
 private:
     std::vector<int> permutation;

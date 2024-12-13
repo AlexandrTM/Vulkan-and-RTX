@@ -1,5 +1,18 @@
 #include "pch.h"
 #include "VulkanAndRTX.h"
+#include "Vertex.h"
+
+void VulkanAndRTX::generateTerrain(float startX, float startZ, size_t width, size_t length,
+	float gridSize, float scale, float height, size_t seed)
+{
+	Model model;
+	Mesh mesh;
+	terrainGenerator = std::make_unique<TerrainGenerator>(seed);
+	auto heightmap = terrainGenerator.get()->generatePerlinHeightMap(width, length, scale, height);
+	terrainGenerator.get()->generateTerrainMesh(startX, startZ, heightmap, gridSize, mesh);
+	model.meshes.push_back(mesh);
+	modelsBuffer.models.push_back(model);
+}
 
 void VulkanAndRTX::generateCubicLandscape(size_t landscapeWidth, size_t landscapeLenght, float_t cubeSize)
 {
@@ -15,41 +28,41 @@ void VulkanAndRTX::generateCubicLandscape(size_t landscapeWidth, size_t landscap
 		}
 	}
 }
-
 void VulkanAndRTX::generateCube(float x, float y, float z, float cubeSize)
 {
 	glm::vec3 basicColor = glm::vec3(0.5f, 0.5f, 0.5f);
 
 	std::vector<Vertex> localVertices(24);
 	Model model;
+	Mesh mesh;
 
 #pragma region
-	localVertices[0].pos  = { glm::vec3(0.0f    , 0.0f    , 0.0f)	  + glm::vec3(x, y, z) };
-	localVertices[1].pos  = { glm::vec3(cubeSize, 0.0f    , 0.0f)	  + glm::vec3(x, y, z) };
-	localVertices[2].pos  = { glm::vec3(cubeSize, cubeSize, 0.0f)     + glm::vec3(x, y, z) };
-	localVertices[3].pos  = { glm::vec3(0.0f    , cubeSize, 0.0f)     + glm::vec3(x, y, z) };
-	localVertices[4].pos  = { glm::vec3(0.0f    , 0.0f    , cubeSize) + glm::vec3(x, y, z) };
-	localVertices[5].pos  = { glm::vec3(cubeSize, 0.0f    , cubeSize) + glm::vec3(x, y, z) };
-	localVertices[6].pos  = { glm::vec3(cubeSize, cubeSize, cubeSize) + glm::vec3(x, y, z) };
-	localVertices[7].pos  = { glm::vec3(0.0f    , cubeSize, cubeSize) + glm::vec3(x, y, z) };
+	localVertices[0].position  = { glm::vec3(0.0f    , 0.0f    , 0.0f)	  + glm::vec3(x, y, z) };
+	localVertices[1].position  = { glm::vec3(cubeSize, 0.0f    , 0.0f)	  + glm::vec3(x, y, z) };
+	localVertices[2].position  = { glm::vec3(cubeSize, cubeSize, 0.0f)     + glm::vec3(x, y, z) };
+	localVertices[3].position  = { glm::vec3(0.0f    , cubeSize, 0.0f)     + glm::vec3(x, y, z) };
+	localVertices[4].position  = { glm::vec3(0.0f    , 0.0f    , cubeSize) + glm::vec3(x, y, z) };
+	localVertices[5].position  = { glm::vec3(cubeSize, 0.0f    , cubeSize) + glm::vec3(x, y, z) };
+	localVertices[6].position  = { glm::vec3(cubeSize, cubeSize, cubeSize) + glm::vec3(x, y, z) };
+	localVertices[7].position  = { glm::vec3(0.0f    , cubeSize, cubeSize) + glm::vec3(x, y, z) };
 	
-	localVertices[8].pos  = { glm::vec3(0.0f    , 0.0f    , 0.0f)	  + glm::vec3(x, y, z) };
-	localVertices[9].pos  = { glm::vec3(cubeSize, 0.0f    , 0.0f)	  + glm::vec3(x, y, z) };
-	localVertices[10].pos = { glm::vec3(cubeSize, cubeSize, 0.0f)	  + glm::vec3(x, y, z) };
-	localVertices[11].pos = { glm::vec3(0.0f    , cubeSize, 0.0f)	  + glm::vec3(x, y, z) };
-	localVertices[12].pos = { glm::vec3(0.0f    , 0.0f    , cubeSize) + glm::vec3(x, y, z) };
-	localVertices[13].pos = { glm::vec3(cubeSize, 0.0f    , cubeSize) + glm::vec3(x, y, z) };
-	localVertices[14].pos = { glm::vec3(cubeSize, cubeSize, cubeSize) + glm::vec3(x, y, z) };
-	localVertices[15].pos = { glm::vec3(0.0f    , cubeSize, cubeSize) + glm::vec3(x, y, z) };
+	localVertices[8].position  = { glm::vec3(0.0f    , 0.0f    , 0.0f)	  + glm::vec3(x, y, z) };
+	localVertices[9].position  = { glm::vec3(cubeSize, 0.0f    , 0.0f)	  + glm::vec3(x, y, z) };
+	localVertices[10].position = { glm::vec3(cubeSize, cubeSize, 0.0f)	  + glm::vec3(x, y, z) };
+	localVertices[11].position = { glm::vec3(0.0f    , cubeSize, 0.0f)	  + glm::vec3(x, y, z) };
+	localVertices[12].position = { glm::vec3(0.0f    , 0.0f    , cubeSize) + glm::vec3(x, y, z) };
+	localVertices[13].position = { glm::vec3(cubeSize, 0.0f    , cubeSize) + glm::vec3(x, y, z) };
+	localVertices[14].position = { glm::vec3(cubeSize, cubeSize, cubeSize) + glm::vec3(x, y, z) };
+	localVertices[15].position = { glm::vec3(0.0f    , cubeSize, cubeSize) + glm::vec3(x, y, z) };
 
-	localVertices[16].pos = { glm::vec3(0.0f    , 0.0f    , 0.0f)	  + glm::vec3(x, y, z) };
-	localVertices[17].pos = { glm::vec3(cubeSize, 0.0f    , 0.0f)	  + glm::vec3(x, y, z) };
-	localVertices[18].pos = { glm::vec3(cubeSize, cubeSize, 0.0f)	  + glm::vec3(x, y, z) };
-	localVertices[19].pos = { glm::vec3(0.0f    , cubeSize, 0.0f)	  + glm::vec3(x, y, z) };
-	localVertices[20].pos = { glm::vec3(0.0f    , 0.0f    , cubeSize) + glm::vec3(x, y, z) };
-	localVertices[21].pos = { glm::vec3(cubeSize, 0.0f    , cubeSize) + glm::vec3(x, y, z) };
-	localVertices[22].pos = { glm::vec3(cubeSize, cubeSize, cubeSize) + glm::vec3(x, y, z) };
-	localVertices[23].pos = { glm::vec3(0.0f    , cubeSize, cubeSize) + glm::vec3(x, y, z) };
+	localVertices[16].position = { glm::vec3(0.0f    , 0.0f    , 0.0f)	  + glm::vec3(x, y, z) };
+	localVertices[17].position = { glm::vec3(cubeSize, 0.0f    , 0.0f)	  + glm::vec3(x, y, z) };
+	localVertices[18].position = { glm::vec3(cubeSize, cubeSize, 0.0f)	  + glm::vec3(x, y, z) };
+	localVertices[19].position = { glm::vec3(0.0f    , cubeSize, 0.0f)	  + glm::vec3(x, y, z) };
+	localVertices[20].position = { glm::vec3(0.0f    , 0.0f    , cubeSize) + glm::vec3(x, y, z) };
+	localVertices[21].position = { glm::vec3(cubeSize, 0.0f    , cubeSize) + glm::vec3(x, y, z) };
+	localVertices[22].position = { glm::vec3(cubeSize, cubeSize, cubeSize) + glm::vec3(x, y, z) };
+	localVertices[23].position = { glm::vec3(0.0f    , cubeSize, cubeSize) + glm::vec3(x, y, z) };
 #pragma endregion // pos
 #pragma region
 	localVertices[0].normal = { glm::vec3(0.0f, 0.0f, -1.0f) };
@@ -134,15 +147,15 @@ void VulkanAndRTX::generateCube(float x, float y, float z, float cubeSize)
 	// indices and vertices push back
 	for (size_t i = 0; i < localVertices.size(); i++)
 	{
-		model.vertices.push_back(localVertices[i]);
+		mesh.vertices.push_back(localVertices[i]);
 	}
 	for (size_t i = 0; i < localIndices.size(); i++)
 	{
-		model.indices.push_back(localIndices[i]);
+		mesh.indices.push_back(localIndices[i]);
 	}
-	models.objects.push_back(model);
+	model.meshes.push_back(mesh);
+	modelsBuffer.models.push_back(model);
 }
-
 void VulkanAndRTX::generateCuboid(float x, float y, float z,
 	float width, float height, float length, glm::vec3 color)
 {
@@ -150,34 +163,35 @@ void VulkanAndRTX::generateCuboid(float x, float y, float z,
 
 	std::vector<Vertex> localVertices(24);
 	Model model;
+	Mesh mesh;
 
 #pragma region
-	localVertices[0].pos = { glm::vec3(0.0f , 0.0f  , 0.0f) + glm::vec3(x, y, z) };
-	localVertices[1].pos = { glm::vec3(width, 0.0f  , 0.0f) + glm::vec3(x, y, z) };
-	localVertices[2].pos = { glm::vec3(width, height, 0.0f) + glm::vec3(x, y, z) };
-	localVertices[3].pos = { glm::vec3(0.0f , height, 0.0f) + glm::vec3(x, y, z) };
-	localVertices[4].pos = { glm::vec3(0.0f , 0.0f  , length) + glm::vec3(x, y, z) };
-	localVertices[5].pos = { glm::vec3(width, 0.0f  , length) + glm::vec3(x, y, z) };
-	localVertices[6].pos = { glm::vec3(width, height, length) + glm::vec3(x, y, z) };
-	localVertices[7].pos = { glm::vec3(0.0f , height, length) + glm::vec3(x, y, z) };
+	localVertices[0].position = { glm::vec3(0.0f , 0.0f  , 0.0f) + glm::vec3(x, y, z) };
+	localVertices[1].position = { glm::vec3(width, 0.0f  , 0.0f) + glm::vec3(x, y, z) };
+	localVertices[2].position = { glm::vec3(width, height, 0.0f) + glm::vec3(x, y, z) };
+	localVertices[3].position = { glm::vec3(0.0f , height, 0.0f) + glm::vec3(x, y, z) };
+	localVertices[4].position = { glm::vec3(0.0f , 0.0f  , length) + glm::vec3(x, y, z) };
+	localVertices[5].position = { glm::vec3(width, 0.0f  , length) + glm::vec3(x, y, z) };
+	localVertices[6].position = { glm::vec3(width, height, length) + glm::vec3(x, y, z) };
+	localVertices[7].position = { glm::vec3(0.0f , height, length) + glm::vec3(x, y, z) };
 
-	localVertices[8].pos  = { glm::vec3(0.0f , 0.0f  , 0.0f) + glm::vec3(x, y, z) };
-	localVertices[9].pos  = { glm::vec3(width, 0.0f  , 0.0f) + glm::vec3(x, y, z) };
-	localVertices[10].pos = { glm::vec3(width, height, 0.0f) + glm::vec3(x, y, z) };
-	localVertices[11].pos = { glm::vec3(0.0f , height, 0.0f) + glm::vec3(x, y, z) };
-	localVertices[12].pos = { glm::vec3(0.0f , 0.0f  , length) + glm::vec3(x, y, z) };
-	localVertices[13].pos = { glm::vec3(width, 0.0f  , length) + glm::vec3(x, y, z) };
-	localVertices[14].pos = { glm::vec3(width, height, length) + glm::vec3(x, y, z) };
-	localVertices[15].pos = { glm::vec3(0.0f , height, length) + glm::vec3(x, y, z) };
+	localVertices[8].position  = { glm::vec3(0.0f , 0.0f  , 0.0f) + glm::vec3(x, y, z) };
+	localVertices[9].position  = { glm::vec3(width, 0.0f  , 0.0f) + glm::vec3(x, y, z) };
+	localVertices[10].position = { glm::vec3(width, height, 0.0f) + glm::vec3(x, y, z) };
+	localVertices[11].position = { glm::vec3(0.0f , height, 0.0f) + glm::vec3(x, y, z) };
+	localVertices[12].position = { glm::vec3(0.0f , 0.0f  , length) + glm::vec3(x, y, z) };
+	localVertices[13].position = { glm::vec3(width, 0.0f  , length) + glm::vec3(x, y, z) };
+	localVertices[14].position = { glm::vec3(width, height, length) + glm::vec3(x, y, z) };
+	localVertices[15].position = { glm::vec3(0.0f , height, length) + glm::vec3(x, y, z) };
 
-	localVertices[16].pos = { glm::vec3(0.0f , 0.0f  , 0.0f) + glm::vec3(x, y, z) };
-	localVertices[17].pos = { glm::vec3(width, 0.0f  , 0.0f) + glm::vec3(x, y, z) };
-	localVertices[18].pos = { glm::vec3(width, height, 0.0f) + glm::vec3(x, y, z) };
-	localVertices[19].pos = { glm::vec3(0.0f , height, 0.0f) + glm::vec3(x, y, z) };
-	localVertices[20].pos = { glm::vec3(0.0f , 0.0f  , length) + glm::vec3(x, y, z) };
-	localVertices[21].pos = { glm::vec3(width, 0.0f  , length) + glm::vec3(x, y, z) };
-	localVertices[22].pos = { glm::vec3(width, height, length) + glm::vec3(x, y, z) };
-	localVertices[23].pos = { glm::vec3(0.0f , height, length) + glm::vec3(x, y, z) };
+	localVertices[16].position = { glm::vec3(0.0f , 0.0f  , 0.0f) + glm::vec3(x, y, z) };
+	localVertices[17].position = { glm::vec3(width, 0.0f  , 0.0f) + glm::vec3(x, y, z) };
+	localVertices[18].position = { glm::vec3(width, height, 0.0f) + glm::vec3(x, y, z) };
+	localVertices[19].position = { glm::vec3(0.0f , height, 0.0f) + glm::vec3(x, y, z) };
+	localVertices[20].position = { glm::vec3(0.0f , 0.0f  , length) + glm::vec3(x, y, z) };
+	localVertices[21].position = { glm::vec3(width, 0.0f  , length) + glm::vec3(x, y, z) };
+	localVertices[22].position = { glm::vec3(width, height, length) + glm::vec3(x, y, z) };
+	localVertices[23].position = { glm::vec3(0.0f , height, length) + glm::vec3(x, y, z) };
 #pragma endregion // pos
 #pragma region
 	localVertices[0].normal = { glm::vec3(0.0f, 0.0f, -1.0f) };
@@ -241,7 +255,7 @@ void VulkanAndRTX::generateCuboid(float x, float y, float z,
 	localVertices[22].texCoord0 = { glm::vec2(1.0f, 1.0f) };
 	localVertices[23].texCoord0 = { glm::vec2(0.0f, 1.0f) };
 #pragma endregion // texCoord
-
+	
 	std::vector<uint32_t> localIndices = {
 		0, 3, 1,
 		1, 3, 2,
@@ -262,49 +276,50 @@ void VulkanAndRTX::generateCuboid(float x, float y, float z,
 	// indices and vertices push back
 	for (size_t i = 0; i < localVertices.size(); i++)
 	{
-		model.vertices.push_back(localVertices[i]);
+		mesh.vertices.push_back(localVertices[i]);
 	}
 	for (size_t i = 0; i < localIndices.size(); i++)
 	{
-		model.indices.push_back(localIndices[i]);
+		mesh.indices.push_back(localIndices[i]);
 	}
-	models.objects.push_back(model);
+	model.meshes.push_back(mesh);
+	modelsBuffer.models.push_back(model);
 }
-
-void VulkanAndRTX::generateSkyCube()
+void VulkanAndRTX::createSkyCube()
 {
 	glm::vec3 basicColor = glm::vec3(0.5f, 0.5f, 0.5f);
 
 	std::vector<Vertex> localVertices(24);
 	Model model;
+	Mesh mesh;
 	
 #pragma region
-	localVertices[0].pos  = { glm::vec3(-1.0f, -1.0f, -1.0f) };
-	localVertices[1].pos  = { glm::vec3( 1.0f, -1.0f, -1.0f) };
-	localVertices[2].pos  = { glm::vec3( 1.0f,  1.0f, -1.0f) };
-	localVertices[3].pos  = { glm::vec3(-1.0f,  1.0f, -1.0f) };
-	localVertices[4].pos  = { glm::vec3(-1.0f, -1.0f,  1.0f) };
-	localVertices[5].pos  = { glm::vec3( 1.0f, -1.0f,  1.0f) };
-	localVertices[6].pos  = { glm::vec3( 1.0f,  1.0f,  1.0f) };
-	localVertices[7].pos  = { glm::vec3(-1.0f,  1.0f,  1.0f) };
+	localVertices[0].position  = { glm::vec3(-1.0f, -1.0f, -1.0f) };
+	localVertices[1].position  = { glm::vec3( 1.0f, -1.0f, -1.0f) };
+	localVertices[2].position  = { glm::vec3( 1.0f,  1.0f, -1.0f) };
+	localVertices[3].position  = { glm::vec3(-1.0f,  1.0f, -1.0f) };
+	localVertices[4].position  = { glm::vec3(-1.0f, -1.0f,  1.0f) };
+	localVertices[5].position  = { glm::vec3( 1.0f, -1.0f,  1.0f) };
+	localVertices[6].position  = { glm::vec3( 1.0f,  1.0f,  1.0f) };
+	localVertices[7].position  = { glm::vec3(-1.0f,  1.0f,  1.0f) };
 
-	localVertices[8].pos  = { glm::vec3(-1.0f, -1.0f, -1.0f) };
-	localVertices[9].pos  = { glm::vec3( 1.0f, -1.0f, -1.0f) };
-	localVertices[10].pos = { glm::vec3( 1.0f,  1.0f, -1.0f) };
-	localVertices[11].pos = { glm::vec3(-1.0f,  1.0f, -1.0f) };
-	localVertices[12].pos = { glm::vec3(-1.0f, -1.0f,  1.0f) };
-	localVertices[13].pos = { glm::vec3( 1.0f, -1.0f,  1.0f) };
-	localVertices[14].pos = { glm::vec3( 1.0f,  1.0f,  1.0f) };
-	localVertices[15].pos = { glm::vec3(-1.0f,  1.0f,  1.0f) };
+	localVertices[8].position  = { glm::vec3(-1.0f, -1.0f, -1.0f) };
+	localVertices[9].position  = { glm::vec3( 1.0f, -1.0f, -1.0f) };
+	localVertices[10].position = { glm::vec3( 1.0f,  1.0f, -1.0f) };
+	localVertices[11].position = { glm::vec3(-1.0f,  1.0f, -1.0f) };
+	localVertices[12].position = { glm::vec3(-1.0f, -1.0f,  1.0f) };
+	localVertices[13].position = { glm::vec3( 1.0f, -1.0f,  1.0f) };
+	localVertices[14].position = { glm::vec3( 1.0f,  1.0f,  1.0f) };
+	localVertices[15].position = { glm::vec3(-1.0f,  1.0f,  1.0f) };
 
-	localVertices[16].pos = { glm::vec3(-1.0f, -1.0f, -1.0f) };
-	localVertices[17].pos = { glm::vec3( 1.0f, -1.0f, -1.0f) };
-	localVertices[18].pos = { glm::vec3( 1.0f,  1.0f, -1.0f) };
-	localVertices[19].pos = { glm::vec3(-1.0f,  1.0f, -1.0f) };
-	localVertices[20].pos = { glm::vec3(-1.0f, -1.0f,  1.0f) };
-	localVertices[21].pos = { glm::vec3( 1.0f, -1.0f,  1.0f) };
-	localVertices[22].pos = { glm::vec3( 1.0f,  1.0f,  1.0f) };
-	localVertices[23].pos = { glm::vec3(-1.0f,  1.0f,  1.0f) };
+	localVertices[16].position = { glm::vec3(-1.0f, -1.0f, -1.0f) };
+	localVertices[17].position = { glm::vec3( 1.0f, -1.0f, -1.0f) };
+	localVertices[18].position = { glm::vec3( 1.0f,  1.0f, -1.0f) };
+	localVertices[19].position = { glm::vec3(-1.0f,  1.0f, -1.0f) };
+	localVertices[20].position = { glm::vec3(-1.0f, -1.0f,  1.0f) };
+	localVertices[21].position = { glm::vec3( 1.0f, -1.0f,  1.0f) };
+	localVertices[22].position = { glm::vec3( 1.0f,  1.0f,  1.0f) };
+	localVertices[23].position = { glm::vec3(-1.0f,  1.0f,  1.0f) };
 #pragma endregion // pos
 #pragma region
 	localVertices[0].normal = { glm::vec3(0.0f, 0.0f, -1.0f) };
@@ -389,26 +404,17 @@ void VulkanAndRTX::generateSkyCube()
 	// indices and vertices push back
 	for (size_t i = 0; i < localVertices.size(); i++)
 	{
-		model.vertices.push_back(localVertices[i]);
+		mesh.vertices.push_back(localVertices[i]);
 	}
 	for (size_t i = 0; i < localIndices.size(); i++)
 	{
-		model.indices.push_back(localIndices[i]);
+		mesh.indices.push_back(localIndices[i]);
 	}
-	models.sky = model;
+	model.meshes.push_back(mesh);
+	modelsBuffer.sky = model;
 }
 
-void VulkanAndRTX::generateTerrain(float startX, float startZ, size_t width, size_t length,
-	float scale, float roughness, size_t seed)
-{
-	Model model;
-	terrainGenerator = std::make_unique<TerrainGenerator>(seed);
-	auto heightmap = terrainGenerator.get()->generatePerlinHeightMap(width, length, scale);
-	terrainGenerator.get()->generateTerrainMesh(startX, startZ, heightmap, scale, model);
-	models.objects.push_back(model);
-}
-
-void VulkanAndRTX::loadModelObj(const std::string& modelPath)
+void VulkanAndRTX::loadObjModel(const std::string& modelPath)
 {
 	Model model;
 
@@ -424,10 +430,12 @@ void VulkanAndRTX::loadModelObj(const std::string& modelPath)
 	std::unordered_map<Vertex, uint32_t> uniqueVertices{};
 
 	for (const auto& shape : shapes) {
+		Mesh mesh;
+
 		for (const auto& index : shape.mesh.indices) {
 			Vertex vertex{};
 
-			vertex.pos = {
+			vertex.position = {
 				attrib.vertices[3 * index.vertex_index + 0],
 				attrib.vertices[3 * index.vertex_index + 1],
 				attrib.vertices[3 * index.vertex_index + 2]
@@ -447,22 +455,23 @@ void VulkanAndRTX::loadModelObj(const std::string& modelPath)
 			};
 
 			if (uniqueVertices.count(vertex) == 0) {
-				uniqueVertices[vertex] = static_cast<uint32_t>(model.vertices.size());
-				model.vertices.push_back(vertex);
+				uniqueVertices[vertex] = static_cast<uint32_t>(mesh.vertices.size());
+				mesh.vertices.push_back(vertex);
 			}
 
-			model.indices.push_back(uniqueVertices[vertex]);
+			mesh.indices.push_back(uniqueVertices[vertex]);
 		}
-		models.objects.push_back(model);
+		model.meshes.push_back(mesh);
 	}
+	modelsBuffer.models.push_back(model);
 }
-
 void VulkanAndRTX::loadGltfModel(const std::string& modelPath) {
 	tinygltf::Model GLTFmodel;
-	
 	tinygltf::TinyGLTF loader;
 	std::string error;
 	std::string warning;
+
+	Model model;
 
 	bool binary = false;
 	size_t extPos = modelPath.rfind('.', modelPath.length());
@@ -478,15 +487,14 @@ void VulkanAndRTX::loadGltfModel(const std::string& modelPath) {
 		std::cout << error << "\n";
 	}
 
-	for (const auto& mesh : GLTFmodel.meshes) {
-		Model model;
-		for (const auto& primitive : mesh.primitives) {
+	for (const auto& GLTFmesh : GLTFmodel.meshes) {
+		Mesh mesh;
+		for (const auto& primitive : GLTFmesh.primitives) {
 			size_t currentVertex = 0;
 			size_t currentIndex = 0;
 
 			const float* bufferPositions = nullptr;
 			const float* bufferNormals = nullptr;
-
 			const float* bufferTexCoordSet0 = nullptr;
 			const float* bufferTexCoordSet1 = nullptr;
 			const float* bufferColorSet0 = nullptr;
@@ -529,7 +537,7 @@ void VulkanAndRTX::loadGltfModel(const std::string& modelPath) {
 					const unsigned char* indicesPreData =
 						&(buffer.data[indicesAccessor.byteOffset + indicesView.byteOffset]);
 
-					model.indices.resize(indicesAccessor.count);
+					mesh.indices.resize(indicesAccessor.count);
 
 					switch (indicesAccessor.componentType)
 					{
@@ -537,7 +545,7 @@ void VulkanAndRTX::loadGltfModel(const std::string& modelPath) {
 						const uint8_t* indicesData = reinterpret_cast<const uint8_t*>(indicesPreData);
 
 						for (size_t i = 0; i < indicesAccessor.count; i++) {
-							model.indices[currentIndex] = indicesData[i] + currentVertex;
+							mesh.indices[currentIndex] = indicesData[i] + currentVertex;
 							currentIndex += 1;
 						}
 						break;
@@ -546,7 +554,7 @@ void VulkanAndRTX::loadGltfModel(const std::string& modelPath) {
 						const uint16_t* indicesData = reinterpret_cast<const uint16_t*>(indicesPreData);
 						
 						for (size_t i = 0; i < indicesAccessor.count; i++) {
-							model.indices[currentIndex] = indicesData[i] + currentVertex;
+							mesh.indices[currentIndex] = indicesData[i] + currentVertex;
 							currentIndex += 1;
 						}
 						break;
@@ -555,7 +563,7 @@ void VulkanAndRTX::loadGltfModel(const std::string& modelPath) {
 						const uint32_t* indicesData = reinterpret_cast<const uint32_t*>(indicesPreData);
 
 						for (size_t i = 0; i < indicesAccessor.count; i++) {
-							model.indices[currentIndex] = indicesData[i] + currentVertex;
+							mesh.indices[currentIndex] = indicesData[i] + currentVertex;
 							currentIndex += 1;
 						}
 						break;
@@ -570,7 +578,7 @@ void VulkanAndRTX::loadGltfModel(const std::string& modelPath) {
 					Vertex vertex{};
 
 					// Extract POSITION
-					vertex.pos = glm::vec3(
+					vertex.position = glm::vec3(
 						bufferPositions[i * 3],
 						bufferPositions[i * 3 + 1],
 						bufferPositions[i * 3 + 2]);
@@ -590,13 +598,14 @@ void VulkanAndRTX::loadGltfModel(const std::string& modelPath) {
 						bufferTexCoordSet1[i * 2],
 						bufferTexCoordSet1[i * 2 + 1]) : glm::vec3(0.0f);
 
-					model.vertices.push_back(vertex);
+					mesh.vertices.push_back(vertex);
 					currentVertex += 1;
 				}
 			}
 		}
-		models.objects.push_back(model);
+		model.meshes.push_back(mesh);
 	}
+	modelsBuffer.models.push_back(model);
 	/*size_t totalVertices = 0;
 	size_t totalIndices = 0;
 	for (size_t i = 0; i < models.objects.size(); i++) {
@@ -607,4 +616,74 @@ void VulkanAndRTX::loadGltfModel(const std::string& modelPath) {
 	std::cout << "indices: " << totalIndices << "\n";
 	std::cout << "models: " << models.objects.size() << "\n";*/
 	//std::cout << "textures: " << GLTFmodel.textures.size() << "\n";
+}
+
+static std::vector<std::string> GetModelFiles(const std::string& directory) {
+	std::vector<std::string> modelFiles;
+
+	for (const auto& entry : std::filesystem::directory_iterator(directory)) {
+		if (entry.is_regular_file()) {
+			const auto& path = entry.path();
+			if (path.extension() == ".gltf" || path.extension() == ".glb") {
+				modelFiles.push_back(path.string());
+			}
+		}
+	}
+
+	return modelFiles;
+}
+static Mesh ProcessMesh(aiMesh* mesh, const aiScene* scene) {
+	Mesh processedMesh;
+
+	for (size_t i = 0; i < mesh->mNumVertices; i++) {
+		Vertex vertex{};
+		vertex.position = glm::vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
+		vertex.normal = glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
+		if (mesh->mTextureCoords[0]) {
+			vertex.texCoord0 = glm::vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);
+		}
+		else {
+			vertex.texCoord0 = glm::vec2(0.0f, 0.0f);
+		}
+		processedMesh.vertices.push_back(vertex);
+	}
+
+	for (size_t i = 0; i < mesh->mNumFaces; i++) {
+		aiFace face = mesh->mFaces[i];
+		for (size_t j = 0; j < face.mNumIndices; j++) {
+			processedMesh.indices.push_back(face.mIndices[j]);
+		}
+	}
+
+	return processedMesh;
+}
+static void ProcessNode(aiNode* node, const aiScene* scene, ModelsBuffer* modelsBuffer, Model& parentModel) {
+	for (size_t i = 0; i < node->mNumMeshes; i++) {
+		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
+		Mesh processedMesh = ProcessMesh(mesh, scene);
+		parentModel.meshes.push_back(processedMesh);
+	}
+	for (size_t i = 0; i < node->mNumChildren; i++) {
+		Model childModel;
+		ProcessNode(node->mChildren[i], scene, modelsBuffer, childModel);
+		modelsBuffer->models.push_back(childModel);
+	}
+}
+static void LoadModelsFromDirectory(const std::string& directory, ModelsBuffer* modelsBuffer) {
+	auto modelFiles = GetModelFiles(directory);
+
+	for (const auto& file : modelFiles) {
+		std::cout << "Loading model: " << file << std::endl;
+		Assimp::Importer importer;
+		const aiScene* scene = importer.ReadFile(file, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
+
+		if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
+			std::cerr << "Failed to load model " << file << ": " << importer.GetErrorString() << std::endl;
+			continue;
+		}
+
+		Model rootModel;
+		ProcessNode(scene->mRootNode, scene, modelsBuffer, rootModel);
+		modelsBuffer->models.push_back(rootModel);
+	}
 }

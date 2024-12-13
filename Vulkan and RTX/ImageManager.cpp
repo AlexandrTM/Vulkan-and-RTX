@@ -38,7 +38,8 @@ bool VulkanAndRTX::hasStencilComponent(VkFormat format)
 
 
 
-// how to sample through texels of the texture for drawing them on 3D model
+// how to sample through texels of the 
+// for drawing them on 3D model
 void VulkanAndRTX::createTextureSampler(VkSampler& textureSampler)
 {
 	VkPhysicalDeviceProperties properties{};

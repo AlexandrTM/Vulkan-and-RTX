@@ -10,6 +10,7 @@ layout(binding = 0) uniform UniformBufferObject {
     mat4 proj;
     vec3 sun;
 	vec3 observer;
+    float visibilityRange;
 } ubo;
 
 void main() {

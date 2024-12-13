@@ -21,11 +21,6 @@ private:
 #pragma endregion
 #pragma region
 
-	struct Models {
-		std::vector<Model> objects;
-		Model sky;
-	} models;
-
 	// MVP matrix and other info for shaders
 	struct UniformBufferObject {
 		alignas(16) glm::mat4 model;
@@ -33,6 +28,7 @@ private:
 		alignas(16) glm::mat4 projection;
 		alignas(16) glm::vec3 sun;
 		alignas(16) glm::vec3 observer;
+		alignas(4) float visibilityRange = 6000;
 	} objectUBO, skyUBO;
 
 	std::unique_ptr<TerrainGenerator> terrainGenerator;
@@ -87,6 +83,8 @@ private:
 	};
 	std::vector<DescriptorSets> descriptorSets;
 
+	ModelsBuffer modelsBuffer;
+
 	VkImage		   textureImage;
 	VkDeviceMemory textureImageMemory;
 	VkImageView    textureImageView;
@@ -124,6 +122,7 @@ private:
 	void restrictCharacterMovement(Camera& camera);
 
 	void cleanupModels();
+	void cleanupModel(Model& model) const;
 	// emptying RAM
 	void cleanupMemory();
 
@@ -140,11 +139,11 @@ private:
 	void generateCube(float x, float y, float z, float cubeSize);
 	void generateCuboid(float x, float y, float z,
 		float width, float height, float length, glm::vec3 color);
-	void generateSkyCube();
+	void createSkyCube();
 	void generateTerrain(float startX, float startZ, size_t width, size_t length,
-		float scale, float roughness, size_t seed);
+		float gridSize, float scale, float roughness, size_t seed);
 
-	void loadModelObj(const std::string& filePath);
+	void loadObjModel(const std::string& filePath);
 	void loadGltfModel(const std::string& filePath);
 	// reading bytecode files and returning its bytes
 	static std::vector<char> readFile(const std::string& filename);
@@ -203,7 +202,6 @@ private:
 		VkBuffer& buffer, VkDeviceMemory& bufferMemory);
 
 	void createVertexBuffer(Model& model);
-
 	void createIndexBuffer(Model& model);
 
 	void createDescriptorSets();
@@ -213,6 +211,7 @@ private:
 
 	// record commands to the command buffer
 	void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, ImDrawData* draw_data);
+	void drawModel(VkCommandBuffer commandBuffer, Model& model);
 
 	// creating uniform buffer for each frame in flight
 	void createUniformBuffers();

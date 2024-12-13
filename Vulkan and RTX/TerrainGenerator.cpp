@@ -31,14 +31,15 @@ std::vector<std::vector<float>> TerrainGenerator::generateDiamondHeightMap(
     return heightmap;
 }
 
-std::vector<std::vector<float>> TerrainGenerator::generatePerlinHeightMap(size_t width, size_t length, float scale) {
+std::vector<std::vector<float>> TerrainGenerator::generatePerlinHeightMap(size_t width, size_t length, 
+    float scale, float height) {
     std::vector<std::vector<float>> heightmap(width, std::vector<float>(length));
-
+    
     for (size_t i = 0; i < width; ++i) {
         for (size_t j = 0; j < length; ++j) {
-            float x = static_cast<float>(i) * scale / 64;
-            float y = static_cast<float>(j) * scale / 64;
-            heightmap[i][j] = perlinNoise(x, y) * 5;
+            float x = static_cast<float>(i) * scale;
+            float y = static_cast<float>(j) * scale;
+            heightmap[i][j] = perlinNoise(x, y) * height;
         }
     }
 
@@ -113,12 +114,12 @@ float TerrainGenerator::perlinNoise(float x, float y, float z) {
     size_t Y = static_cast<int>(std::floor(y)) & 255;
     size_t Z = static_cast<int>(std::floor(z)) & 255;
 
-    // Find relative x, y in grid cell
+    // Find fractional part of x, y, z in grid cell
     x -= std::floor(x);
     y -= std::floor(y);
     z -= std::floor(z);
 
-    // Compute fade curves for x, y
+    // Compute fade curves for x, y, z
     float u = fade(x);
     float v = fade(y);
     float w = fade(z);
@@ -136,27 +137,30 @@ float TerrainGenerator::perlinNoise(float x, float y, float z) {
     const float p1 = grad(ba, x - 1, y    );
     const float p2 = grad(ab, x    , y - 1);
     const float p3 = grad(bb, x - 1, y - 1);
-    const float p4 = grad(aa, x    , y    );
-    const float p5 = grad(ba, x - 1, y    );
-    const float p6 = grad(ab, x    , y - 1);
-    const float p7 = grad(bb, x - 1, y - 1);
+    const float p4 = grad(permutation[(aa + 1) & 255], x    , y    );
+    const float p5 = grad(permutation[(ba + 1) & 255], x - 1, y    );
+    const float p6 = grad(permutation[(ab + 1) & 255], x    , y - 1);
+    const float p7 = grad(permutation[(bb + 1) & 255], x - 1, y - 1);
 
     float q0 = lerp(p0, p1, u);
     float q1 = lerp(p2, p3, u);
     float q2 = lerp(p4, p5, u);
     float q3 = lerp(p6, p7, u);
-
+        
     float r0 = lerp(q0, q1, v);
     float r1 = lerp(q2, q3, v);
 
     // And add blended results from 4 corners of the square
     float res = lerp(r0, r1, w);
+    /*if (res > 0.85 || res < -0.85) {
+        std::cout << res << "\n";
+    }*/
     return res; // result is in range [-1, 1]
-    // return (res + 1) / 2 // result is in range [0, 1]
+    //return (res + 1) / 2; // result is in range [0, 1]
 }
 
 void TerrainGenerator::generateTerrainMesh(float startX, float startZ,
-    const std::vector<std::vector<float>>& heightmap, float scale, Model& model) {
+    const std::vector<std::vector<float>>& heightmap, float gridSize, Mesh& mesh) {
     // Calculate terrain dimensions
     size_t width = heightmap.size();
     size_t length = heightmap[0].size();
@@ -164,29 +168,29 @@ void TerrainGenerator::generateTerrainMesh(float startX, float startZ,
     // Generate vertices
     for (size_t i = 0; i < width; i++) {
         for (size_t j = 0; j < length; j++) {
-            float x0 = static_cast<float>(i) * scale + startX;
-            float y0 =          heightmap[i][j] * scale;
-            float z0 = static_cast<float>   (j) * scale + startZ;
+            float x0 = static_cast<float>(i)        * gridSize + startX;
+            float y0 =          heightmap[i][j]     * gridSize;
+            float z0 = static_cast<float>   (j)     * gridSize + startZ;
 
-            float x1 = static_cast<float>(i + 1) * scale + startX;
-            float y1 =          heightmap[i == width - 1 ? width - 1 : i + 1][j] * scale;
-            float z1 = static_cast<float>   (j) * scale + startZ;
+            float x1 = static_cast<float>(i + 1)    * gridSize + startX;
+            float y1 =          heightmap[i == width - 1 ? width - 1 : i + 1][j] * gridSize;
+            float z1 = static_cast<float>   (j)     * gridSize + startZ;
 
-            float x2 = static_cast<float>(i) * scale + startX;
-            float y2 =          heightmap[i][j == length - 1 ? length - 1 : j + 1] * scale;
-            float z2 = static_cast<float>   (j + 1) * scale + startZ;
+            float x2 = static_cast<float>(i)        * gridSize + startX;
+            float y2 =          heightmap[i][j == length - 1 ? length - 1 : j + 1] * gridSize;
+            float z2 = static_cast<float>   (j + 1) * gridSize + startZ;
 
-            float x3 = static_cast<float>(i + 1) * scale + startX;
+            float x3 = static_cast<float>(i + 1)    * gridSize + startX;
             float y3 =          heightmap[i == width - 1 ? width - 1 : i + 1]
-                                            [j == length - 1 ? length - 1 : j + 1] * scale;
-            float z3 = static_cast<float>   (j + 1) * scale + startZ;
+                                            [j == length - 1 ? length - 1 : j + 1] * gridSize;
+            float z3 = static_cast<float>   (j + 1) * gridSize + startZ;
 
             // Create vertex
             Vertex v0{}, v1{}, v2{}, v3{};
-            v0.pos = glm::vec3(x0, y0, z0);
-            v1.pos = glm::vec3(x1, y1, z1);
-            v2.pos = glm::vec3(x2, y2, z2);
-            v3.pos = glm::vec3(x3, y3, z3);
+            v0.position = glm::vec3(x0, y0, z0);
+            v1.position = glm::vec3(x1, y1, z1);
+            v2.position = glm::vec3(x2, y2, z2);
+            v3.position = glm::vec3(x3, y3, z3);
 
             v0.color = glm::vec3(0.5f, 0.5f, 0.5f);
             v1.color = glm::vec3(0.5f, 0.5f, 0.5f);
@@ -227,13 +231,13 @@ void TerrainGenerator::generateTerrainMesh(float startX, float startZ,
 
             //std::cout << v0.texCoord0[0] << " " << v0.texCoord0[1] << "\n";
 
-            model.vertices.push_back(v0);
-            model.vertices.push_back(v1);
-            model.vertices.push_back(v2);
-            model.vertices.push_back(v3);
+            mesh.vertices.push_back(v0);
+            mesh.vertices.push_back(v1);
+            mesh.vertices.push_back(v2);
+            mesh.vertices.push_back(v3);
         }
     }
-    std::cout << "terrain vertices: " << model.vertices.size() << "\n";
+    std::cout << "terrain vertices: " << mesh.vertices.size() << "\n";
 
     // Generate indices
     for (size_t i = 0; i < width; ++i) {
@@ -253,25 +257,27 @@ void TerrainGenerator::generateTerrainMesh(float startX, float startZ,
 
             for (size_t k = 0; k < localIndices.size(); k++)
             {
-                model.indices.push_back(localIndices[k]);
+                mesh.indices.push_back(localIndices[k]);
             }
         }
     }
 
+    std::cout << "terrain indices: " << mesh.indices.size() << "\n";
+
     // Calculate normals
-    for (size_t i = 0; i < model.indices.size(); i += 3) {
-        size_t idx0 = model.indices[i    ];
-        size_t idx1 = model.indices[i + 1];
-        size_t idx2 = model.indices[i + 2];
+    for (size_t i = 0; i < mesh.indices.size(); i += 3) {
+        size_t idx0 = mesh.indices[i    ];
+        size_t idx1 = mesh.indices[i + 1];
+        size_t idx2 = mesh.indices[i + 2];
 
         // Calculate triangle normal
-        glm::vec3 edge1 = model.vertices[idx1].pos - model.vertices[idx0].pos;
-        glm::vec3 edge2 = model.vertices[idx2].pos - model.vertices[idx0].pos;
+        glm::vec3 edge1 = mesh.vertices[idx1].position - mesh.vertices[idx0].position;
+        glm::vec3 edge2 = mesh.vertices[idx2].position - mesh.vertices[idx0].position;
         glm::vec3 normal = glm::normalize(glm::cross(edge1, edge2));
 
         // Assign the same normal to all three vertices of the triangle
-        model.vertices[idx0].normal = normal;
-        model.vertices[idx1].normal = normal;
-        model.vertices[idx2].normal = normal;
+        mesh.vertices[idx0].normal = normal;
+        mesh.vertices[idx1].normal = normal;
+        mesh.vertices[idx2].normal = normal;
     }
 }

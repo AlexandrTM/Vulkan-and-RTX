@@ -86,49 +86,57 @@ void VulkanAndRTX::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkM
 
 void VulkanAndRTX::createVertexBuffer(Model& model)
 {
-	VkDeviceSize bufferSize = sizeof(Vertex) * model.vertices.size();
+	for (size_t i = 0; i < model.meshes.size(); i++) {
+		Mesh& mesh = model.meshes[i];
 
-	VkBuffer stagingBuffer;
-	VkDeviceMemory stagingBufferMemory;
-	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-		| VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+		VkDeviceSize bufferSize = sizeof(Vertex) * mesh.vertices.size();
 
-	void* data;
-	vkMapMemory(vkInit.device, stagingBufferMemory, 0, bufferSize, 0, &data);
-	memcpy(data, model.vertices.data(), (size_t)bufferSize);
-	vkUnmapMemory(vkInit.device, stagingBufferMemory);
+		VkBuffer stagingBuffer;
+		VkDeviceMemory stagingBufferMemory;
+		createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+			| VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 
-	// giving perfomance boost by using device local memory
-	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, model.vertexBuffer, model.vertexBufferMemory);
+		void* data;
+		vkMapMemory(vkInit.device, stagingBufferMemory, 0, bufferSize, 0, &data);
+		memcpy(data, mesh.vertices.data(), (size_t)bufferSize);
+		vkUnmapMemory(vkInit.device, stagingBufferMemory);
 
-	copyBuffer(stagingBuffer, model.vertexBuffer, bufferSize);
+		// giving perfomance boost by using device local memory
+		createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mesh.vertexBuffer, mesh.vertexBufferMemory);
 
-	vkDestroyBuffer(vkInit.device, stagingBuffer, nullptr);
-	vkFreeMemory(vkInit.device, stagingBufferMemory, nullptr);
+		copyBuffer(stagingBuffer, mesh.vertexBuffer, bufferSize);
+
+		vkDestroyBuffer(vkInit.device, stagingBuffer, nullptr);
+		vkFreeMemory(vkInit.device, stagingBufferMemory, nullptr);
+	}
 }
 
-void VulkanAndRTX::createIndexBuffer(Model &model)
+void VulkanAndRTX::createIndexBuffer(Model& model)
 {
-	VkDeviceSize bufferSize = sizeof(model.indices[0]) * model.indices.size();
+	for (size_t i = 0; i < model.meshes.size(); i++) {
+		Mesh& mesh = model.meshes[i];
 
-	VkBuffer stagingBuffer;
-	VkDeviceMemory stagingBufferMemory;
-	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-		| VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+		VkDeviceSize bufferSize = sizeof(mesh.indices[0]) * mesh.indices.size();
 
-	void* data;
-	vkMapMemory(vkInit.device, stagingBufferMemory, 0, bufferSize, 0, &data);
-	memcpy(data, model.indices.data(), (size_t)bufferSize);
-	vkUnmapMemory(vkInit.device, stagingBufferMemory);
+		VkBuffer stagingBuffer;
+		VkDeviceMemory stagingBufferMemory;
+		createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+			| VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
 
-	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, model.indexBuffer, model.indexBufferMemory);
+		void* data;
+		vkMapMemory(vkInit.device, stagingBufferMemory, 0, bufferSize, 0, &data);
+		memcpy(data, mesh.indices.data(), (size_t)bufferSize);
+		vkUnmapMemory(vkInit.device, stagingBufferMemory);
 
-	copyBuffer(stagingBuffer, model.indexBuffer, bufferSize);
+		createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mesh.indexBuffer, mesh.indexBufferMemory);
 
-	vkDestroyBuffer(vkInit.device, stagingBuffer, nullptr);
-	vkFreeMemory(vkInit.device, stagingBufferMemory, nullptr);
+		copyBuffer(stagingBuffer, mesh.indexBuffer, bufferSize);
+
+		vkDestroyBuffer(vkInit.device, stagingBuffer, nullptr);
+		vkFreeMemory(vkInit.device, stagingBufferMemory, nullptr);
+	}
 }
 
 // create multiple command buffers

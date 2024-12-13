@@ -42,9 +42,6 @@
     <ClCompile Include="Camera.cpp">
       <Filter>source</Filter>
     </ClCompile>
-    <ClCompile Include="Item.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
     <ClCompile Include="HasExperienceLevel.cpp">
       <Filter>characteristics\primary_chars</Filter>
     </ClCompile>
@@ -132,6 +129,9 @@
     <ClCompile Include="imgui_demo.cpp">
       <Filter>headers\imgui</Filter>
     </ClCompile>
+    <ClCompile Include="Item.cpp">
+      <Filter>characteristics</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -156,9 +156,6 @@
       <Filter>characteristics\secondary_chars</Filter>
     </ClInclude>
     <ClInclude Include="Camera.h">
-      <Filter>headers</Filter>
-    </ClInclude>
-    <ClInclude Include="Item.h">
       <Filter>headers</Filter>
     </ClInclude>
     <ClInclude Include="VulkanAndRTX.h">
@@ -208,6 +205,9 @@
     </ClInclude>
     <ClInclude Include="imgui.h">
       <Filter>headers\imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="Item.h">
+      <Filter>characteristics</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
