@@ -172,20 +172,12 @@ void VulkanAndRTX::prepareResources()
 	createDepthResources();
 	createSwapChainFramebuffers();
 
-	createTextureImage("textures/grass001.png", textureImage, textureImageMemory);
-	createTextureImageView(textureImage, textureImageView);
 	createTextureSampler(textureSampler);
+	createTextureImageFromPath("textures/grass001.png", texture);
 
-	loadGltfModel("models/blue_archivekasumizawa_miyu.glb");
+	//loadGltfModel("models/blue_archivekasumizawa_miyu.glb");
+	LoadModelsFromDirectory("models", &modelsBuffer);
 	generateTerrain(-30, -30, 600, 600, 0.1, 0.1, 1.0, 1);
-	/*generateCuboid(20.0, 0.0 , -10.0, 
-				   1.75, 4.75,  1.75, glm::vec3(0.0, 0.4, 0.0));
-	generateCuboid(20.0, 0.0 ,   0.0,
-				   1.75, 4.75,  1.75, glm::vec3(0.57, 0.57, 0.0));
-	generateCuboid(20.0, 0.0 ,  10.0,
-				   1.75, 4.75,  1.75, glm::vec3(0.7, 0.0, 0.0));*/
-
-	//std::cout << sizeof(intmax_t) << " " << sizeof(uintmax_t) << "\n";
 
 	createSkyCube();
 
@@ -196,7 +188,6 @@ void VulkanAndRTX::prepareResources()
 		createVertexBuffer(modelsBuffer.models[i]);
 		createIndexBuffer(modelsBuffer.models[i]);
 	}
-	//std::cout << "models:" << models.size() << "\n";
 
 	createUniformBuffers();
 
@@ -257,7 +248,7 @@ void VulkanAndRTX::mainLoop()
 			ImGui::PopStyleColor(); // Pop color style
 			ImGui::End();
 		}
-
+		
 		// interaction menu
 		{
 			if (inputHandler.currentInteractingVolume && inputHandler.currentInteractingVolume->isOpen) {
@@ -360,10 +351,10 @@ void VulkanAndRTX::cleanupMemory()
 	vkDestroyDescriptorPool(vkInit.device, descriptorPool, nullptr);
 
 	vkDestroySampler(vkInit.device, textureSampler, nullptr);
-	vkDestroyImageView(vkInit.device, textureImageView, nullptr);
+	vkDestroyImageView(vkInit.device, texture.imageView, nullptr);
 
-	vkDestroyImage(vkInit.device, textureImage, nullptr);
-	vkFreeMemory(vkInit.device, textureImageMemory, nullptr);
+	vkDestroyImage(vkInit.device, texture.image, nullptr);
+	vkFreeMemory(vkInit.device, texture.imageMemory, nullptr);
 
 	vkDestroyDescriptorSetLayout(vkInit.device, descriptorSetLayout, nullptr);
 

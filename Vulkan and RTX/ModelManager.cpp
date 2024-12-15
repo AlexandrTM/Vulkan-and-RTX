@@ -603,19 +603,13 @@ void VulkanAndRTX::loadGltfModel(const std::string& modelPath) {
 				}
 			}
 		}
+		std::cout << 
+			"mesh name: " << GLTFmesh.name << " "
+			"vertices count: " << mesh.vertices.size() << "\n";
 		model.meshes.push_back(mesh);
 	}
 	modelsBuffer.models.push_back(model);
-	/*size_t totalVertices = 0;
-	size_t totalIndices = 0;
-	for (size_t i = 0; i < models.objects.size(); i++) {
-		totalVertices += models.objects[i].vertices.size();
-		totalIndices += models.objects[i].indices.size();
-	}
-	std::cout << "vertices: " << totalVertices << " ";
-	std::cout << "indices: " << totalIndices << "\n";
-	std::cout << "models: " << models.objects.size() << "\n";*/
-	//std::cout << "textures: " << GLTFmodel.textures.size() << "\n";
+	std::cout << "textures: " << GLTFmodel.textures.size() << "\n";
 }
 
 static std::vector<std::string> GetModelFiles(const std::string& directory) {
@@ -631,6 +625,152 @@ static std::vector<std::string> GetModelFiles(const std::string& directory) {
 	}
 
 	return modelFiles;
+}
+void VulkanAndRTX::createTextureImageFromPath(const std::string& texturePath, Texture& texture)
+{
+	VkBuffer stagingBuffer;
+	VkDeviceMemory stagingBufferMemory;
+
+	int texWidth, texHeight, texChannels;
+	stbi_uc* pixels = stbi_load(texturePath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+	VkDeviceSize imageSize = texWidth * texHeight * 4;
+	texture.mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
+
+	if (!pixels) {
+		std::cout << texturePath;
+		throw std::runtime_error("failed to load texture image!");
+	}
+
+	createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+		| VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+
+	void* data;
+	vkMapMemory(vkInit.device, stagingBufferMemory, 0, imageSize, 0, &data);
+	memcpy(data, pixels, static_cast<size_t>(imageSize));
+	vkUnmapMemory(vkInit.device, stagingBufferMemory);
+	stbi_image_free(pixels);
+
+	createImage(texWidth, texHeight, texture.mipLevels, VK_SAMPLE_COUNT_1_BIT, VK_FORMAT_R8G8B8A8_SRGB,
+		VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT
+		| VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		texture.image, texture.imageMemory);
+
+	transitionImageLayout(texture.image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED,
+		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, texture.mipLevels);
+
+	copyBufferToImage(stagingBuffer, texture.image,
+		static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
+
+	vkDestroyBuffer(vkInit.device, stagingBuffer, nullptr);
+	vkFreeMemory(vkInit.device, stagingBufferMemory, nullptr);
+
+	generateMipmaps(texture.image, VK_FORMAT_R8G8B8A8_SRGB, texWidth, texHeight, texture.mipLevels);
+
+	texture.imageView = createImageView(
+		texture.image,
+		VK_FORMAT_R8G8B8A8_SRGB,
+		VK_IMAGE_ASPECT_COLOR_BIT,
+		texture.mipLevels);
+	texture.sampler = textureSampler;
+}
+void VulkanAndRTX::createTextureFromEmbedded(const std::string& embeddedTextureName, Texture& texture, const aiScene* scene) {
+	const aiTexture* embeddedTexture = scene->GetEmbeddedTexture(embeddedTextureName.c_str());
+
+	if (!embeddedTexture) {
+		throw std::runtime_error("Failed to find embedded texture: " + embeddedTextureName);
+	}
+
+	VkBuffer stagingBuffer;
+	VkDeviceMemory stagingBufferMemory;
+
+	// Decode the embedded texture
+	stbi_uc* pixels = nullptr;
+	int texWidth, texHeight, texChannels;
+
+	if (embeddedTexture->mHeight == 0) {
+		// Compressed image data (e.g., PNG or JPEG)
+		pixels = stbi_load_from_memory(reinterpret_cast<stbi_uc*>(embeddedTexture->pcData),
+			static_cast<int>(embeddedTexture->mWidth), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
+	}
+	else {
+		// Raw pixel data
+		texWidth = embeddedTexture->mWidth;
+		texHeight = embeddedTexture->mHeight;
+		pixels = reinterpret_cast<stbi_uc*>(embeddedTexture->pcData);
+		texChannels = 4;  // Assuming RGBA
+	}
+
+	if (!pixels) {
+		throw std::runtime_error("Failed to load embedded texture!");
+	}
+
+	VkDeviceSize imageSize = texWidth * texHeight * 4; // 4 bytes per pixel for RGBA
+	uint32_t mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
+
+	createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+		stagingBuffer, stagingBufferMemory);
+
+	void* data;
+	vkMapMemory(vkInit.device, stagingBufferMemory, 0, imageSize, 0, &data);
+	memcpy(data, pixels, static_cast<size_t>(imageSize));
+	vkUnmapMemory(vkInit.device, stagingBufferMemory);
+
+	if (embeddedTexture->mHeight == 0) {
+		stbi_image_free(pixels);
+	}
+
+	VkImage textureImage;
+	VkDeviceMemory textureImageMemory;
+	createImage(texWidth, texHeight, mipLevels, VK_SAMPLE_COUNT_1_BIT,
+		VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL,
+		VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory);
+
+	transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED,
+		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mipLevels);
+	copyBufferToImage(stagingBuffer, textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
+
+	vkDestroyBuffer(vkInit.device, stagingBuffer, nullptr);
+	vkFreeMemory(vkInit.device, stagingBufferMemory, nullptr);
+
+	generateMipmaps(textureImage, VK_FORMAT_R8G8B8A8_SRGB, texWidth, texHeight, mipLevels);
+
+	texture.image = textureImage;
+	texture.imageMemory = textureImageMemory;
+	texture.imageView = createImageView(
+		texture.image,
+		VK_FORMAT_R8G8B8A8_SRGB,
+		VK_IMAGE_ASPECT_COLOR_BIT,
+		texture.mipLevels);
+	texture.sampler = textureSampler;
+
+	std::cout << embeddedTextureName << " " << texWidth << " " << texHeight << "\n";
+}
+Texture VulkanAndRTX::LoadTexture(const std::string& texturePath, const aiScene* scene) {
+	Texture texture{};
+
+	// Embedded texture in .glb file, the path is in the form "*n", where n is the index
+	if (texturePath[0] == '*') {
+		createTextureFromEmbedded(texturePath, texture, scene);
+	}
+	else {
+		createTextureImageFromPath(texturePath, texture);
+	}
+
+	return texture;
+}
+Material VulkanAndRTX::ProcessMaterial(aiMaterial* aiMat, const aiScene* scene) {
+	Material material{};
+
+	// Load diffuse texture
+	if (aiMat->GetTextureCount(aiTextureType_DIFFUSE) > 0) {
+		aiString texturePath;
+		aiMat->GetTexture(aiTextureType_DIFFUSE, 0, &texturePath);
+		material.diffuseTexture = LoadTexture(texturePath.C_Str(), scene);
+	}
+
+	return material;
 }
 static Mesh ProcessMesh(aiMesh* mesh, const aiScene* scene) {
 	Mesh processedMesh;
@@ -657,11 +797,17 @@ static Mesh ProcessMesh(aiMesh* mesh, const aiScene* scene) {
 
 	return processedMesh;
 }
-static void ProcessNode(aiNode* node, const aiScene* scene, ModelsBuffer* modelsBuffer, Model& parentModel) {
+void VulkanAndRTX::ProcessNode(aiNode* node, const aiScene* scene, ModelsBuffer* modelsBuffer, Model& parentModel) {
 	for (size_t i = 0; i < node->mNumMeshes; i++) {
 		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
 		Mesh processedMesh = ProcessMesh(mesh, scene);
 		parentModel.meshes.push_back(processedMesh);
+
+		if (mesh->mMaterialIndex >= 0) {
+			aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
+			Material processedMaterial = ProcessMaterial(material, scene);
+			parentModel.materials.push_back(processedMaterial);
+		}
 	}
 	for (size_t i = 0; i < node->mNumChildren; i++) {
 		Model childModel;
@@ -669,7 +815,7 @@ static void ProcessNode(aiNode* node, const aiScene* scene, ModelsBuffer* models
 		modelsBuffer->models.push_back(childModel);
 	}
 }
-static void LoadModelsFromDirectory(const std::string& directory, ModelsBuffer* modelsBuffer) {
+void VulkanAndRTX::LoadModelsFromDirectory(const std::string& directory, ModelsBuffer* modelsBuffer) {
 	auto modelFiles = GetModelFiles(directory);
 
 	for (const auto& file : modelFiles) {

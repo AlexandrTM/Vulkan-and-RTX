@@ -120,10 +120,15 @@ void VulkanInitializer::pickPhysicalDevice()
 		vkGetPhysicalDeviceProperties(device, &deviceProperties);
 		vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
 
-		std::cout << "GPU type: " << deviceProperties.deviceType << "\n";
-		std::cout << "GPU name: " << deviceProperties.deviceName << "\n";
+		std::cout << 
+			"device type: " << deviceProperties.deviceType << " "
+			"device name: " << deviceProperties.deviceName << "\n";
 
 		if (isDeviceSuitable(device)) {
+			std::cout << 
+				"suitable device type: " << deviceProperties.deviceType << " "
+				"suitable device name: " << deviceProperties.deviceName << "\n";
+
 			physicalDevice = device;
 			msaaSamples = getMaxUsableSampleCount();
 			break;
@@ -283,6 +288,7 @@ VkSampleCountFlagBits VulkanInitializer::getMaxUsableSampleCount()
 
 	VkSampleCountFlags counts = physicalDeviceProperties.limits.framebufferColorSampleCounts
 							  & physicalDeviceProperties.limits.framebufferDepthSampleCounts;
+
 	if (counts & VK_SAMPLE_COUNT_64_BIT) { return VK_SAMPLE_COUNT_64_BIT; }
 	if (counts & VK_SAMPLE_COUNT_32_BIT) { return VK_SAMPLE_COUNT_32_BIT; }
 	if (counts & VK_SAMPLE_COUNT_16_BIT) { return VK_SAMPLE_COUNT_16_BIT; }

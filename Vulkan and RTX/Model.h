@@ -9,6 +9,7 @@ struct Texture {
     VkDeviceMemory imageMemory;
     VkImageView    imageView;
     VkSampler      sampler;
+    uint32_t       mipLevels;
 };
 
 struct Mesh
