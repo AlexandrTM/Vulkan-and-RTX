@@ -29,7 +29,20 @@ private:
 		alignas(16) glm::vec3 sun;
 		alignas(16) glm::vec3 observer;
 		alignas(4) float visibilityRange = 6000;
-	} objectUBO, skyUBO;
+	};
+
+	UniformBufferObject						 skyUBO;
+	std::vector<VkBuffer>					 skyUniformBuffers;
+	std::vector<VkDeviceMemory>				 skyUniformBuffersMemory;
+
+	VkDescriptorPool            descriptorPool;
+	VkDescriptorSetLayout       descriptorSetLayout;
+
+	std::vector<VkDescriptorSet> skyDescriptorSets;
+
+	std::vector<std::vector<std::vector<VkBuffer>>> meshUniformBuffers; // For all models, meshes, and frames
+	std::vector<std::vector<std::vector<VkDeviceMemory>>> meshUniformBuffersMemory;
+	std::vector<std::vector<std::vector<VkDescriptorSet>>> meshDescriptorSets;
 
 	std::unique_ptr<TerrainGenerator> terrainGenerator;
 
@@ -69,21 +82,8 @@ private:
 
 	bool framebufferResized = false;
 
-	std::vector<VkBuffer>       objectUniformBuffers;
-	std::vector<VkDeviceMemory> objectUniformBuffersMemory;
-	std::vector<VkBuffer>       skyUniformBuffers;
-	std::vector<VkDeviceMemory> skyUniformBuffersMemory;
-
-	VkDescriptorPool            descriptorPool;
-	VkDescriptorSetLayout       descriptorSetLayout;
-
-	struct DescriptorSets {
-		VkDescriptorSet objects;
-		VkDescriptorSet sky;
-	};
-	std::vector<DescriptorSets> descriptorSets;
-
-	ModelsBuffer modelsBuffer;
+	std::vector<Model> models;
+	Model sky;
 
 	VkSampler	   textureSampler;
 
@@ -145,10 +145,10 @@ private:
 	void loadObjModel(const std::string& filePath);
 	void loadGltfModel(const std::string& filePath);
 
-	void LoadModelsFromDirectory(const std::string& directory, ModelsBuffer* modelsBuffer);
-	Texture LoadTexture(const std::string& texturePath, const aiScene* scene);
-	Material ProcessMaterial(aiMaterial* aiMat, const aiScene* scene);
-	void ProcessNode(aiNode* node, const aiScene* scene, ModelsBuffer* modelsBuffer, Model& parentModel);
+	void loadModelsFromDirectory(const std::string& directory, std::vector<Model>* models);
+	Texture loadTexture(const std::string& texturePath, const aiScene* scene);
+	Material processMaterial(aiMaterial* aiMat, const aiScene* scene);
+	void processNode(aiNode* node, const aiScene* scene, std::vector<Model>* models, Model& parentModel, glm::mat4 parentTransform, int level = 0);
 	
 	void createTextureImageFromPath(const std::string& texturePath, Texture& texture);
 	void createTextureFromEmbedded(const std::string& embeddedTextureName, Texture& texture, const aiScene* scene);
@@ -156,6 +156,7 @@ private:
 		VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties,
 		VkImage& image, VkDeviceMemory& imageMemory);
 	void generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels);
+	void addTextureToDescriptorSet(const Texture& texture, VkDescriptorSet descriptorSet) const;
 
 	// how to sample through texels of the texture for drawing them on 3D model
 	void createTextureSampler(VkSampler& vkSampler);
@@ -190,7 +191,6 @@ private:
 	// ending and submitting command buffer helper function
 	void endSingleTimeCommands(VkCommandBuffer commandBuffer) const;
 
-
 	// finding most appropriate memory type depending on buffer and application properties
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
 
@@ -205,21 +205,25 @@ private:
 	void createVertexBuffer(Model& model);
 	void createIndexBuffer(Model& model);
 
-	void createDescriptorSets();
+	void createSkyUniformBuffers(size_t swapChainImageCount);
+	void createMeshUniformBuffers(size_t swapChainImageCount);
+	void createSkyDescriptorSets(size_t swapChainImageCount);
+	void createMeshDescriptorSets(size_t swapChainImageCount);
+
+	void drawModel(VkCommandBuffer commandBuffer, const Model& model);
+	void drawMesh(VkCommandBuffer commandBuffer, const Mesh& mesh);
+
+	// updating MVP matrix for every draw call every frame
+	void updateUniformBuffers(uint32_t currentImage, float timeSinceLaunch);
 
 	// create multiple command buffers
 	void createCommandBuffers();
-
 	// record commands to the command buffer
 	void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, ImDrawData* draw_data);
-	void drawModel(VkCommandBuffer commandBuffer, Model& model);
-
-	// creating uniform buffer for each frame in flight
-	void createUniformBuffers();
-
-	void createDescriptorSetLayout(VkDescriptorSetLayout& descriptorSetLayout) const;
 
 	void createDescriptorPool();
+	void createDescriptorSetLayout(VkDescriptorSetLayout& descriptorSetLayout) const;
+	void createDescriptorSet(VkDescriptorSet& descriptorSet, VkBuffer uniformBuffer, size_t uniformBufferSize);
 
 	// creating swap chain with the best properties for current device
 	void createSwapChain();
@@ -232,9 +236,10 @@ private:
 
 	void createPipelineLayout(VkDescriptorSetLayout& descriptorSetLayout);
 
-	// transfering scene to images
-	void createGraphicsPipeline(const std::string prefix, const std::string& vertexShader,
-		const std::string& fragmentShader);
+	void createGraphicsPipeline(
+		const std::string prefix, 
+		const std::string& vertexShader, const std::string& fragmentShader
+	);
 
 	// creating framebuffer from each swap chain image view
 	void createSwapChainFramebuffers();
@@ -247,9 +252,6 @@ private:
 
 	// Creating frames for presentation
 	void drawFrame(float timeSinceLaunch, ImDrawData* draw_data);
-
-	// updating MVP matrix for every draw call every frame
-	void updateUniformBuffers(uint32_t currentImage, float timeSinceLaunch);
 
 	// wraping shader
 	VkShaderModule createShaderModule(const std::vector<char>& code) const;

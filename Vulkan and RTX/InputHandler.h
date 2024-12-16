@@ -31,7 +31,7 @@ public:
 	// mouse wheel handling
 	void scrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 
-	void movePerson(float deltaTime);
+	void movePerson(float deltaTime, float moveSpeed);
 };
 
 #endif // !INPUT_HANDLER_H

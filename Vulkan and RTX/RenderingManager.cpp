@@ -98,9 +98,10 @@ void VulkanAndRTX::createPipelineLayout(VkDescriptorSetLayout& descriptorSetLayo
 	}
 }
 
-// transfering scene to images
-void VulkanAndRTX::createGraphicsPipeline(const std::string prefix, const std::string& vertexShader,
-	const std::string& fragmentShader)
+void VulkanAndRTX::createGraphicsPipeline(
+	const std::string prefix, 
+	const std::string& vertexShader, const std::string& fragmentShader
+)
 {
 	auto vertShader = readFile(vertexShader);
 	auto fragShader = readFile(fragmentShader);
@@ -416,22 +417,11 @@ void VulkanAndRTX::updateUniformBuffers(uint32_t currentImage, float timeSinceLa
 	glm::mat4 projection = glm::perspective(
 		glm::radians(inputHandler.camera.getVerticalFov()),
 		swapChainExtent.width / (float)swapChainExtent.height, 
-		0.1f, 100000.0f
+		0.01f, 100000.0f
 	);
 	projection[1][1] *= -1;
 
 	glm::vec3 sun = StellarCalculations::calculateSunPosition(timeSinceLaunch);
-
-	objectUBO.model = glm::mat4(1.0f);
-	objectUBO.view = view;
-	objectUBO.projection = projection;
-	objectUBO.sun = sun;
-	objectUBO.observer = inputHandler.camera.getLookFrom();
-
-	/*std::cout << "position: "
-		<< objectUBO.observer[0] << " "
-		<< objectUBO.observer[1] << " "
-		<< objectUBO.observer[2] << "\n";*/
 
 	// add transpose(inverse(ubo.model)) if doing non uniform scaling
 
@@ -442,94 +432,71 @@ void VulkanAndRTX::updateUniformBuffers(uint32_t currentImage, float timeSinceLa
 	skyUBO.observer = inputHandler.camera.getLookFrom();
 
 	void* data;
-	vkMapMemory(vkInit.device, objectUniformBuffersMemory[currentImage], 
-		0, sizeof(UniformBufferObject), 0, &data);
-	memcpy(data, &objectUBO, sizeof(UniformBufferObject));
-	vkUnmapMemory(vkInit.device, objectUniformBuffersMemory[currentImage]);
-
 	vkMapMemory(vkInit.device, skyUniformBuffersMemory[currentImage],
 		0, sizeof(UniformBufferObject), 0, &data);
 	memcpy(data, &skyUBO, sizeof(UniformBufferObject));
 	vkUnmapMemory(vkInit.device, skyUniformBuffersMemory[currentImage]);
+
+	// Update per-mesh UBOs
+	for (size_t modelIndex = 0; modelIndex < models.size(); ++modelIndex) {
+		Model& model = models[modelIndex];
+		for (size_t meshIndex = 0; meshIndex < model.meshes.size(); ++meshIndex) {
+			Mesh& mesh = model.meshes[meshIndex];
+
+			UniformBufferObject meshUBO{};
+			//meshUBO.model = mesh.transform;
+			meshUBO.model = glm::mat4(1.0f);
+			meshUBO.view = view;
+			meshUBO.projection = projection;
+			meshUBO.sun = sun;
+			meshUBO.observer = inputHandler.camera.getLookFrom();
+
+			vkMapMemory(vkInit.device,
+				meshUniformBuffersMemory[modelIndex][meshIndex][currentImage],
+				0, sizeof(UniformBufferObject), 0, &data);
+			memcpy(data, &meshUBO, sizeof(UniformBufferObject));
+			vkUnmapMemory(vkInit.device,
+				meshUniformBuffersMemory[modelIndex][meshIndex][currentImage]);
+		}
+	}
 }
 
-void VulkanAndRTX::createDescriptorSets()
+void VulkanAndRTX::createSkyUniformBuffers(size_t swapChainImageCount)
 {
-	descriptorSets.resize(MAX_FRAMES_IN_FLIGHT);
+	skyUniformBuffers.resize(swapChainImageCount);
+	skyUniformBuffersMemory.resize(swapChainImageCount);
 
-	// object descriptor sets
-	for (size_t i = 0; i < descriptorSets.size(); i++) {
-		VkDescriptorSetAllocateInfo allocInfo{};
-		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-		allocInfo.descriptorPool = descriptorPool;
-		allocInfo.descriptorSetCount = 1;
-		allocInfo.pSetLayouts = &descriptorSetLayout;
-
-		if (vkAllocateDescriptorSets(vkInit.device, &allocInfo, &descriptorSets[i].objects) != VK_SUCCESS) {
-			throw std::runtime_error("failed to allocate descriptor sets!");
-		}
-
-		VkDescriptorBufferInfo bufferInfo{};
-		bufferInfo.buffer = objectUniformBuffers[i];
-		bufferInfo.offset = 0;
-		bufferInfo.range = sizeof(UniformBufferObject);
-
-		VkDescriptorImageInfo imageInfo{};
-		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-		imageInfo.imageView = texture.imageView;
-		imageInfo.sampler = textureSampler;
-
-		std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
-
-		descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		descriptorWrites[0].descriptorCount = 1;
-		descriptorWrites[0].dstBinding = 0;
-		descriptorWrites[0].dstSet = descriptorSets[i].objects;
-		descriptorWrites[0].dstArrayElement = 0;
-		descriptorWrites[0].pBufferInfo = &bufferInfo;
-
-		descriptorWrites[1].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrites[1].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-		descriptorWrites[1].descriptorCount = 1;
-		descriptorWrites[1].dstBinding = 1;
-		descriptorWrites[1].dstSet = descriptorSets[i].objects;
-		descriptorWrites[1].dstArrayElement = 0;
-		descriptorWrites[1].pImageInfo = &imageInfo;
-
-		vkUpdateDescriptorSets(vkInit.device, static_cast<uint32_t>(descriptorWrites.size()),
-			descriptorWrites.data(), 0, nullptr);
+	for (size_t i = 0; i < swapChainImageCount; i++) {
+		createBuffer(sizeof(UniformBufferObject), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
+			| VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, skyUniformBuffers[i], skyUniformBuffersMemory[i]);
 	}
+}
+void VulkanAndRTX::createMeshUniformBuffers(size_t swapChainImageCount)
+{
+	meshUniformBuffers.resize(models.size());
+    meshUniformBuffersMemory.resize(models.size());
 
-	// sky descriptor sets
-	for (size_t i = 0; i < descriptorSets.size(); i++) {
-		VkDescriptorSetAllocateInfo allocInfo{};
-		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-		allocInfo.descriptorPool = descriptorPool;
-		allocInfo.descriptorSetCount = 1;
-		allocInfo.pSetLayouts = &descriptorSetLayout;
+    for (size_t modelIndex = 0; modelIndex < models.size(); ++modelIndex) {
+        const Model& model = models[modelIndex];
 
-		if (vkAllocateDescriptorSets(vkInit.device, &allocInfo, &descriptorSets[i].sky) != VK_SUCCESS) {
-			throw std::runtime_error("failed to allocate descriptor sets!");
-		}
+        meshUniformBuffers[modelIndex].resize(model.meshes.size());
+        meshUniformBuffersMemory[modelIndex].resize(model.meshes.size());
 
-		std::array<VkWriteDescriptorSet, 1> descriptorWrites{};
+        for (size_t meshIndex = 0; meshIndex < model.meshes.size(); ++meshIndex) {
+            meshUniformBuffers[modelIndex][meshIndex].resize(swapChainImageCount);
+            meshUniformBuffersMemory[modelIndex][meshIndex].resize(swapChainImageCount);
 
-		VkDescriptorBufferInfo bufferInfo{};
-		bufferInfo.buffer = skyUniformBuffers[i];
-		bufferInfo.offset = 0;
-		bufferInfo.range = sizeof(UniformBufferObject);
-
-		descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-		descriptorWrites[0].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		descriptorWrites[0].descriptorCount = 1;
-		descriptorWrites[0].dstBinding = 0;
-		descriptorWrites[0].dstSet = descriptorSets[i].sky;
-		descriptorWrites[0].pBufferInfo = &bufferInfo;
-
-		vkUpdateDescriptorSets(vkInit.device, static_cast<uint32_t>(descriptorWrites.size()),
-			descriptorWrites.data(), 0, nullptr);
-	}
+            for (size_t frameIndex = 0; frameIndex < swapChainImageCount; ++frameIndex) {
+                createBuffer(
+                    sizeof(UniformBufferObject),
+                    VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+                    meshUniformBuffers[modelIndex][meshIndex][frameIndex],
+                    meshUniformBuffersMemory[modelIndex][meshIndex][frameIndex]
+                );
+            }
+        }
+    }
 }
 
 void VulkanAndRTX::createDescriptorSetLayout(VkDescriptorSetLayout& descriptorSetLayout) const
@@ -558,10 +525,65 @@ void VulkanAndRTX::createDescriptorSetLayout(VkDescriptorSetLayout& descriptorSe
 		throw std::runtime_error("failed to create descriptor set layout!");
 	}
 }
+void VulkanAndRTX::createDescriptorSet(VkDescriptorSet& descriptorSet, VkBuffer uniformBuffer, size_t uniformBufferSize)
+{
+	VkDescriptorSetAllocateInfo allocInfo{};
+	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	allocInfo.descriptorPool = descriptorPool;  // Make sure you have a valid descriptor pool
+	allocInfo.descriptorSetCount = 1;
+	allocInfo.pSetLayouts = &descriptorSetLayout;  // Ensure the layout matches UBO binding requirements
 
-// record commands to the command buffer
-void VulkanAndRTX::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, 
-	ImDrawData* draw_data)
+	if (vkAllocateDescriptorSets(vkInit.device, &allocInfo, &descriptorSet) != VK_SUCCESS) {
+		throw std::runtime_error("Failed to allocate descriptor set!");
+	}
+
+	VkDescriptorBufferInfo bufferInfo{};
+	bufferInfo.buffer = uniformBuffer;
+	bufferInfo.offset = 0;
+	bufferInfo.range = uniformBufferSize;
+
+	VkWriteDescriptorSet descriptorWrite{};
+	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	descriptorWrite.descriptorCount = 1;
+	descriptorWrite.dstBinding = 0;
+	descriptorWrite.dstSet = descriptorSet;
+	descriptorWrite.dstArrayElement = 0;
+	descriptorWrite.pBufferInfo = &bufferInfo;
+
+	vkUpdateDescriptorSets(vkInit.device, 1, &descriptorWrite, 0, nullptr);
+}
+void VulkanAndRTX::createSkyDescriptorSets(size_t swapChainImageCount)
+{
+	skyDescriptorSets.resize(swapChainImageCount);
+
+	for (size_t i = 0; i < skyDescriptorSets.size(); i++) {
+		createDescriptorSet(skyDescriptorSets[i], skyUniformBuffers[i], sizeof(UniformBufferObject));
+	}
+}
+void VulkanAndRTX::createMeshDescriptorSets(size_t swapChainImageCount)
+{
+	meshDescriptorSets.resize(models.size());
+
+	for (size_t modelIndex = 0; modelIndex < models.size(); ++modelIndex) {
+		const Model& model = models[modelIndex];
+		meshDescriptorSets[modelIndex].resize(model.meshes.size());
+
+		for (size_t meshIndex = 0; meshIndex < model.meshes.size(); ++meshIndex) {
+			meshDescriptorSets[modelIndex][meshIndex].resize(swapChainImageCount);
+
+			for (size_t frameIndex = 0; frameIndex < swapChainImageCount; ++frameIndex) {
+				createDescriptorSet(
+					meshDescriptorSets[modelIndex][meshIndex][frameIndex],
+					meshUniformBuffers[modelIndex][meshIndex][frameIndex],
+					sizeof(UniformBufferObject)
+				);
+			}
+		}
+	}
+}
+
+void VulkanAndRTX::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, ImDrawData* draw_data)
 {
 	VkCommandBufferBeginInfo beginInfo{};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -589,20 +611,39 @@ void VulkanAndRTX::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t i
 	// sky
 	{
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["sky"]);
-		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1,
-			&descriptorSets[currentFrame].sky, 0, nullptr);
+		vkCmdBindDescriptorSets(
+			commandBuffer, 
+			VK_PIPELINE_BIND_POINT_GRAPHICS, 
+			pipelineLayout, 
+			0, 1, &skyDescriptorSets[currentFrame],
+			0, nullptr
+		);
 
-		drawModel(commandBuffer, modelsBuffer.sky);
+		drawModel(commandBuffer, sky);
 	}
 
 	// objects
-	{
-		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["object"]);
-		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelineLayout, 0, 1,
-			&descriptorSets[currentFrame].objects, 0, nullptr);
+	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["object"]);
+	for (size_t modelIndex = 0; modelIndex < models.size(); ++modelIndex) {
+		for (size_t meshIndex = 0; meshIndex < models[modelIndex].meshes.size(); ++meshIndex) {
+			const Mesh& mesh = models[modelIndex].meshes[meshIndex];
+			const Material& material = models[modelIndex].materials[meshIndex];
 
-		for (size_t i = 0; i < modelsBuffer.models.size(); i++) {
-			drawModel(commandBuffer, modelsBuffer.models[i]);
+			addTextureToDescriptorSet(material.diffuseTexture, meshDescriptorSets[modelIndex][meshIndex][currentFrame]);
+			if (material.emissiveTexture.imageView && material.emissiveTexture.sampler) {
+				addTextureToDescriptorSet(material.emissiveTexture, meshDescriptorSets[modelIndex][meshIndex][currentFrame]);
+			}
+
+			// Bind per-mesh descriptor set
+			vkCmdBindDescriptorSets(
+				commandBuffer,
+				VK_PIPELINE_BIND_POINT_GRAPHICS,
+				pipelineLayout,
+				0, 1, &meshDescriptorSets[modelIndex][meshIndex][currentFrame],
+				0, nullptr
+			);
+
+			drawMesh(commandBuffer, mesh);
 		}
 	}
 
@@ -614,16 +655,36 @@ void VulkanAndRTX::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t i
 		throw std::runtime_error("failed to record command buffer!");
 	}
 }
-
-void VulkanAndRTX::drawModel(VkCommandBuffer commandBuffer, Model& model)
+void VulkanAndRTX::addTextureToDescriptorSet(const Texture& texture, VkDescriptorSet descriptorSet) const
 {
-	for (size_t i = 0; i < model.meshes.size(); i++) {
-		const Mesh& mesh = model.meshes[i];
+	VkDescriptorImageInfo imageInfo{};
+	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	imageInfo.imageView = texture.imageView;
+	imageInfo.sampler = texture.sampler;
 
-		VkDeviceSize offsets[] = { 0 };
+	VkWriteDescriptorSet descriptorWrite{};
+	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	descriptorWrite.dstSet = descriptorSet;
+	descriptorWrite.dstBinding = 1;  // Assume binding 1 is for diffuse texture
+	descriptorWrite.dstArrayElement = 0;
+	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	descriptorWrite.descriptorCount = 1;
+	descriptorWrite.pImageInfo = &imageInfo;
 
-		vkCmdBindVertexBuffers(commandBuffer, 0, 1, &mesh.vertexBuffer, offsets);
-		vkCmdBindIndexBuffer(commandBuffer, mesh.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
-		vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(mesh.indices.size()), 1, 0, 0, 0);
+	vkUpdateDescriptorSets(vkInit.device, 1, &descriptorWrite, 0, nullptr);
+}
+
+void VulkanAndRTX::drawModel(VkCommandBuffer commandBuffer, const Model& model)
+{
+	for (const Mesh& mesh : model.meshes) {
+		drawMesh(commandBuffer, mesh);
 	}
+}
+void VulkanAndRTX::drawMesh(VkCommandBuffer commandBuffer, const Mesh& mesh)
+{
+	VkDeviceSize offsets[] = { 0 };
+
+	vkCmdBindVertexBuffers(commandBuffer, 0, 1, &mesh.vertexBuffer, offsets);
+	vkCmdBindIndexBuffer(commandBuffer, mesh.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
+	vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(mesh.indices.size()), 1, 0, 0, 0);
 }

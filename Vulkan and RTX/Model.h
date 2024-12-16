@@ -16,6 +16,8 @@ struct Mesh
 {
     std::vector<Vertex>   vertices;
     std::vector<uint32_t> indices;
+    glm::mat4             transform = glm::mat4(1.0f);
+
     VkBuffer              vertexBuffer;
     VkDeviceMemory        vertexBufferMemory;
     VkBuffer              indexBuffer;
@@ -23,10 +25,10 @@ struct Mesh
 };
 
 struct Material {
-    Texture diffuseTexture;    // Diffuse map
-    Texture normalTexture;     // Normal map (optional)
-    Texture specularTexture;   // Specular map (optional)
-    // Add more texture maps if needed
+    Texture diffuseTexture;
+    Texture normalTexture;
+    Texture specularTexture;
+    Texture emissiveTexture;
 };
 
 struct Model {
@@ -44,11 +46,6 @@ struct Model {
     std::vector<std::vector<Mesh>> lodLevels;
 
     bool                  isLoaded = false;  // Dynamic loading flag
-};
-
-struct ModelsBuffer {
-    std::vector<Model> models;
-    Model sky;
 };
 
 #endif // !MODEL

@@ -127,10 +127,12 @@ void VulkanAndRTX::recreateSwapChain()
 	createColorResources();
 	createDepthResources();
 	createSwapChainFramebuffers();
-	createUniformBuffers();
 	createCommandBuffers();
 	createDescriptorPool();
-	createDescriptorSets();
+	createSkyUniformBuffers(MAX_FRAMES_IN_FLIGHT);
+	createSkyDescriptorSets(MAX_FRAMES_IN_FLIGHT);
+	createMeshUniformBuffers(MAX_FRAMES_IN_FLIGHT);
+	createMeshDescriptorSets(MAX_FRAMES_IN_FLIGHT);
 }
 
 // cleaning "out of date" swap chain

@@ -176,23 +176,25 @@ void VulkanAndRTX::prepareResources()
 	createTextureImageFromPath("textures/grass001.png", texture);
 
 	//loadGltfModel("models/blue_archivekasumizawa_miyu.glb");
-	LoadModelsFromDirectory("models", &modelsBuffer);
+	loadModelsFromDirectory("models", &models);
 	generateTerrain(-30, -30, 600, 600, 0.1, 0.1, 1.0, 1);
 
 	createSkyCube();
 
-	createVertexBuffer(modelsBuffer.sky);
-	createIndexBuffer(modelsBuffer.sky);
+	createVertexBuffer(sky);
+	createIndexBuffer(sky);
 
-	for (size_t i = 0; i < modelsBuffer.models.size(); i++) {
-		createVertexBuffer(modelsBuffer.models[i]);
-		createIndexBuffer(modelsBuffer.models[i]);
+	for (size_t i = 0; i < models.size(); i++) {
+		createVertexBuffer(models[i]);
+		createIndexBuffer(models[i]);
 	}
 
-	createUniformBuffers();
-
 	createDescriptorPool();
-	createDescriptorSets();
+
+	createSkyUniformBuffers(MAX_FRAMES_IN_FLIGHT);
+	createSkyDescriptorSets(MAX_FRAMES_IN_FLIGHT);
+	createMeshUniformBuffers(MAX_FRAMES_IN_FLIGHT);
+	createMeshDescriptorSets(MAX_FRAMES_IN_FLIGHT);
 
 	createCommandBuffers();
 	createSyncObjects();
@@ -218,7 +220,7 @@ void VulkanAndRTX::mainLoop()
 
 		glfwPollEvents();
 		if (!inputHandler.currentInteractingVolume) {
-			inputHandler.movePerson(deltaTime);
+			inputHandler.movePerson(deltaTime, 4.0f);
 		}
 		//restrictCharacterMovement(inputHandler.camera);
 
@@ -313,11 +315,11 @@ void VulkanAndRTX::cleanupImGui() {
 
 void VulkanAndRTX::cleanupModels()
 {
-	for (size_t i = 0; i < modelsBuffer.models.size(); i++) {
-		cleanupModel(modelsBuffer.models[i]);
+	for (size_t i = 0; i < models.size(); i++) {
+		cleanupModel(models[i]);
 	}
 
-	cleanupModel(modelsBuffer.sky);
+	cleanupModel(sky);
 }
 
 void VulkanAndRTX::cleanupModel(Model& model) const
@@ -341,8 +343,6 @@ void VulkanAndRTX::cleanupMemory()
 	cleanupSwapChain();
 
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-		vkDestroyBuffer (vkInit.device, objectUniformBuffers[i], nullptr);
-		vkFreeMemory    (vkInit.device, objectUniformBuffersMemory[i], nullptr);
 		vkDestroyBuffer (vkInit.device, skyUniformBuffers[i], nullptr);
 		vkFreeMemory    (vkInit.device, skyUniformBuffersMemory[i], nullptr);
 	}
@@ -537,9 +537,16 @@ uint32_t VulkanAndRTX::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags
 
 void VulkanAndRTX::createDescriptorPool()
 {
+	size_t totalMeshes = 0;
+	for (const auto& model : models) {
+		totalMeshes += model.meshes.size();
+	}
+
+	const uint32_t totalMeshDescriptors = static_cast<uint32_t>(totalMeshes * MAX_FRAMES_IN_FLIGHT);
+
 	std::array<VkDescriptorPoolSize, 2> poolSizes{};
 	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	poolSizes[0].descriptorCount = 7 * static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+	poolSizes[0].descriptorCount = totalMeshDescriptors * 2 * static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT) + 5;
 	poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	poolSizes[1].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 
@@ -547,7 +554,11 @@ void VulkanAndRTX::createDescriptorPool()
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
 	poolInfo.pPoolSizes = poolSizes.data();
-	poolInfo.maxSets = 3 * static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+	poolInfo.maxSets = totalMeshDescriptors + 2 * static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+
+	//std::cout << "totalMeshDescriptors: " << totalMeshDescriptors << "\n";
+	//std::cout << "poolSizes[0].descriptorCount: " << poolSizes[0].descriptorCount << "\n";
+	//std::cout << "poolInfo.maxSets: " << poolInfo.maxSets << "\n";
 
 	if (vkCreateDescriptorPool(vkInit.device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create descriptor pool!");

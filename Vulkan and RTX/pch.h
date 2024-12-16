@@ -15,6 +15,7 @@
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <gtx/hash.hpp>
+#include <gtx/string_cast.hpp>
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>

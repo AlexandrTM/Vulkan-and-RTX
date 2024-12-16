@@ -7,11 +7,16 @@ void VulkanAndRTX::generateTerrain(float startX, float startZ, size_t width, siz
 {
 	Model model;
 	Mesh mesh;
+
 	terrainGenerator = std::make_unique<TerrainGenerator>(seed);
 	auto heightmap = terrainGenerator.get()->generatePerlinHeightMap(width, length, scale, height);
 	terrainGenerator.get()->generateTerrainMesh(startX, startZ, heightmap, gridSize, mesh);
+	
 	model.meshes.push_back(mesh);
-	modelsBuffer.models.push_back(model);
+	Material material{};
+	material.diffuseTexture = texture;
+	model.materials.push_back(material);
+	models.push_back(model);
 }
 
 void VulkanAndRTX::generateCubicLandscape(size_t landscapeWidth, size_t landscapeLenght, float_t cubeSize)
@@ -30,8 +35,6 @@ void VulkanAndRTX::generateCubicLandscape(size_t landscapeWidth, size_t landscap
 }
 void VulkanAndRTX::generateCube(float x, float y, float z, float cubeSize)
 {
-	glm::vec3 basicColor = glm::vec3(0.5f, 0.5f, 0.5f);
-
 	std::vector<Vertex> localVertices(24);
 	Model model;
 	Mesh mesh;
@@ -95,7 +98,7 @@ void VulkanAndRTX::generateCube(float x, float y, float z, float cubeSize)
 #pragma region
 	for (size_t i = 0; i < localVertices.size(); ++i)
 	{
-		localVertices[i].color = basicColor;
+		localVertices[i].color = glm::vec3(1.0f);
 	}
 #pragma endregion // color
 #pragma region
@@ -154,13 +157,11 @@ void VulkanAndRTX::generateCube(float x, float y, float z, float cubeSize)
 		mesh.indices.push_back(localIndices[i]);
 	}
 	model.meshes.push_back(mesh);
-	modelsBuffer.models.push_back(model);
+	models.push_back(model);
 }
 void VulkanAndRTX::generateCuboid(float x, float y, float z,
 	float width, float height, float length, glm::vec3 color)
 {
-	glm::vec3 basicColor = color;
-
 	std::vector<Vertex> localVertices(24);
 	Model model;
 	Mesh mesh;
@@ -224,7 +225,7 @@ void VulkanAndRTX::generateCuboid(float x, float y, float z,
 #pragma region
 	for (size_t i = 0; i < localVertices.size(); ++i)
 	{
-		localVertices[i].color = basicColor;
+		localVertices[i].color = color;
 	}
 #pragma endregion // color
 #pragma region
@@ -283,12 +284,10 @@ void VulkanAndRTX::generateCuboid(float x, float y, float z,
 		mesh.indices.push_back(localIndices[i]);
 	}
 	model.meshes.push_back(mesh);
-	modelsBuffer.models.push_back(model);
+	models.push_back(model);
 }
 void VulkanAndRTX::createSkyCube()
 {
-	glm::vec3 basicColor = glm::vec3(0.5f, 0.5f, 0.5f);
-
 	std::vector<Vertex> localVertices(24);
 	Model model;
 	Mesh mesh;
@@ -352,7 +351,7 @@ void VulkanAndRTX::createSkyCube()
 #pragma region
 	for (size_t i = 0; i < localVertices.size(); ++i)
 	{
-		localVertices[i].color = basicColor;
+		localVertices[i].color = glm::vec3(1.0f);
 	}
 #pragma endregion // color
 #pragma region
@@ -411,7 +410,7 @@ void VulkanAndRTX::createSkyCube()
 		mesh.indices.push_back(localIndices[i]);
 	}
 	model.meshes.push_back(mesh);
-	modelsBuffer.sky = model;
+	sky = model;
 }
 
 void VulkanAndRTX::loadObjModel(const std::string& modelPath)
@@ -446,7 +445,7 @@ void VulkanAndRTX::loadObjModel(const std::string& modelPath)
 				1 - attrib.texcoords[2 * index.texcoord_index + 1]
 			};
 
-			vertex.color = { 1.f, 1.f, 1.f };
+			vertex.color = glm::vec3(1.0f);
 
 			vertex.normal = {
 				attrib.normals[index.normal_index * 3],
@@ -463,7 +462,7 @@ void VulkanAndRTX::loadObjModel(const std::string& modelPath)
 		}
 		model.meshes.push_back(mesh);
 	}
-	modelsBuffer.models.push_back(model);
+	models.push_back(model);
 }
 void VulkanAndRTX::loadGltfModel(const std::string& modelPath) {
 	tinygltf::Model GLTFmodel;
@@ -589,7 +588,7 @@ void VulkanAndRTX::loadGltfModel(const std::string& modelPath) {
 						bufferNormals[i * 3 + 1],
 						bufferNormals[i * 3 + 2]) : glm::vec3(0.0f)));
 
-					vertex.color = { 0.5f, 0.5f, 0.5f };
+					vertex.color = glm::vec3(1.0f);
 
 					vertex.texCoord0 = bufferTexCoordSet0 ? glm::vec2(
 						bufferTexCoordSet0[i * 2],
@@ -608,7 +607,7 @@ void VulkanAndRTX::loadGltfModel(const std::string& modelPath) {
 			"vertices count: " << mesh.vertices.size() << "\n";
 		model.meshes.push_back(mesh);
 	}
-	modelsBuffer.models.push_back(model);
+	models.push_back(model);
 	std::cout << "textures: " << GLTFmodel.textures.size() << "\n";
 }
 
@@ -626,6 +625,33 @@ static std::vector<std::string> GetModelFiles(const std::string& directory) {
 
 	return modelFiles;
 }
+static glm::mat4 assimpToGLMMat4(const aiMatrix4x4& from) {
+	glm::mat4 to{};
+	to[0][0] = from.a1; to[1][0] = from.a2; to[2][0] = from.a3; to[3][0] = from.a4;
+	to[0][1] = from.b1; to[1][1] = from.b2; to[2][1] = from.b3; to[3][1] = from.b4;
+	to[0][2] = from.c1; to[1][2] = from.c2; to[2][2] = from.c3; to[3][2] = from.c4;
+	to[0][3] = from.d1; to[1][3] = from.d2; to[2][3] = from.d3; to[3][3] = from.d4;
+	return to;
+}
+static void decomposeTransform(const glm::mat4& transform, glm::vec3& position, glm::quat& rotation, glm::vec3& scale) {
+	// Extract the translation
+	position = glm::vec3(transform[3]);
+
+	// Extract the scale
+	scale = glm::vec3(
+		glm::length(transform[0]),
+		glm::length(transform[1]),
+		glm::length(transform[2])
+	);
+
+	// Extract the rotation
+	glm::mat3 rotationMatrix = glm::mat3(
+		transform[0] / scale.x,
+		transform[1] / scale.y,
+		transform[2] / scale.z
+	);
+	rotation = glm::quat_cast(rotationMatrix);
+}
 void VulkanAndRTX::createTextureImageFromPath(const std::string& texturePath, Texture& texture)
 {
 	VkBuffer stagingBuffer;
@@ -633,13 +659,14 @@ void VulkanAndRTX::createTextureImageFromPath(const std::string& texturePath, Te
 
 	int texWidth, texHeight, texChannels;
 	stbi_uc* pixels = stbi_load(texturePath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
-	VkDeviceSize imageSize = texWidth * texHeight * 4;
-	texture.mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
-
+	
 	if (!pixels) {
 		std::cout << texturePath;
 		throw std::runtime_error("failed to load texture image!");
 	}
+
+	VkDeviceSize imageSize = texWidth * texHeight * 4;
+	texture.mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
 
 	createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
 		| VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
@@ -650,10 +677,13 @@ void VulkanAndRTX::createTextureImageFromPath(const std::string& texturePath, Te
 	vkUnmapMemory(vkInit.device, stagingBufferMemory);
 	stbi_image_free(pixels);
 
-	createImage(texWidth, texHeight, texture.mipLevels, VK_SAMPLE_COUNT_1_BIT, VK_FORMAT_R8G8B8A8_SRGB,
-		VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT
-		| VK_IMAGE_USAGE_SAMPLED_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-		texture.image, texture.imageMemory);
+	createImage(
+		texWidth, texHeight, texture.mipLevels, VK_SAMPLE_COUNT_1_BIT, 
+		VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, 
+		VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		texture.image, texture.imageMemory
+	);
 
 	transitionImageLayout(texture.image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED,
 		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, texture.mipLevels);
@@ -705,7 +735,7 @@ void VulkanAndRTX::createTextureFromEmbedded(const std::string& embeddedTextureN
 	}
 
 	VkDeviceSize imageSize = texWidth * texHeight * 4; // 4 bytes per pixel for RGBA
-	uint32_t mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
+	texture.mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
 
 	createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
@@ -720,24 +750,23 @@ void VulkanAndRTX::createTextureFromEmbedded(const std::string& embeddedTextureN
 		stbi_image_free(pixels);
 	}
 
-	VkImage textureImage;
-	VkDeviceMemory textureImageMemory;
-	createImage(texWidth, texHeight, mipLevels, VK_SAMPLE_COUNT_1_BIT,
+	createImage(
+		texWidth, texHeight, texture.mipLevels, VK_SAMPLE_COUNT_1_BIT,
 		VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL,
 		VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory);
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
+		texture.image, texture.imageMemory
+	);
 
-	transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED,
-		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mipLevels);
-	copyBufferToImage(stagingBuffer, textureImage, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
+	transitionImageLayout(texture.image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED,
+		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, texture.mipLevels);
+	copyBufferToImage(stagingBuffer, texture.image, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
 
 	vkDestroyBuffer(vkInit.device, stagingBuffer, nullptr);
 	vkFreeMemory(vkInit.device, stagingBufferMemory, nullptr);
 
-	generateMipmaps(textureImage, VK_FORMAT_R8G8B8A8_SRGB, texWidth, texHeight, mipLevels);
+	generateMipmaps(texture.image, VK_FORMAT_R8G8B8A8_SRGB, texWidth, texHeight, texture.mipLevels);
 
-	texture.image = textureImage;
-	texture.imageMemory = textureImageMemory;
 	texture.imageView = createImageView(
 		texture.image,
 		VK_FORMAT_R8G8B8A8_SRGB,
@@ -745,9 +774,15 @@ void VulkanAndRTX::createTextureFromEmbedded(const std::string& embeddedTextureN
 		texture.mipLevels);
 	texture.sampler = textureSampler;
 
-	std::cout << embeddedTextureName << " " << texWidth << " " << texHeight << "\n";
+	/*std::cout << "Embedded Texture Loaded:\n";
+	std::cout << " - Name: " << embeddedTextureName << "\n";
+	std::cout << " - Dimensions: " << texWidth << "x" << texHeight << "\n";
+	std::cout << " - Channels: " << texChannels << "\n";
+	std::cout << " - Image Size: " << imageSize / (1024.0f * 1024.0f) << " MB\n";
+	std::cout << " - Mip Levels: " << texture.mipLevels << "\n";
+	std::cout << " - Compression: " << (embeddedTexture->mHeight == 0 ? "Yes" : "No") << "\n";*/
 }
-Texture VulkanAndRTX::LoadTexture(const std::string& texturePath, const aiScene* scene) {
+Texture VulkanAndRTX::loadTexture(const std::string& texturePath, const aiScene* scene) {
 	Texture texture{};
 
 	// Embedded texture in .glb file, the path is in the form "*n", where n is the index
@@ -755,24 +790,42 @@ Texture VulkanAndRTX::LoadTexture(const std::string& texturePath, const aiScene*
 		createTextureFromEmbedded(texturePath, texture, scene);
 	}
 	else {
-		createTextureImageFromPath(texturePath, texture);
+		createTextureImageFromPath(("textures\\" + std::string(texturePath)), texture);
 	}
 
 	return texture;
 }
-Material VulkanAndRTX::ProcessMaterial(aiMaterial* aiMat, const aiScene* scene) {
+Material VulkanAndRTX::processMaterial(aiMaterial* aiMat, const aiScene* scene) {
 	Material material{};
 
-	// Load diffuse texture
+	//std::cout << "Material Name: " << aiMat->GetName().C_Str() << "\n";
+	//// Print all texture types
+	//for (int textureType = aiTextureType_NONE; textureType <= aiTextureType_MAYA_SPECULAR_ROUGHNESS; ++textureType) {
+	//	int textureCount = aiMat->GetTextureCount(static_cast<aiTextureType>(textureType));
+	//	if (textureCount > 0) {
+	//		std::cout << "Texture Type " << textureType << ": " << textureCount << "\n";
+	//	}
+	//}
+
 	if (aiMat->GetTextureCount(aiTextureType_DIFFUSE) > 0) {
 		aiString texturePath;
-		aiMat->GetTexture(aiTextureType_DIFFUSE, 0, &texturePath);
-		material.diffuseTexture = LoadTexture(texturePath.C_Str(), scene);
+
+		if (aiMat->GetTexture(aiTextureType_DIFFUSE, 0, &texturePath) == AI_SUCCESS) {
+			material.diffuseTexture = loadTexture(texturePath.C_Str(), scene);
+		}
+	}
+
+	if (aiMat->GetTextureCount(aiTextureType_EMISSIVE) > 0) {
+		aiString texturePath;
+
+		if (aiMat->GetTexture(aiTextureType_EMISSIVE, 0, &texturePath) == AI_SUCCESS) {
+			material.emissiveTexture = loadTexture(texturePath.C_Str(), scene);
+		}
 	}
 
 	return material;
 }
-static Mesh ProcessMesh(aiMesh* mesh, const aiScene* scene) {
+static Mesh processMesh(aiMesh* mesh, const aiScene* scene) {
 	Mesh processedMesh;
 
 	for (size_t i = 0; i < mesh->mNumVertices; i++) {
@@ -785,6 +838,14 @@ static Mesh ProcessMesh(aiMesh* mesh, const aiScene* scene) {
 		else {
 			vertex.texCoord0 = glm::vec2(0.0f, 0.0f);
 		}
+		//vertex.color = glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
+		if (mesh->mColors[0]) {
+			vertex.color = glm::vec3(mesh->mColors[0][i].r, mesh->mColors[0][i].g, mesh->mColors[0][i].b);
+		}
+		else {
+			vertex.color = glm::vec3(1.0f);
+		}
+
 		processedMesh.vertices.push_back(vertex);
 	}
 
@@ -797,27 +858,55 @@ static Mesh ProcessMesh(aiMesh* mesh, const aiScene* scene) {
 
 	return processedMesh;
 }
-void VulkanAndRTX::ProcessNode(aiNode* node, const aiScene* scene, ModelsBuffer* modelsBuffer, Model& parentModel) {
+static glm::mat4 setScaleToOne(const glm::mat4& matrix) {
+	glm::vec3 position, scale;
+	glm::quat rotation;
+
+	decomposeTransform(matrix, position, rotation, scale);
+
+	// Reconstruct the matrix with the updated scale
+	glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), position);
+	glm::mat4 rotationMatrix = glm::mat4_cast(rotation);
+	glm::mat4 scaleMatrix = glm::mat4(1.0f);
+
+	return translationMatrix * rotationMatrix * scaleMatrix;
+}
+void VulkanAndRTX::processNode(aiNode* node, const aiScene* scene, std::vector<Model>* models, Model& parentModel, glm::mat4 parentTransform, int level) {
+	glm::mat4 nodeTransform = assimpToGLMMat4(node->mTransformation);
+	glm::mat4 globalTransform = parentTransform * nodeTransform;
+	globalTransform = setScaleToOne(globalTransform);
+
+	/*glm::vec3 position, scale;
+	glm::quat rotation;
+	decomposeTransform(globalTransform, position, rotation, scale);
+
+	std::cout << std::string(level * 2, ' ') << "Node: " << node->mName.C_Str() << "\n";
+	std::cout << std::string(level * 2, ' ') << "  Position: " << glm::to_string(position) << "\n";
+	std::cout << std::string(level * 2, ' ') << "  Rotation: " << glm::to_string(rotation) << "\n";
+	std::cout << std::string(level * 2, ' ') << "  Scale: " << glm::to_string(scale) << "\n";*/
+
 	for (size_t i = 0; i < node->mNumMeshes; i++) {
 		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-		Mesh processedMesh = ProcessMesh(mesh, scene);
+		Mesh processedMesh = processMesh(mesh, scene);
+		processedMesh.transform = globalTransform;
+
 		parentModel.meshes.push_back(processedMesh);
 
 		if (mesh->mMaterialIndex >= 0) {
 			aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
-			Material processedMaterial = ProcessMaterial(material, scene);
+			Material processedMaterial = processMaterial(material, scene);
 			parentModel.materials.push_back(processedMaterial);
 		}
 	}
 	for (size_t i = 0; i < node->mNumChildren; i++) {
 		Model childModel;
-		ProcessNode(node->mChildren[i], scene, modelsBuffer, childModel);
-		modelsBuffer->models.push_back(childModel);
+		processNode(node->mChildren[i], scene, models, childModel, globalTransform, level + 1);
+		models->push_back(childModel);
 	}
 }
-void VulkanAndRTX::LoadModelsFromDirectory(const std::string& directory, ModelsBuffer* modelsBuffer) {
+void VulkanAndRTX::loadModelsFromDirectory(const std::string& directory, std::vector<Model>* models) {
 	auto modelFiles = GetModelFiles(directory);
-
+	
 	for (const auto& file : modelFiles) {
 		std::cout << "Loading model: " << file << std::endl;
 		Assimp::Importer importer;
@@ -829,7 +918,8 @@ void VulkanAndRTX::LoadModelsFromDirectory(const std::string& directory, ModelsB
 		}
 
 		Model rootModel;
-		ProcessNode(scene->mRootNode, scene, modelsBuffer, rootModel);
-		modelsBuffer->models.push_back(rootModel);
+		glm::mat4 identityTransform = glm::mat4(1.0f);
+		processNode(scene->mRootNode, scene, models, rootModel, identityTransform);
+		models->push_back(rootModel);
 	}
 }

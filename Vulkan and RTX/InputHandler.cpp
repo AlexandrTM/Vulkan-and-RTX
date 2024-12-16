@@ -107,9 +107,9 @@ void InputHandler::scrollCallback(GLFWwindow* window, double xoffset, double yof
 	camera.setVerticalFov(std::clamp(camera.getVerticalFov() - static_cast<float>(yoffset), 1.0f, 130.0f));
 }
 
-void InputHandler::movePerson(float deltaTime)
+void InputHandler::movePerson(float deltaTime, float moveSpeed)
 {
-	float movementSpeed = 15.0 * deltaTime;
+	float movementSpeed = moveSpeed * deltaTime;
 	
 	glm::vec3 verticalWorldAxis = camera.getVerticalWorldAxis();
 	glm::vec3 cameraDirection = camera.getDirection();

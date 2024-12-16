@@ -192,10 +192,10 @@ void TerrainGenerator::generateTerrainMesh(float startX, float startZ,
             v2.position = glm::vec3(x2, y2, z2);
             v3.position = glm::vec3(x3, y3, z3);
 
-            v0.color = glm::vec3(0.5f, 0.5f, 0.5f);
-            v1.color = glm::vec3(0.5f, 0.5f, 0.5f);
-            v2.color = glm::vec3(0.5f, 0.5f, 0.5f);
-            v3.color = glm::vec3(0.5f, 0.5f, 0.5f);
+            v0.color = glm::vec3(1.0f);
+            v1.color = glm::vec3(1.0f);
+            v2.color = glm::vec3(1.0f);
+            v3.color = glm::vec3(1.0f);
 
             /*v0.texCoord0 = glm::vec2(0.0f, 0.0f);
             v1.texCoord0 = glm::vec2(1.0f, 0.0f);

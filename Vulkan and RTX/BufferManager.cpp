@@ -154,21 +154,3 @@ void VulkanAndRTX::createCommandBuffers()
 		throw std::runtime_error("failed to allocate command buffers!");
 	}
 }
-
-// creating uniform buffer for each frame in flight
-void VulkanAndRTX::createUniformBuffers()
-{
-	VkDeviceSize bufferSize = sizeof(UniformBufferObject);
-
-	objectUniformBuffers.       resize(MAX_FRAMES_IN_FLIGHT);
-	objectUniformBuffersMemory. resize(MAX_FRAMES_IN_FLIGHT);
-	skyUniformBuffers.          resize(MAX_FRAMES_IN_FLIGHT);
-	skyUniformBuffersMemory.    resize(MAX_FRAMES_IN_FLIGHT);
-
-	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-		createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-			| VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, objectUniformBuffers[i], objectUniformBuffersMemory[i]);
-		createBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-			| VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, skyUniformBuffers[i], skyUniformBuffersMemory[i]);
-	}
-}
