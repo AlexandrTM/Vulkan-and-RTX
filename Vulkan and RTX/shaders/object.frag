@@ -9,8 +9,8 @@ layout(binding = 0) uniform UniformBufferObject {
     float visibilityRange;
 } ubo;
 
-layout(binding = 1) uniform sampler2D diffuseSampler;
-//layout(binding = 2) uniform sampler2D emissiveSampler;
+layout(binding = 2) uniform sampler2D diffuseSampler;
+layout(binding = 3) uniform sampler2D emissiveSampler;
 
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec3 inColor;
@@ -30,8 +30,8 @@ void main() {
     }
 
     vec4 diffuseColor = texture(diffuseSampler, inTexCoord0);
-    //vec4 emissiveColor = texture(emissiveSampler, inTexCoord0);
-    vec4 texColor = diffuseColor;
+    vec4 emissiveColor = texture(emissiveSampler, inTexCoord0);
+    vec4 texColor = diffuseColor + emissiveColor;
     texColor.rgb = pow(texColor.rgb, vec3(1.0 / gamma));
     //texColor.rgb = (texColor.rgb - 0.5) * contrast + 0.5;
 

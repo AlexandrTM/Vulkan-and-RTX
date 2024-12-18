@@ -237,7 +237,6 @@ void TerrainGenerator::generateTerrainMesh(float startX, float startZ,
             mesh.vertices.push_back(v3);
         }
     }
-    std::cout << "terrain vertices: " << mesh.vertices.size() << "\n";
 
     // Generate indices
     for (size_t i = 0; i < width; ++i) {
@@ -262,7 +261,8 @@ void TerrainGenerator::generateTerrainMesh(float startX, float startZ,
         }
     }
 
-    std::cout << "terrain indices: " << mesh.indices.size() << "\n";
+    /*std::cout << "terrain vertices: " << mesh.vertices.size() << "\n";
+    std::cout << "terrain indices: " << mesh.indices.size() << "\n";*/
 
     // Calculate normals
     for (size_t i = 0; i < mesh.indices.size(); i += 3) {

@@ -173,7 +173,7 @@ void VulkanAndRTX::prepareResources()
 	createSwapChainFramebuffers();
 
 	createTextureSampler(textureSampler);
-	createTextureImageFromPath("textures/grass001.png", texture);
+	createTextureFromPath("textures/grass001.png", texture);
 
 	//loadGltfModel("models/blue_archivekasumizawa_miyu.glb");
 	loadModelsFromDirectory("models", &models);
@@ -192,8 +192,8 @@ void VulkanAndRTX::prepareResources()
 	createDescriptorPool();
 
 	createSkyUniformBuffers(MAX_FRAMES_IN_FLIGHT);
+	createMeshShaderBuffers(MAX_FRAMES_IN_FLIGHT);
 	createSkyDescriptorSets(MAX_FRAMES_IN_FLIGHT);
-	createMeshUniformBuffers(MAX_FRAMES_IN_FLIGHT);
 	createMeshDescriptorSets(MAX_FRAMES_IN_FLIGHT);
 
 	createCommandBuffers();
@@ -220,7 +220,7 @@ void VulkanAndRTX::mainLoop()
 
 		glfwPollEvents();
 		if (!inputHandler.currentInteractingVolume) {
-			inputHandler.movePerson(deltaTime, 4.0f);
+			inputHandler.movePerson(deltaTime, 2.5f);
 		}
 		//restrictCharacterMovement(inputHandler.camera);
 
@@ -533,36 +533,6 @@ uint32_t VulkanAndRTX::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags
 	}
 
 	throw std::runtime_error("failed to find suitable memory type!");
-}
-
-void VulkanAndRTX::createDescriptorPool()
-{
-	size_t totalMeshes = 0;
-	for (const auto& model : models) {
-		totalMeshes += model.meshes.size();
-	}
-
-	const uint32_t totalMeshDescriptors = static_cast<uint32_t>(totalMeshes * MAX_FRAMES_IN_FLIGHT);
-
-	std::array<VkDescriptorPoolSize, 2> poolSizes{};
-	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	poolSizes[0].descriptorCount = totalMeshDescriptors * 2 * static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT) + 5;
-	poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	poolSizes[1].descriptorCount = static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
-
-	VkDescriptorPoolCreateInfo poolInfo{};
-	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
-	poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
-	poolInfo.pPoolSizes = poolSizes.data();
-	poolInfo.maxSets = totalMeshDescriptors + 2 * static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
-
-	//std::cout << "totalMeshDescriptors: " << totalMeshDescriptors << "\n";
-	//std::cout << "poolSizes[0].descriptorCount: " << poolSizes[0].descriptorCount << "\n";
-	//std::cout << "poolInfo.maxSets: " << poolInfo.maxSets << "\n";
-
-	if (vkCreateDescriptorPool(vkInit.device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create descriptor pool!");
-	}
 }
 
 // for specific queue family

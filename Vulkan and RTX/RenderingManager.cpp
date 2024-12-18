@@ -355,8 +355,6 @@ void VulkanAndRTX::drawFrame(float timeSinceLaunch, ImDrawData* draw_data)
 		throw std::runtime_error("failed to acquire swap chain image!");
 	}
 
-	// updating MVP matrix
-	//updateUniformBuffer(imageIndex);
 	updateUniformBuffers(currentFrame, timeSinceLaunch);
 
 	// Only reset the fence if we are submitting work
@@ -405,7 +403,6 @@ void VulkanAndRTX::drawFrame(float timeSinceLaunch, ImDrawData* draw_data)
 	currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
-// updating MVP matrix for every draw call every frame
 void VulkanAndRTX::updateUniformBuffers(uint32_t currentImage, float timeSinceLaunch)
 {
 	glm::mat4 view = glm::lookAt(
@@ -437,15 +434,32 @@ void VulkanAndRTX::updateUniformBuffers(uint32_t currentImage, float timeSinceLa
 	memcpy(data, &skyUBO, sizeof(UniformBufferObject));
 	vkUnmapMemory(vkInit.device, skyUniformBuffersMemory[currentImage]);
 
+	//std::cout << "boneTransforms.size(): " << boneTransforms.size() << "\n";
+	//std::cout << "sizeof(boneUBO): " << sizeof(boneUBO) << "\n";
+	//memcpy(boneUBO.boneTransforms, boneTransforms.data(), boneTransforms.size() * sizeof(glm::mat4));
+
 	// Update per-mesh UBOs
 	for (size_t modelIndex = 0; modelIndex < models.size(); ++modelIndex) {
 		Model& model = models[modelIndex];
+		
+		// update bones
+		if (model.bones.size() > 0) {
+			for (size_t i = 0; i < model.bones.size(); i++) {
+				boneUBO.boneTransforms[i] = model.bones[i].offsetMatrix;
+				//std::cout << glm::to_string(model.bones[i].offsetMatrix) << "\n";
+			}
+
+			vkMapMemory(vkInit.device, boneUniformBuffersMemory[modelIndex][currentImage],
+				0, sizeof(glm::mat4) * BONES_NUM, 0, &data);
+			memcpy(data, &boneUBO, sizeof(glm::mat4) * BONES_NUM);
+			vkUnmapMemory(vkInit.device, boneUniformBuffersMemory[modelIndex][currentImage]);
+		}
+
 		for (size_t meshIndex = 0; meshIndex < model.meshes.size(); ++meshIndex) {
 			Mesh& mesh = model.meshes[meshIndex];
 
-			UniformBufferObject meshUBO{};
 			//meshUBO.model = mesh.transform;
-			meshUBO.model = glm::mat4(1.0f);
+			meshUBO.model = glm::mat4(1.0);
 			meshUBO.view = view;
 			meshUBO.projection = projection;
 			meshUBO.sun = sun;
@@ -460,129 +474,6 @@ void VulkanAndRTX::updateUniformBuffers(uint32_t currentImage, float timeSinceLa
 		}
 	}
 }
-
-void VulkanAndRTX::createSkyUniformBuffers(size_t swapChainImageCount)
-{
-	skyUniformBuffers.resize(swapChainImageCount);
-	skyUniformBuffersMemory.resize(swapChainImageCount);
-
-	for (size_t i = 0; i < swapChainImageCount; i++) {
-		createBuffer(sizeof(UniformBufferObject), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-			| VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, skyUniformBuffers[i], skyUniformBuffersMemory[i]);
-	}
-}
-void VulkanAndRTX::createMeshUniformBuffers(size_t swapChainImageCount)
-{
-	meshUniformBuffers.resize(models.size());
-    meshUniformBuffersMemory.resize(models.size());
-
-    for (size_t modelIndex = 0; modelIndex < models.size(); ++modelIndex) {
-        const Model& model = models[modelIndex];
-
-        meshUniformBuffers[modelIndex].resize(model.meshes.size());
-        meshUniformBuffersMemory[modelIndex].resize(model.meshes.size());
-
-        for (size_t meshIndex = 0; meshIndex < model.meshes.size(); ++meshIndex) {
-            meshUniformBuffers[modelIndex][meshIndex].resize(swapChainImageCount);
-            meshUniformBuffersMemory[modelIndex][meshIndex].resize(swapChainImageCount);
-
-            for (size_t frameIndex = 0; frameIndex < swapChainImageCount; ++frameIndex) {
-                createBuffer(
-                    sizeof(UniformBufferObject),
-                    VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-                    VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-                    meshUniformBuffers[modelIndex][meshIndex][frameIndex],
-                    meshUniformBuffersMemory[modelIndex][meshIndex][frameIndex]
-                );
-            }
-        }
-    }
-}
-
-void VulkanAndRTX::createDescriptorSetLayout(VkDescriptorSetLayout& descriptorSetLayout) const
-{
-	VkDescriptorSetLayoutBinding uboLayoutBinding{};
-	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-	uboLayoutBinding.binding = 0;
-	uboLayoutBinding.descriptorCount = 1;
-	uboLayoutBinding.pImmutableSamplers = nullptr; // Optional
-
-	VkDescriptorSetLayoutBinding samplerLayoutBinding{};
-	samplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
-	samplerLayoutBinding.binding = 1;
-	samplerLayoutBinding.descriptorCount = 1;
-	samplerLayoutBinding.pImmutableSamplers = nullptr; // Optional
-
-	std::array<VkDescriptorSetLayoutBinding, 2> bindings = { uboLayoutBinding, samplerLayoutBinding };
-	VkDescriptorSetLayoutCreateInfo layoutInfo{};
-	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-	layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
-	layoutInfo.pBindings = bindings.data();
-
-	if (vkCreateDescriptorSetLayout(vkInit.device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create descriptor set layout!");
-	}
-}
-void VulkanAndRTX::createDescriptorSet(VkDescriptorSet& descriptorSet, VkBuffer uniformBuffer, size_t uniformBufferSize)
-{
-	VkDescriptorSetAllocateInfo allocInfo{};
-	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	allocInfo.descriptorPool = descriptorPool;  // Make sure you have a valid descriptor pool
-	allocInfo.descriptorSetCount = 1;
-	allocInfo.pSetLayouts = &descriptorSetLayout;  // Ensure the layout matches UBO binding requirements
-
-	if (vkAllocateDescriptorSets(vkInit.device, &allocInfo, &descriptorSet) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to allocate descriptor set!");
-	}
-
-	VkDescriptorBufferInfo bufferInfo{};
-	bufferInfo.buffer = uniformBuffer;
-	bufferInfo.offset = 0;
-	bufferInfo.range = uniformBufferSize;
-
-	VkWriteDescriptorSet descriptorWrite{};
-	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	descriptorWrite.descriptorCount = 1;
-	descriptorWrite.dstBinding = 0;
-	descriptorWrite.dstSet = descriptorSet;
-	descriptorWrite.dstArrayElement = 0;
-	descriptorWrite.pBufferInfo = &bufferInfo;
-
-	vkUpdateDescriptorSets(vkInit.device, 1, &descriptorWrite, 0, nullptr);
-}
-void VulkanAndRTX::createSkyDescriptorSets(size_t swapChainImageCount)
-{
-	skyDescriptorSets.resize(swapChainImageCount);
-
-	for (size_t i = 0; i < skyDescriptorSets.size(); i++) {
-		createDescriptorSet(skyDescriptorSets[i], skyUniformBuffers[i], sizeof(UniformBufferObject));
-	}
-}
-void VulkanAndRTX::createMeshDescriptorSets(size_t swapChainImageCount)
-{
-	meshDescriptorSets.resize(models.size());
-
-	for (size_t modelIndex = 0; modelIndex < models.size(); ++modelIndex) {
-		const Model& model = models[modelIndex];
-		meshDescriptorSets[modelIndex].resize(model.meshes.size());
-
-		for (size_t meshIndex = 0; meshIndex < model.meshes.size(); ++meshIndex) {
-			meshDescriptorSets[modelIndex][meshIndex].resize(swapChainImageCount);
-
-			for (size_t frameIndex = 0; frameIndex < swapChainImageCount; ++frameIndex) {
-				createDescriptorSet(
-					meshDescriptorSets[modelIndex][meshIndex][frameIndex],
-					meshUniformBuffers[modelIndex][meshIndex][frameIndex],
-					sizeof(UniformBufferObject)
-				);
-			}
-		}
-	}
-}
-
 void VulkanAndRTX::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, ImDrawData* draw_data)
 {
 	VkCommandBufferBeginInfo beginInfo{};
@@ -612,9 +503,9 @@ void VulkanAndRTX::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t i
 	{
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["sky"]);
 		vkCmdBindDescriptorSets(
-			commandBuffer, 
-			VK_PIPELINE_BIND_POINT_GRAPHICS, 
-			pipelineLayout, 
+			commandBuffer,
+			VK_PIPELINE_BIND_POINT_GRAPHICS,
+			pipelineLayout,
 			0, 1, &skyDescriptorSets[currentFrame],
 			0, nullptr
 		);
@@ -625,13 +516,31 @@ void VulkanAndRTX::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t i
 	// objects
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["object"]);
 	for (size_t modelIndex = 0; modelIndex < models.size(); ++modelIndex) {
+
+		// Bind bone descriptor set
+		vkCmdBindDescriptorSets(
+			commandBuffer,
+			VK_PIPELINE_BIND_POINT_GRAPHICS,
+			pipelineLayout,
+			0, 1, &boneDescriptorSets[modelIndex][currentFrame],
+			0, nullptr
+		);
+
 		for (size_t meshIndex = 0; meshIndex < models[modelIndex].meshes.size(); ++meshIndex) {
 			const Mesh& mesh = models[modelIndex].meshes[meshIndex];
 			const Material& material = models[modelIndex].materials[meshIndex];
 
-			addTextureToDescriptorSet(material.diffuseTexture, meshDescriptorSets[modelIndex][meshIndex][currentFrame]);
+			if (material.diffuseTexture.imageView && material.diffuseTexture.sampler) {
+				addTextureToDescriptorSet(
+					material.diffuseTexture,
+					meshDescriptorSets[modelIndex][meshIndex][currentFrame], 2
+				);
+			}
 			if (material.emissiveTexture.imageView && material.emissiveTexture.sampler) {
-				addTextureToDescriptorSet(material.emissiveTexture, meshDescriptorSets[modelIndex][meshIndex][currentFrame]);
+				addTextureToDescriptorSet(
+					material.emissiveTexture,
+					meshDescriptorSets[modelIndex][meshIndex][currentFrame], 3
+				);
 			}
 
 			// Bind per-mesh descriptor set
@@ -655,7 +564,127 @@ void VulkanAndRTX::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t i
 		throw std::runtime_error("failed to record command buffer!");
 	}
 }
-void VulkanAndRTX::addTextureToDescriptorSet(const Texture& texture, VkDescriptorSet descriptorSet) const
+
+void VulkanAndRTX::createDescriptorPool()
+{
+	size_t totalMeshes = 0;
+	for (const auto& model : models) {
+		totalMeshes += model.meshes.size();
+	}
+
+	std::array<VkDescriptorPoolSize, 3> poolSizes{};
+
+	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	poolSizes[0].descriptorCount = (totalMeshes * 4 + models.size() * 15)
+		* static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT) + 5;
+	poolSizes[1].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+	poolSizes[1].descriptorCount = (models.size() * 2)
+		* static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+	poolSizes[2].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	poolSizes[2].descriptorCount = (totalMeshes + 2)
+		* static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+
+	VkDescriptorPoolCreateInfo poolInfo{};
+	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+	poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
+	poolInfo.pPoolSizes = poolSizes.data();
+	poolInfo.maxSets = (totalMeshes + models.size() * 2 + 2)
+		* static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+
+	//std::cout << "totalMeshDescriptors: " << totalMeshDescriptors << "\n";
+	//std::cout << "poolSizes[0].descriptorCount: " << poolSizes[0].descriptorCount << "\n";
+	//std::cout << "poolInfo.maxSets: " << poolInfo.maxSets << "\n";
+
+	if (vkCreateDescriptorPool(vkInit.device, &poolInfo, nullptr, &descriptorPool) != VK_SUCCESS) {
+		throw std::runtime_error("failed to create descriptor pool!");
+	}
+}
+void VulkanAndRTX::createDescriptorSetLayout(VkDescriptorSetLayout& descriptorSetLayout) const
+{
+	VkDescriptorSetLayoutBinding uboLayoutBinding{};
+	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	uboLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+	uboLayoutBinding.binding = 0;
+	uboLayoutBinding.descriptorCount = 1;
+	uboLayoutBinding.pImmutableSamplers = nullptr; // Optional
+
+	// Bone UBO Binding
+	VkDescriptorSetLayoutBinding boneUBOLayoutBinding{};
+	boneUBOLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
+	boneUBOLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+	boneUBOLayoutBinding.binding = 1;
+	boneUBOLayoutBinding.descriptorCount = 1;
+	boneUBOLayoutBinding.pImmutableSamplers = nullptr; // Optional
+
+	// Diffuse Texture Binding
+	VkDescriptorSetLayoutBinding diffuseSamplerLayoutBinding{};
+	diffuseSamplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	diffuseSamplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	diffuseSamplerLayoutBinding.binding = 2;
+	diffuseSamplerLayoutBinding.descriptorCount = 1;
+	diffuseSamplerLayoutBinding.pImmutableSamplers = nullptr; // Optional
+
+	// Emissive Texture Binding
+	VkDescriptorSetLayoutBinding emissiveSamplerLayoutBinding{};
+	emissiveSamplerLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	emissiveSamplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+	emissiveSamplerLayoutBinding.binding = 3;
+	emissiveSamplerLayoutBinding.descriptorCount = 1;
+	emissiveSamplerLayoutBinding.pImmutableSamplers = nullptr; // Optional
+
+	// Combine all bindings
+	std::array<VkDescriptorSetLayoutBinding, 4> bindings = {
+		uboLayoutBinding,
+		boneUBOLayoutBinding,
+		diffuseSamplerLayoutBinding,
+		emissiveSamplerLayoutBinding
+	};
+
+	VkDescriptorSetLayoutCreateInfo layoutInfo{};
+	layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+	layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
+	layoutInfo.pBindings = bindings.data();
+
+	if (vkCreateDescriptorSetLayout(vkInit.device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
+		throw std::runtime_error("failed to create descriptor set layout!");
+	}
+}
+void VulkanAndRTX::createDescriptorSet(
+	VkDescriptorSet& descriptorSet,
+	VkBuffer buffer, VkDescriptorType descriptorType, 
+	size_t bufferSize, uint32_t dstBinding
+)
+{
+	VkDescriptorSetAllocateInfo allocInfo{};
+	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	allocInfo.descriptorPool = descriptorPool;  // Make sure you have a valid descriptor pool
+	allocInfo.descriptorSetCount = 1;
+	allocInfo.pSetLayouts = &descriptorSetLayout;  // Ensure the layout matches UBO binding requirements
+
+	if (vkAllocateDescriptorSets(vkInit.device, &allocInfo, &descriptorSet) != VK_SUCCESS) {
+		throw std::runtime_error("Failed to allocate descriptor set!");
+	}
+
+	VkDescriptorBufferInfo bufferInfo{};
+	bufferInfo.buffer = buffer;
+	bufferInfo.offset = 0;
+	bufferInfo.range = bufferSize;
+
+	VkWriteDescriptorSet descriptorWrite{};
+	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	descriptorWrite.descriptorType = descriptorType;
+	descriptorWrite.descriptorCount = 1;
+	descriptorWrite.dstBinding = dstBinding;
+	descriptorWrite.dstSet = descriptorSet;
+	descriptorWrite.dstArrayElement = 0;
+	descriptorWrite.pBufferInfo = &bufferInfo;
+
+	vkUpdateDescriptorSets(vkInit.device, 1, &descriptorWrite, 0, nullptr);
+}
+void VulkanAndRTX::addTextureToDescriptorSet(
+	const Texture& texture,
+	VkDescriptorSet descriptorSet, uint32_t dstBinding
+) const
 {
 	VkDescriptorImageInfo imageInfo{};
 	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -665,7 +694,7 @@ void VulkanAndRTX::addTextureToDescriptorSet(const Texture& texture, VkDescripto
 	VkWriteDescriptorSet descriptorWrite{};
 	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 	descriptorWrite.dstSet = descriptorSet;
-	descriptorWrite.dstBinding = 1;  // Assume binding 1 is for diffuse texture
+	descriptorWrite.dstBinding = dstBinding;
 	descriptorWrite.dstArrayElement = 0;
 	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	descriptorWrite.descriptorCount = 1;
@@ -673,6 +702,114 @@ void VulkanAndRTX::addTextureToDescriptorSet(const Texture& texture, VkDescripto
 
 	vkUpdateDescriptorSets(vkInit.device, 1, &descriptorWrite, 0, nullptr);
 }
+void VulkanAndRTX::createSkyDescriptorSets(size_t swapChainImageCount)
+{
+	skyDescriptorSets.resize(swapChainImageCount);
+
+	for (size_t i = 0; i < skyDescriptorSets.size(); i++) {
+		createDescriptorSet(
+			skyDescriptorSets[i], 
+			skyUniformBuffers[i], 
+			VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+			sizeof(UniformBufferObject), 0
+		);
+	}
+}
+void VulkanAndRTX::createMeshDescriptorSets(size_t swapChainImageCount)
+{
+	meshDescriptorSets.resize(models.size());
+	boneDescriptorSets.resize(models.size());
+
+	for (size_t modelIndex = 0; modelIndex < models.size(); ++modelIndex) {
+		const Model& model = models[modelIndex];
+
+		meshDescriptorSets[modelIndex].resize(model.meshes.size());
+		boneDescriptorSets[modelIndex].resize(swapChainImageCount);
+
+		for (size_t frameIndex = 0; frameIndex < swapChainImageCount; ++frameIndex) {
+			createDescriptorSet(
+				boneDescriptorSets[modelIndex][frameIndex],
+				boneUniformBuffers[modelIndex][frameIndex],
+				VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+				sizeof(glm::mat4) * BONES_NUM, 1
+			);
+		}
+
+		for (size_t meshIndex = 0; meshIndex < model.meshes.size(); ++meshIndex) {
+			meshDescriptorSets[modelIndex][meshIndex].resize(swapChainImageCount);
+
+			for (size_t frameIndex = 0; frameIndex < swapChainImageCount; ++frameIndex) {
+				createDescriptorSet(
+					meshDescriptorSets[modelIndex][meshIndex][frameIndex],
+					meshUniformBuffers[modelIndex][meshIndex][frameIndex],
+					VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+					sizeof(UniformBufferObject), 0
+				);
+			}
+		}
+	}
+}
+void VulkanAndRTX::createSkyUniformBuffers(size_t swapChainImageCount)
+{
+	skyUniformBuffers.resize(swapChainImageCount);
+	skyUniformBuffersMemory.resize(swapChainImageCount);
+
+	for (size_t i = 0; i < swapChainImageCount; i++) {
+		createBuffer(
+			sizeof(UniformBufferObject),
+			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			skyUniformBuffers[i],
+			skyUniformBuffersMemory[i]
+		);
+	}
+}
+void VulkanAndRTX::createMeshShaderBuffers(size_t swapChainImageCount)
+{
+	meshUniformBuffers.resize(models.size());
+	boneUniformBuffers.resize(models.size());
+	meshUniformBuffersMemory.resize(models.size());
+	boneUniformBuffersMemory.resize(models.size());
+
+	for (size_t i = 0; i < BONES_NUM; ++i) {
+		boneUBO.boneTransforms[i] = glm::mat4(0.0f);
+	}
+
+	for (size_t modelIndex = 0; modelIndex < models.size(); ++modelIndex) {
+		const Model& model = models[modelIndex];
+
+		meshUniformBuffers[modelIndex].resize(model.meshes.size());
+		boneUniformBuffers[modelIndex].resize(swapChainImageCount);
+		meshUniformBuffersMemory[modelIndex].resize(model.meshes.size());
+		boneUniformBuffersMemory[modelIndex].resize(swapChainImageCount);
+
+		for (size_t frameIndex = 0; frameIndex < swapChainImageCount; ++frameIndex) {
+			createBuffer(
+				sizeof(glm::mat4) * BONES_NUM,
+				VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+				boneUniformBuffers[modelIndex][frameIndex],
+				boneUniformBuffersMemory[modelIndex][frameIndex]
+			);
+		}
+
+		for (size_t meshIndex = 0; meshIndex < model.meshes.size(); ++meshIndex) {
+			meshUniformBuffers[modelIndex][meshIndex].resize(swapChainImageCount);
+			meshUniformBuffersMemory[modelIndex][meshIndex].resize(swapChainImageCount);
+
+			for (size_t frameIndex = 0; frameIndex < swapChainImageCount; ++frameIndex) {
+				createBuffer(
+					sizeof(UniformBufferObject),
+					VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+					meshUniformBuffers[modelIndex][meshIndex][frameIndex],
+					meshUniformBuffersMemory[modelIndex][meshIndex][frameIndex]
+				);
+			}
+		}
+	}
+}
+
 
 void VulkanAndRTX::drawModel(VkCommandBuffer commandBuffer, const Model& model)
 {

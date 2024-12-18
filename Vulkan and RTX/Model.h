@@ -4,48 +4,95 @@
 #ifndef MODEL
 #define MODEL
 
-struct Texture {
-    VkImage        image;
-    VkDeviceMemory imageMemory;
-    VkImageView    imageView;
-    VkSampler      sampler;
-    uint32_t       mipLevels;
+// Animation Key Types
+struct PositionKey {
+    double                                  time;
+    glm::vec3                               position;
 };
 
-struct Mesh
-{
-    std::vector<Vertex>   vertices;
-    std::vector<uint32_t> indices;
-    glm::mat4             transform = glm::mat4(1.0f);
+struct RotationKey {
+    double                                  time;
+    glm::quat                               rotation;
+};
 
-    VkBuffer              vertexBuffer;
-    VkDeviceMemory        vertexBufferMemory;
-    VkBuffer              indexBuffer;
-    VkDeviceMemory        indexBufferMemory;
+struct ScalingKey {
+    double                                  time;
+    glm::vec3                               scale;
+};
+
+// Animation Channel: Per-node animation data
+struct AnimationChannel {
+    std::string                             nodeName;         // The name of the node being animated
+    std::vector<PositionKey>                positionKeys;
+    std::vector<RotationKey>                rotationKeys;
+    std::vector<ScalingKey>                 scalingKeys;
+};
+
+// Animation Data
+struct Animation {
+    std::string                             name;             // Name of the animation
+    double                                  duration;         // Duration of the animation in ticks
+    double                                  ticksPerSecond;   // Ticks per second (default: 25 if 0)
+
+    std::vector<AnimationChannel>           channels;         // Animation channels for nodes
+};
+
+struct VertexWeight {
+    uint32_t                                vertexID;
+    float                                   weight;
+};
+
+struct Bone {
+    std::string                             name;
+    glm::mat4                               offsetMatrix;     // Bone to local space
+    std::vector<VertexWeight>               weights;
+};
+
+struct Mesh {
+    std::vector<Vertex>                     vertices;
+    std::vector<uint32_t>                   indices;
+    glm::mat4                               transform = glm::mat4(1.0f);
+
+    VkBuffer                                vertexBuffer;
+    VkDeviceMemory                          vertexBufferMemory;
+    VkBuffer                                indexBuffer;
+    VkDeviceMemory                          indexBufferMemory;
+};
+
+struct Texture {
+    VkImage                                 image;
+    VkDeviceMemory                          imageMemory;
+    VkImageView                             imageView;
+    VkSampler                               sampler;
+    uint32_t                                mipLevels;
 };
 
 struct Material {
-    Texture diffuseTexture;
-    Texture normalTexture;
-    Texture specularTexture;
-    Texture emissiveTexture;
+    Texture                                 diffuseTexture;
+    Texture                                 normalTexture;
+    Texture                                 specularTexture;
+    Texture                                 emissiveTexture;
 };
 
 struct Model {
-    std::vector<Mesh>     meshes;        // Separate meshes for complex models
-    std::vector<Material> materials;     // Materials for different parts of the model
-    glm::vec3             position;      // Position in the world
-    glm::vec3             scale;         // Scale for the model
-    glm::quat             rotation;      // Orientation of the model
+    std::vector<Mesh>                       meshes;
+    std::vector<Material>                   materials;
+    glm::vec3                               position;
+    glm::vec3                               scale;
+    glm::quat                               rotation;
 
-    // Optional: Add bounding box for frustum culling
-    glm::vec3             minBounds;
-    glm::vec3             maxBounds;
+    std::vector<Bone>                       bones;
+    std::unordered_map<std::string, size_t> boneMap;
 
-    // LOD levels
-    std::vector<std::vector<Mesh>> lodLevels;
+    // bounding box for frustum culling
+    glm::vec3                               minBounds;
+    glm::vec3                               maxBounds;
 
-    bool                  isLoaded = false;  // Dynamic loading flag
+    std::vector<std::vector<Mesh>>          lodLevels;
+
+    std::vector<Animation>                  animations;
+
+    bool                                    isLoaded = false;  // Dynamic loading flag
 };
 
 #endif // !MODEL

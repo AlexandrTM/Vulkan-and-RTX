@@ -111,7 +111,6 @@ void VulkanAndRTX::createVertexBuffer(Model& model)
 		vkFreeMemory(vkInit.device, stagingBufferMemory, nullptr);
 	}
 }
-
 void VulkanAndRTX::createIndexBuffer(Model& model)
 {
 	for (size_t i = 0; i < model.meshes.size(); i++) {

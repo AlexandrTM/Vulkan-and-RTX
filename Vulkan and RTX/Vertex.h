@@ -10,11 +10,14 @@ struct Vertex {
 	glm::vec2 texCoord0;
 	glm::vec2 texCoord1;
 
+	uint32_t boneIDs[4] = { 0 }; // IDs of up to 4 influencing bones
+	float boneWeights[4] = { 0.0f }; // Corresponding weights of the bones
+
 	// number of bytes between data entries and how move to the next data entry
 	static VkVertexInputBindingDescription getBindingDescription();
 
 	// how to extract a vertex attribute from a chunk of vertex data originating from a binding description to shaders
-	static std::array<VkVertexInputAttributeDescription, 5> getAttributeDescriptions();
+	static std::array<VkVertexInputAttributeDescription, 7> getAttributeDescriptions();
 
 	bool operator==(const Vertex& other) const;
 };

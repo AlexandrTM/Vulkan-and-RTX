@@ -2,8 +2,12 @@
 #include "VulkanAndRTX.h"
 #include "Vertex.h"
 
-void VulkanAndRTX::generateTerrain(float startX, float startZ, size_t width, size_t length,
-	float gridSize, float scale, float height, size_t seed)
+void VulkanAndRTX::generateTerrain(
+	float startX, float startZ, 
+	size_t width, size_t length,
+	float gridSize, float scale, float height, 
+	size_t seed
+)
 {
 	Model model;
 	Mesh mesh;
@@ -482,7 +486,7 @@ void VulkanAndRTX::loadGltfModel(const std::string& modelPath) {
 		: loader.LoadASCIIFromFile(&GLTFmodel, &error, &warning, modelPath.c_str());
 
 	if (!result) {
-		std::cout << "model not loaded: " + modelPath << "\n";
+		std::cout << "rootModel not loaded: " + modelPath << "\n";
 		std::cout << error << "\n";
 	}
 
@@ -652,7 +656,22 @@ static void decomposeTransform(const glm::mat4& transform, glm::vec3& position, 
 	);
 	rotation = glm::quat_cast(rotationMatrix);
 }
-void VulkanAndRTX::createTextureImageFromPath(const std::string& texturePath, Texture& texture)
+static glm::mat4 setScaleToOne(const glm::mat4& matrix) {
+	glm::vec3 position, scale;
+	glm::quat rotation;
+
+	decomposeTransform(matrix, position, rotation, scale);
+
+	// Reconstruct the matrix with the updated scale
+	glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), position);
+	glm::mat4 rotationMatrix = glm::mat4_cast(rotation);
+	glm::mat4 scaleMatrix = glm::mat4(1.0f);
+
+	return translationMatrix * rotationMatrix * scaleMatrix;
+}
+
+// добавить сэмплер как параметр и вынести функцию из класса
+void VulkanAndRTX::createTextureFromPath(const std::string& texturePath, Texture& texture)
 {
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;
@@ -790,11 +809,12 @@ Texture VulkanAndRTX::loadTexture(const std::string& texturePath, const aiScene*
 		createTextureFromEmbedded(texturePath, texture, scene);
 	}
 	else {
-		createTextureImageFromPath(("textures\\" + std::string(texturePath)), texture);
+		createTextureFromPath(("textures\\" + std::string(texturePath)), texture);
 	}
 
 	return texture;
 }
+
 Material VulkanAndRTX::processMaterial(aiMaterial* aiMat, const aiScene* scene) {
 	Material material{};
 
@@ -825,9 +845,32 @@ Material VulkanAndRTX::processMaterial(aiMaterial* aiMat, const aiScene* scene) 
 
 	return material;
 }
-static Mesh processMesh(aiMesh* mesh, const aiScene* scene) {
+static Bone processBone(aiBone* bone) {
+	Bone processedBone;
+
+	processedBone.name = bone->mName.C_Str();
+	processedBone.offsetMatrix = assimpToGLMMat4(bone->mOffsetMatrix);
+
+	// Process weights for the bone
+	for (size_t k = 0; k < bone->mNumWeights; k++) {
+		VertexWeight weight{};
+		weight.vertexID = bone->mWeights[k].mVertexId;
+		weight.weight = bone->mWeights[k].mWeight;
+
+		processedBone.weights.push_back(weight);
+	}
+
+	return processedBone;
+}
+static Mesh processMesh(
+	aiMesh* mesh, 
+	std::vector<Bone>& bones, 
+	std::unordered_map<std::string, size_t>& boneMap,
+	uint32_t& perModelVertexOffset
+) {
 	Mesh processedMesh;
 
+	// position, normal, tex coords, color
 	for (size_t i = 0; i < mesh->mNumVertices; i++) {
 		Vertex vertex{};
 		vertex.position = glm::vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
@@ -849,6 +892,7 @@ static Mesh processMesh(aiMesh* mesh, const aiScene* scene) {
 		processedMesh.vertices.push_back(vertex);
 	}
 
+	// indices
 	for (size_t i = 0; i < mesh->mNumFaces; i++) {
 		aiFace face = mesh->mFaces[i];
 		for (size_t j = 0; j < face.mNumIndices; j++) {
@@ -856,26 +900,142 @@ static Mesh processMesh(aiMesh* mesh, const aiScene* scene) {
 		}
 	}
 
+	// bones
+	std::vector<uint32_t> boneCount(mesh->mNumVertices, 0);
+	/*if (!mesh->HasBones()) {
+		std::cout << "mesh: " << mesh->mName.C_Str() << " has no bones" << "\n";
+	}*/
+	for (size_t i = 0; i < mesh->mNumBones; i++) {
+		aiBone* bone = mesh->mBones[i];
+		std::string boneName = bone->mName.C_Str();
+
+		size_t boneIndex;
+		if (boneMap.find(boneName) == boneMap.end()) {
+			boneIndex = bones.size();
+			Bone processedBone{};
+			processedBone.name = boneName;
+			processedBone.offsetMatrix = assimpToGLMMat4(bone->mOffsetMatrix);
+
+			for (size_t j = 0; j < bone->mNumWeights; j++) {
+				VertexWeight weight{};
+				weight.vertexID = bone->mWeights[j].mVertexId;
+				weight.weight = bone->mWeights[j].mWeight;
+				processedBone.weights.push_back(weight);
+			}
+
+			/*glm::vec3 position, scale;
+			glm::quat rotation;
+			decomposeTransform(processedBone.offsetMatrix, position, rotation, scale);
+			std::cout << "boneName: " << boneName << "\n";
+			std::cout << "Position: " << glm::to_string(position) << "\n";
+			std::cout << "Rotation: " << glm::to_string(rotation) << "\n";
+			std::cout << "Scale: " << glm::to_string(scale) << "\n";*/
+
+			bones.push_back(processedBone);
+			boneMap[boneName] = boneIndex;
+		}
+		else {
+			boneIndex = boneMap[boneName];
+		}
+
+		// Assign bone influences to vertices
+		for (size_t j = 0; j < bone->mNumWeights; j++) {
+			uint32_t vertexID = bone->mWeights[j].mVertexId;
+			float weight = bone->mWeights[j].mWeight;
+
+			if (boneCount[vertexID] < 4) {
+				processedMesh.vertices[vertexID].boneIDs[boneCount[vertexID]] = boneIndex;
+				processedMesh.vertices[vertexID].boneWeights[boneCount[vertexID]] = weight;
+				boneCount[vertexID]++;
+			}
+		}
+	}
+
+	// Normalize weights for vertices
+	for (auto& vertex : processedMesh.vertices) {
+		float totalWeight = 
+			vertex.boneWeights[0] + vertex.boneWeights[1] +
+			vertex.boneWeights[2] + vertex.boneWeights[3];
+
+		if (totalWeight > 0.0f) {
+			for (size_t i = 0; i < 4; i++) {
+				vertex.boneWeights[i] /= totalWeight;
+			}
+		}	
+	}
+
+	perModelVertexOffset += mesh->mNumVertices;
+
 	return processedMesh;
 }
-static glm::mat4 setScaleToOne(const glm::mat4& matrix) {
-	glm::vec3 position, scale;
-	glm::quat rotation;
+static void processAnimations(const aiScene* scene, Model& model) {
+	if (scene->HasAnimations()) {
+		std::cout << "scene: " << scene->mName.C_Str() << 
+			" has animations: " << scene->mNumAnimations << "\n";
+	}
 
-	decomposeTransform(matrix, position, rotation, scale);
+	for (size_t i = 0; i < scene->mNumAnimations; i++) {
+		aiAnimation* animation = scene->mAnimations[i];
 
-	// Reconstruct the matrix with the updated scale
-	glm::mat4 translationMatrix = glm::translate(glm::mat4(1.0f), position);
-	glm::mat4 rotationMatrix = glm::mat4_cast(rotation);
-	glm::mat4 scaleMatrix = glm::mat4(1.0f);
+		Animation processedAnimation;
+		processedAnimation.name = animation->mName.C_Str();
+		processedAnimation.duration = animation->mDuration;
+		processedAnimation.ticksPerSecond = animation->mTicksPerSecond != 0.0 ? animation->mTicksPerSecond : 25.0;
 
-	return translationMatrix * rotationMatrix * scaleMatrix;
+		// Process animation channels
+		for (size_t j = 0; j < animation->mNumChannels; j++) {
+			aiNodeAnim* channel = animation->mChannels[j];
+
+			AnimationChannel processedChannel;
+			processedChannel.nodeName = channel->mNodeName.C_Str();
+
+			// Load position keys
+			for (size_t k = 0; k < channel->mNumPositionKeys; k++) {
+				aiVectorKey positionKey = channel->mPositionKeys[k];
+				processedChannel.positionKeys.emplace_back(
+					positionKey.mTime,
+					glm::vec3(positionKey.mValue.x, positionKey.mValue.y, positionKey.mValue.z)
+				);
+			}
+
+			// Load rotation keys
+			for (size_t k = 0; k < channel->mNumRotationKeys; k++) {
+				aiQuatKey rotationKey = channel->mRotationKeys[k];
+				processedChannel.rotationKeys.emplace_back(
+					rotationKey.mTime,
+					glm::quat(rotationKey.mValue.w, rotationKey.mValue.x, rotationKey.mValue.y, rotationKey.mValue.z)
+				);
+			}
+
+			// Load scaling keys
+			for (size_t k = 0; k < channel->mNumScalingKeys; k++) {
+				aiVectorKey scalingKey = channel->mScalingKeys[k];
+				processedChannel.scalingKeys.emplace_back(
+					scalingKey.mTime,
+					glm::vec3(scalingKey.mValue.x, scalingKey.mValue.y, scalingKey.mValue.z)
+				);
+			}
+
+			processedAnimation.channels.push_back(processedChannel);
+		}
+
+		model.animations.push_back(processedAnimation);
+	}
 }
-void VulkanAndRTX::processNode(aiNode* node, const aiScene* scene, std::vector<Model>* models, Model& parentModel, glm::mat4 parentTransform, int level) {
+
+void VulkanAndRTX::processNode(
+	aiNode* node, const aiScene* scene, 
+	std::vector<Model>* models, 
+	Model& parentModel, glm::mat4 parentTransform, 
+	std::unordered_map<std::string, size_t>& boneMap,
+	uint32_t& perModelVertexOffset,
+	int level
+) {
 	glm::mat4 nodeTransform = assimpToGLMMat4(node->mTransformation);
 	glm::mat4 globalTransform = parentTransform * nodeTransform;
-	globalTransform = setScaleToOne(globalTransform);
+	//globalTransform = setScaleToOne(globalTransform);
 
+	// node hierarchy
 	/*glm::vec3 position, scale;
 	glm::quat rotation;
 	decomposeTransform(globalTransform, position, rotation, scale);
@@ -887,7 +1047,7 @@ void VulkanAndRTX::processNode(aiNode* node, const aiScene* scene, std::vector<M
 
 	for (size_t i = 0; i < node->mNumMeshes; i++) {
 		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-		Mesh processedMesh = processMesh(mesh, scene);
+		Mesh processedMesh = processMesh(mesh, parentModel.bones, boneMap, perModelVertexOffset);
 		processedMesh.transform = globalTransform;
 
 		parentModel.meshes.push_back(processedMesh);
@@ -898,9 +1058,10 @@ void VulkanAndRTX::processNode(aiNode* node, const aiScene* scene, std::vector<M
 			parentModel.materials.push_back(processedMaterial);
 		}
 	}
+
 	for (size_t i = 0; i < node->mNumChildren; i++) {
 		Model childModel;
-		processNode(node->mChildren[i], scene, models, childModel, globalTransform, level + 1);
+		processNode(node->mChildren[i], scene, models, childModel, globalTransform, boneMap, perModelVertexOffset, level + 1);
 		models->push_back(childModel);
 	}
 }
@@ -908,18 +1069,27 @@ void VulkanAndRTX::loadModelsFromDirectory(const std::string& directory, std::ve
 	auto modelFiles = GetModelFiles(directory);
 	
 	for (const auto& file : modelFiles) {
-		std::cout << "Loading model: " << file << std::endl;
+		std::cout << "Loading rootModel: " << file << std::endl;
 		Assimp::Importer importer;
 		const aiScene* scene = importer.ReadFile(file, aiProcess_Triangulate | aiProcess_FlipUVs | aiProcess_CalcTangentSpace);
 
 		if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
-			std::cerr << "Failed to load model " << file << ": " << importer.GetErrorString() << std::endl;
+			std::cerr << "Failed to load rootModel " << file << ": " << importer.GetErrorString() << std::endl;
 			continue;
 		}
 
 		Model rootModel;
+		uint32_t perModelVertexOffset = 0;
 		glm::mat4 identityTransform = glm::mat4(1.0f);
-		processNode(scene->mRootNode, scene, models, rootModel, identityTransform);
+
+		processNode(scene->mRootNode, scene, models, rootModel, identityTransform, rootModel.boneMap, perModelVertexOffset, 0);
+		processAnimations(scene, rootModel);
+
+		/*for (size_t i = 0; i < rootModel.bones.size(); i++) {
+			boneUBO.boneTransforms[i] = rootModel.bones[i].offsetMatrix;
+			std::cout << glm::to_string(rootModel.bones[i].offsetMatrix) << "\n";
+		}*/
+	
 		models->push_back(rootModel);
 	}
 }

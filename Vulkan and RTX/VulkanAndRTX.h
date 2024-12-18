@@ -8,6 +8,8 @@
 #ifndef VULKAN_AND_RTX_H
 #define VULKAN_AND_RTX_H
 
+static const uint32_t BONES_NUM = 256;
+
 class VulkanAndRTX {
 private:
 #pragma region
@@ -21,6 +23,9 @@ private:
 #pragma endregion
 #pragma region
 
+	VkDescriptorPool            descriptorPool;
+	VkDescriptorSetLayout       descriptorSetLayout;
+
 	// MVP matrix and other info for shaders
 	struct UniformBufferObject {
 		alignas(16) glm::mat4 model;
@@ -31,18 +36,31 @@ private:
 		alignas(4) float visibilityRange = 6000;
 	};
 
-	UniformBufferObject						 skyUBO;
-	std::vector<VkBuffer>					 skyUniformBuffers;
-	std::vector<VkDeviceMemory>				 skyUniformBuffersMemory;
+	struct BoneUniformBufferObject {
+		alignas(16) std::vector<glm::mat4> boneTransforms;
 
-	VkDescriptorPool            descriptorPool;
-	VkDescriptorSetLayout       descriptorSetLayout;
+		BoneUniformBufferObject() {
+			boneTransforms.resize(BONES_NUM);
+			for (size_t i = 0; i < BONES_NUM; ++i) {
+				boneTransforms[i] = glm::mat4(0.0f); // Initialize each matrix to zero
+			}
+		}
+	};
 
-	std::vector<VkDescriptorSet> skyDescriptorSets;
+	UniformBufferObject									   skyUBO;
+	std::vector<VkBuffer>								   skyUniformBuffers;
+	std::vector<VkDeviceMemory>							   skyUniformBuffersMemory;
+	std::vector<VkDescriptorSet>						   skyDescriptorSets;
 
-	std::vector<std::vector<std::vector<VkBuffer>>> meshUniformBuffers; // For all models, meshes, and frames
-	std::vector<std::vector<std::vector<VkDeviceMemory>>> meshUniformBuffersMemory;
+	UniformBufferObject									   meshUBO;
+	std::vector<std::vector<std::vector<VkBuffer>>>        meshUniformBuffers; // For all models, meshes, and frames
+	std::vector<std::vector<std::vector<VkDeviceMemory>>>  meshUniformBuffersMemory;
 	std::vector<std::vector<std::vector<VkDescriptorSet>>> meshDescriptorSets;
+
+	BoneUniformBufferObject								   boneUBO;
+	std::vector<std::vector<VkBuffer>>					   boneUniformBuffers; // For all models and frames
+	std::vector<std::vector<VkDeviceMemory>>			   boneUniformBuffersMemory;
+	std::vector<std::vector<VkDescriptorSet>>			   boneDescriptorSets;
 
 	std::unique_ptr<TerrainGenerator> terrainGenerator;
 
@@ -148,15 +166,25 @@ private:
 	void loadModelsFromDirectory(const std::string& directory, std::vector<Model>* models);
 	Texture loadTexture(const std::string& texturePath, const aiScene* scene);
 	Material processMaterial(aiMaterial* aiMat, const aiScene* scene);
-	void processNode(aiNode* node, const aiScene* scene, std::vector<Model>* models, Model& parentModel, glm::mat4 parentTransform, int level = 0);
-	
-	void createTextureImageFromPath(const std::string& texturePath, Texture& texture);
+	void processNode(
+		aiNode* node, const aiScene* scene,
+		std::vector<Model>* models,
+		Model& parentModel, glm::mat4 parentTransform,
+		std::unordered_map<std::string, size_t>& boneMap,
+		uint32_t& perModelVertexOffset,
+		int level
+	);
+
+	void createTextureFromPath(const std::string& texturePath, Texture& texture);
 	void createTextureFromEmbedded(const std::string& embeddedTextureName, Texture& texture, const aiScene* scene);
 	void createImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkSampleCountFlagBits numSamples,
 		VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties,
 		VkImage& image, VkDeviceMemory& imageMemory);
 	void generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels);
-	void addTextureToDescriptorSet(const Texture& texture, VkDescriptorSet descriptorSet) const;
+	void addTextureToDescriptorSet(
+		const Texture& texture,
+		VkDescriptorSet descriptorSet, uint32_t dstBinding
+	) const;
 
 	// how to sample through texels of the texture for drawing them on 3D model
 	void createTextureSampler(VkSampler& vkSampler);
@@ -206,7 +234,7 @@ private:
 	void createIndexBuffer(Model& model);
 
 	void createSkyUniformBuffers(size_t swapChainImageCount);
-	void createMeshUniformBuffers(size_t swapChainImageCount);
+	void createMeshShaderBuffers(size_t swapChainImageCount);
 	void createSkyDescriptorSets(size_t swapChainImageCount);
 	void createMeshDescriptorSets(size_t swapChainImageCount);
 
@@ -223,7 +251,11 @@ private:
 
 	void createDescriptorPool();
 	void createDescriptorSetLayout(VkDescriptorSetLayout& descriptorSetLayout) const;
-	void createDescriptorSet(VkDescriptorSet& descriptorSet, VkBuffer uniformBuffer, size_t uniformBufferSize);
+	void createDescriptorSet(
+		VkDescriptorSet& descriptorSet,
+		VkBuffer buffer, VkDescriptorType descriptorType,
+		size_t bufferSize, uint32_t dstBinding
+	);
 
 	// creating swap chain with the best properties for current device
 	void createSwapChain();

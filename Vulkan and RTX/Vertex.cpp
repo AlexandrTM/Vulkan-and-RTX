@@ -13,9 +13,9 @@ VkVertexInputBindingDescription Vertex::getBindingDescription()
 }
 
 // how to extract a vertex attribute from a chunk of vertex data originating from a binding description to shaders
-std::array<VkVertexInputAttributeDescription, 5> Vertex::getAttributeDescriptions()
+std::array<VkVertexInputAttributeDescription, 7> Vertex::getAttributeDescriptions()
 {
-	std::array<VkVertexInputAttributeDescription, 5> attributeDescriptions{};
+	std::array<VkVertexInputAttributeDescription, 7> attributeDescriptions{};
 
 	attributeDescriptions[0].binding = 0;
 	attributeDescriptions[0].location = 0;
@@ -41,6 +41,16 @@ std::array<VkVertexInputAttributeDescription, 5> Vertex::getAttributeDescription
 	attributeDescriptions[4].location = 4;
 	attributeDescriptions[4].format = VK_FORMAT_R32G32_SFLOAT;
 	attributeDescriptions[4].offset = offsetof(Vertex, texCoord1);
+	
+	attributeDescriptions[5].binding = 0;
+	attributeDescriptions[5].location = 5;
+	attributeDescriptions[5].format = VK_FORMAT_R32G32B32A32_SINT;
+	attributeDescriptions[5].offset = offsetof(Vertex, boneIDs);
+	
+	attributeDescriptions[6].binding = 0;
+	attributeDescriptions[6].location = 6;
+	attributeDescriptions[6].format = VK_FORMAT_R32G32B32A32_SFLOAT;
+	attributeDescriptions[6].offset = offsetof(Vertex, boneWeights);
 
 	return attributeDescriptions;
 }

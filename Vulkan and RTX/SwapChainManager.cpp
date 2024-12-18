@@ -131,7 +131,7 @@ void VulkanAndRTX::recreateSwapChain()
 	createDescriptorPool();
 	createSkyUniformBuffers(MAX_FRAMES_IN_FLIGHT);
 	createSkyDescriptorSets(MAX_FRAMES_IN_FLIGHT);
-	createMeshUniformBuffers(MAX_FRAMES_IN_FLIGHT);
+	createMeshShaderBuffers(MAX_FRAMES_IN_FLIGHT);
 	createMeshDescriptorSets(MAX_FRAMES_IN_FLIGHT);
 }
 
