@@ -78,11 +78,11 @@ private:
 	InputHandler inputHandler;
 	VulkanInitializer vkInit;
 
-	VkSwapchainKHR swapChain;
-	std::vector<VkImage> swapChainImages;
-	VkFormat swapChainImageFormat;
-	VkExtent2D swapChainExtent;
-	std::vector<VkImageView> swapChainImageViews;
+	VkSwapchainKHR			   swapChain;
+	std::vector<VkImage>	   swapChainImages;
+	VkFormat				   swapChainImageFormat;
+	VkExtent2D				   swapChainExtent;
+	std::vector<VkImageView>   swapChainImageViews;
 	std::vector<VkFramebuffer> swapChainFramebuffers;
 
 	VkRenderPass objectRenderPass;
@@ -181,10 +181,6 @@ private:
 		VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties,
 		VkImage& image, VkDeviceMemory& imageMemory);
 	void generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels);
-	void addTextureToDescriptorSet(
-		const Texture& texture,
-		VkDescriptorSet descriptorSet, uint32_t dstBinding
-	) const;
 
 	// how to sample through texels of the texture for drawing them on 3D model
 	void createTextureSampler(VkSampler& vkSampler);
@@ -238,6 +234,23 @@ private:
 	void createSkyDescriptorSets(size_t swapChainImageCount);
 	void createMeshDescriptorSets(size_t swapChainImageCount);
 
+	void createDescriptorPool();
+	void createDescriptorSetLayout(VkDescriptorSetLayout& descriptorSetLayout) const;
+	void createDescriptorSet(
+		VkDescriptorSet& descriptorSet,
+		VkBuffer buffer, VkDescriptorType descriptorType,
+		size_t bufferSize, uint32_t dstBinding
+	);
+	void addTextureToDescriptorSet(
+		const Texture& texture,
+		VkDescriptorSet descriptorSet, uint32_t dstBinding
+	) const;
+	void addBufferToDescriptorSet(
+		VkDescriptorSet descriptorSet, VkBuffer buffer,
+		VkDescriptorType descriptorType,
+		size_t bufferSize, uint32_t dstBinding
+	) const;
+
 	void drawModel(VkCommandBuffer commandBuffer, const Model& model);
 	void drawMesh(VkCommandBuffer commandBuffer, const Mesh& mesh);
 
@@ -249,32 +262,25 @@ private:
 	// record commands to the command buffer
 	void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, ImDrawData* draw_data);
 
-	void createDescriptorPool();
-	void createDescriptorSetLayout(VkDescriptorSetLayout& descriptorSetLayout) const;
-	void createDescriptorSet(
-		VkDescriptorSet& descriptorSet,
-		VkBuffer buffer, VkDescriptorType descriptorType,
-		size_t bufferSize, uint32_t dstBinding
-	);
-
 	// creating swap chain with the best properties for current device
 	void createSwapChain();
-
 	void createSwapChainImageViews();
+	// creating framebuffer from each swap chain image view
+	void createSwapChainFramebuffers();
+	// chosing best present mode to window surface
+	VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
+	// chosing best swap chain extent(resolution of the images)
+	VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
 
 	// information about framebuffer attachments, how many color and depth buffers there will
 	// be, how many samples to use for each of them and how their contents should be treated
 	void createRenderPass(VkRenderPass& renderPass);
 
 	void createPipelineLayout(VkDescriptorSetLayout& descriptorSetLayout);
-
 	void createGraphicsPipeline(
 		const std::string prefix, 
 		const std::string& vertexShader, const std::string& fragmentShader
 	);
-
-	// creating framebuffer from each swap chain image view
-	void createSwapChainFramebuffers();
 
 	// for specific queue family
 	void createCommandPool();
@@ -290,12 +296,6 @@ private:
 
 	// choosing best surface format(color space and number of bits) for the swap chain
 	VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
-
-	// chosing best present mode to window surface
-	VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
-
-	// chosing best swap chain extent(resolution of the images)
-	VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
 };
 
 #endif // !VULKAN_AND_RTX_H

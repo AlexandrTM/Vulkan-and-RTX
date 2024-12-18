@@ -933,6 +933,7 @@ static Mesh processMesh(
 
 			bones.push_back(processedBone);
 			boneMap[boneName] = boneIndex;
+			std::cout << bones.size() << "\n";
 		}
 		else {
 			boneIndex = boneMap[boneName];

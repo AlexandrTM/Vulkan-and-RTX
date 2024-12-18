@@ -61,11 +61,10 @@ void VulkanAndRTX::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkM
 	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 	bufferInfo.size = size;
 	bufferInfo.usage = usage;
-	// which queue will use the buffer
 	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
 	if (vkCreateBuffer(vkInit.device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create vertex buffer!");
+		throw std::runtime_error("failed to create buffer!");
 	}
 
 	VkMemoryRequirements memRequirements;
@@ -77,7 +76,7 @@ void VulkanAndRTX::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkM
 	allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
 
 	if (vkAllocateMemory(vkInit.device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS) {
-		throw std::runtime_error("failed to allocate vertex buffer memory!");
+		throw std::runtime_error("failed to allocate buffer memory!");
 	}
 
 	// connecting buffer memory and the buffer itself
