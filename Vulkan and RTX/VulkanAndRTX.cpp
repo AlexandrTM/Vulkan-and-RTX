@@ -91,7 +91,7 @@ void VulkanAndRTX::setupImGui() {
 	init_info.Subpass = 0;
 	init_info.MinImageCount = MAX_FRAMES_IN_FLIGHT;
 	init_info.ImageCount = vulkanWindow->ImageCount;
-	init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+	init_info.MSAASamples = vkInit.colorSamples;
 	init_info.Allocator = nullptr;
 	init_info.CheckVkResultFn = [](VkResult err) {
 		if (err != VK_SUCCESS) {
@@ -174,19 +174,24 @@ void VulkanAndRTX::prepareResources()
 
 	createTextureSampler(textureSampler);
 	createTextureFromPath("textures/grass001.png", texture);
+	createDummyTexture({ 0, 0, 0, 255 }, dummyTexture);
 
 	//loadGltfModel("models/blue_archivekasumizawa_miyu.glb");
-	loadModelsFromDirectory("models", &models);
+	loadModelsFromDirectory("models", models);
 	generateTerrain(-30, -30, 600, 600, 0.1, 0.1, 1.0, 1);
 
 	createSkyCube();
 
-	createVertexBuffer(sky);
-	createIndexBuffer(sky);
+	for (Mesh& mesh : sky.meshes) {
+		createVertexBuffer(mesh);
+		createIndexBuffer(mesh);
+	}
 
 	for (size_t i = 0; i < models.size(); i++) {
-		createVertexBuffer(models[i]);
-		createIndexBuffer(models[i]);
+		for (Mesh& mesh : models[i].meshes) {
+			createVertexBuffer(mesh);
+			createIndexBuffer(mesh);
+		}
 	}
 
 	createDescriptorPool();

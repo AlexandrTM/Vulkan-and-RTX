@@ -36,13 +36,13 @@ private:
 		alignas(4) float visibilityRange = 6000;
 	};
 
-	struct BoneUniformBufferObject {
+	struct ShaderStorageBufferObject {
 		alignas(16) std::vector<glm::mat4> boneTransforms;
 
-		BoneUniformBufferObject() {
+		ShaderStorageBufferObject() {
 			boneTransforms.resize(BONES_NUM);
 			for (size_t i = 0; i < BONES_NUM; ++i) {
-				boneTransforms[i] = glm::mat4(0.0f); // Initialize each matrix to zero
+				boneTransforms[i] = glm::mat4(1.0f); // Initialize each matrix to zero
 			}
 		}
 	};
@@ -57,10 +57,9 @@ private:
 	std::vector<std::vector<std::vector<VkDeviceMemory>>>  meshUniformBuffersMemory;
 	std::vector<std::vector<std::vector<VkDescriptorSet>>> meshDescriptorSets;
 
-	BoneUniformBufferObject								   boneUBO;
-	std::vector<std::vector<VkBuffer>>					   boneUniformBuffers; // For all models and frames
-	std::vector<std::vector<VkDeviceMemory>>			   boneUniformBuffersMemory;
-	std::vector<std::vector<VkDescriptorSet>>			   boneDescriptorSets;
+	ShaderStorageBufferObject							   boneSSBO;
+	std::vector<std::vector<std::vector<VkBuffer>>>		   boneUniformBuffers; // For all models and frames
+	std::vector<std::vector<std::vector<VkDeviceMemory>>>  boneUniformBuffersMemory;
 
 	std::unique_ptr<TerrainGenerator> terrainGenerator;
 
@@ -106,6 +105,7 @@ private:
 	VkSampler	   textureSampler;
 
 	Texture        texture;
+	Texture		   dummyTexture;
 
 	VkImage        depthImage;
 	VkDeviceMemory depthImageMemory;
@@ -163,18 +163,19 @@ private:
 	void loadObjModel(const std::string& filePath);
 	void loadGltfModel(const std::string& filePath);
 
-	void loadModelsFromDirectory(const std::string& directory, std::vector<Model>* models);
+	void loadModelsFromDirectory(const std::string& directory, std::vector<Model>& models);
 	Texture loadTexture(const std::string& texturePath, const aiScene* scene);
 	Material processMaterial(aiMaterial* aiMat, const aiScene* scene);
 	void processNode(
 		aiNode* node, const aiScene* scene,
-		std::vector<Model>* models,
-		Model& parentModel, glm::mat4 parentTransform,
-		std::unordered_map<std::string, size_t>& boneMap,
+		std::vector<Model>& models,
+		Model& parentModel,
+		glm::mat4 parentTransform, const glm::mat4 globalInverseTransform,
 		uint32_t& perModelVertexOffset,
 		int level
 	);
 
+	void createDummyTexture(std::array<uint8_t, 4> color, Texture& texture);
 	void createTextureFromPath(const std::string& texturePath, Texture& texture);
 	void createTextureFromEmbedded(const std::string& embeddedTextureName, Texture& texture, const aiScene* scene);
 	void createImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkSampleCountFlagBits numSamples,
@@ -183,12 +184,15 @@ private:
 	void generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels);
 
 	// how to sample through texels of the texture for drawing them on 3D model
-	void createTextureSampler(VkSampler& vkSampler);
+	void createTextureSampler(VkSampler& vkSampler) const;
 	void createTextureImageView(VkImage& textureImage, VkImageView& textureImageView);
-	VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels);
+	VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels) const;
 	// transitioning image to the right layout
-	void transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout,
-		VkImageLayout newLayout, uint32_t mipLevels);
+	void transitionImageLayout(
+		VkImage image, VkFormat format, VkImageAspectFlags aspectMask,
+		VkImageLayout oldLayout, VkImageLayout newLayout,
+		uint32_t mipLevels
+	);
 
 	// reading bytecode files and returning its bytes
 	static std::vector<char> readFile(const std::string& filename);
@@ -207,7 +211,7 @@ private:
 
 	// finding most desirable format of color for a given situation
 	VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling,
-		VkFormatFeatureFlags features);
+		VkFormatFeatureFlags features) const;
 
 	// allocating and beginning command buffer helper function
 	VkCommandBuffer beginSingleTimeCommands() const;
@@ -226,8 +230,8 @@ private:
 	void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
 		VkBuffer& buffer, VkDeviceMemory& bufferMemory);
 
-	void createVertexBuffer(Model& model);
-	void createIndexBuffer(Model& model);
+	void createVertexBuffer(Mesh& mesh);
+	void createIndexBuffer(Mesh& mesh);
 
 	void createSkyUniformBuffers(size_t swapChainImageCount);
 	void createMeshShaderBuffers(size_t swapChainImageCount);

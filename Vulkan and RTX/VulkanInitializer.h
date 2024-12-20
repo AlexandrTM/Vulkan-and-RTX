@@ -9,7 +9,7 @@ struct QueueFamilyIndices {
     // presenting rendered images to window surface
     std::optional<uint32_t> presentFamily;
 
-    bool isComplete()
+    bool isComplete() const
     {
         return graphicsFamily.has_value() && presentFamily.has_value();
     }
@@ -34,7 +34,8 @@ struct VulkanInitializer
     VkQueue graphicsQueue;
     VkQueue presentQueue;
 
-    VkSampleCountFlagBits msaaSamples = VK_SAMPLE_COUNT_1_BIT;
+    VkSampleCountFlagBits colorSamples;
+    VkSampleCountFlagBits depthSamples;
 
     // enabling or disabling validation layers
     #ifdef NDEBUG
@@ -69,13 +70,13 @@ struct VulkanInitializer
     void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger,
         const VkAllocationCallbacks* pAllocator);
 
-    VkSampleCountFlagBits getMaxUsableSampleCount();
+    void findMaxUsableSampleCount(VkPhysicalDevice physicalDevice);
 
     // getting required extensions for GLFW and their number
     std::vector<const char*> getRequiredExtensions();
 
     // finding needed queue families
-    QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device);
+    QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device) const;
 
     // function for debugging callbakcs(checking warnings, errors etc)
     // VKAPI_ATTR and VKAPI_CALL ensures that this function signature suitable for Vulkan

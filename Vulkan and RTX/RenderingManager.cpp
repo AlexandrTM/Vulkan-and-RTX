@@ -8,7 +8,7 @@ void VulkanAndRTX::createRenderPass(VkRenderPass& renderPass)
 {
 	VkAttachmentDescription colorAttachment{};
 	colorAttachment.format = swapChainImageFormat;
-	colorAttachment.samples = vkInit.msaaSamples;// samples per fragment		
+	colorAttachment.samples = vkInit.colorSamples;// samples per fragment		
 	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;// color and depth data
 	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
 	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;// stencil data
@@ -21,7 +21,7 @@ void VulkanAndRTX::createRenderPass(VkRenderPass& renderPass)
 
 	VkAttachmentDescription depthAttachment{};
 	depthAttachment.format = findDepthFormat();
-	depthAttachment.samples = vkInit.msaaSamples;
+	depthAttachment.samples = vkInit.colorSamples;
 	depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
@@ -210,7 +210,7 @@ void VulkanAndRTX::createGraphicsPipeline(
 	VkPipelineMultisampleStateCreateInfo multisampling{};
 	multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
 	multisampling.sampleShadingEnable = VK_FALSE;
-	multisampling.rasterizationSamples = vkInit.msaaSamples;
+	multisampling.rasterizationSamples = vkInit.colorSamples;
 	multisampling.minSampleShading = 1.0f; // Optional
 
 	VkPipelineDepthStencilStateCreateInfo depthStencil{};
@@ -434,38 +434,39 @@ void VulkanAndRTX::updateUniformBuffers(uint32_t currentImage, float timeSinceLa
 	memcpy(data, &skyUBO, sizeof(UniformBufferObject));
 	vkUnmapMemory(vkInit.device, skyUniformBuffersMemory[currentImage]);
 
-	//std::cout << "boneTransforms.size(): " << boneTransforms.size() << "\n";
-	//std::cout << "sizeof(boneUBO): " << sizeof(boneUBO) << "\n";
-	//memcpy(boneUBO.boneTransforms, boneTransforms.data(), boneTransforms.size() * sizeof(glm::mat4));
-
-	// Update per-mesh UBOs
+	// Update per-mesh shader buffers
 	for (size_t modelIndex = 0; modelIndex < models.size(); ++modelIndex) {
 		Model& model = models[modelIndex];
-		
-		// update bones
-		if (model.bones.size() > 0) {
-			for (size_t i = 0; i < model.bones.size(); i++) {
-				boneUBO.boneTransforms[i] = model.bones[i].offsetMatrix;
-				//std::cout << glm::to_string(boneUBO.boneTransforms[i]) << "\n";
+
+		for (size_t meshIndex = 0; meshIndex < model.meshes.size(); ++meshIndex) {
+			Mesh& mesh = model.meshes[meshIndex];
+
+			// update bones
+			if (model.bones.size() > 0) {
+				for (size_t i = 0; i < model.bones.size(); i++) {
+					boneSSBO.boneTransforms[i] = model.bones[i].finalTransform;
+					//std::cout << glm::to_string(boneUBO.boneTransforms[i]) << "\n";
+				}
+			}
+			else {
+				for (size_t i = 0; i < model.bones.size(); i++) {
+					boneSSBO.boneTransforms[i] = glm::mat4(1.0);
+				}
 			}
 
-			vkMapMemory(vkInit.device, boneUniformBuffersMemory[modelIndex][currentImage],
-				0, sizeof(glm::mat4) * BONES_NUM, 0, &data);
-			memcpy(data, boneUBO.boneTransforms.data(), sizeof(glm::mat4) * BONES_NUM);
+			vkMapMemory(vkInit.device, boneUniformBuffersMemory[modelIndex][meshIndex][currentImage],
+						0, sizeof(glm::mat4) * BONES_NUM, 0, &data);
+			memcpy(data, boneSSBO.boneTransforms.data(), sizeof(glm::mat4) * BONES_NUM);
 
 			/*glm::mat4* mappedMatrices = reinterpret_cast<glm::mat4*>(data);
 			for (size_t i = 0; i < BONES_NUM; ++i) {
 				std::cout << "Matrix " << i << ": " << glm::to_string(mappedMatrices[i]) << std::endl;
 			}*/
 
-			vkUnmapMemory(vkInit.device, boneUniformBuffersMemory[modelIndex][currentImage]);
-		}
+			vkUnmapMemory(vkInit.device, boneUniformBuffersMemory[modelIndex][meshIndex][currentImage]);
 
-		for (size_t meshIndex = 0; meshIndex < model.meshes.size(); ++meshIndex) {
-			Mesh& mesh = model.meshes[meshIndex];
-
-			meshUBO.model = mesh.transform;
-			//meshUBO.model = glm::mat4(1.0);
+			//meshUBO.model = mesh.transform;
+			meshUBO.model = glm::mat4(1.0);
 			meshUBO.view = view;
 			meshUBO.projection = projection;
 			meshUBO.sun = sun;
@@ -520,19 +521,8 @@ void VulkanAndRTX::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t i
 	}
 
 	// objects
-	for (size_t modelIndex = 0; modelIndex < models.size(); ++modelIndex) {
-		// Bind bone descriptor set
-		/*vkCmdBindDescriptorSets(
-			commandBuffer,
-			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			pipelineLayout,
-			0, 1, &boneDescriptorSets[modelIndex][currentFrame],
-			0, nullptr
-		);*/
-	}
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["object"]);
 	for (size_t modelIndex = 0; modelIndex < models.size(); ++modelIndex) {
-
 		for (size_t meshIndex = 0; meshIndex < models[modelIndex].meshes.size(); ++meshIndex) {
 			const Mesh& mesh = models[modelIndex].meshes[meshIndex];
 			const Material& material = models[modelIndex].materials[meshIndex];
@@ -543,12 +533,34 @@ void VulkanAndRTX::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t i
 					meshDescriptorSets[modelIndex][meshIndex][currentFrame], 2
 				);
 			}
+			else {
+				addTextureToDescriptorSet(
+					dummyTexture,
+					meshDescriptorSets[modelIndex][meshIndex][currentFrame], 2
+				);
+			}
 			if (material.emissiveTexture.imageView && material.emissiveTexture.sampler) {
 				addTextureToDescriptorSet(
 					material.emissiveTexture,
 					meshDescriptorSets[modelIndex][meshIndex][currentFrame], 3
 				);
 			}
+			else {
+				addTextureToDescriptorSet(
+					dummyTexture,
+					meshDescriptorSets[modelIndex][meshIndex][currentFrame], 3
+				);
+			}
+
+			//if (models[modelIndex].meshes[meshIndex].bones.size() > 0) {
+				// adding bone data
+			addBufferToDescriptorSet(
+				meshDescriptorSets[modelIndex][meshIndex][currentFrame],
+				boneUniformBuffers[modelIndex][meshIndex][currentFrame],
+				VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+				sizeof(glm::mat4) * BONES_NUM, 1
+			);
+			//}
 
 			// Bind per-mesh descriptor set
 			vkCmdBindDescriptorSets(
@@ -582,7 +594,7 @@ void VulkanAndRTX::createDescriptorPool()
 	std::array<VkDescriptorPoolSize, 3> poolSizes{};
 
 	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	poolSizes[0].descriptorCount = (totalMeshes * 4 + models.size() * 6)
+	poolSizes[0].descriptorCount = (totalMeshes * 5 + models.size() * 6)
 		* static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT) + 5;
 	poolSizes[1].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
 	poolSizes[1].descriptorCount = (models.size() * 4)
@@ -754,30 +766,22 @@ void VulkanAndRTX::createMeshShaderBuffers(size_t swapChainImageCount)
 	boneUniformBuffersMemory.resize(models.size());
 
 	for (size_t i = 0; i < BONES_NUM; ++i) {
-		boneUBO.boneTransforms[i] = glm::mat4(0.0f);
+		boneSSBO.boneTransforms[i] = glm::mat4(0.0f);
 	}
 
 	for (size_t modelIndex = 0; modelIndex < models.size(); ++modelIndex) {
 		const Model& model = models[modelIndex];
 
 		meshUniformBuffers[modelIndex].resize(model.meshes.size());
-		boneUniformBuffers[modelIndex].resize(swapChainImageCount);
+		boneUniformBuffers[modelIndex].resize(model.meshes.size());
 		meshUniformBuffersMemory[modelIndex].resize(model.meshes.size());
-		boneUniformBuffersMemory[modelIndex].resize(swapChainImageCount);
-
-		for (size_t frameIndex = 0; frameIndex < swapChainImageCount; ++frameIndex) {
-			createBuffer(
-				sizeof(glm::mat4) * BONES_NUM,
-				VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-				boneUniformBuffers[modelIndex][frameIndex],
-				boneUniformBuffersMemory[modelIndex][frameIndex]
-			);
-		}
+		boneUniformBuffersMemory[modelIndex].resize(model.meshes.size());
 
 		for (size_t meshIndex = 0; meshIndex < model.meshes.size(); ++meshIndex) {
 			meshUniformBuffers[modelIndex][meshIndex].resize(swapChainImageCount);
+			boneUniformBuffers[modelIndex][meshIndex].resize(swapChainImageCount);
 			meshUniformBuffersMemory[modelIndex][meshIndex].resize(swapChainImageCount);
+			boneUniformBuffersMemory[modelIndex][meshIndex].resize(swapChainImageCount);
 
 			for (size_t frameIndex = 0; frameIndex < swapChainImageCount; ++frameIndex) {
 				createBuffer(
@@ -786,6 +790,14 @@ void VulkanAndRTX::createMeshShaderBuffers(size_t swapChainImageCount)
 					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 					meshUniformBuffers[modelIndex][meshIndex][frameIndex],
 					meshUniformBuffersMemory[modelIndex][meshIndex][frameIndex]
+				);
+
+				createBuffer(
+					sizeof(glm::mat4) * BONES_NUM,
+					VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+					boneUniformBuffers[modelIndex][meshIndex][frameIndex],
+					boneUniformBuffersMemory[modelIndex][meshIndex][frameIndex]
 				);
 			}
 		}
@@ -807,22 +819,10 @@ void VulkanAndRTX::createSkyDescriptorSets(size_t swapChainImageCount)
 void VulkanAndRTX::createMeshDescriptorSets(size_t swapChainImageCount)
 {
 	meshDescriptorSets.resize(models.size());
-	boneDescriptorSets.resize(models.size());
 
 	for (size_t modelIndex = 0; modelIndex < models.size(); ++modelIndex) {
 		const Model& model = models[modelIndex];
-
 		meshDescriptorSets[modelIndex].resize(model.meshes.size());
-		boneDescriptorSets[modelIndex].resize(swapChainImageCount);
-
-		/*for (size_t frameIndex = 0; frameIndex < swapChainImageCount; ++frameIndex) {
-			createDescriptorSet(
-				boneDescriptorSets[modelIndex][frameIndex],
-				boneUniformBuffers[modelIndex][frameIndex],
-				VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-				sizeof(glm::mat4) * BONES_NUM, 1
-			);
-		}*/
 
 		for (size_t meshIndex = 0; meshIndex < model.meshes.size(); ++meshIndex) {
 			meshDescriptorSets[modelIndex][meshIndex].resize(swapChainImageCount);
@@ -833,14 +833,6 @@ void VulkanAndRTX::createMeshDescriptorSets(size_t swapChainImageCount)
 					meshUniformBuffers[modelIndex][meshIndex][frameIndex],
 					VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 					sizeof(UniformBufferObject), 0
-				);
-
-				// adding bone data
-				addBufferToDescriptorSet(
-					meshDescriptorSets[modelIndex][meshIndex][frameIndex],
-					boneUniformBuffers[modelIndex][frameIndex],
-					VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-					sizeof(glm::mat4) * BONES_NUM, 1
 				);
 			}
 		}

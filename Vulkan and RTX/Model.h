@@ -44,8 +44,10 @@ struct VertexWeight {
 
 struct Bone {
     std::string                             name;
-    glm::mat4                               offsetMatrix;     // Bone to local space
-    std::vector<VertexWeight>               weights;
+    glm::mat4                               offsetMatrix;   // Transform from mesh space to bone local space
+    glm::mat4                               finalTransform; // Final transformation for skinning
+    glm::mat4                               localTransform; // Local transformation (updated by animations)
+    std::vector<int>                        children; // Indices of child bones
 };
 
 struct Mesh {

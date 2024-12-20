@@ -13,7 +13,7 @@ VkFormat VulkanAndRTX::findDepthFormat()
 
 // finding most desirable format of color for a given situation
 VkFormat VulkanAndRTX::findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling,
-	VkFormatFeatureFlags features)
+	VkFormatFeatureFlags features) const
 {
 	for (VkFormat format : candidates) {
 		VkFormatProperties props;
@@ -40,7 +40,7 @@ bool VulkanAndRTX::hasStencilComponent(VkFormat format)
 
 // how to sample through texels of the 
 // for drawing them on 3D model
-void VulkanAndRTX::createTextureSampler(VkSampler& textureSampler)
+void VulkanAndRTX::createTextureSampler(VkSampler& textureSampler) const
 {
 	VkPhysicalDeviceProperties properties{};
 	vkGetPhysicalDeviceProperties(vkInit.physicalDevice, &properties);
@@ -72,15 +72,13 @@ void VulkanAndRTX::createTextureSampler(VkSampler& textureSampler)
 		throw std::runtime_error("failed to create texture sampler!");
 	}
 }
-
 void VulkanAndRTX::createTextureImageView(VkImage& textureImage, VkImageView& textureImageView)
 {
 	textureImageView = createImageView(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT,
 		mipLevels);
 }
-
 VkImageView VulkanAndRTX::createImageView(VkImage image, VkFormat format,
-	VkImageAspectFlags aspectFlags, uint32_t mipLevels)
+	VkImageAspectFlags aspectFlags, uint32_t mipLevels) const
 {
 	VkImageViewCreateInfo viewInfo{};
 	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -195,8 +193,11 @@ void VulkanAndRTX::generateMipmaps(VkImage image, VkFormat imageFormat,
 }
 
 // transitioning image to the right layout
-void VulkanAndRTX::transitionImageLayout(VkImage image, VkFormat format, VkImageLayout oldLayout,
-	VkImageLayout newLayout, uint32_t mipLevels)
+void VulkanAndRTX::transitionImageLayout(
+	VkImage image, VkFormat format, VkImageAspectFlags aspectMask,
+	VkImageLayout oldLayout, VkImageLayout newLayout,
+	uint32_t mipLevels
+)
 {
 	VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
@@ -210,7 +211,7 @@ void VulkanAndRTX::transitionImageLayout(VkImage image, VkFormat format, VkImage
 	barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
 
 	barrier.image = image;
-	barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+	barrier.subresourceRange.aspectMask = aspectMask;
 	barrier.subresourceRange.baseMipLevel = 0;
 	barrier.subresourceRange.levelCount = mipLevels;
 	barrier.subresourceRange.baseArrayLayer = 0;
@@ -329,9 +330,12 @@ void VulkanAndRTX::createColorResources()
 {
 	VkFormat colorFormat = swapChainImageFormat;
 
-	createImage(swapChainExtent.width, swapChainExtent.height, 1, vkInit.msaaSamples, colorFormat,
+	createImage(
+		swapChainExtent.width, swapChainExtent.height, 1, vkInit.colorSamples, colorFormat,
 		VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, colorImage, colorImageMemory);
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
+		colorImage, colorImageMemory
+	);
 
 	colorImageView = createImageView(colorImage, colorFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
 }
@@ -341,12 +345,20 @@ void VulkanAndRTX::createDepthResources()
 {
 	VkFormat depthFormat = findDepthFormat();
 
-	createImage(swapChainExtent.width, swapChainExtent.height, 1, vkInit.msaaSamples, depthFormat,
+	createImage(
+		swapChainExtent.width, swapChainExtent.height, 1, vkInit.colorSamples, depthFormat,
 		VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, depthImage, depthImageMemory);
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
+		depthImage, depthImageMemory
+	);
 
 	depthImageView = createImageView(depthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
 
-	transitionImageLayout(depthImage, depthFormat, VK_IMAGE_LAYOUT_UNDEFINED,
-		VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 1);
+	transitionImageLayout(
+		depthImage, depthFormat, 
+		VK_IMAGE_ASPECT_DEPTH_BIT,
+		VK_IMAGE_LAYOUT_UNDEFINED, 
+		VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 
+		1
+	);
 }

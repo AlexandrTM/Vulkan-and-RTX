@@ -4,14 +4,14 @@
 #define VERTEX_H
 
 struct Vertex {
-	glm::vec3 position;
-	glm::vec3 normal;
-	glm::vec3 color = glm::vec3(1.0f);
-	glm::vec2 texCoord0;
-	glm::vec2 texCoord1;
+	alignas(16) glm::vec3 position;
+	alignas(16) glm::vec3 normal;
+	alignas(16) glm::vec3 color = glm::vec3(1.0f);
+	alignas(16) glm::vec2 texCoord0;
+	alignas(16) glm::vec2 texCoord1;
 
-	uint32_t boneIDs[4] = { 0 }; // IDs of up to 4 influencing bones
-	float boneWeights[4] = { 0.0f }; // Corresponding weights of the bones
+	alignas(16) uint32_t boneIDs[4] = { 0 }; // IDs of up to 4 influencing bones
+	alignas(16) float boneWeights[4] = { 0.0f }; // Corresponding weights of the bones
 
 	// number of bytes between data entries and how move to the next data entry
 	static VkVertexInputBindingDescription getBindingDescription();

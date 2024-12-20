@@ -671,6 +671,63 @@ static glm::mat4 setScaleToOne(const glm::mat4& matrix) {
 }
 
 // добавить сэмплер как параметр и вынести функцию из класса
+void VulkanAndRTX::createDummyTexture(std::array<uint8_t, 4> color, Texture& texture)
+{
+	VkBuffer stagingBuffer;
+	VkDeviceMemory stagingBufferMemory;
+
+	VkDeviceSize imageSize = sizeof(uint8_t) * 4;
+	texture.mipLevels = 1;
+
+	createBuffer(
+		imageSize, 
+		VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 
+		stagingBuffer, stagingBufferMemory
+	);
+
+	void* data;
+	vkMapMemory(vkInit.device, stagingBufferMemory, 0, imageSize, 0, &data);
+	memcpy(data, color.data(), static_cast<size_t>(imageSize));
+	vkUnmapMemory(vkInit.device, stagingBufferMemory);
+
+	createImage(
+		1, 1, texture.mipLevels, VK_SAMPLE_COUNT_1_BIT,
+		VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL,
+		VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		texture.image, texture.imageMemory
+	);
+
+	transitionImageLayout(
+		texture.image, VK_FORMAT_R8G8B8A8_SRGB,
+		VK_IMAGE_ASPECT_COLOR_BIT,
+		VK_IMAGE_LAYOUT_UNDEFINED,
+		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		texture.mipLevels
+	);
+
+	copyBufferToImage(stagingBuffer, texture.image,
+		static_cast<uint32_t>(1), static_cast<uint32_t>(1));
+
+	vkDestroyBuffer(vkInit.device, stagingBuffer, nullptr);
+	vkFreeMemory(vkInit.device, stagingBufferMemory, nullptr);
+
+	transitionImageLayout(
+		texture.image, VK_FORMAT_R8G8B8A8_SRGB,
+		VK_IMAGE_ASPECT_COLOR_BIT,
+		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+		texture.mipLevels
+	);
+
+	texture.imageView = createImageView(
+		texture.image,
+		VK_FORMAT_R8G8B8A8_SRGB,
+		VK_IMAGE_ASPECT_COLOR_BIT,
+		texture.mipLevels);
+	texture.sampler = textureSampler;
+}
 void VulkanAndRTX::createTextureFromPath(const std::string& texturePath, Texture& texture)
 {
 	VkBuffer stagingBuffer;
@@ -687,8 +744,12 @@ void VulkanAndRTX::createTextureFromPath(const std::string& texturePath, Texture
 	VkDeviceSize imageSize = texWidth * texHeight * 4;
 	texture.mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
 
-	createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-		| VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+	createBuffer(
+		imageSize, 
+		VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 
+		stagingBuffer, stagingBufferMemory
+	);
 
 	void* data;
 	vkMapMemory(vkInit.device, stagingBufferMemory, 0, imageSize, 0, &data);
@@ -704,8 +765,13 @@ void VulkanAndRTX::createTextureFromPath(const std::string& texturePath, Texture
 		texture.image, texture.imageMemory
 	);
 
-	transitionImageLayout(texture.image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED,
-		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, texture.mipLevels);
+	transitionImageLayout(
+		texture.image, VK_FORMAT_R8G8B8A8_SRGB, 
+		VK_IMAGE_ASPECT_COLOR_BIT,
+		VK_IMAGE_LAYOUT_UNDEFINED,
+		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 
+		texture.mipLevels
+	);
 
 	copyBufferToImage(stagingBuffer, texture.image,
 		static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
@@ -756,9 +822,12 @@ void VulkanAndRTX::createTextureFromEmbedded(const std::string& embeddedTextureN
 	VkDeviceSize imageSize = texWidth * texHeight * 4; // 4 bytes per pixel for RGBA
 	texture.mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
 
-	createBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+	createBuffer(
+		imageSize, 
+		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-		stagingBuffer, stagingBufferMemory);
+		stagingBuffer, stagingBufferMemory
+	);
 
 	void* data;
 	vkMapMemory(vkInit.device, stagingBufferMemory, 0, imageSize, 0, &data);
@@ -777,8 +846,13 @@ void VulkanAndRTX::createTextureFromEmbedded(const std::string& embeddedTextureN
 		texture.image, texture.imageMemory
 	);
 
-	transitionImageLayout(texture.image, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED,
-		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, texture.mipLevels);
+	transitionImageLayout(
+		texture.image, VK_FORMAT_R8G8B8A8_SRGB, 
+		VK_IMAGE_ASPECT_COLOR_BIT,
+		VK_IMAGE_LAYOUT_UNDEFINED,
+		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 
+		texture.mipLevels
+	);
 	copyBufferToImage(stagingBuffer, texture.image, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
 
 	vkDestroyBuffer(vkInit.device, stagingBuffer, nullptr);
@@ -845,133 +919,9 @@ Material VulkanAndRTX::processMaterial(aiMaterial* aiMat, const aiScene* scene) 
 
 	return material;
 }
-static Bone processBone(aiBone* bone) {
-	Bone processedBone;
-
-	processedBone.name = bone->mName.C_Str();
-	processedBone.offsetMatrix = assimpToGLMMat4(bone->mOffsetMatrix);
-
-	// Process weights for the bone
-	for (size_t k = 0; k < bone->mNumWeights; k++) {
-		VertexWeight weight{};
-		weight.vertexID = bone->mWeights[k].mVertexId;
-		weight.weight = bone->mWeights[k].mWeight;
-
-		processedBone.weights.push_back(weight);
-	}
-
-	return processedBone;
-}
-static Mesh processMesh(
-	aiMesh* mesh, 
-	std::vector<Bone>& bones, 
-	std::unordered_map<std::string, size_t>& boneMap,
-	uint32_t& perModelVertexOffset
-) {
-	Mesh processedMesh;
-
-	// position, normal, tex coords, color
-	for (size_t i = 0; i < mesh->mNumVertices; i++) {
-		Vertex vertex{};
-		vertex.position = glm::vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
-		vertex.normal = glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
-		if (mesh->mTextureCoords[0]) {
-			vertex.texCoord0 = glm::vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);
-		}
-		else {
-			vertex.texCoord0 = glm::vec2(0.0f, 0.0f);
-		}
-		//vertex.color = glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
-		if (mesh->mColors[0]) {
-			vertex.color = glm::vec3(mesh->mColors[0][i].r, mesh->mColors[0][i].g, mesh->mColors[0][i].b);
-		}
-		else {
-			vertex.color = glm::vec3(1.0f);
-		}
-
-		processedMesh.vertices.push_back(vertex);
-	}
-
-	// indices
-	for (size_t i = 0; i < mesh->mNumFaces; i++) {
-		aiFace face = mesh->mFaces[i];
-		for (size_t j = 0; j < face.mNumIndices; j++) {
-			processedMesh.indices.push_back(face.mIndices[j]);
-		}
-	}
-
-	// bones
-	std::vector<uint32_t> boneCount(mesh->mNumVertices, 0);
-	/*if (!mesh->HasBones()) {
-		std::cout << "mesh: " << mesh->mName.C_Str() << " has no bones" << "\n";
-	}*/
-	for (size_t i = 0; i < mesh->mNumBones; i++) {
-		aiBone* bone = mesh->mBones[i];
-		std::string boneName = bone->mName.C_Str();
-
-		size_t boneIndex;
-		if (boneMap.find(boneName) == boneMap.end()) {
-			boneIndex = bones.size();
-			Bone processedBone{};
-			processedBone.name = boneName;
-			processedBone.offsetMatrix = assimpToGLMMat4(bone->mOffsetMatrix);
-
-			for (size_t j = 0; j < bone->mNumWeights; j++) {
-				VertexWeight weight{};
-				weight.vertexID = bone->mWeights[j].mVertexId;
-				weight.weight = bone->mWeights[j].mWeight;
-				processedBone.weights.push_back(weight);
-			}
-
-			/*glm::vec3 position, scale;
-			glm::quat rotation;
-			decomposeTransform(processedBone.offsetMatrix, position, rotation, scale);
-			std::cout << "boneName: " << boneName << "\n";
-			std::cout << "Position: " << glm::to_string(position) << "\n";
-			std::cout << "Rotation: " << glm::to_string(rotation) << "\n";
-			std::cout << "Scale: " << glm::to_string(scale) << "\n";*/
-
-			bones.push_back(processedBone);
-			boneMap[boneName] = boneIndex;
-			std::cout << bones.size() << "\n";
-		}
-		else {
-			boneIndex = boneMap[boneName];
-		}
-
-		// Assign bone influences to vertices
-		for (size_t j = 0; j < bone->mNumWeights; j++) {
-			uint32_t vertexID = bone->mWeights[j].mVertexId;
-			float weight = bone->mWeights[j].mWeight;
-
-			if (boneCount[vertexID] < 4) {
-				processedMesh.vertices[vertexID].boneIDs[boneCount[vertexID]] = boneIndex;
-				processedMesh.vertices[vertexID].boneWeights[boneCount[vertexID]] = weight;
-				boneCount[vertexID]++;
-			}
-		}
-	}
-
-	// Normalize weights for vertices
-	for (auto& vertex : processedMesh.vertices) {
-		float totalWeight = 
-			vertex.boneWeights[0] + vertex.boneWeights[1] +
-			vertex.boneWeights[2] + vertex.boneWeights[3];
-
-		if (totalWeight > 0.0f) {
-			for (size_t i = 0; i < 4; i++) {
-				vertex.boneWeights[i] /= totalWeight;
-			}
-		}	
-	}
-
-	perModelVertexOffset += mesh->mNumVertices;
-
-	return processedMesh;
-}
 static void processAnimations(const aiScene* scene, Model& model) {
 	if (scene->HasAnimations()) {
-		std::cout << "scene: " << scene->mName.C_Str() << 
+		std::cout << "scene: " << scene->mName.C_Str() <<
 			" has animations: " << scene->mNumAnimations << "\n";
 	}
 
@@ -1023,12 +973,167 @@ static void processAnimations(const aiScene* scene, Model& model) {
 		model.animations.push_back(processedAnimation);
 	}
 }
+static void updateBoneHierarchy(
+	std::vector<Bone>& bones, int boneIndex,
+	const glm::mat4& parentTransform, const glm::mat4& globalInverseTransform
+) {
+	Bone& bone = bones[boneIndex];
+	glm::mat4 globalTransform = parentTransform * bone.localTransform;
+
+	// Compute the final transform for skinning
+	bone.finalTransform = globalInverseTransform * globalTransform * bone.offsetMatrix;
+	/*glm::vec3 position, scale;
+	glm::quat rotation;
+	decomposeTransform(bone.localTransform, position, rotation, scale);
+	std::cout << "boneName: " << bone.name << "\n";
+	std::cout << "Position: " << glm::to_string(position) << "\n";
+	std::cout << "Rotation: " << glm::to_string(rotation) << "\n";
+	std::cout << "Scale: " << glm::to_string(scale) << "\n";*/
+
+	// Update children
+	for (int childIndex : bone.children) {
+		updateBoneHierarchy(bones, childIndex, globalTransform, globalInverseTransform);
+	}
+}
+static bool isRootBone(const Bone& bone) {
+	return bone.children.empty();
+}
+static void updateModelBones(Model& model, const glm::mat4& globalInverseTransform) {
+	for (size_t i = 0; i < model.bones.size(); ++i) {
+		if (isRootBone(model.bones[i])) {
+			updateBoneHierarchy(model.bones, i, glm::mat4(1.0f), globalInverseTransform);
+		}
+	}
+}
+static aiNode* findNode(aiNode* rootNode, const std::string& name) {
+	if (name == rootNode->mName.C_Str()) {
+		return rootNode;
+	}
+	for (size_t i = 0; i < rootNode->mNumChildren; ++i) {
+		aiNode* foundNode = findNode(rootNode->mChildren[i], name);
+		if (foundNode) {
+			return foundNode;
+		}
+	}
+	return nullptr;
+}
+static Mesh processMesh(
+	aiMesh* mesh,
+	Model& parentModel,
+	glm::mat4 globalTransform,
+	glm::mat4 globalInverseTransform,
+	uint32_t& perModelVertexOffset,
+	const aiScene* scene
+) {
+	Mesh processedMesh;
+
+	// position, normal, tex coords, color
+	for (size_t i = 0; i < mesh->mNumVertices; i++) {
+		Vertex vertex{};
+		vertex.position = glm::vec3(mesh->mVertices[i].x, mesh->mVertices[i].y, mesh->mVertices[i].z);
+		vertex.normal = glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
+		if (mesh->mTextureCoords[0]) {
+			vertex.texCoord0 = glm::vec2(mesh->mTextureCoords[0][i].x, mesh->mTextureCoords[0][i].y);
+		}
+		else {
+			vertex.texCoord0 = glm::vec2(0.0f, 0.0f);
+		}
+		//vertex.color = glm::vec3(mesh->mNormals[i].x, mesh->mNormals[i].y, mesh->mNormals[i].z);
+		if (mesh->mColors[0]) {
+			vertex.color = glm::vec3(mesh->mColors[0][i].r, mesh->mColors[0][i].g, mesh->mColors[0][i].b);
+		}
+		else {
+			vertex.color = glm::vec3(1.0f);
+		}
+
+		processedMesh.vertices.push_back(vertex);
+	}
+
+	// indices
+	for (size_t i = 0; i < mesh->mNumFaces; i++) {
+		aiFace face = mesh->mFaces[i];
+		for (size_t j = 0; j < face.mNumIndices; j++) {
+			processedMesh.indices.push_back(face.mIndices[j]);
+		}
+	}
+
+	// bones
+	std::vector<uint32_t> boneCount(mesh->mNumVertices, 0);
+	for (size_t i = 0; i < mesh->mNumBones; i++) {
+		aiBone* bone = mesh->mBones[i];
+		std::string boneName = bone->mName.C_Str();
+
+		size_t boneIndex;
+		if (parentModel.boneMap.find(boneName) == parentModel.boneMap.end()) {
+			boneIndex = parentModel.bones.size();
+			Bone processedBone{};
+			processedBone.name = boneName;
+			processedBone.offsetMatrix = assimpToGLMMat4(bone->mOffsetMatrix);
+			processedBone.localTransform = globalTransform;
+			processedBone.finalTransform = globalInverseTransform * globalTransform * processedBone.offsetMatrix;
+
+			parentModel.bones.push_back(processedBone);
+			parentModel.boneMap[boneName] = boneIndex;
+
+			/*glm::vec3 position, scale;
+			glm::quat rotation;
+			decomposeTransform(processedBone.offsetMatrix, position, rotation, scale);
+			std::cout << "boneName: " << boneName << "\n";
+			std::cout << "Position: " << glm::to_string(position) << "\n";
+			std::cout << "Rotation: " << glm::to_string(rotation) << "\n";
+			std::cout << "Scale: " << glm::to_string(scale) << "\n";*/
+		}
+		else {
+			boneIndex = parentModel.boneMap[boneName];
+		}
+
+		// Assign bone influences to vertices
+		for (size_t j = 0; j < bone->mNumWeights; j++) {
+			uint32_t vertexID = bone->mWeights[j].mVertexId;
+			float weight = bone->mWeights[j].mWeight;
+
+			if (boneCount[vertexID] < 4) {
+				processedMesh.vertices[vertexID].boneIDs[boneCount[vertexID]] = boneIndex;
+				processedMesh.vertices[vertexID].boneWeights[boneCount[vertexID]] = weight;
+				boneCount[vertexID]++;
+			}
+		}
+
+		aiNode* boneNode = findNode(scene->mRootNode, boneName);
+		if (boneNode) {
+			for (size_t j = 0; j < boneNode->mNumChildren; ++j) {
+				std::string childName = boneNode->mChildren[j]->mName.C_Str();
+				if (parentModel.boneMap.find(childName) != parentModel.boneMap.end()) {
+					int childIndex = parentModel.boneMap[childName];
+					parentModel.bones[boneIndex].children.push_back(childIndex);
+				}
+			}
+		}
+	}
+
+	// Normalize weights for vertices
+	for (auto& vertex : processedMesh.vertices) {
+		float totalWeight = 
+			vertex.boneWeights[0] + vertex.boneWeights[1] +
+			vertex.boneWeights[2] + vertex.boneWeights[3];
+
+		if (totalWeight > 0.0f) {
+			for (size_t i = 0; i < 4; i++) {
+				vertex.boneWeights[i] /= totalWeight;
+			}
+		}	
+	}
+
+	perModelVertexOffset += mesh->mNumVertices;
+
+	return processedMesh;
+}
 
 void VulkanAndRTX::processNode(
 	aiNode* node, const aiScene* scene, 
-	std::vector<Model>* models, 
-	Model& parentModel, glm::mat4 parentTransform, 
-	std::unordered_map<std::string, size_t>& boneMap,
+	std::vector<Model>& models, 
+	Model& parentModel, 
+	glm::mat4 parentTransform, const glm::mat4 globalInverseTransform,
 	uint32_t& perModelVertexOffset,
 	int level
 ) {
@@ -1048,9 +1153,14 @@ void VulkanAndRTX::processNode(
 
 	for (size_t i = 0; i < node->mNumMeshes; i++) {
 		aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-		Mesh processedMesh = processMesh(mesh, parentModel.bones, boneMap, perModelVertexOffset);
+		Mesh processedMesh = processMesh(
+			mesh, parentModel,
+			globalTransform,
+			globalInverseTransform,
+			perModelVertexOffset,
+			scene
+		);
 		processedMesh.transform = globalTransform;
-
 		parentModel.meshes.push_back(processedMesh);
 
 		if (mesh->mMaterialIndex >= 0) {
@@ -1062,11 +1172,11 @@ void VulkanAndRTX::processNode(
 
 	for (size_t i = 0; i < node->mNumChildren; i++) {
 		Model childModel;
-		processNode(node->mChildren[i], scene, models, childModel, globalTransform, boneMap, perModelVertexOffset, level + 1);
-		models->push_back(childModel);
+		processNode(node->mChildren[i], scene, models, childModel, globalTransform, globalInverseTransform, perModelVertexOffset, level + 1);
+		models.push_back(childModel);
 	}
 }
-void VulkanAndRTX::loadModelsFromDirectory(const std::string& directory, std::vector<Model>* models) {
+void VulkanAndRTX::loadModelsFromDirectory(const std::string& directory, std::vector<Model>& models) {
 	auto modelFiles = GetModelFiles(directory);
 	
 	for (const auto& file : modelFiles) {
@@ -1082,15 +1192,31 @@ void VulkanAndRTX::loadModelsFromDirectory(const std::string& directory, std::ve
 		Model rootModel;
 		uint32_t perModelVertexOffset = 0;
 		glm::mat4 identityTransform = glm::mat4(1.0f);
+		glm::mat4 globalInverseTransform = glm::inverse(assimpToGLMMat4(scene->mRootNode->mTransformation));
 
-		processNode(scene->mRootNode, scene, models, rootModel, identityTransform, rootModel.boneMap, perModelVertexOffset, 0);
+		/*size_t meshesNum = 0;
+		for (size_t i = 0; i < models.size(); i++) {
+			meshesNum += models[i].meshes.size();
+		}
+		std::cout << "models.size(): " << models.size() << "\n";
+		std::cout << "meshes num: " << meshesNum << "\n";*/
+
+		processNode(
+			scene->mRootNode, scene, models, rootModel, 
+			identityTransform, globalInverseTransform, 
+			perModelVertexOffset, 0
+		);
 		processAnimations(scene, rootModel);
+		models.push_back(rootModel);
+		for (size_t i = 0; i < models.size(); i++) {
+			//updateModelBones(models[i], globalInverseTransform);
+		}
 
-		/*for (size_t i = 0; i < rootModel.bones.size(); i++) {
-			boneUBO.boneTransforms[i] = rootModel.bones[i].offsetMatrix;
-			std::cout << glm::to_string(rootModel.bones[i].offsetMatrix) << "\n";
-		}*/
-	
-		models->push_back(rootModel);
+		/*meshesNum = 0;
+		for (size_t i = 0; i < models.size(); i++) {
+			meshesNum += models[i].meshes.size();
+		}
+		std::cout << "models.size(): " << models.size() << "\n";
+		std::cout << "meshes num: " << meshesNum << "\n";*/
 	}
 }

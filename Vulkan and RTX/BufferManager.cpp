@@ -83,58 +83,66 @@ void VulkanAndRTX::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkM
 	vkBindBufferMemory(vkInit.device, buffer, bufferMemory, 0);
 }
 
-void VulkanAndRTX::createVertexBuffer(Model& model)
+void VulkanAndRTX::createVertexBuffer(Mesh& mesh)
 {
-	for (size_t i = 0; i < model.meshes.size(); i++) {
-		Mesh& mesh = model.meshes[i];
+	VkDeviceSize bufferSize = sizeof(Vertex) * mesh.vertices.size();
 
-		VkDeviceSize bufferSize = sizeof(Vertex) * mesh.vertices.size();
+	VkBuffer stagingBuffer;
+	VkDeviceMemory stagingBufferMemory;
+	createBuffer(
+		bufferSize, 
+		VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 
+		stagingBuffer, stagingBufferMemory
+	);
 
-		VkBuffer stagingBuffer;
-		VkDeviceMemory stagingBufferMemory;
-		createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-			| VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+	void* data;
+	vkMapMemory(vkInit.device, stagingBufferMemory, 0, bufferSize, 0, &data);
+	memcpy(data, mesh.vertices.data(), (size_t)bufferSize);
+	vkUnmapMemory(vkInit.device, stagingBufferMemory);
 
-		void* data;
-		vkMapMemory(vkInit.device, stagingBufferMemory, 0, bufferSize, 0, &data);
-		memcpy(data, mesh.vertices.data(), (size_t)bufferSize);
-		vkUnmapMemory(vkInit.device, stagingBufferMemory);
+	// giving perfomance boost by using device local memory
+	createBuffer(
+		bufferSize, 
+		VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
+		mesh.vertexBuffer, mesh.vertexBufferMemory
+	);
 
-		// giving perfomance boost by using device local memory
-		createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mesh.vertexBuffer, mesh.vertexBufferMemory);
+	copyBuffer(stagingBuffer, mesh.vertexBuffer, bufferSize);
 
-		copyBuffer(stagingBuffer, mesh.vertexBuffer, bufferSize);
-
-		vkDestroyBuffer(vkInit.device, stagingBuffer, nullptr);
-		vkFreeMemory(vkInit.device, stagingBufferMemory, nullptr);
-	}
+	vkDestroyBuffer(vkInit.device, stagingBuffer, nullptr);
+	vkFreeMemory(vkInit.device, stagingBufferMemory, nullptr);
 }
-void VulkanAndRTX::createIndexBuffer(Model& model)
+void VulkanAndRTX::createIndexBuffer(Mesh& mesh)
 {
-	for (size_t i = 0; i < model.meshes.size(); i++) {
-		Mesh& mesh = model.meshes[i];
+	VkDeviceSize bufferSize = sizeof(mesh.indices[0]) * mesh.indices.size();
 
-		VkDeviceSize bufferSize = sizeof(mesh.indices[0]) * mesh.indices.size();
+	VkBuffer stagingBuffer;
+	VkDeviceMemory stagingBufferMemory;
+	createBuffer(
+		bufferSize, 
+		VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 
+		stagingBuffer, stagingBufferMemory
+	);
 
-		VkBuffer stagingBuffer;
-		VkDeviceMemory stagingBufferMemory;
-		createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT
-			| VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, stagingBuffer, stagingBufferMemory);
+	void* data;
+	vkMapMemory(vkInit.device, stagingBufferMemory, 0, bufferSize, 0, &data);
+	memcpy(data, mesh.indices.data(), (size_t)bufferSize);
+	vkUnmapMemory(vkInit.device, stagingBufferMemory);
 
-		void* data;
-		vkMapMemory(vkInit.device, stagingBufferMemory, 0, bufferSize, 0, &data);
-		memcpy(data, mesh.indices.data(), (size_t)bufferSize);
-		vkUnmapMemory(vkInit.device, stagingBufferMemory);
+	createBuffer(
+		bufferSize, 
+		VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
+		mesh.indexBuffer, mesh.indexBufferMemory
+	);
 
-		createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-			VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, mesh.indexBuffer, mesh.indexBufferMemory);
+	copyBuffer(stagingBuffer, mesh.indexBuffer, bufferSize);
 
-		copyBuffer(stagingBuffer, mesh.indexBuffer, bufferSize);
-
-		vkDestroyBuffer(vkInit.device, stagingBuffer, nullptr);
-		vkFreeMemory(vkInit.device, stagingBufferMemory, nullptr);
-	}
+	vkDestroyBuffer(vkInit.device, stagingBuffer, nullptr);
+	vkFreeMemory(vkInit.device, stagingBufferMemory, nullptr);
 }
 
 // create multiple command buffers

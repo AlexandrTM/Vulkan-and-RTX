@@ -130,7 +130,7 @@ void VulkanInitializer::pickPhysicalDevice()
 				"suitable device name: " << deviceProperties.deviceName << "\n";
 
 			physicalDevice = device;
-			msaaSamples = getMaxUsableSampleCount();
+			findMaxUsableSampleCount(physicalDevice);
 			break;
 		}
 	}
@@ -281,22 +281,29 @@ bool VulkanInitializer::checkValidationLayerSupport()
 	return true;
 }
 
-VkSampleCountFlagBits VulkanInitializer::getMaxUsableSampleCount()
+void VulkanInitializer::findMaxUsableSampleCount(VkPhysicalDevice physicalDevice)
 {
 	VkPhysicalDeviceProperties physicalDeviceProperties;
 	vkGetPhysicalDeviceProperties(physicalDevice, &physicalDeviceProperties);
 
-	VkSampleCountFlags counts = physicalDeviceProperties.limits.framebufferColorSampleCounts
-							  & physicalDeviceProperties.limits.framebufferDepthSampleCounts;
+	VkSampleCountFlags colorCounts = physicalDeviceProperties.limits.framebufferColorSampleCounts;
+	VkSampleCountFlags depthCounts = physicalDeviceProperties.limits.framebufferDepthSampleCounts;
 
-	if (counts & VK_SAMPLE_COUNT_64_BIT) { return VK_SAMPLE_COUNT_64_BIT; }
-	if (counts & VK_SAMPLE_COUNT_32_BIT) { return VK_SAMPLE_COUNT_32_BIT; }
-	if (counts & VK_SAMPLE_COUNT_16_BIT) { return VK_SAMPLE_COUNT_16_BIT; }
-	if (counts & VK_SAMPLE_COUNT_8_BIT ) { return VK_SAMPLE_COUNT_8_BIT;  }
-	if (counts & VK_SAMPLE_COUNT_4_BIT ) { return VK_SAMPLE_COUNT_4_BIT;  }
-	if (counts & VK_SAMPLE_COUNT_2_BIT ) { return VK_SAMPLE_COUNT_2_BIT;  }
-
-	return VK_SAMPLE_COUNT_1_BIT;
+	if (colorCounts & VK_SAMPLE_COUNT_64_BIT) { colorSamples = VK_SAMPLE_COUNT_64_BIT; }
+	if (colorCounts & VK_SAMPLE_COUNT_32_BIT) { colorSamples = VK_SAMPLE_COUNT_32_BIT; }
+	if (colorCounts & VK_SAMPLE_COUNT_16_BIT) { colorSamples = VK_SAMPLE_COUNT_16_BIT; }
+	if (colorCounts & VK_SAMPLE_COUNT_8_BIT ) { colorSamples = VK_SAMPLE_COUNT_8_BIT;  }
+	if (colorCounts & VK_SAMPLE_COUNT_4_BIT ) { colorSamples = VK_SAMPLE_COUNT_4_BIT;  }
+	if (colorCounts & VK_SAMPLE_COUNT_2_BIT ) { colorSamples = VK_SAMPLE_COUNT_2_BIT;  }
+	else { colorSamples = VK_SAMPLE_COUNT_1_BIT; }
+	
+	if (depthCounts & VK_SAMPLE_COUNT_64_BIT) { depthSamples = VK_SAMPLE_COUNT_64_BIT; }
+	if (depthCounts & VK_SAMPLE_COUNT_32_BIT) { depthSamples = VK_SAMPLE_COUNT_32_BIT; }
+	if (depthCounts & VK_SAMPLE_COUNT_16_BIT) { depthSamples = VK_SAMPLE_COUNT_16_BIT; }
+	if (depthCounts & VK_SAMPLE_COUNT_8_BIT ) { depthSamples = VK_SAMPLE_COUNT_8_BIT;  }
+	if (depthCounts & VK_SAMPLE_COUNT_4_BIT ) { depthSamples = VK_SAMPLE_COUNT_4_BIT;  }
+	if (depthCounts & VK_SAMPLE_COUNT_2_BIT ) { depthSamples = VK_SAMPLE_COUNT_2_BIT;  }
+	else { depthSamples = VK_SAMPLE_COUNT_1_BIT; }
 }
 
 // getting required extensions for GLFW and their number
@@ -316,7 +323,7 @@ std::vector<const char*> VulkanInitializer::getRequiredExtensions()
 }
 
 // finding needed queue families
-QueueFamilyIndices VulkanInitializer::findQueueFamilies(VkPhysicalDevice device)
+QueueFamilyIndices VulkanInitializer::findQueueFamilies(VkPhysicalDevice device) const
 {
 	QueueFamilyIndices indices;
 

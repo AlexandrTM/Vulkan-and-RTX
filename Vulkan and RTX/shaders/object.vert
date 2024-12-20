@@ -31,18 +31,18 @@ layout(location = 2) out vec2 outTexCoord0;
 
 void main() {		
 	mat4 boneTransform = mat4(0.0f);
-	vec4 transformedPosition = vec4(0.0);
+	vec4 transformedPosition = vec4(inPosition, 1.0);
 
     for (int i = 0; i < 4; i++) {
         if (inBoneWeights[i] > 0.0) {
             boneTransform += inBoneWeights[i] * boneUBO.boneTransforms[inBoneIDs[i]];
-			//transformedPosition += vec4(inBoneWeights[i]);
+			//transformedPosition += boneUBO.boneTransforms[inBoneIDs[i]] * vec4(inPosition, 1.0);
         }
     }
+	if (boneTransform == mat4(0.0)) {
+    	boneTransform = mat4(1.0);
+	}
 	transformedPosition = boneTransform * vec4(inPosition, 1.0);
-	if (transformedPosition == vec4(0.0)) {
-        transformedPosition = vec4(inPosition, 1.0);
-    }
 
 	// for (int i = 0; i < 256; i++) {
 	// 	if (boneUBO.boneTransforms[i] == mat4(0.0f)) {
