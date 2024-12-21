@@ -30,7 +30,7 @@ Camera::Camera(
 	double yaw,
 	double pitch,
 	double roll
-			)
+)
 {
 	_lookFrom = lookFrom;
 	_lookAt = lookAt;
@@ -67,13 +67,17 @@ void Camera::rotate(double xpos, double ypos, double sensitivity)
 	xoffset *= sensitivity;
 	yoffset *= sensitivity;
 
-	_yaw = _yaw + xoffset;
-	_pitch = _pitch + yoffset;
+	if (_pitch + yoffset > 90) {
+		_pitch = 90;
+	}
+	else if (_pitch + yoffset < -90) {
+		_pitch = -90;
+	}
+	else {
+		_pitch = _pitch + yoffset;
+	}
 
-	if (_pitch > 89.9)
-		_pitch = 89.9;
-	if (_pitch < -89.9)
-		_pitch = -89.9;
+	_yaw = _yaw + xoffset;
 
 	glm::vec3 front{};
 	front.x = cos(glm::radians(_yaw)) * cos(glm::radians(_pitch));
@@ -89,21 +93,21 @@ void Camera::setLookFrom(glm::vec3 lookFrom) { _lookFrom = lookFrom; }
 void Camera::setLookAt(glm::vec3 lookAt) { _lookAt = lookAt; }
 void Camera::setDirection(glm::vec3 cameraDirection) { _cameraDirection = cameraDirection; }
 void Camera::setVerticalFov(float vFov) { _verticalFov = vFov; }
-glm::vec3 Camera::getLookFrom() { return _lookFrom; }
-glm::vec3 Camera::getLookAt() { return _lookAt; }
-glm::vec3 Camera::getDirection() { return _cameraDirection; }
-float Camera::getVerticalFov() { return _verticalFov; }
+glm::vec3 Camera::getLookFrom() const { return _lookFrom; }
+glm::vec3 Camera::getLookAt() const { return _lookAt; }
+glm::vec3 Camera::getDirection() const { return _cameraDirection; }
+float Camera::getVerticalFov() const { return _verticalFov; }
 
 void Camera::setLastViewportX(double lastX) { _lastViewportX = lastX; }
 void Camera::setLastViewportY(double lastY) { _lastViewportY = lastY; }
-double Camera::getLastViewportX() { return _lastViewportX; }
-double Camera::getLastViewportY() { return _lastViewportY; }
+double Camera::getLastViewportX() const { return _lastViewportX; }
+double Camera::getLastViewportY() const { return _lastViewportY; }
 
 void Camera::setYaw(double yaw) { _yaw = yaw; }
 void Camera::setPitch(double pitch) { _pitch = pitch; }
 void Camera::setRoll(double roll) { _roll = roll; }
-double Camera::getYaw() { return _yaw; }
-double Camera::getPitch() { return _pitch; }
-double Camera::getRoll() { return _roll; }
+double Camera::getYaw() const { return _yaw; }
+double Camera::getPitch() const { return _pitch; }
+double Camera::getRoll() const { return _roll; }
 
 glm::vec3 Camera::getVerticalWorldAxis() { return _verticalWorldAxis; }

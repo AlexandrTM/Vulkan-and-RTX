@@ -12,7 +12,11 @@ void VulkanAndRTX::run()
 	vulkanWindow = &g_MainWindowData;
 	setupImguiWindow(vulkanWindow, vkInit.surface, windowWidth, windowHeight);
 	setupImGui();
+	Noesis::GUI::Init();
+
 	mainLoop();
+
+	Noesis::GUI::Shutdown();
 	cleanupMemory();
 }
 
@@ -101,7 +105,6 @@ void VulkanAndRTX::setupImGui() {
 
 	ImGui_ImplVulkan_Init(&init_info);
 }
-
 void VulkanAndRTX::setupImguiWindow(ImGui_ImplVulkanH_Window* wd, 
 	VkSurfaceKHR surface, size_t width, size_t height)
 {
@@ -178,7 +181,13 @@ void VulkanAndRTX::prepareResources()
 
 	//loadGltfModel("models/blue_archivekasumizawa_miyu.glb");
 	loadModelsFromDirectory("models", models);
-	generateTerrain(-30, -30, 600, 600, 0.1, 0.1, 1.0, 1);
+	generateTerrain(
+		-60, -60, -1,
+		60, 60, 
+		2.0, 
+		0.1, 1.0, 
+		1
+	);
 
 	createSkyCube();
 
@@ -317,7 +326,6 @@ void VulkanAndRTX::cleanupImGui() {
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
 }
-
 void VulkanAndRTX::cleanupModels()
 {
 	for (size_t i = 0; i < models.size(); i++) {
@@ -326,7 +334,6 @@ void VulkanAndRTX::cleanupModels()
 
 	cleanupModel(sky);
 }
-
 void VulkanAndRTX::cleanupModel(Model& model) const
 {
 	for (size_t i = 0; i < model.meshes.size(); i++) {
@@ -337,7 +344,6 @@ void VulkanAndRTX::cleanupModel(Model& model) const
 		vkFreeMemory(vkInit.device, model.meshes[i].vertexBufferMemory, nullptr);
 	}
 }
-
 // emptying RAM
 void VulkanAndRTX::cleanupMemory()
 {
@@ -385,6 +391,14 @@ void VulkanAndRTX::cleanupMemory()
 
 	glfwTerminate();
 }
+void VulkanAndRTX::check_vk_result(VkResult err)
+{
+	if (err == 0)
+		return;
+	fprintf(stderr, "[vulkan] Error: VkResult = %d\n", err);
+	if (err < 0)
+		abort();
+}
 
 void VulkanAndRTX::restrictCharacterMovement(Camera& camera)
 {
@@ -419,14 +433,6 @@ void VulkanAndRTX::restrictCharacterMovement(Camera& camera)
 	}
 }
 
-void VulkanAndRTX::check_vk_result(VkResult err)
-{
-	if (err == 0)
-		return;
-	fprintf(stderr, "[vulkan] Error: VkResult = %d\n", err);
-	if (err < 0)
-		abort();
-}
 
 std::string VulkanAndRTX::createPuzzleEquation(std::string name, int& answer)
 {

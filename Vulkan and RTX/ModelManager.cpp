@@ -3,7 +3,7 @@
 #include "Vertex.h"
 
 void VulkanAndRTX::generateTerrain(
-	float startX, float startZ, 
+	float startX, float startZ, float startY,
 	size_t width, size_t length,
 	float gridSize, float scale, float height, 
 	size_t seed
@@ -14,7 +14,7 @@ void VulkanAndRTX::generateTerrain(
 
 	terrainGenerator = std::make_unique<TerrainGenerator>(seed);
 	auto heightmap = terrainGenerator.get()->generatePerlinHeightMap(width, length, scale, height);
-	terrainGenerator.get()->generateTerrainMesh(startX, startZ, heightmap, gridSize, mesh);
+	terrainGenerator.get()->generateTerrainMesh(startX, startZ, startY, heightmap, gridSize, mesh);
 	
 	model.meshes.push_back(mesh);
 	Material material{};
@@ -973,37 +973,9 @@ static void processAnimations(const aiScene* scene, Model& model) {
 		model.animations.push_back(processedAnimation);
 	}
 }
-static void updateBoneHierarchy(
-	std::vector<Bone>& bones, int boneIndex,
-	const glm::mat4& parentTransform, const glm::mat4& globalInverseTransform
-) {
-	Bone& bone = bones[boneIndex];
-	glm::mat4 globalTransform = parentTransform * bone.localTransform;
 
-	// Compute the final transform for skinning
-	bone.finalTransform = globalInverseTransform * globalTransform * bone.offsetMatrix;
-	/*glm::vec3 position, scale;
-	glm::quat rotation;
-	decomposeTransform(bone.localTransform, position, rotation, scale);
-	std::cout << "boneName: " << bone.name << "\n";
-	std::cout << "Position: " << glm::to_string(position) << "\n";
-	std::cout << "Rotation: " << glm::to_string(rotation) << "\n";
-	std::cout << "Scale: " << glm::to_string(scale) << "\n";*/
-
-	// Update children
-	for (int childIndex : bone.children) {
-		updateBoneHierarchy(bones, childIndex, globalTransform, globalInverseTransform);
-	}
-}
 static bool isRootBone(const Bone& bone) {
 	return bone.children.empty();
-}
-static void updateModelBones(Model& model, const glm::mat4& globalInverseTransform) {
-	for (size_t i = 0; i < model.bones.size(); ++i) {
-		if (isRootBone(model.bones[i])) {
-			updateBoneHierarchy(model.bones, i, glm::mat4(1.0f), globalInverseTransform);
-		}
-	}
 }
 static aiNode* findNode(aiNode* rootNode, const std::string& name) {
 	if (name == rootNode->mName.C_Str()) {
@@ -1017,6 +989,106 @@ static aiNode* findNode(aiNode* rootNode, const std::string& name) {
 	}
 	return nullptr;
 }
+static void updateBoneHierarchy(
+	std::vector<Bone>& bones, int boneIndex,
+	const glm::mat4& parentTransform, const glm::mat4& globalInverseTransform
+) {
+	Bone& bone = bones[boneIndex];
+	glm::mat4 globalTransform = parentTransform * bone.globalTransform;
+
+	// Compute the final transform for skinning
+	bone.finalTransform = globalInverseTransform * bone.globalTransform * bone.offsetMatrix;
+	/*glm::vec3 position, scale;
+	glm::quat rotation;
+	decomposeTransform(bone.globalTransform, position, rotation, scale);
+	std::cout << "boneName: " << bone.name << "\n";
+	std::cout << "Position: " << glm::to_string(position) << "\n";
+	std::cout << "Rotation: " << glm::to_string(rotation) << "\n";
+	std::cout << "Scale: " << glm::to_string(scale) << "\n";*/
+
+	// Update children
+	for (int childIndex : bone.children) {
+		updateBoneHierarchy(bones, childIndex, globalTransform, globalInverseTransform);
+	}
+}
+static void updateModelBones(Model& model, const glm::mat4& globalInverseTransform) {
+	for (size_t j = 0; j < model.meshes.size(); ++j) {
+		for (size_t i = 0; i < model.meshes[j].bones.size(); ++i) {
+			if (isRootBone(model.meshes[j].bones[i])) {
+				updateBoneHierarchy(model.meshes[j].bones, i, glm::mat4(1.0f), globalInverseTransform);
+			}
+		}
+	}
+}
+static void processBones(aiMesh* mesh, const aiScene* scene, Mesh& processedMesh)
+{
+	std::vector<uint32_t> boneCount(mesh->mNumVertices, 0);
+	for (size_t i = 0; i < mesh->mNumBones; i++) {
+		aiBone* bone = mesh->mBones[i];
+		std::string boneName = bone->mName.C_Str();
+
+		size_t boneIndex;
+		if (processedMesh.boneMap.find(boneName) == processedMesh.boneMap.end()) {
+			boneIndex = processedMesh.bones.size();
+			Bone processedBone{};
+			processedBone.name = boneName;
+			//processedBone.offsetMatrix = assimpToGLMMat4(bone->mOffsetMatrix);
+			//processedBone.globalTransform = globalTransform;
+			processedBone.finalTransform = processedBone.offsetMatrix;
+
+			processedMesh.bones.push_back(processedBone);
+			processedMesh.boneMap[boneName] = boneIndex;
+
+			/*glm::vec3 position, scale;
+			glm::quat rotation;
+			decomposeTransform(processedBone.offsetMatrix, position, rotation, scale);
+			std::cout << "boneName: " << boneName << "\n";
+			std::cout << "Position: " << glm::to_string(position) << "\n";
+			std::cout << "Rotation: " << glm::to_string(rotation) << "\n";
+			std::cout << "Scale: " << glm::to_string(scale) << "\n";*/
+		}
+		else {
+			boneIndex = processedMesh.boneMap[boneName];
+		}
+
+		// Assign bone influences to vertices
+		for (size_t j = 0; j < bone->mNumWeights; j++) {
+			uint32_t vertexID = bone->mWeights[j].mVertexId;
+			float weight = bone->mWeights[j].mWeight;
+
+			if (boneCount[vertexID] < 4) {
+				processedMesh.vertices[vertexID].boneIDs[boneCount[vertexID]] = boneIndex;
+				processedMesh.vertices[vertexID].boneWeights[boneCount[vertexID]] = weight;
+				boneCount[vertexID]++;
+			}
+		}
+
+		aiNode* boneNode = findNode(scene->mRootNode, boneName);
+		if (boneNode) {
+			for (size_t j = 0; j < boneNode->mNumChildren; ++j) {
+				std::string childName = boneNode->mChildren[j]->mName.C_Str();
+				if (processedMesh.boneMap.find(childName) != processedMesh.boneMap.end()) {
+					int childIndex = processedMesh.boneMap[childName];
+					processedMesh.bones[boneIndex].children.push_back(childIndex);
+				}
+			}
+		}
+	}
+
+	// Normalize weights for vertices
+	for (auto& vertex : processedMesh.vertices) {
+		float totalWeight =
+			vertex.boneWeights[0] + vertex.boneWeights[1] +
+			vertex.boneWeights[2] + vertex.boneWeights[3];
+
+		if (totalWeight > 0.0f) {
+			for (size_t i = 0; i < 4; i++) {
+				vertex.boneWeights[i] /= totalWeight;
+			}
+		}
+	}
+}
+
 static Mesh processMesh(
 	aiMesh* mesh,
 	Model& parentModel,
@@ -1058,71 +1130,7 @@ static Mesh processMesh(
 	}
 
 	// bones
-	std::vector<uint32_t> boneCount(mesh->mNumVertices, 0);
-	for (size_t i = 0; i < mesh->mNumBones; i++) {
-		aiBone* bone = mesh->mBones[i];
-		std::string boneName = bone->mName.C_Str();
-
-		size_t boneIndex;
-		if (parentModel.boneMap.find(boneName) == parentModel.boneMap.end()) {
-			boneIndex = parentModel.bones.size();
-			Bone processedBone{};
-			processedBone.name = boneName;
-			processedBone.offsetMatrix = assimpToGLMMat4(bone->mOffsetMatrix);
-			processedBone.localTransform = globalTransform;
-			processedBone.finalTransform = globalInverseTransform * globalTransform * processedBone.offsetMatrix;
-
-			parentModel.bones.push_back(processedBone);
-			parentModel.boneMap[boneName] = boneIndex;
-
-			/*glm::vec3 position, scale;
-			glm::quat rotation;
-			decomposeTransform(processedBone.offsetMatrix, position, rotation, scale);
-			std::cout << "boneName: " << boneName << "\n";
-			std::cout << "Position: " << glm::to_string(position) << "\n";
-			std::cout << "Rotation: " << glm::to_string(rotation) << "\n";
-			std::cout << "Scale: " << glm::to_string(scale) << "\n";*/
-		}
-		else {
-			boneIndex = parentModel.boneMap[boneName];
-		}
-
-		// Assign bone influences to vertices
-		for (size_t j = 0; j < bone->mNumWeights; j++) {
-			uint32_t vertexID = bone->mWeights[j].mVertexId;
-			float weight = bone->mWeights[j].mWeight;
-
-			if (boneCount[vertexID] < 4) {
-				processedMesh.vertices[vertexID].boneIDs[boneCount[vertexID]] = boneIndex;
-				processedMesh.vertices[vertexID].boneWeights[boneCount[vertexID]] = weight;
-				boneCount[vertexID]++;
-			}
-		}
-
-		aiNode* boneNode = findNode(scene->mRootNode, boneName);
-		if (boneNode) {
-			for (size_t j = 0; j < boneNode->mNumChildren; ++j) {
-				std::string childName = boneNode->mChildren[j]->mName.C_Str();
-				if (parentModel.boneMap.find(childName) != parentModel.boneMap.end()) {
-					int childIndex = parentModel.boneMap[childName];
-					parentModel.bones[boneIndex].children.push_back(childIndex);
-				}
-			}
-		}
-	}
-
-	// Normalize weights for vertices
-	for (auto& vertex : processedMesh.vertices) {
-		float totalWeight = 
-			vertex.boneWeights[0] + vertex.boneWeights[1] +
-			vertex.boneWeights[2] + vertex.boneWeights[3];
-
-		if (totalWeight > 0.0f) {
-			for (size_t i = 0; i < 4; i++) {
-				vertex.boneWeights[i] /= totalWeight;
-			}
-		}	
-	}
+	//processBones(mesh, scene, processedMesh);
 
 	perModelVertexOffset += mesh->mNumVertices;
 

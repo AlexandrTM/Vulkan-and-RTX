@@ -57,6 +57,12 @@ std::array<VkVertexInputAttributeDescription, 7> Vertex::getAttributeDescription
 
 bool Vertex::operator==(const Vertex& other) const
 {
-	return position == other.position && normal == other.normal && color == other.color
-		&& texCoord0 == other.texCoord0 && texCoord1 == other.texCoord1;
+	return 
+		position == other.position && 
+		normal == other.normal && 
+		color == other.color && 
+		texCoord0 == other.texCoord0 && 
+		texCoord1 == other.texCoord1 && 
+		boneIDs == other.boneIDs && 
+		boneWeights == other.boneWeights;
 }

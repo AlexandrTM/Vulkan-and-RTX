@@ -93,6 +93,7 @@ void InputHandler::mouseButtonCallback(GLFWwindow* window, int button, int actio
 	if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) 
 	{
 		camera.setVerticalFov(60.0f);
+		sensitivity = 0.125;
 	}
 }
 void InputHandler::mouseCallback(GLFWwindow* window, double xpos, double ypos)
@@ -104,7 +105,7 @@ void InputHandler::mouseCallback(GLFWwindow* window, double xpos, double ypos)
 // mouse wheel handling
 void InputHandler::scrollCallback(GLFWwindow* window, double xoffset, double yoffset)
 {
-	camera.setVerticalFov(std::clamp(camera.getVerticalFov() - static_cast<float>(yoffset), 1.0f, 130.0f));
+	camera.setVerticalFov(std::clamp(camera.getVerticalFov() - static_cast<float>(yoffset), 0.1f, 130.0f));
 }
 
 void InputHandler::movePerson(float deltaTime, float moveSpeed)

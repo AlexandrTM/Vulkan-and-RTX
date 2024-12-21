@@ -13,9 +13,9 @@ layout(binding = 0) uniform UniformBufferObject {
 //     mat4 boneTransforms[256];
 // } boneUBO;
 
-layout(std430, set = 0, binding = 1) readonly buffer BoneUniformBufferObject {
+layout(std430, set = 0, binding = 1) readonly buffer BoneShaderStorageBufferObject {
     mat4 boneTransforms[];
-} boneUBO;
+} boneSSBO;
 
 layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec3 inNormal;
@@ -30,22 +30,27 @@ layout(location = 1) out vec3 outColor;
 layout(location = 2) out vec2 outTexCoord0; 
 
 void main() {		
-	mat4 boneTransform = mat4(0.0f);
+	mat4 boneTransform = mat4(0.0);
 	vec4 transformedPosition = vec4(inPosition, 1.0);
 
     for (int i = 0; i < 4; i++) {
-        if (inBoneWeights[i] > 0.0) {
-            boneTransform += inBoneWeights[i] * boneUBO.boneTransforms[inBoneIDs[i]];
-			//transformedPosition += boneUBO.boneTransforms[inBoneIDs[i]] * vec4(inPosition, 1.0);
+        if (inBoneWeights[i] > 0.01) {
+            boneTransform += inBoneWeights[i] * boneSSBO.boneTransforms[inBoneIDs[i]];
+			//transformedPosition += boneSSBO.boneTransforms[inBoneIDs[i]] * vec4(inPosition, 1.0);
         }
     }
+	// boneTransform = boneSSBO.boneTransforms[inBoneIDs[0]] * inBoneWeights[0];
+    // boneTransform += boneSSBO.boneTransforms[inBoneIDs[1]] * inBoneWeights[1];
+    // boneTransform += boneSSBO.boneTransforms[inBoneIDs[2]] * inBoneWeights[2];
+    // boneTransform += boneSSBO.boneTransforms[inBoneIDs[3]] * inBoneWeights[3];
+
 	if (boneTransform == mat4(0.0)) {
     	boneTransform = mat4(1.0);
 	}
 	transformedPosition = boneTransform * vec4(inPosition, 1.0);
 
 	// for (int i = 0; i < 256; i++) {
-	// 	if (boneUBO.boneTransforms[i] == mat4(0.0f)) {
+	// 	if (boneSSBO.boneTransforms[i] == mat4(0.0f)) {
 	// 		transformedPosition = vec4(inPosition, 1.0);
 	// 		break;
 	// 	}

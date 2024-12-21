@@ -33,12 +33,24 @@ namespace std {
 			auto h4 = hash<glm::vec2>()(vertex.texCoord0);
 			auto h5 = hash<glm::vec2>()(vertex.texCoord1);
 
-			return ((((((
-				   h1 
+			size_t h6 = 0;
+			for (size_t i = 0; i < 4; ++i) {
+				h6 ^= hash<uint32_t>()(vertex.boneIDs[i]) + 0x9e3779b9 + (h6 << 6) + (h6 >> 2);
+			}
+
+			size_t h7 = 0;
+			for (size_t i = 0; i < 4; ++i) {
+				h7 ^= hash<float>()(vertex.boneWeights[i]) + 0x9e3779b9 + (h7 << 6) + (h7 >> 2);
+			}
+
+			return ((((((((((
+				   h1	
 				^ (h2 << 1)) >> 1)
 				^ (h3 << 1)) >> 1)
 				^ (h4 << 1)) >> 1)
-				^ (h5 << 1);
+				^ (h5 << 1)) >> 1)
+				^ (h6 << 1)) >> 1)
+				^ (h7 << 1);
 		}
 	};
 }

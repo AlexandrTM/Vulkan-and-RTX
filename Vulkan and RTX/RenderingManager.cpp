@@ -355,7 +355,7 @@ void VulkanAndRTX::drawFrame(float timeSinceLaunch, ImDrawData* draw_data)
 		throw std::runtime_error("failed to acquire swap chain image!");
 	}
 
-	updateUniformBuffers(currentFrame, timeSinceLaunch);
+	updateShaderBuffers(currentFrame, timeSinceLaunch);
 
 	// Only reset the fence if we are submitting work
 	vkResetFences(vkInit.device, 1, &inFlightFences[currentFrame]);
@@ -403,7 +403,7 @@ void VulkanAndRTX::drawFrame(float timeSinceLaunch, ImDrawData* draw_data)
 	currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
-void VulkanAndRTX::updateUniformBuffers(uint32_t currentImage, float timeSinceLaunch)
+void VulkanAndRTX::updateShaderBuffers(uint32_t currentImage, float timeSinceLaunch)
 {
 	glm::mat4 view = glm::lookAt(
 		inputHandler.camera.getLookFrom(),
@@ -442,14 +442,14 @@ void VulkanAndRTX::updateUniformBuffers(uint32_t currentImage, float timeSinceLa
 			Mesh& mesh = model.meshes[meshIndex];
 
 			// update bones
-			if (model.bones.size() > 0) {
-				for (size_t i = 0; i < model.bones.size(); i++) {
-					boneSSBO.boneTransforms[i] = model.bones[i].finalTransform;
+			if (mesh.bones.size() > 0) {
+				for (size_t i = 0; i < mesh.bones.size(); i++) {
+					boneSSBO.boneTransforms[i] = mesh.bones[i].finalTransform;
 					//std::cout << glm::to_string(boneUBO.boneTransforms[i]) << "\n";
 				}
 			}
 			else {
-				for (size_t i = 0; i < model.bones.size(); i++) {
+				for (size_t i = 0; i < mesh.bones.size(); i++) {
 					boneSSBO.boneTransforms[i] = glm::mat4(1.0);
 				}
 			}

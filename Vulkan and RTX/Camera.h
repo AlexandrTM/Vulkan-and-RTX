@@ -27,22 +27,22 @@ public:
 	void setLookAt(glm::vec3 lookAt);
 	void setDirection(glm::vec3 cameraDirection);
 	void setVerticalFov(float vFov);
-	glm::vec3 getLookFrom();
-	glm::vec3 getLookAt();
-	glm::vec3 getDirection();
-	float getVerticalFov();
+	glm::vec3 getLookFrom() const;
+	glm::vec3 getLookAt() const;
+	glm::vec3 getDirection() const;
+	float getVerticalFov() const;
 
 	void setLastViewportX(double lastViewportX);
 	void setLastViewportY(double lastViewportY);
-	double getLastViewportX();
-	double getLastViewportY();
+	double getLastViewportX() const;
+	double getLastViewportY() const;
 
 	void setYaw(double yaw);
 	void setPitch(double pitch);
 	void setRoll(double roll);
-	double getYaw();
-	double getPitch();
-	double getRoll();
+	double getYaw() const;
+	double getPitch() const;
+	double getRoll() const;
 
 	glm::vec3 getVerticalWorldAxis();
 

@@ -46,19 +46,8 @@ struct Bone {
     std::string                             name;
     glm::mat4                               offsetMatrix;   // Transform from mesh space to bone local space
     glm::mat4                               finalTransform; // Final transformation for skinning
-    glm::mat4                               localTransform; // Local transformation (updated by animations)
+    glm::mat4                               globalTransform; // Local transformation (updated by animations)
     std::vector<int>                        children; // Indices of child bones
-};
-
-struct Mesh {
-    std::vector<Vertex>                     vertices;
-    std::vector<uint32_t>                   indices;
-    glm::mat4                               transform = glm::mat4(1.0f);
-
-    VkBuffer                                vertexBuffer;
-    VkDeviceMemory                          vertexBufferMemory;
-    VkBuffer                                indexBuffer;
-    VkDeviceMemory                          indexBufferMemory;
 };
 
 struct Texture {
@@ -76,6 +65,21 @@ struct Material {
     Texture                                 emissiveTexture;
 };
 
+struct Mesh
+{
+    std::vector<Vertex>                     vertices;
+    std::vector<uint32_t>                   indices;
+    glm::mat4                               transform = glm::mat4(1.0f);
+
+    VkBuffer                                vertexBuffer;
+    VkDeviceMemory                          vertexBufferMemory;
+    VkBuffer                                indexBuffer;
+    VkDeviceMemory                          indexBufferMemory;
+
+    std::vector<Bone>                       bones;
+    std::unordered_map<std::string, size_t> boneMap;
+};
+
 struct Model {
     std::vector<Mesh>                       meshes;
     std::vector<Material>                   materials;
@@ -83,8 +87,6 @@ struct Model {
     glm::vec3                               scale;
     glm::quat                               rotation;
 
-    std::vector<Bone>                       bones;
-    std::unordered_map<std::string, size_t> boneMap;
 
     // bounding box for frustum culling
     glm::vec3                               minBounds;

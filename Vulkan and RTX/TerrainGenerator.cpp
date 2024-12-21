@@ -15,15 +15,17 @@ TerrainGenerator::TerrainGenerator(size_t seed) : generator(seed)
 }
 
 std::vector<std::vector<float>> TerrainGenerator::generateDiamondHeightMap(
-    size_t width, size_t length, float roughness) {
+    size_t width, size_t length,
+    float roughness
+) {
     // Initialize the heightmap with zeros
     std::vector<std::vector<float>> heightmap(width, std::vector<float>(length, 0.0f));
 
     // Set the corner heights randomly
-    heightmap[0        ][0         ] = roughness == 0.0 ? 0.0 : getRandomHeight();
-    heightmap[0        ][length - 1] = roughness == 0.0 ? 0.0 : getRandomHeight();
-    heightmap[width - 1][0         ] = roughness == 0.0 ? 0.0 : getRandomHeight();
-    heightmap[width - 1][length - 1] = roughness == 0.0 ? 0.0 : getRandomHeight();
+    heightmap[0        ][0         ] = roughness == 0.0 ? 0.0 : getRandomNormalizedReal();
+    heightmap[0        ][length - 1] = roughness == 0.0 ? 0.0 : getRandomNormalizedReal();
+    heightmap[width - 1][0         ] = roughness == 0.0 ? 0.0 : getRandomNormalizedReal();
+    heightmap[width - 1][length - 1] = roughness == 0.0 ? 0.0 : getRandomNormalizedReal();
 
     // Perform the Diamond-Square algorithm
     diamondSquare(heightmap, 0, 0, width - 1, length - 1, roughness);
@@ -31,8 +33,10 @@ std::vector<std::vector<float>> TerrainGenerator::generateDiamondHeightMap(
     return heightmap;
 }
 
-std::vector<std::vector<float>> TerrainGenerator::generatePerlinHeightMap(size_t width, size_t length, 
-    float scale, float height) {
+std::vector<std::vector<float>> TerrainGenerator::generatePerlinHeightMap(
+    size_t width, size_t length, 
+    float scale, float height
+) {
     std::vector<std::vector<float>> heightmap(width, std::vector<float>(length));
     
     for (size_t i = 0; i < width; ++i) {
@@ -54,19 +58,20 @@ float TerrainGenerator::grad(size_t hash, float x, float y) {
     float v = h < 4 ? y : (h == 12 || h == 14 ? x : 0);  // Determine v based on h
     return ((h & 1) == 0 ? u : -u) + ((h & 2) == 0 ? v : -v);  // Calculate dot product
 }
-
 float TerrainGenerator::fade(float t) {
     return t * t * t * (t * (t * 6 - 15) + 10);
 }
-
 // linear interpolation between a and b with weight t
 float TerrainGenerator::lerp(float a, float b, float t) {
     return a + t * (b - a);
 }
 
 // Perform the Diamond-Square algorithm recursively
-void TerrainGenerator::diamondSquare(std::vector<std::vector<float>>& heightmap, 
-    size_t x1, size_t y1, size_t x2, size_t y2, float roughness) {
+void TerrainGenerator::diamondSquare(
+    std::vector<std::vector<float>>& heightmap,
+    size_t x1, size_t y1, size_t x2, size_t y2,
+    float roughness
+) {
     if (x2 - x1 < 2 || y2 - y1 < 2) {
         return;
     }
@@ -101,18 +106,16 @@ float TerrainGenerator::getRandomOffset(float roughness) {
     std::uniform_real_distribution<float> distribution(-roughness, roughness);
     return distribution(generator);
 }
-
-// Get a random height value
-float TerrainGenerator::getRandomHeight() {
+float TerrainGenerator::getRandomNormalizedReal() {
     std::uniform_real_distribution<float> distribution(0.0f, 1.0f);
     return distribution(generator);
 }
 
 float TerrainGenerator::perlinNoise(float x, float y, float z) {
     // Find unit grid cell containing point
-    size_t X = static_cast<int>(std::floor(x)) & 255;
-    size_t Y = static_cast<int>(std::floor(y)) & 255;
-    size_t Z = static_cast<int>(std::floor(z)) & 255;
+    size_t X = static_cast<size_t>(std::floor(x)) & 255;
+    size_t Y = static_cast<size_t>(std::floor(y)) & 255;
+    size_t Z = static_cast<size_t>(std::floor(z)) & 255;
 
     // Find fractional part of x, y, z in grid cell
     x -= std::floor(x);
@@ -159,8 +162,12 @@ float TerrainGenerator::perlinNoise(float x, float y, float z) {
     //return (res + 1) / 2; // result is in range [0, 1]
 }
 
-void TerrainGenerator::generateTerrainMesh(float startX, float startZ,
-    const std::vector<std::vector<float>>& heightmap, float gridSize, Mesh& mesh) {
+void TerrainGenerator::generateTerrainMesh(
+    float startX, float startZ, float startY,
+    const std::vector<std::vector<float>>& heightmap, 
+    float gridSize, 
+    Mesh& mesh
+) {
     // Calculate terrain dimensions
     size_t width = heightmap.size();
     size_t length = heightmap[0].size();
@@ -169,20 +176,20 @@ void TerrainGenerator::generateTerrainMesh(float startX, float startZ,
     for (size_t i = 0; i < width; i++) {
         for (size_t j = 0; j < length; j++) {
             float x0 = static_cast<float>(i)        * gridSize + startX;
-            float y0 =          heightmap[i][j]     * gridSize;
+            float y0 =          heightmap[i][j]     * gridSize + startY;
             float z0 = static_cast<float>   (j)     * gridSize + startZ;
 
             float x1 = static_cast<float>(i + 1)    * gridSize + startX;
-            float y1 =          heightmap[i == width - 1 ? width - 1 : i + 1][j] * gridSize;
+            float y1 =          heightmap[i == width - 1 ? width - 1 : i + 1][j] * gridSize + startY;
             float z1 = static_cast<float>   (j)     * gridSize + startZ;
 
             float x2 = static_cast<float>(i)        * gridSize + startX;
-            float y2 =          heightmap[i][j == length - 1 ? length - 1 : j + 1] * gridSize;
+            float y2 =          heightmap[i][j == length - 1 ? length - 1 : j + 1] * gridSize + startY;
             float z2 = static_cast<float>   (j + 1) * gridSize + startZ;
 
             float x3 = static_cast<float>(i + 1)    * gridSize + startX;
             float y3 =          heightmap[i == width - 1 ? width - 1 : i + 1]
-                                            [j == length - 1 ? length - 1 : j + 1] * gridSize;
+                                            [j == length - 1 ? length - 1 : j + 1] * gridSize + startY;
             float z3 = static_cast<float>   (j + 1) * gridSize + startZ;
 
             // Create vertex

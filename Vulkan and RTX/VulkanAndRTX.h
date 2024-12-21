@@ -140,12 +140,9 @@ private:
 
 	void cleanupModels();
 	void cleanupModel(Model& model) const;
-	// emptying RAM
 	void cleanupMemory();
-
 	// cleaning "out of date" swap chain
 	void cleanupSwapChain();
-
 	// recreating swap chain in some special cases
 	void recreateSwapChain();
 
@@ -157,8 +154,12 @@ private:
 	void generateCuboid(float x, float y, float z,
 		float width, float height, float length, glm::vec3 color);
 	void createSkyCube();
-	void generateTerrain(float startX, float startZ, size_t width, size_t length,
-		float gridSize, float scale, float roughness, size_t seed);
+	void generateTerrain(
+		float startX, float startZ, float startY,
+		size_t width, size_t length,
+		float gridSize, float scale, float height,
+		size_t seed
+	);
 
 	void loadObjModel(const std::string& filePath);
 	void loadGltfModel(const std::string& filePath);
@@ -194,12 +195,8 @@ private:
 		uint32_t mipLevels
 	);
 
-	// reading bytecode files and returning its bytes
-	static std::vector<char> readFile(const std::string& filename);
-
 	// creating image for MSAA sampling
 	void createColorResources();
-
 	// three objects for depth testing
 	void createDepthResources();
 
@@ -208,14 +205,12 @@ private:
 
 	// finding most appropriate format for the depth test
 	VkFormat findDepthFormat();
-
 	// finding most desirable format of color for a given situation
 	VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling,
 		VkFormatFeatureFlags features) const;
 
 	// allocating and beginning command buffer helper function
 	VkCommandBuffer beginSingleTimeCommands() const;
-
 	// ending and submitting command buffer helper function
 	void endSingleTimeCommands(VkCommandBuffer commandBuffer) const;
 
@@ -223,7 +218,6 @@ private:
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
 
 	void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
-
 	// copying contents of one buffer to another
 	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
@@ -258,8 +252,9 @@ private:
 	void drawModel(VkCommandBuffer commandBuffer, const Model& model);
 	void drawMesh(VkCommandBuffer commandBuffer, const Mesh& mesh);
 
-	// updating MVP matrix for every draw call every frame
-	void updateUniformBuffers(uint32_t currentImage, float timeSinceLaunch);
+	void updateShaderBuffers(uint32_t currentImage, float timeSinceLaunch);
+	// Creating frames for presentation
+	void drawFrame(float timeSinceLaunch, ImDrawData* draw_data);
 
 	// create multiple command buffers
 	void createCommandBuffers();
@@ -275,6 +270,8 @@ private:
 	VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
 	// chosing best swap chain extent(resolution of the images)
 	VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
+	// choosing best surface format(color space and number of bits) for the swap chain
+	VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
 
 	// information about framebuffer attachments, how many color and depth buffers there will
 	// be, how many samples to use for each of them and how their contents should be treated
@@ -292,14 +289,10 @@ private:
 	// Creating fences and semaphores
 	void createSyncObjects();
 
-	// Creating frames for presentation
-	void drawFrame(float timeSinceLaunch, ImDrawData* draw_data);
-
+	// reading bytecode files and returning its bytes
+	static std::vector<char> readFile(const std::string& filename);
 	// wraping shader
 	VkShaderModule createShaderModule(const std::vector<char>& code) const;
-
-	// choosing best surface format(color space and number of bits) for the swap chain
-	VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
 };
 
 #endif // !VULKAN_AND_RTX_H
