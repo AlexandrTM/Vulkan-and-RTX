@@ -6,7 +6,7 @@ static ImGui_ImplVulkanH_Window g_MainWindowData;
 void VulkanAndRTX::run()
 {
 	createWindow();
-	inputHandler.initializeInputHandler(window);
+	character.initializeInputHandler(window);
 	vkInit.initializeVulkan(window);
 	prepareResources();
 	vulkanWindow = &g_MainWindowData;
@@ -151,7 +151,7 @@ void VulkanAndRTX::framebufferResizeCallback(GLFWwindow* window, int width, int 
 {
 	auto app = reinterpret_cast<VulkanAndRTX*>(glfwGetWindowUserPointer(window));
 	app->framebufferResized = true;
-	inputHandler.camera.setViewportSize(width, height);
+	character.camera.setViewportSize(width, height);
 }
 
 void VulkanAndRTX::prepareResources()
@@ -180,14 +180,14 @@ void VulkanAndRTX::prepareResources()
 	createDummyTexture({ 0, 0, 0, 255 }, dummyTexture);
 
 	//loadGltfModel("models/blue_archivekasumizawa_miyu.glb");
-	loadModelsFromDirectory("models", models);
 	generateTerrain(
 		-60, -60, -1,
-		60, 60, 
-		2.0, 
-		0.1, 1.0, 
+		60, 60,
+		2.0,
+		0.1, 1.0,
 		1
 	);
+	loadModelsFromDirectory("models", models);
 
 	createSkyCube();
 
@@ -233,10 +233,12 @@ void VulkanAndRTX::mainLoop()
 		timeSinceLaunch += deltaTime;
 
 		glfwPollEvents();
-		if (!inputHandler.currentInteractingVolume) {
-			inputHandler.movePerson(deltaTime, 2.5f);
+		if (!character.currentInteractingVolume) {
+			character.movePerson(
+				deltaTime, characterSpeed, jumpSpeed, 
+				gravity, models[0].meshes[0]);
 		}
-		//restrictCharacterMovement(inputHandler.camera);
+		//restrictCharacterMovement(character.camera);
 
 		// Start the ImGui frame
 		ImGui_ImplVulkan_NewFrame();
@@ -267,18 +269,18 @@ void VulkanAndRTX::mainLoop()
 		
 		// interaction menu
 		{
-			if (inputHandler.currentInteractingVolume && inputHandler.currentInteractingVolume->isOpen) {
+			if (character.currentInteractingVolume && character.currentInteractingVolume->isOpen) {
 				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
 				//glfwGetCursorPos(window, &lastMousePosX, &lastMousePosY);
 
-				bool menuOpen = inputHandler.currentInteractingVolume->isOpen;
-				ImGui::Begin((&inputHandler.currentInteractingVolume->name)->c_str(), &menuOpen);
+				bool menuOpen = character.currentInteractingVolume->isOpen;
+				ImGui::Begin((&character.currentInteractingVolume->name)->c_str(), &menuOpen);
 
 				ImGui::Text("Solve the equation");
 
 				if (!puzzleGenerated) {
 					puzzleEquation = createPuzzleEquation(
-						inputHandler.currentInteractingVolume->name, puzzleAnswer);
+						character.currentInteractingVolume->name, puzzleAnswer);
 					std::cout << puzzleAnswer << "\n";
 					puzzleGenerated = true;
 					timeToSolvePuzzle = 6.5f;
@@ -297,8 +299,8 @@ void VulkanAndRTX::mainLoop()
 				//std::cout << inputNumber << "\n";
 				//menuOpen = false;
 				if (!menuOpen || timeToSolvePuzzle <= 0.0f) {
-					inputHandler.currentInteractingVolume->isOpen = menuOpen;
-					inputHandler.currentInteractingVolume = nullptr;
+					character.currentInteractingVolume->isOpen = menuOpen;
+					character.currentInteractingVolume = nullptr;
 					glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 					puzzleInput = 0;
 					puzzleGenerated = false;

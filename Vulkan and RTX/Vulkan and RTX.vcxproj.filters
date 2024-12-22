@@ -69,7 +69,7 @@
     <ClCompile Include="VulkanInitializer.cpp">
       <Filter>source\main class split</Filter>
     </ClCompile>
-    <ClCompile Include="InputHandler.cpp">
+    <ClCompile Include="Character.cpp">
       <Filter>source\main class split</Filter>
     </ClCompile>
     <ClCompile Include="VulkanAndRTX.cpp">
@@ -164,7 +164,7 @@
     <ClInclude Include="Vertex.h">
       <Filter>headers</Filter>
     </ClInclude>
-    <ClInclude Include="InputHandler.h">
+    <ClInclude Include="Character.h">
       <Filter>headers</Filter>
     </ClInclude>
     <ClInclude Include="VulkanInitializer.h">

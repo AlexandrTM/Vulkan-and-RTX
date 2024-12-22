@@ -406,13 +406,13 @@ void VulkanAndRTX::drawFrame(float timeSinceLaunch, ImDrawData* draw_data)
 void VulkanAndRTX::updateShaderBuffers(uint32_t currentImage, float timeSinceLaunch)
 {
 	glm::mat4 view = glm::lookAt(
-		inputHandler.camera.getLookFrom(),
-		inputHandler.camera.getLookFrom() + inputHandler.camera.getDirection(),
-		inputHandler.camera.getVerticalWorldAxis()
+		character.camera.getLookFrom(),
+		character.camera.getLookFrom() + character.camera.getDirection(),
+		character.camera.getVerticalWorldAxis()
 	);
 
 	glm::mat4 projection = glm::perspective(
-		glm::radians(inputHandler.camera.getVerticalFov()),
+		glm::radians(character.camera.getVerticalFov()),
 		swapChainExtent.width / (float)swapChainExtent.height, 
 		0.01f, 100000.0f
 	);
@@ -426,7 +426,7 @@ void VulkanAndRTX::updateShaderBuffers(uint32_t currentImage, float timeSinceLau
 	skyUBO.view = view;
 	skyUBO.projection = projection;
 	skyUBO.sun = sun;
-	skyUBO.observer = inputHandler.camera.getLookFrom();
+	skyUBO.observer = character.camera.getLookFrom();
 
 	void* data;
 	vkMapMemory(vkInit.device, skyUniformBuffersMemory[currentImage],
@@ -470,7 +470,7 @@ void VulkanAndRTX::updateShaderBuffers(uint32_t currentImage, float timeSinceLau
 			meshUBO.view = view;
 			meshUBO.projection = projection;
 			meshUBO.sun = sun;
-			meshUBO.observer = inputHandler.camera.getLookFrom();
+			meshUBO.observer = character.camera.getLookFrom();
 
 			vkMapMemory(vkInit.device,
 				meshUniformBuffersMemory[modelIndex][meshIndex][currentImage],

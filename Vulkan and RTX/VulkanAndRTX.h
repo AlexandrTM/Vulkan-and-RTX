@@ -1,6 +1,6 @@
 #include "pch.h"
 #include "VulkanInitializer.h"
-#include "InputHandler.h"
+#include "Character.h"
 #include "Vertex.h"
 #include "Model.h"
 #include "TerrainGenerator.h"
@@ -74,7 +74,10 @@ private:
 	std::string puzzleEquation;
 	float timeToSolvePuzzle = 0.0f;
 
-	InputHandler inputHandler;
+	float gravity = 9.81f;
+	float characterSpeed = 2.5f;
+	float jumpSpeed = 5.0f;
+	Character character;
 	VulkanInitializer vkInit;
 
 	VkSwapchainKHR			   swapChain;

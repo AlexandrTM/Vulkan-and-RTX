@@ -173,7 +173,7 @@
     <ClCompile Include="imgui_impl_vulkan.cpp" />
     <ClCompile Include="imgui_tables.cpp" />
     <ClCompile Include="imgui_widgets.cpp" />
-    <ClCompile Include="InputHandler.cpp" />
+    <ClCompile Include="Character.cpp" />
     <ClCompile Include="InteractableVolume.cpp" />
     <ClCompile Include="IsCreature.cpp" />
     <ClCompile Include="IsEntity.cpp" />
@@ -209,7 +209,7 @@
     <ClInclude Include="imstb_rectpack.h" />
     <ClInclude Include="imstb_textedit.h" />
     <ClInclude Include="imstb_truetype.h" />
-    <ClInclude Include="InputHandler.h" />
+    <ClInclude Include="Character.h" />
     <ClInclude Include="InteractableVolume.h" />
     <ClInclude Include="IsEntity.h" />
     <ClInclude Include="HasExperienceLevel.h" />
