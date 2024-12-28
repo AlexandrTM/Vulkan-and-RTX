@@ -113,6 +113,8 @@ void Character::movePerson(
 	float gravity, Mesh& mesh
 )
 {
+	glm::vec3 verticalDisplacement(0.0f);
+	glm::vec3 horizontalDisplacement(0.0f);
 	float movementSpeed = moveSpeed * deltaTime;
 	
 	glm::vec3 verticalWorldAxis = camera.getVerticalWorldAxis();
@@ -120,11 +122,10 @@ void Character::movePerson(
 	glm::vec3 position = camera.getLookFrom();
 	glm::vec3 rightVector = glm::normalize(glm::cross(cameraDirection, verticalWorldAxis));
 
-	if (!isOnGround) {
+	if (!isOnGround && gamemode == SURVIVAL) {
 		velocity.y -= gravity * deltaTime;
+		verticalDisplacement = glm::vec3(0.0f, velocity.y * deltaTime, 0.0f);
 	}
-	glm::vec3 horizontalDisplacement(0.0f);
-	glm::vec3 verticalDisplacement(0.0f, velocity.y * deltaTime, 0.0f);
 
 	if (keys[GLFW_KEY_LEFT_CONTROL]) {
 		movementSpeed *= 1.9;
@@ -147,46 +148,57 @@ void Character::movePerson(
 		horizontalDisplacement += rightVector * movementSpeed;
 	}
 	if (keys[GLFW_KEY_SPACE]) {
-		if (isOnGround) {
+		if (gamemode == SURVIVAL && isOnGround) {
 			velocity.y = jumpSpeed;
 			isOnGround = false;
 		}
+		if (gamemode == CREATIVE) {
+			verticalDisplacement += verticalWorldAxis * movementSpeed * 0.7f;
+		}
 	}
 	if (keys[GLFW_KEY_LEFT_SHIFT]) {
-		verticalDisplacement -= verticalWorldAxis * movementSpeed * 0.8f;
+		if (gamemode == CREATIVE) {
+			verticalDisplacement -= verticalWorldAxis * movementSpeed * 0.8f;
+		}
 	}
 
-	glm::vec3 surfaceNormal;
-	// horizontal check
-	if (checkCollisionWithMesh(mesh, position + horizontalDisplacement, surfaceNormal)) {
-		float slopeAngle = glm::degrees(glm::acos(glm::dot(surfaceNormal, verticalWorldAxis)));
+	if (gamemode == SURVIVAL) {
+		glm::vec3 surfaceNormal;
+		// horizontal check
+		if (checkCollisionWithMesh(mesh, position + horizontalDisplacement, surfaceNormal)) {
+			float slopeAngle = glm::degrees(glm::acos(glm::dot(surfaceNormal, verticalWorldAxis)));
 
-		if (slopeAngle <= 45.0f) {
-			// Adjust movement along the slope
-			glm::vec3 slopeAdjustment = glm::dot(horizontalDisplacement, surfaceNormal) * surfaceNormal;
-			horizontalDisplacement -= slopeAdjustment;
+			if (slopeAngle <= 45.0f) {
+				// Adjust movement along the slope
+				glm::vec3 slopeAdjustment = glm::dot(horizontalDisplacement, surfaceNormal) * surfaceNormal;
+				horizontalDisplacement -= slopeAdjustment;
+
+				position.y += std::abs(slopeAdjustment.y * 0.2f);
+			}
+			else {
+				// Too steep, restrict movement
+				horizontalDisplacement = glm::vec3(0.0f);
+				verticalDisplacement = glm::vec3(0.0f);
+			}
+			isOnGround = true;
 		}
 		else {
-			// Too steep, restrict movement
-			horizontalDisplacement = glm::vec3(0.0f);
+			isOnGround = false;
 		}
-		position += horizontalDisplacement;
-		isOnGround = true;
-	}
-	else {
-		position += horizontalDisplacement;
-		isOnGround = false;
+
+		// vertical check
+		if (checkCollisionWithMesh(mesh, position + verticalDisplacement, surfaceNormal)) {
+			velocity.y = 0.0f;
+			isOnGround = true;
+		}
+		else {
+			//position += verticalDisplacement;
+			isOnGround = false;
+		}
 	}
 
-	// vertical check
-	if (checkCollisionWithMesh(mesh, position + verticalDisplacement, surfaceNormal)) {
-		velocity.y = 0.0f;
-		isOnGround = true;
-	}
-	else {
-		position += verticalDisplacement;
-		isOnGround = false;
-	}
+	position += verticalDisplacement;
+	position += horizontalDisplacement;
 
 	camera.setLookFrom(position);
 }
@@ -195,23 +207,38 @@ bool Character::checkCollisionWithMesh(
 	const Mesh& mesh, 
 	const glm::vec3& cameraPosition, 
 	glm::vec3& surfaceNormal
-)
+) const
 {
-	glm::vec3 minBox = cameraPosition + bound0;
-	glm::vec3 maxBox = cameraPosition + bound1;
+	glm::vec3 boxMin = cameraPosition + bound0;
+	glm::vec3 boxMax = cameraPosition + bound1;
 
-	for (size_t i = 0; i < mesh.indices.size(); i += 3) {
-		const glm::vec3& v0 = mesh.vertices[mesh.indices[i    ]].position;
-		const glm::vec3& v1 = mesh.vertices[mesh.indices[i + 1]].position;
-		const glm::vec3& v2 = mesh.vertices[mesh.indices[i + 2]].position;
-		const glm::vec3& triangleNormal = mesh.vertices[mesh.indices[i]].normal;
-		surfaceNormal = triangleNormal;
+	glm::vec3 meshMin = mesh.aabb.min;
+	glm::vec3 meshMax = mesh.aabb.max;
+	
+	if (isAABBOverlap(boxMin, boxMax, meshMin, meshMax)) {
+		for (size_t i = 0; i < mesh.indices.size(); i += 3) {
+			const glm::vec3& v0 = mesh.vertices[mesh.indices[i]].position;
+			const glm::vec3& v1 = mesh.vertices[mesh.indices[i + 1]].position;
+			const glm::vec3& v2 = mesh.vertices[mesh.indices[i + 2]].position;
+			const glm::vec3& triangleNormal = mesh.vertices[mesh.indices[i]].normal;
+			surfaceNormal = triangleNormal;
 
-		if (triangleBoxIntersection(minBox, maxBox, v0, v1, v2, triangleNormal)) {
-			return true;
+			if (triangleBoxIntersection(boxMin, boxMax, v0, v1, v2, triangleNormal)) {
+				return true;
+			}
 		}
 	}
 	return false;
+}
+
+bool Character::isAABBOverlap(
+	const glm::vec3& min1, const glm::vec3& max1,
+	const glm::vec3& min2, const glm::vec3& max2
+) {
+	return 
+		(min1.x <= max2.x && max1.x >= min2.x) &&
+		(min1.y <= max2.y && max1.y >= min2.y) &&
+		(min1.z <= max2.z && max1.z >= min2.z);
 }
 
 static const glm::vec3 xAxis = glm::vec3(1.0f, 0.0f, 0.0f);
@@ -222,7 +249,7 @@ bool Character::triangleBoxIntersection(const glm::vec3& boxMin, const glm::vec3
 	const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2,
 	const glm::vec3& triangleNormal
 ) {
-	// SAT-based Triangle-AABB intersection
+	// SAT-based Triangle-Cuboid intersection
 	const glm::vec3 boxCenter = (boxMin + boxMax) * 0.5f;
 	const glm::vec3 boxHalfSize = (boxMax - boxMin) * 0.5f;
 

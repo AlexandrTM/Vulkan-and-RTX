@@ -2,27 +2,6 @@
 #include "VulkanAndRTX.h"
 #include "Vertex.h"
 
-void VulkanAndRTX::generateTerrain(
-	float startX, float startZ, float startY,
-	size_t width, size_t length,
-	float gridSize, float scale, float height, 
-	size_t seed
-)
-{
-	Model model;
-	Mesh mesh;
-
-	terrainGenerator = std::make_unique<TerrainGenerator>(seed);
-	auto heightmap = terrainGenerator.get()->generatePerlinHeightMap(width, length, scale, height);
-	terrainGenerator.get()->generateTerrainMesh(startX, startZ, startY, heightmap, gridSize, mesh);
-	
-	model.meshes.push_back(mesh);
-	Material material{};
-	material.diffuseTexture = texture;
-	model.materials.push_back(material);
-	models.push_back(model);
-}
-
 void VulkanAndRTX::generateCubicLandscape(size_t landscapeWidth, size_t landscapeLenght, float_t cubeSize)
 {
 	for (size_t i = 0; i < landscapeWidth; i++)
@@ -670,7 +649,6 @@ static glm::mat4 setScaleToOne(const glm::mat4& matrix) {
 	return translationMatrix * rotationMatrix * scaleMatrix;
 }
 
-// добавить сэмплер как параметр и вынести функцию из класса
 void VulkanAndRTX::createDummyTexture(std::array<uint8_t, 4> color, Texture& texture)
 {
 	VkBuffer stagingBuffer;

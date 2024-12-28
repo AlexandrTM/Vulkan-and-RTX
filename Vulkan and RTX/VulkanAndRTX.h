@@ -157,12 +157,6 @@ private:
 	void generateCuboid(float x, float y, float z,
 		float width, float height, float length, glm::vec3 color);
 	void createSkyCube();
-	void generateTerrain(
-		float startX, float startZ, float startY,
-		size_t width, size_t length,
-		float gridSize, float scale, float height,
-		size_t seed
-	);
 
 	void loadObjModel(const std::string& filePath);
 	void loadGltfModel(const std::string& filePath);

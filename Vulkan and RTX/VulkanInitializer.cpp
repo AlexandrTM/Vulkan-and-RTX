@@ -58,7 +58,6 @@ void VulkanInitializer::createSurface(GLFWwindow* window)
 	}
 }
 
-// creating instance with debigging checks
 void VulkanInitializer::createInstance()
 {
 	if (enableValidationLayers && !checkValidationLayerSupport()) {
@@ -69,7 +68,7 @@ void VulkanInitializer::createInstance()
 	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 	appInfo.pApplicationName = "Vulkan and RTX";
 	appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-	appInfo.pEngineName = "No Engine";
+	appInfo.pEngineName = "RTX";
 	appInfo.engineVersion = VK_MAKE_VERSION(1, 0, 0);
 	appInfo.apiVersion = VK_API_VERSION_1_0;
 
@@ -91,7 +90,6 @@ void VulkanInitializer::createInstance()
 	}
 	else {
 		createInfo.enabledLayerCount = 0;
-
 		createInfo.pNext = nullptr;
 	}
 
@@ -210,10 +208,9 @@ bool VulkanInitializer::isDeviceSuitable(VkPhysicalDevice device)
 }
 
 // querying swap chain details, they specific for each device
-SwapChainSupportDetails VulkanInitializer::querySwapChainSupport(VkPhysicalDevice device)
+SwapChainSupportDetails VulkanInitializer::querySwapChainSupport(VkPhysicalDevice device) const
 {
 	SwapChainSupportDetails details;
-
 	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.capabilities);
 
 	uint32_t formatCount;
@@ -304,6 +301,8 @@ void VulkanInitializer::findMaxUsableSampleCount(VkPhysicalDevice physicalDevice
 	if (depthCounts & VK_SAMPLE_COUNT_4_BIT ) { depthSamples = VK_SAMPLE_COUNT_4_BIT;  }
 	if (depthCounts & VK_SAMPLE_COUNT_2_BIT ) { depthSamples = VK_SAMPLE_COUNT_2_BIT;  }
 	else { depthSamples = VK_SAMPLE_COUNT_1_BIT; }
+
+	std::cout << "colorSamples: " << colorSamples << " " << "depthSamples: " << depthSamples << "\n";
 }
 
 // getting required extensions for GLFW and their number

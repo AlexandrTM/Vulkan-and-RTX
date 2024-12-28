@@ -67,11 +67,11 @@ void Camera::rotate(double xpos, double ypos, double sensitivity)
 	xoffset *= sensitivity;
 	yoffset *= sensitivity;
 
-	if (_pitch + yoffset > 90) {
-		_pitch = 90;
+	if (_pitch + yoffset > 89.99) {
+		_pitch = 89.99;
 	}
-	else if (_pitch + yoffset < -90) {
-		_pitch = -90;
+	else if (_pitch + yoffset < -89.99) {
+		_pitch = -89.99;
 	}
 	else {
 		_pitch = _pitch + yoffset;

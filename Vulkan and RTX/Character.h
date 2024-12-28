@@ -6,6 +6,12 @@
 #ifndef CHARACTER_H
 #define CHARACTER_H
 
+typedef enum GamemodeBits {
+	CREATIVE = 0x00000000,
+	SURVIVAL = 0x00000001
+} GamemodeBits;
+typedef uint32_t Gamemodes;
+
 class Character
 {
 private:
@@ -18,6 +24,8 @@ private:
 
 	glm::vec3 bound0 = glm::vec3(-0.3, -1.45, -0.3);
 	glm::vec3 bound1 = glm::vec3(0.3, 0.25, 0.3);
+
+	Gamemodes gamemode = CREATIVE;
 
 public:
 	Camera camera;
@@ -38,13 +46,18 @@ public:
 		const Mesh& mesh,
 		const glm::vec3& cameraPosition,
 		glm::vec3& surfaceNormal
+	) const;
+
+	static bool isAABBOverlap(
+		const glm::vec3& min1, const glm::vec3& max1,
+		const glm::vec3& min2, const glm::vec3& max2
 	);
-	bool triangleBoxIntersection(
+	static bool triangleBoxIntersection(
 		const glm::vec3& boxMin, const glm::vec3& boxMax,
 		const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2,
 		const glm::vec3& triangleNormal
 	);
-	bool isOverlapOnAxis(
+	static bool isOverlapOnAxis(
 		const glm::vec3& axis, const glm::vec3& boxHalfSize,
 		const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2
 	);

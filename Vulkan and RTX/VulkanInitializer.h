@@ -57,7 +57,7 @@ struct VulkanInitializer
     bool isDeviceSuitable(VkPhysicalDevice device);
 
     // querying swap chain details, they specific for each device
-    SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
+    SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device) const;
 
     // check for extensions suitability of the GPUs
     bool checkDeviceExtensionSupport(VkPhysicalDevice device);

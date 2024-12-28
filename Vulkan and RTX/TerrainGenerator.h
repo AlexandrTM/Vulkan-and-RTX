@@ -14,19 +14,30 @@ public:
         float roughness
     );
     std::vector<std::vector<float>> generatePerlinHeightMap(
-        size_t width, size_t length, 
+        size_t chunkXoffset, size_t chunkZoffset,
+        size_t chunkWidth, size_t chunkLength,
         float scale, float height
     );
 
+    static void generateTerrain(
+        float startX, float startY, float startZ,
+        size_t chunkWidth, size_t chunkLength,
+        size_t chunkRows, size_t chunkCols,
+        float gridSize, float scale, float height,
+        size_t seed, std::vector<Model>& models,
+        Texture& texture,
+        TerrainGenerator* terrainGenerator
+    );
+
     void generateTerrainMesh(
-        float startX, float startZ, float startY,
+        float offsetX, float offsetY, float offsetZ,
         const std::vector<std::vector<float>>& heightmap,
         float gridSize,
         Mesh& mesh
     );
 
 private:
-    std::vector<int> permutation;
+    std::vector<uint32_t> permutation;
     std::default_random_engine generator;
 
     // Perform the Diamond-Square algorithm recursively

@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "VulkanAndRTX.h"
+#include "TerrainGenerator.h"
 
 static ImGui_ImplVulkanH_Window g_MainWindowData;
 
@@ -180,13 +181,17 @@ void VulkanAndRTX::prepareResources()
 	createDummyTexture({ 0, 0, 0, 255 }, dummyTexture);
 
 	//loadGltfModel("models/blue_archivekasumizawa_miyu.glb");
-	generateTerrain(
-		-60, -60, -1,
-		60, 60,
-		2.0,
-		0.1, 1.0,
-		1
+	terrainGenerator = std::make_unique<TerrainGenerator>(1);
+	TerrainGenerator::generateTerrain(
+		-10, -1, -10,
+		10, 10,
+		2, 2,
+		1.0, 0.5, 2,
+		1, models,
+		texture,
+		terrainGenerator.get()
 	);
+
 	loadModelsFromDirectory("models", models);
 
 	createSkyCube();
@@ -200,6 +205,7 @@ void VulkanAndRTX::prepareResources()
 		for (Mesh& mesh : models[i].meshes) {
 			createVertexBuffer(mesh);
 			createIndexBuffer(mesh);
+			computeAABB(mesh);
 		}
 	}
 

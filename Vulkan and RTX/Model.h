@@ -65,11 +65,18 @@ struct Material {
     Texture                                 emissiveTexture;
 };
 
+struct Cuboid
+{
+    glm::vec3 min;
+    glm::vec3 max;
+};
+
 struct Mesh
 {
     std::vector<Vertex>                     vertices;
     std::vector<uint32_t>                   indices;
     glm::mat4                               transform = glm::mat4(1.0f);
+    Cuboid                                  aabb;
 
     VkBuffer                                vertexBuffer;
     VkDeviceMemory                          vertexBufferMemory;
@@ -87,7 +94,6 @@ struct Model {
     glm::vec3                               scale;
     glm::quat                               rotation;
 
-
     // bounding box for frustum culling
     glm::vec3                               minBounds;
     glm::vec3                               maxBounds;
@@ -98,5 +104,7 @@ struct Model {
 
     bool                                    isLoaded = false;  // Dynamic loading flag
 };
+
+void computeAABB(Mesh& mesh);
 
 #endif // !MODEL
