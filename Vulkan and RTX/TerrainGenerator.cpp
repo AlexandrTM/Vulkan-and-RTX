@@ -35,37 +35,33 @@ std::vector<std::vector<float>> TerrainGenerator::generateDiamondHeightMap(
 
 void TerrainGenerator::generateTerrain(
     float startX, float startY, float startZ,
-    size_t chunkWidth, size_t chunkLength,
-    size_t chunkRows, size_t chunkCols,
-    float gridSize, float scale, float height,
-    size_t seed, std::vector<Model>& models,
-    Texture& texture,
-    TerrainGenerator* terrainGenerator
+    const TerrainData& terrainData,
+    std::vector<Model>& models, Texture& grassTexture, float metricTextureSize,
+    TerrainGenerator* terrainGenerator, size_t seed
 ) {
     Model model;
 
-    for (size_t chunkX = 0; chunkX < chunkCols; ++chunkX) {
-        for (size_t chunkZ = 0; chunkZ < chunkRows; ++chunkZ) {
+    for (size_t chunkX = 0; chunkX < terrainData.chunkCols; ++chunkX) {
+        for (size_t chunkZ = 0; chunkZ < terrainData.chunkRows; ++chunkZ) {
             Mesh mesh;
 
-            float chunkXoffset = chunkX * chunkWidth;
-            float chunkZoffset = chunkZ * chunkLength;
-            // auto tempTerrainGenerator = std::make_unique<TerrainGenerator>(seed);
+            float chunkXoffset = chunkX * terrainData.chunkWidth;
+            float chunkZoffset = chunkZ * terrainData.chunkLength;
 
             auto heightmap = terrainGenerator->generatePerlinHeightMap(
                 chunkXoffset, chunkZoffset,
-                chunkWidth, chunkLength,
-                scale, height
+                terrainData.chunkWidth, terrainData.chunkLength,
+                terrainData.scale, terrainData.height
             );
 
             terrainGenerator->generateTerrainMesh(
-                startX + chunkXoffset * gridSize, startY, startZ + chunkZoffset * gridSize,
-                heightmap, gridSize, mesh
+                startX + chunkXoffset * terrainData.gridSize, startY, startZ + chunkZoffset * terrainData.gridSize,
+                heightmap, terrainData.gridSize, mesh, metricTextureSize
             );
 
             model.meshes.push_back(mesh);
             Material material{};
-            material.diffuseTexture = texture;
+            material.diffuseTexture = grassTexture;
             model.materials.push_back(material);
         }
     }
@@ -78,10 +74,13 @@ std::vector<std::vector<float>> TerrainGenerator::generatePerlinHeightMap(
     size_t chunkWidth, size_t chunkLength,
     float scale, float height
 ) {
-    std::vector<std::vector<float>> heightmap(chunkWidth, std::vector<float>(chunkLength));
+    // add extra row and column to stitch neighboring chunks with indices
+    size_t width = chunkWidth + 1;
+    size_t length = chunkLength + 1;
+    std::vector<std::vector<float>> heightmap(width, std::vector<float>(length));
 
-    for (size_t i = 0; i < chunkWidth; ++i) {
-        for (size_t j = 0; j < chunkLength; ++j) {
+    for (size_t i = 0; i < width; ++i) {
+        for (size_t j = 0; j < length; ++j) {
             float x = static_cast<float>(i + chunkXoffset) * scale;
             float z = static_cast<float>(j + chunkZoffset) * scale;
             heightmap[i][j] = perlinNoise(x, z) * height;
@@ -215,31 +214,30 @@ void TerrainGenerator::generateTerrainMesh(
     float offsetX, float offsetY, float offsetZ,
     const std::vector<std::vector<float>>& heightmap, 
     float gridSize, 
-    Mesh& mesh
+    Mesh& mesh, float metricTextureSize
 ) {
-    // Calculate terrain dimensions
-    size_t width = heightmap.size();
-    size_t length = heightmap[0].size();
+    // remove heightmap edges
+    size_t width = heightmap.size() - 1;
+    size_t length = heightmap[0].size() - 1;
 
     // Generate vertices
     for (size_t i = 0; i < width; i++) {
         for (size_t j = 0; j < length; j++) {
             float x0 = static_cast<float>(i);
-            float y0 =          heightmap[i][j];
-            float z0 = static_cast<float>   (j);
+            float y0 =          heightmap[i]    [j];
+            float z0 = static_cast<float>       (j);
 
             float x1 = static_cast<float>(i + 1);
-            float y1 =          heightmap[i == width - 1 ? width - 1 : i + 1][j];
-            float z1 = static_cast<float>   (j);
+            float y1 =          heightmap[i + 1][j];
+            float z1 = static_cast<float>       (j);
 
             float x2 = static_cast<float>(i);
-            float y2 =          heightmap[i][j == length - 1 ? length - 1 : j + 1];
-            float z2 = static_cast<float>   (j + 1);
+            float y2 =          heightmap[i]    [j + 1];
+            float z2 = static_cast<float>       (j + 1);
 
             float x3 = static_cast<float>(i + 1);
-            float y3 =          heightmap[i == width - 1 ? width - 1 : i + 1]
-                                            [j == length - 1 ? length - 1 : j + 1];
-            float z3 = static_cast<float>   (j + 1);
+            float y3 =          heightmap[i + 1][j + 1];
+            float z3 = static_cast<float>       (j + 1);
 
             // Create vertex
             Vertex v0{}, v1{}, v2{}, v3{};
@@ -258,17 +256,15 @@ void TerrainGenerator::generateTerrainMesh(
             v2.texCoord0 = glm::vec2(0.0f, 1.0f);
             v3.texCoord0 = glm::vec2(1.0f, 1.0f);*/
 
-            float metricTextureSize = 10.0f;
-
             // relative
-            float rx0 = x0 / metricTextureSize;
-            float rx1 = x1 / metricTextureSize;
-            float rx2 = x2 / metricTextureSize;
-            float rx3 = x3 / metricTextureSize;
-            float rz0 = z0 / metricTextureSize;
-            float rz1 = z1 / metricTextureSize;
-            float rz2 = z2 / metricTextureSize;
-            float rz3 = z3 / metricTextureSize;
+            float rx0 = v0.position.x / metricTextureSize;
+            float rx1 = v1.position.x / metricTextureSize;
+            float rx2 = v2.position.x / metricTextureSize;
+            float rx3 = v3.position.x / metricTextureSize;
+            float rz0 = v0.position.z / metricTextureSize;
+            float rz1 = v1.position.z / metricTextureSize;
+            float rz2 = v2.position.z / metricTextureSize;
+            float rz3 = v3.position.z / metricTextureSize;
 
             // integer part
             /*float irx0 = std::floor(rx0);

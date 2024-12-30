@@ -11,14 +11,14 @@ const std::vector<const char*> deviceExtensions = {
 	VK_KHR_SWAPCHAIN_EXTENSION_NAME
 };
 
-// finding adress "vkCreateDebugUtilsMessengerEXT" function for our "instance" and then executing it
-VkResult CreateDebugUtilsMessengerEXT(VkInstance instance,
+// finding address "vkCreateDebugUtilsMessengerEXT" function for our "instance" and then executing it
+static VkResult CreateDebugUtilsMessengerEXT(VkInstance instance,
 	const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
 	const VkAllocationCallbacks* pAllocator,
 	VkDebugUtilsMessengerEXT* pDebugMessenger)
 {
 	auto func = (PFN_vkCreateDebugUtilsMessengerEXT)
-		// finding adress of the vkCreateDebugUtilsMessengerEXT function
+		// finding address of the vkCreateDebugUtilsMessengerEXT function
 		vkGetInstanceProcAddr(instance, "vkCreateDebugUtilsMessengerEXT");
 	if (func != nullptr) {
 		return func(instance, pCreateInfo, pAllocator, pDebugMessenger);
@@ -28,13 +28,13 @@ VkResult CreateDebugUtilsMessengerEXT(VkInstance instance,
 	}
 }
 
-// finding adress "vkDestroyDebugUtilsMessengerEXT" function for our "instance" and then executing it
+// finding address "vkDestroyDebugUtilsMessengerEXT" function for our "instance" and then executing it
 void VulkanInitializer::DestroyDebugUtilsMessengerEXT(VkInstance instance,
 	VkDebugUtilsMessengerEXT debugMessenger,
 	const VkAllocationCallbacks* pAllocator)
 {
 	auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)
-		// finding adress of the vkDestroyDebugUtilsMessengerEXT function
+		// finding address of the vkDestroyDebugUtilsMessengerEXT function
 		vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
 	if (func != nullptr) {
 		func(instance, debugMessenger, pAllocator);
@@ -188,7 +188,7 @@ void VulkanInitializer::createLogicalDevice()
 	vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
 }
 
-// checks of the GPUs for availabilty of some features
+// checks of the GPUs for availability of some features
 bool VulkanInitializer::isDeviceSuitable(VkPhysicalDevice device)
 {
 	QueueFamilyIndices indices = findQueueFamilies(device);
@@ -356,7 +356,7 @@ QueueFamilyIndices VulkanInitializer::findQueueFamilies(VkPhysicalDevice device)
 }
 
 // creating "VkDebugUtilsMessengerEXT" object 
-// after finding adress of the "vkCreateDebugUtilsMessengerEXT" function
+// after finding address of the "vkCreateDebugUtilsMessengerEXT" function
 // debug messenger is specific for each "instance"
 void VulkanInitializer::setupDebugMessenger()
 {

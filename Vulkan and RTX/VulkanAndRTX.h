@@ -75,7 +75,7 @@ private:
 	float timeToSolvePuzzle = 0.0f;
 
 	float gravity = 9.81f;
-	float characterSpeed = 2.5f;
+	float characterSpeed = 2.0f;
 	float jumpSpeed = 5.0f;
 	Character character;
 	VulkanInitializer vkInit;
@@ -107,7 +107,7 @@ private:
 
 	VkSampler	   textureSampler;
 
-	Texture        texture;
+	Texture        grassTexture;
 	Texture		   dummyTexture;
 
 	VkImage        depthImage;
@@ -126,7 +126,7 @@ public:
 
 private:
 	// initializing GLFW and creating window
-	void createWindow();
+	void createGLFWWindow();
 
 	void setupImguiWindow(ImGui_ImplVulkanH_Window* wd, VkSurfaceKHR surface, 
 		size_t width, size_t height);

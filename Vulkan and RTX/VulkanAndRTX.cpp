@@ -6,7 +6,7 @@ static ImGui_ImplVulkanH_Window g_MainWindowData;
 
 void VulkanAndRTX::run()
 {
-	createWindow();
+	createGLFWWindow();
 	character.initializeInputHandler(window);
 	vkInit.initializeVulkan(window);
 	prepareResources();
@@ -22,7 +22,7 @@ void VulkanAndRTX::run()
 }
 
 // initializing GLFW and creating window
-void VulkanAndRTX::createWindow()
+void VulkanAndRTX::createGLFWWindow()
 {
 	glfwInit();
 
@@ -177,19 +177,24 @@ void VulkanAndRTX::prepareResources()
 	createSwapChainFramebuffers();
 
 	createTextureSampler(textureSampler);
-	createTextureFromPath("textures/grass001.png", texture);
+	createTextureFromPath("textures/grass001.png", grassTexture);
 	createDummyTexture({ 0, 0, 0, 255 }, dummyTexture);
 
-	//loadGltfModel("models/blue_archivekasumizawa_miyu.glb");
+	TerrainData terrainData = {
+		100, 100,  // chunkWidth, chunkLength
+		4, 4,    // chunkRows, chunkCols
+		1.0f,      // gridSize
+		0.1f,      // scale
+		2.0f,     // height
+	};
 	terrainGenerator = std::make_unique<TerrainGenerator>(1);
 	TerrainGenerator::generateTerrain(
-		-10, -1, -10,
-		10, 10,
-		2, 2,
-		1.0, 0.5, 2,
-		1, models,
-		texture,
-		terrainGenerator.get()
+		-(terrainData.chunkWidth * terrainData.chunkRows / 2 * terrainData.gridSize), 
+		-1, 
+		-(terrainData.chunkLength * terrainData.chunkCols / 2 * terrainData.gridSize),
+		terrainData,
+		models, grassTexture, 8.0f,
+		terrainGenerator.get(), 1
 	);
 
 	loadModelsFromDirectory("models", models);
@@ -352,7 +357,6 @@ void VulkanAndRTX::cleanupModel(Model& model) const
 		vkFreeMemory(vkInit.device, model.meshes[i].vertexBufferMemory, nullptr);
 	}
 }
-// emptying RAM
 void VulkanAndRTX::cleanupMemory()
 {
 	cleanupImGui();
@@ -370,10 +374,10 @@ void VulkanAndRTX::cleanupMemory()
 	vkDestroyDescriptorPool(vkInit.device, descriptorPool, nullptr);
 
 	vkDestroySampler(vkInit.device, textureSampler, nullptr);
-	vkDestroyImageView(vkInit.device, texture.imageView, nullptr);
 
-	vkDestroyImage(vkInit.device, texture.image, nullptr);
-	vkFreeMemory(vkInit.device, texture.imageMemory, nullptr);
+	vkDestroyImageView(vkInit.device, grassTexture.imageView, nullptr);
+	vkDestroyImage(vkInit.device, grassTexture.image, nullptr);
+	vkFreeMemory(vkInit.device, grassTexture.imageMemory, nullptr);
 
 	vkDestroyDescriptorSetLayout(vkInit.device, descriptorSetLayout, nullptr);
 
@@ -440,7 +444,6 @@ void VulkanAndRTX::restrictCharacterMovement(Camera& camera)
 		cameraPosition = camera.getLookFrom();
 	}
 }
-
 
 std::string VulkanAndRTX::createPuzzleEquation(std::string name, int& answer)
 {
@@ -520,7 +523,7 @@ std::string VulkanAndRTX::createPuzzleEquation(std::string name, int& answer)
 	return puzzleEquation.str();
 }
 
-// reading bytecode files and returning its bytes
+// reading byte code files and returning its bytes
 std::vector<char> VulkanAndRTX::readFile(const std::string& filename)
 {
 	std::ifstream file(filename, std::ios::ate | std::ios::binary);
@@ -554,7 +557,7 @@ uint32_t VulkanAndRTX::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags
 	throw std::runtime_error("failed to find suitable memory type!");
 }
 
-// for specific queue family
+// command pool for specific queue family
 void VulkanAndRTX::createCommandPool()
 {
 	QueueFamilyIndices queueFamilyIndices = vkInit.findQueueFamilies(vkInit.physicalDevice);
@@ -594,7 +597,7 @@ void VulkanAndRTX::createSyncObjects()
 	}
 }
 
-// wraping shader
+// wrapping shader
 VkShaderModule VulkanAndRTX::createShaderModule(const std::vector<char>& code) const
 {
 	VkShaderModuleCreateInfo createInfo{};

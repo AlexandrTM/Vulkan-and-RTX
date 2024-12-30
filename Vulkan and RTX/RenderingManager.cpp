@@ -526,48 +526,49 @@ void VulkanAndRTX::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t i
 		for (size_t meshIndex = 0; meshIndex < models[modelIndex].meshes.size(); ++meshIndex) {
 			const Mesh& mesh = models[modelIndex].meshes[meshIndex];
 			const Material& material = models[modelIndex].materials[meshIndex];
+			const VkDescriptorSet& meshDescriptorSet = meshDescriptorSets[modelIndex][meshIndex][currentFrame];
 
 			if (material.diffuseTexture.imageView && material.diffuseTexture.sampler) {
 				addTextureToDescriptorSet(
 					material.diffuseTexture,
-					meshDescriptorSets[modelIndex][meshIndex][currentFrame], 2
+					meshDescriptorSet, 2
 				);
 			}
 			else {
 				addTextureToDescriptorSet(
 					dummyTexture,
-					meshDescriptorSets[modelIndex][meshIndex][currentFrame], 2
+					meshDescriptorSet, 2
 				);
 			}
 			if (material.emissiveTexture.imageView && material.emissiveTexture.sampler) {
 				addTextureToDescriptorSet(
 					material.emissiveTexture,
-					meshDescriptorSets[modelIndex][meshIndex][currentFrame], 3
+					meshDescriptorSet, 3
 				);
 			}
 			else {
 				addTextureToDescriptorSet(
 					dummyTexture,
-					meshDescriptorSets[modelIndex][meshIndex][currentFrame], 3
+					meshDescriptorSet, 3
 				);
 			}
 
-			//if (models[modelIndex].meshes[meshIndex].bones.size() > 0) {
+			if (models[modelIndex].meshes[meshIndex].bones.size() > 0) {
 				// adding bone data
-			addBufferToDescriptorSet(
-				meshDescriptorSets[modelIndex][meshIndex][currentFrame],
-				boneUniformBuffers[modelIndex][meshIndex][currentFrame],
-				VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-				sizeof(glm::mat4) * BONES_NUM, 1
-			);
-			//}
+				addBufferToDescriptorSet(
+					meshDescriptorSet,
+					boneUniformBuffers[modelIndex][meshIndex][currentFrame],
+					VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+					sizeof(glm::mat4) * BONES_NUM, 1
+				);
+			}
 
 			// Bind per-mesh descriptor set
 			vkCmdBindDescriptorSets(
 				commandBuffer,
 				VK_PIPELINE_BIND_POINT_GRAPHICS, 
 				pipelineLayout,
-				0, 1, &meshDescriptorSets[modelIndex][meshIndex][currentFrame],
+				0, 1, &meshDescriptorSet,
 				0, nullptr
 			);
 

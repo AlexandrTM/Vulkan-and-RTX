@@ -4,6 +4,17 @@
 #ifndef TERRAIN_GENERATOR
 #define TERRAIN_GENERATOR
 
+struct TerrainData
+{
+    size_t chunkWidth;
+    size_t chunkLength;
+    size_t chunkRows; 
+    size_t chunkCols;
+    float gridSize;
+    float scale;
+    float height;
+};
+
 class TerrainGenerator
 {
 public:
@@ -21,19 +32,16 @@ public:
 
     static void generateTerrain(
         float startX, float startY, float startZ,
-        size_t chunkWidth, size_t chunkLength,
-        size_t chunkRows, size_t chunkCols,
-        float gridSize, float scale, float height,
-        size_t seed, std::vector<Model>& models,
-        Texture& texture,
-        TerrainGenerator* terrainGenerator
+        const TerrainData& terrainData,
+        std::vector<Model>& models, Texture& grassTexture, float metricTextureSize,
+        TerrainGenerator* terrainGenerator, size_t seed
     );
 
     void generateTerrainMesh(
         float offsetX, float offsetY, float offsetZ,
         const std::vector<std::vector<float>>& heightmap,
         float gridSize,
-        Mesh& mesh
+        Mesh& mesh, float metricTextureSize
     );
 
 private:
