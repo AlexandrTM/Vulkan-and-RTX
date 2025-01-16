@@ -2,7 +2,7 @@
 #include "VulkanAndRTX.h"
 
 // finding most appropriate format for the depth test
-VkFormat VulkanAndRTX::findDepthFormat()
+VkFormat VulkanAndRTX::findDepthFormat() const
 {
 	return findSupportedFormat(
 		{ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
@@ -40,7 +40,7 @@ bool VulkanAndRTX::hasStencilComponent(VkFormat format)
 
 // how to sample through texels of the 
 // for drawing them on 3D model
-void VulkanAndRTX::createTextureSampler(VkSampler& textureSampler) const
+void VulkanAndRTX::createTextureSampler(uint32_t& mipLevels, VkSampler& textureSampler) const
 {
 	VkPhysicalDeviceProperties properties{};
 	vkGetPhysicalDeviceProperties(vkInit.physicalDevice, &properties);
@@ -71,11 +71,6 @@ void VulkanAndRTX::createTextureSampler(VkSampler& textureSampler) const
 	if (vkCreateSampler(vkInit.device, &samplerInfo, nullptr, &textureSampler) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create texture sampler!");
 	}
-}
-void VulkanAndRTX::createTextureImageView(VkImage& textureImage, VkImageView& textureImageView)
-{
-	textureImageView = createImageView(textureImage, VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_ASPECT_COLOR_BIT,
-		mipLevels);
 }
 VkImageView VulkanAndRTX::createImageView(VkImage image, VkFormat format,
 	VkImageAspectFlags aspectFlags, uint32_t mipLevels) const
@@ -326,39 +321,43 @@ void VulkanAndRTX::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t wi
 }
 
 // creating image for MSAA sampling
-void VulkanAndRTX::createColorResources()
+void VulkanAndRTX::createColorTexture(Texture& texture)
 {
-	VkFormat colorFormat = swapChainImageFormat;
+	VkFormat colorFormat = swapchainImageFormat;
+	uint32_t mipLevels = 1;
 
 	createImage(
-		swapChainExtent.width, swapChainExtent.height, 1, vkInit.colorSamples, colorFormat,
-		VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+		swapChainExtent.width, swapChainExtent.height, mipLevels, vkInit.colorSamples, colorFormat,
+		VK_IMAGE_TILING_OPTIMAL, 
+		VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
-		colorImage, colorImageMemory
+		texture.image, texture.imageMemory
 	);
 
-	colorImageView = createImageView(colorImage, colorFormat, VK_IMAGE_ASPECT_COLOR_BIT, 1);
+	texture.imageView = createImageView(texture.image, colorFormat, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels);
 }
 
 // three objects for depth testing
-void VulkanAndRTX::createDepthResources()
+void VulkanAndRTX::createDepthTexture(Texture& texture)
 {
 	VkFormat depthFormat = findDepthFormat();
+	uint32_t mipLevels = 1;
 
 	createImage(
-		swapChainExtent.width, swapChainExtent.height, 1, vkInit.colorSamples, depthFormat,
-		VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+		swapChainExtent.width, swapChainExtent.height, mipLevels, vkInit.colorSamples, depthFormat,
+		VK_IMAGE_TILING_OPTIMAL, 
+		VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
-		depthImage, depthImageMemory
+		texture.image, texture.imageMemory
 	);
 
-	depthImageView = createImageView(depthImage, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, 1);
+	texture.imageView = createImageView(texture.image, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, mipLevels);
 
 	transitionImageLayout(
-		depthImage, depthFormat, 
+		texture.image, depthFormat,
 		VK_IMAGE_ASPECT_DEPTH_BIT,
 		VK_IMAGE_LAYOUT_UNDEFINED, 
 		VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL, 
-		1
+		mipLevels
 	);
 }

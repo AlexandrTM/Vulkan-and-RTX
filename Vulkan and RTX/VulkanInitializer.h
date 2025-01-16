@@ -2,7 +2,7 @@
 
 #pragma once
 
-// indicies of queue families
+// indices of queue families
 struct QueueFamilyIndices {
     // rendering
     std::optional<uint32_t> graphicsFamily;
@@ -33,6 +33,7 @@ struct VulkanInitializer
 
     VkQueue graphicsQueue;
     VkQueue presentQueue;
+    QueueFamilyIndices queueFamilyIndices;
 
     VkSampleCountFlagBits colorSamples;
     VkSampleCountFlagBits depthSamples;
@@ -53,7 +54,7 @@ struct VulkanInitializer
     void pickPhysicalDevice();
     void createLogicalDevice();
 
-    // checks of the GPUs for availabilty of some features
+    // checks of the GPUs for availability of some features
     bool isDeviceSuitable(VkPhysicalDevice device);
 
     // querying swap chain details, they specific for each device
@@ -62,7 +63,7 @@ struct VulkanInitializer
     // check for extensions suitability of the GPUs
     bool checkDeviceExtensionSupport(VkPhysicalDevice device);
 
-    // checking for requested validation layers to be suported by system
+    // checking for requested validation layers to be supported by system
     bool checkValidationLayerSupport();
 
     // creating info for debugMessenger
@@ -73,12 +74,12 @@ struct VulkanInitializer
     void findMaxUsableSampleCount(VkPhysicalDevice physicalDevice);
 
     // getting required extensions for GLFW and their number
-    std::vector<const char*> getRequiredExtensions();
+    std::vector<const char*> getRequiredExtensions() const;
 
     // finding needed queue families
     QueueFamilyIndices findQueueFamilies(VkPhysicalDevice device) const;
 
-    // function for debugging callbakcs(checking warnings, errors etc)
+    // function for debugging callbacks(checking warnings, errors etc)
     // VKAPI_ATTR and VKAPI_CALL ensures that this function signature suitable for Vulkan
     static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
         VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,

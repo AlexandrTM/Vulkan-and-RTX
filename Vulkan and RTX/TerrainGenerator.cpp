@@ -63,6 +63,7 @@ void TerrainGenerator::generateTerrain(
             Material material{};
             material.diffuseTexture = grassTexture;
             model.materials.push_back(material);
+            model.checkCollision = true;
         }
     }
 

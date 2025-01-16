@@ -42,7 +42,7 @@ void Character::keyCallback(GLFWwindow* window, int key, int scancode, int actio
 		glfwSetWindowShouldClose(window, GL_TRUE);
 	}
 
-	// altering mouse sensivity
+	// altering mouse sensitivity
 	if (key == GLFW_KEY_UP && action == GLFW_PRESS)
 	{
 		sensitivity = std::clamp(sensitivity * 1.3, 0.001, 10.0);
@@ -108,9 +108,9 @@ void Character::scrollCallback(GLFWwindow* window, double xoffset, double yoffse
 	camera.setVerticalFov(std::clamp(camera.getVerticalFov() - static_cast<float>(yoffset), 0.1f, 130.0f));
 }
 
-void Character::movePerson(
-	float deltaTime, float moveSpeed, float jumpSpeed, 
-	float gravity, Mesh& mesh
+void Character::handleKeyInput(
+	float deltaTime, 
+	float gravity, const std::vector<Model>& models
 )
 {
 	glm::vec3 verticalDisplacement(0.0f);
@@ -121,11 +121,6 @@ void Character::movePerson(
 	glm::vec3 cameraDirection = camera.getDirection();
 	glm::vec3 position = camera.getLookFrom();
 	glm::vec3 rightVector = glm::normalize(glm::cross(cameraDirection, verticalWorldAxis));
-
-	if (!isOnGround && gamemode == SURVIVAL) {
-		velocity.y -= gravity * deltaTime;
-		verticalDisplacement = glm::vec3(0.0f, velocity.y * deltaTime, 0.0f);
-	}
 
 	if (keys[GLFW_KEY_LEFT_CONTROL]) {
 		movementSpeed *= 1.9;
@@ -148,53 +143,57 @@ void Character::movePerson(
 		horizontalDisplacement += rightVector * movementSpeed;
 	}
 	if (keys[GLFW_KEY_SPACE]) {
-		if (gamemode == SURVIVAL && isOnGround) {
+		if (gamemode == GAMEMODE_SURVIVAL && isOnGround) {
 			velocity.y = jumpSpeed;
 			isOnGround = false;
 		}
-		if (gamemode == CREATIVE) {
+		if (gamemode == GAMEMODE_CREATIVE) {
 			verticalDisplacement += verticalWorldAxis * movementSpeed * 0.7f;
 		}
 	}
 	if (keys[GLFW_KEY_LEFT_SHIFT]) {
-		if (gamemode == CREATIVE) {
+		if (gamemode == GAMEMODE_CREATIVE) {
 			verticalDisplacement -= verticalWorldAxis * movementSpeed * 0.8f;
 		}
 	}
 
-	if (gamemode == SURVIVAL) {
-		glm::vec3 surfaceNormal;
-		// horizontal check
-		if (checkCollisionWithMesh(mesh, position + horizontalDisplacement, surfaceNormal)) {
-			float slopeAngle = glm::degrees(glm::acos(glm::dot(surfaceNormal, verticalWorldAxis)));
+	if (!isOnGround && gamemode == GAMEMODE_SURVIVAL) {
+		velocity.y -= gravity * deltaTime;
+		verticalDisplacement = glm::vec3(0.0f, velocity.y * deltaTime, 0.0f);
+	}
 
-			if (slopeAngle <= 45.0f) {
-				// Adjust movement along the slope
-				glm::vec3 slopeAdjustment = glm::dot(horizontalDisplacement, surfaceNormal) * surfaceNormal;
-				horizontalDisplacement -= slopeAdjustment;
+	glm::vec3 surfaceNormal;
+	// horizontal check
+	if (checkCollisionWithModels(models, position + horizontalDisplacement, surfaceNormal)) {
+		float slopeAngle = glm::degrees(glm::acos(glm::dot(surfaceNormal, verticalWorldAxis)));
 
-				position.y += std::abs(slopeAdjustment.y * 0.2f);
-			}
-			else {
-				// Too steep, restrict movement
-				horizontalDisplacement = glm::vec3(0.0f);
-				verticalDisplacement = glm::vec3(0.0f);
-			}
-			isOnGround = true;
+		if (slopeAngle <= maxSlopeAngle) {
+			// Adjust movement along the slope
+			glm::vec3 slopeAdjustment = glm::dot(horizontalDisplacement, surfaceNormal) * surfaceNormal;
+			horizontalDisplacement -= slopeAdjustment;
+
+			// slight vertical correction, to not get stuck in ground
+			// position.y += std::abs(slopeAdjustment.y * 0.01f);
 		}
 		else {
-			isOnGround = false;
+			// Too steep, restrict movement
+			horizontalDisplacement = glm::vec3(0.0f);
+			verticalDisplacement = glm::vec3(0.0f);
 		}
+		isOnGround = true;
+	}
+	else {
+		isOnGround = false;
+	}
 
-		// vertical check
-		if (checkCollisionWithMesh(mesh, position + verticalDisplacement, surfaceNormal)) {
-			velocity.y = 0.0f;
-			isOnGround = true;
-		}
-		else {
-			//position += verticalDisplacement;
-			isOnGround = false;
-		}
+	// vertical check
+	if (checkCollisionWithModels(models, position + verticalDisplacement, surfaceNormal)) {
+		velocity.y = 0.0f;
+		isOnGround = true;
+		verticalDisplacement = glm::vec3(0.0f);
+	}
+	else {
+		isOnGround = false;
 	}
 
 	position += verticalDisplacement;
@@ -203,19 +202,23 @@ void Character::movePerson(
 	camera.setLookFrom(position);
 }
 
+
 bool Character::checkCollisionWithMesh(
 	const Mesh& mesh, 
 	const glm::vec3& cameraPosition, 
 	glm::vec3& surfaceNormal
 ) const
 {
-	glm::vec3 boxMin = cameraPosition + bound0;
-	glm::vec3 boxMax = cameraPosition + bound1;
+	glm::vec3 characterBoxMin = cameraPosition + aabb.min;
+	glm::vec3 characterBoxMax = cameraPosition + aabb.max;
 
-	glm::vec3 meshMin = mesh.aabb.min;
-	glm::vec3 meshMax = mesh.aabb.max;
+	glm::vec3 meshBoxMin = mesh.aabb.min;
+	glm::vec3 meshBoxMax = mesh.aabb.max;
+
+	// Cuboid characterAABB = { mesh.aabb.min, mesh.aabb.max };
+	// Cuboid meshAABB = { cameraPosition + aabb.min, cameraPosition + aabb.max };
 	
-	if (isAABBOverlap(boxMin, boxMax, meshMin, meshMax)) {
+	if (isAABBOverlap(characterBoxMin, characterBoxMax, meshBoxMin, meshBoxMax)) {
 		for (size_t i = 0; i < mesh.indices.size(); i += 3) {
 			const glm::vec3& v0 = mesh.vertices[mesh.indices[i]].position;
 			const glm::vec3& v1 = mesh.vertices[mesh.indices[i + 1]].position;
@@ -223,9 +226,36 @@ bool Character::checkCollisionWithMesh(
 			const glm::vec3& triangleNormal = mesh.vertices[mesh.indices[i]].normal;
 			surfaceNormal = triangleNormal;
 
-			if (triangleBoxIntersection(boxMin, boxMax, v0, v1, v2, triangleNormal)) {
+			if (triangleBoxIntersection(characterBoxMin, characterBoxMax, v0, v1, v2, triangleNormal)) {
 				return true;
 			}
+		}
+	}
+	return false;
+}
+bool Character::checkCollisionWithModel(
+	const Model& model, 
+	const glm::vec3& cameraPosition, 
+	glm::vec3& surfaceNormal
+) const
+{
+	for (size_t i = 0; i < model.meshes.size(); i++) {
+		if (model.checkCollision && 
+			checkCollisionWithMesh(model.meshes[i], cameraPosition, surfaceNormal)) {
+			return true;
+		}
+	}
+	return false;
+}
+bool Character::checkCollisionWithModels(
+	const std::vector<Model>& models, 
+	const glm::vec3& cameraPosition, 
+	glm::vec3& surfaceNormal
+) const
+{
+	for (size_t i = 0; i < models.size(); i++) {
+		if (checkCollisionWithModel(models[i], cameraPosition, surfaceNormal)) {
+			return true;
 		}
 	}
 	return false;

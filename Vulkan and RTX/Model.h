@@ -51,11 +51,19 @@ struct Bone {
 };
 
 struct Texture {
-    VkImage                                 image;
-    VkDeviceMemory                          imageMemory;
-    VkImageView                             imageView;
-    VkSampler                               sampler;
-    uint32_t                                mipLevels;
+    VkImage                                 image       = VK_NULL_HANDLE;
+    VkDeviceMemory                          imageMemory = VK_NULL_HANDLE;
+    VkImageView                             imageView   = VK_NULL_HANDLE;
+    VkSampler                               sampler     = VK_NULL_HANDLE;
+    uint32_t                                mipLevels = 0;
+
+	explicit operator bool() const {
+		return 
+            image       != VK_NULL_HANDLE &&
+			imageMemory != VK_NULL_HANDLE &&
+			imageView   != VK_NULL_HANDLE &&
+			sampler     != VK_NULL_HANDLE;
+	}
 };
 
 struct Material {
@@ -102,6 +110,7 @@ struct Model {
 
     std::vector<Animation>                  animations;
 
+    bool                                    checkCollision = false;
     bool                                    isLoaded = false;  // Dynamic loading flag
 };
 

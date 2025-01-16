@@ -13,11 +13,8 @@ void VulkanAndRTX::run()
 	vulkanWindow = &g_MainWindowData;
 	setupImguiWindow(vulkanWindow, vkInit.surface, windowWidth, windowHeight);
 	setupImGui();
-	Noesis::GUI::Init();
-
+	initializeNoesisGUI();
 	mainLoop();
-
-	Noesis::GUI::Shutdown();
 	cleanupMemory();
 }
 
@@ -73,6 +70,63 @@ void VulkanAndRTX::createGLFWWindow()
 	glfwSetWindowIcon(window, 1, windowIcon);
 #pragma endregion
 }
+void VulkanAndRTX::initializeNoesisGUI()
+{
+	Noesis::GUI::Init();
+
+#ifdef NDEBUG
+	Noesis::SetLogHandler(
+		[](const char* file, uint32_t line, uint32_t level, const char* channel, const char* message) {
+			printf("[%s:%u] %s: %s\n", file, line, channel, message);
+		}
+	);
+	Noesis::SetErrorHandler(
+		[](const char* file, uint32_t line, const char* message, bool fatal) {
+		printf("[%s:%u] %s: %s\n", file, line, message, fatal ? "true" : "false");
+		}
+	);
+#endif
+
+	std::string xamlRootPath = std::filesystem::current_path().string();
+	Noesis::Ptr<NoesisApp::LocalXamlProvider> xamlProvider = *new NoesisApp::LocalXamlProvider(xamlRootPath.c_str());
+	Noesis::GUI::SetXamlProvider(xamlProvider);
+
+	NoesisApp::VKFactory::InstanceInfo instanceInfo{};
+	instanceInfo.instance = vkInit.instance;
+	instanceInfo.physicalDevice = vkInit.physicalDevice;
+	instanceInfo.device = vkInit.device;
+	instanceInfo.pipelineCache = VK_NULL_HANDLE; // Optional pipeline cache
+	instanceInfo.queueFamilyIndex = vkInit.queueFamilyIndices.presentFamily.value();
+	instanceInfo.vkGetInstanceProcAddr = reinterpret_cast<PFN_vkGetInstanceProcAddr>(
+		vkGetInstanceProcAddr(vkInit.instance, "vkGetInstanceProcAddr")
+	);
+
+    // Initialize NoesisGUI with a Vulkan render device
+	noesisRenderDevice = NoesisApp::VKFactory::CreateDevice(true, instanceInfo);
+	if (!noesisRenderDevice) {
+		throw std::runtime_error("Failed to create Noesis Vulkan render device");
+	}
+
+	NoesisApp::VKFactory::SetRenderPass(noesisRenderDevice, objectRenderPass, vkInit.colorSamples);
+
+    // Load your XAML file
+    Noesis::Ptr<Noesis::FrameworkElement> xamlElement = Noesis::GUI::LoadXaml
+		<Noesis::FrameworkElement>(Noesis::Uri("UI/MainMenu.xaml"));
+	if (!xamlElement) {
+		throw std::runtime_error("Failed to load XAML file");
+	}
+	
+	// Create a renderer for the XAML element
+	noesisView = Noesis::GUI::CreateView(xamlElement);
+	if (!noesisView) {
+		throw std::runtime_error("Failed to create Noesis renderer");
+	}
+
+	noesisView->SetSize(swapChainExtent.width, swapChainExtent.height);
+
+    // Attach the render device to the renderer
+	noesisView->GetRenderer()->Init(noesisRenderDevice);
+}
 
 void VulkanAndRTX::setupImGui() {
 	IMGUI_CHECKVERSION();
@@ -88,7 +142,7 @@ void VulkanAndRTX::setupImGui() {
 	init_info.Instance = vkInit.instance;
 	init_info.PhysicalDevice = vkInit.physicalDevice;
 	init_info.Device = vkInit.device;
-	init_info.QueueFamily = vkInit.findQueueFamilies(vkInit.physicalDevice).graphicsFamily.value();
+	init_info.QueueFamily = vkInit.queueFamilyIndices.graphicsFamily.value();
 	init_info.Queue = vkInit.graphicsQueue;
 	init_info.PipelineCache = nullptr;
 	init_info.DescriptorPool = descriptorPool;
@@ -114,7 +168,7 @@ void VulkanAndRTX::setupImguiWindow(ImGui_ImplVulkanH_Window* wd,
 	// Check for WSI support
 	VkBool32 res;
 	vkGetPhysicalDeviceSurfaceSupportKHR(vkInit.physicalDevice, 
-		vkInit.findQueueFamilies(vkInit.physicalDevice).graphicsFamily.value(), wd->Surface, &res);
+		vkInit.queueFamilyIndices.graphicsFamily.value(), wd->Surface, &res);
 	if (res != VK_TRUE)
 	{
 		fprintf(stderr, "Error no WSI support on physical device 0\n");
@@ -143,7 +197,7 @@ void VulkanAndRTX::setupImguiWindow(ImGui_ImplVulkanH_Window* wd,
 #endif // !NDEBUG
 
 	ImGui_ImplVulkanH_CreateOrResizeWindow(vkInit.instance, vkInit.physicalDevice, vkInit.device, wd, 
-		vkInit.findQueueFamilies(vkInit.physicalDevice).graphicsFamily.value(), nullptr, 
+		vkInit.queueFamilyIndices.graphicsFamily.value(), nullptr,
 		width, height, MAX_FRAMES_IN_FLIGHT);
 }
 
@@ -153,6 +207,7 @@ void VulkanAndRTX::framebufferResizeCallback(GLFWwindow* window, int width, int 
 	auto app = reinterpret_cast<VulkanAndRTX*>(glfwGetWindowUserPointer(window));
 	app->framebufferResized = true;
 	character.camera.setViewportSize(width, height);
+	noesisView->SetSize(width, height);
 }
 
 void VulkanAndRTX::prepareResources()
@@ -167,25 +222,38 @@ void VulkanAndRTX::prepareResources()
 	
 	createSwapChain();
 	createSwapChainImageViews();
-	createRenderPass(objectRenderPass);
+	createObjectRenderPass(objectRenderPass);
+	createGUIRenderPass(noesisRenderPass);
 	createDescriptorSetLayout(descriptorSetLayout);
-	createGraphicsPipeline("object", "shaders/object.vert.spv", "shaders/object.frag.spv");
-	createGraphicsPipeline("sky", "shaders/sky.vert.spv", "shaders/sky.frag.spv");
+	createGraphicsPipeline(
+		PIPELINE_TYPE_OBJECT,
+		"object", "shaders/object.vert.spv", "shaders/object.frag.spv",
+		objectRenderPass
+	);
+	createGraphicsPipeline(
+		PIPELINE_TYPE_SKY,
+		"sky", "shaders/sky.vert.spv", "shaders/sky.frag.spv",
+		objectRenderPass
+	);
+	createGraphicsPipeline(
+		PIPELINE_TYPE_GUI,
+		"noesis", "shaders/noesis.vert.spv", "shaders/noesis.frag.spv",
+		noesisRenderPass
+	);
 	createCommandPool();
-	createColorResources();
-	createDepthResources();
+	createColorTexture(msaaTexture);
+	createDepthTexture(depthTexture);
 	createSwapChainFramebuffers();
 
-	createTextureSampler(textureSampler);
 	createTextureFromPath("textures/grass001.png", grassTexture);
 	createDummyTexture({ 0, 0, 0, 255 }, dummyTexture);
 
 	TerrainData terrainData = {
-		100, 100,  // chunkWidth, chunkLength
-		4, 4,    // chunkRows, chunkCols
-		1.0f,      // gridSize
-		0.1f,      // scale
-		2.0f,     // height
+		100, 100, // chunkWidth, chunkLength
+		4, 4,     // chunkRows, chunkCols
+		2.0f,     // gridSize
+		0.1f,     // scale
+		1.0f,     // height
 	};
 	terrainGenerator = std::make_unique<TerrainGenerator>(1);
 	TerrainGenerator::generateTerrain(
@@ -197,9 +265,9 @@ void VulkanAndRTX::prepareResources()
 		terrainGenerator.get(), 1
 	);
 
-	loadModelsFromDirectory("models", models);
+	// loadModelsFromDirectory("models", models);
 
-	createSkyCube();
+	createSkyModel(sky);
 
 	for (Mesh& mesh : sky.meshes) {
 		createVertexBuffer(mesh);
@@ -231,7 +299,7 @@ void VulkanAndRTX::mainLoop()
 	std::chrono::high_resolution_clock::time_point currentTime;
 	double deltaTime;
 	double timeSinceLaunch = 0.0f;
-
+	
 	int counter = 0;
 	float accumulator = 0;
 	float fps = 0;
@@ -245,9 +313,9 @@ void VulkanAndRTX::mainLoop()
 
 		glfwPollEvents();
 		if (!character.currentInteractingVolume) {
-			character.movePerson(
-				deltaTime, characterSpeed, jumpSpeed, 
-				gravity, models[0].meshes[0]);
+			character.handleKeyInput(
+				deltaTime, 
+				gravity, models);
 		}
 		//restrictCharacterMovement(character.camera);
 
@@ -326,7 +394,7 @@ void VulkanAndRTX::mainLoop()
 
 		ImGui::Render();
 		ImDrawData* draw_data = ImGui::GetDrawData();
-		drawFrame(timeSinceLaunch, draw_data);
+		drawFrame(timeSinceLaunch, deltaTime, draw_data);
 	}
 
 	vkDeviceWaitIdle(vkInit.device);
@@ -339,6 +407,7 @@ void VulkanAndRTX::cleanupImGui() {
     ImGui_ImplGlfw_Shutdown();
     ImGui::DestroyContext();
 }
+
 void VulkanAndRTX::cleanupModels()
 {
 	for (size_t i = 0; i < models.size(); i++) {
@@ -356,31 +425,68 @@ void VulkanAndRTX::cleanupModel(Model& model) const
 		vkDestroyBuffer(vkInit.device, model.meshes[i].vertexBuffer, nullptr);
 		vkFreeMemory(vkInit.device, model.meshes[i].vertexBufferMemory, nullptr);
 	}
+	for (size_t i = 0; i < model.materials.size(); i++)
+	{
+		// cleanupMaterial(model.materials[i]);
+	}
 }
+void VulkanAndRTX::cleanupMaterial(Material& material) const
+{
+	cleanupTexture(material.diffuseTexture);
+	cleanupTexture(material.normalTexture);
+	cleanupTexture(material.specularTexture);
+	cleanupTexture(material.emissiveTexture);
+}
+void VulkanAndRTX::cleanupTexture(Texture& texture) const
+{
+	if (texture.imageView) {
+		vkDestroyImageView(vkInit.device, texture.imageView, nullptr);
+		texture.imageView = VK_NULL_HANDLE;
+	}
+	if (texture.image) {
+		vkDestroyImage(vkInit.device, texture.image, nullptr);
+		texture.image = VK_NULL_HANDLE;
+	}
+	if (texture.imageMemory) {
+		vkFreeMemory(vkInit.device, texture.imageMemory, nullptr);
+		texture.imageMemory = VK_NULL_HANDLE;
+	}
+	if (texture.sampler) {
+		vkDestroySampler(vkInit.device, texture.sampler, nullptr);
+		texture.sampler = VK_NULL_HANDLE;
+	}
+}
+
 void VulkanAndRTX::cleanupMemory()
 {
+	/*if (noesisRenderer) {
+		noesisRenderer->Shutdown();
+		noesisRenderer.Reset();
+	}*/
+	if (noesisView) {
+		noesisView.Reset();
+	}
+	if (noesisRenderDevice) {
+		noesisRenderDevice.Reset();
+	}
+	Noesis::GUI::Shutdown();
+
 	cleanupImGui();
 
 	cleanupModels();
+	cleanupTexture(grassTexture);
+	cleanupTexture(dummyTexture);
 
 	cleanupSwapChain();
 
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-		vkDestroyBuffer (vkInit.device, skyUniformBuffers[i], nullptr);
-		vkFreeMemory    (vkInit.device, skyUniformBuffersMemory[i], nullptr);
+		vkDestroyBuffer(vkInit.device, skyUniformBuffers[i], nullptr);
+		vkFreeMemory(vkInit.device, skyUniformBuffersMemory[i], nullptr);
 	}
 
 	// will free all allocated descriptor sets from this pool
 	vkDestroyDescriptorPool(vkInit.device, descriptorPool, nullptr);
-
-	vkDestroySampler(vkInit.device, textureSampler, nullptr);
-
-	vkDestroyImageView(vkInit.device, grassTexture.imageView, nullptr);
-	vkDestroyImage(vkInit.device, grassTexture.image, nullptr);
-	vkFreeMemory(vkInit.device, grassTexture.imageMemory, nullptr);
-
 	vkDestroyDescriptorSetLayout(vkInit.device, descriptorSetLayout, nullptr);
-
 
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 		vkDestroySemaphore(vkInit.device, renderFinishedSemaphores[i], nullptr);
@@ -529,7 +635,7 @@ std::vector<char> VulkanAndRTX::readFile(const std::string& filename)
 	std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
 	if (!file.is_open()) {
-		throw std::runtime_error("failed to open file!" + filename);
+		throw std::runtime_error("failed to open file: " + filename);
 	}
 
 	size_t fileSize = (size_t)file.tellg();
@@ -560,12 +666,10 @@ uint32_t VulkanAndRTX::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags
 // command pool for specific queue family
 void VulkanAndRTX::createCommandPool()
 {
-	QueueFamilyIndices queueFamilyIndices = vkInit.findQueueFamilies(vkInit.physicalDevice);
-
 	VkCommandPoolCreateInfo poolInfo{};
 	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
 	poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-	poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
+	poolInfo.queueFamilyIndex = vkInit.queueFamilyIndices.graphicsFamily.value();
 
 	if (vkCreateCommandPool(vkInit.device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create command pool!");

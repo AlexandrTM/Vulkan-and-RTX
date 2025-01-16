@@ -4,10 +4,10 @@
 
 // information about framebuffer attachments, how many color and depth buffers there will
 // be, how many samples to use for each of them and how their contents should be treated
-void VulkanAndRTX::createRenderPass(VkRenderPass& renderPass)
+void VulkanAndRTX::createObjectRenderPass(VkRenderPass& renderPass) const
 {
 	VkAttachmentDescription colorAttachment{};
-	colorAttachment.format = swapChainImageFormat;
+	colorAttachment.format = swapchainImageFormat;
 	colorAttachment.samples = vkInit.colorSamples;// samples per fragment		
 	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;// color and depth data
 	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -30,7 +30,7 @@ void VulkanAndRTX::createRenderPass(VkRenderPass& renderPass)
 	depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 	VkAttachmentDescription colorAttachmentResolve{};
-	colorAttachmentResolve.format = swapChainImageFormat;
+	colorAttachmentResolve.format = swapchainImageFormat;
 	colorAttachmentResolve.samples = VK_SAMPLE_COUNT_1_BIT;
 	colorAttachmentResolve.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
 	colorAttachmentResolve.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -83,8 +83,41 @@ void VulkanAndRTX::createRenderPass(VkRenderPass& renderPass)
 		throw std::runtime_error("failed to create render pass!");
 	}
 }
+void VulkanAndRTX::createGUIRenderPass(VkRenderPass& renderPass) const
+{
+	VkAttachmentDescription attachment = {};
+	attachment.format = swapchainImageFormat;
+	attachment.samples = VK_SAMPLE_COUNT_1_BIT;
+	attachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;  // Preserve content
+	attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	attachment.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
-void VulkanAndRTX::createPipelineLayout(VkDescriptorSetLayout& descriptorSetLayout)
+	VkAttachmentReference colorAttachmentRef = {};
+	colorAttachmentRef.attachment = 0;
+	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+	VkSubpassDescription subpass = {};
+	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+	subpass.colorAttachmentCount = 1;
+	subpass.pColorAttachments = &colorAttachmentRef;
+
+	VkRenderPassCreateInfo renderPassInfo = {};
+	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+	renderPassInfo.attachmentCount = 1;
+	renderPassInfo.pAttachments = &attachment;
+	renderPassInfo.subpassCount = 1;
+	renderPassInfo.pSubpasses = &subpass;
+
+	vkCreateRenderPass(vkInit.device, &renderPassInfo, nullptr, &renderPass);
+}
+
+void VulkanAndRTX::createPipelineLayout(
+	VkDescriptorSetLayout& descriptorSetLayout, 
+	VkPipelineLayout& pipelineLayout
+) const
 {
 	VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 	pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
@@ -99,8 +132,9 @@ void VulkanAndRTX::createPipelineLayout(VkDescriptorSetLayout& descriptorSetLayo
 }
 
 void VulkanAndRTX::createGraphicsPipeline(
-	const std::string prefix, 
-	const std::string& vertexShader, const std::string& fragmentShader
+	const PipelineType pipelineType, const std::string pipelineName, 
+	const std::string& vertexShader, const std::string& fragmentShader,
+	const VkRenderPass& renderPass 
 )
 {
 	auto vertShader = readFile(vertexShader);
@@ -205,18 +239,18 @@ void VulkanAndRTX::createGraphicsPipeline(
 	rasterizer.depthBiasSlopeFactor = 0.0f; // Optional
 #pragma endregion
 
-	// Multisampling stage   (FIXED): how many samples for each fragment we will take also depth testing
+	// Multi sampling stage  (FIXED): how many samples for each fragment we will take also depth testing
 #pragma region
 	VkPipelineMultisampleStateCreateInfo multisampling{};
 	multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
 	multisampling.sampleShadingEnable = VK_FALSE;
-	multisampling.rasterizationSamples = vkInit.colorSamples;
+	multisampling.rasterizationSamples = pipelineType == PIPELINE_TYPE_GUI ? VK_SAMPLE_COUNT_1_BIT : vkInit.colorSamples;
 	multisampling.minSampleShading = 1.0f; // Optional
 
 	VkPipelineDepthStencilStateCreateInfo depthStencil{};
 	depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-	depthStencil.depthTestEnable = (prefix == "sky" ? VK_FALSE : VK_TRUE);
-	depthStencil.depthWriteEnable = (prefix == "sky" ? VK_FALSE : VK_TRUE);
+	depthStencil.depthTestEnable = pipelineType == PIPELINE_TYPE_OBJECT ? VK_TRUE : VK_FALSE;
+	depthStencil.depthWriteEnable = pipelineType == PIPELINE_TYPE_OBJECT ? VK_TRUE : VK_FALSE;
 	depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
 	depthStencil.front = depthStencil.back;
 	depthStencil.back.compareOp = VK_COMPARE_OP_ALWAYS;
@@ -235,13 +269,24 @@ void VulkanAndRTX::createGraphicsPipeline(
 	VkPipelineColorBlendAttachmentState colorBlendAttachment{};
 	colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT
 		| VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-	colorBlendAttachment.blendEnable = VK_FALSE;
-	colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE; // Optional
-	colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
-	colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD; // Optional
-	colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE; // Optional
-	colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
-	colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD; // Optional
+	if (pipelineType == PIPELINE_TYPE_GUI) {
+		colorBlendAttachment.blendEnable = VK_TRUE;
+		colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+		colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+		colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+		colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+		colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+		colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+	}
+	else {
+		colorBlendAttachment.blendEnable = VK_FALSE;
+		colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
+		colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
+		colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+		colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+		colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+		colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+	}
 
 	/* alternative case */
 	/*
@@ -272,7 +317,7 @@ void VulkanAndRTX::createGraphicsPipeline(
 	finalColor.a = newAlpha.a;
 	*/
 
-	// constants for afformentioned for color blending calculations
+	// constants for aforementioned color blending calculations
 	// this method has higher priority then previous
 	VkPipelineColorBlendStateCreateInfo colorBlending{};
 	colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
@@ -302,7 +347,7 @@ void VulkanAndRTX::createGraphicsPipeline(
 	dynamicState.pDynamicStates = dynamicStates.data();
 #pragma endregion
 
-	createPipelineLayout(descriptorSetLayout);
+	createPipelineLayout(descriptorSetLayout, pipelineLayout);
 
 	// information about all stages
 	VkGraphicsPipelineCreateInfo pipelineInfo{};
@@ -322,30 +367,32 @@ void VulkanAndRTX::createGraphicsPipeline(
 	pipelineInfo.pColorBlendState = &colorBlending;
 	pipelineInfo.pDynamicState = &dynamicState; // Optional
 	pipelineInfo.layout = pipelineLayout;
-	pipelineInfo.renderPass = objectRenderPass;
+	pipelineInfo.renderPass = renderPass;
 	pipelineInfo.subpass = 0;
 	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE; // Optional
 #pragma endregion
-
+	
 	VkPipeline pipeline{};
 	if (vkCreateGraphicsPipelines(vkInit.device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &pipeline) != VK_SUCCESS) {
-		std::cout << prefix << " ";
+		std::cout << pipelineName << " ";
 		throw std::runtime_error("failed to create graphics pipeline!");
 	}
-	pipelines[prefix] = pipeline;
+	pipelines[pipelineName] = pipeline;
 
 	vkDestroyShaderModule(vkInit.device, fragShaderModule, nullptr);
 	vkDestroyShaderModule(vkInit.device, vertShaderModule, nullptr);
 }
 
 // Creating frames for presentation
-void VulkanAndRTX::drawFrame(float timeSinceLaunch, ImDrawData* draw_data)
+void VulkanAndRTX::drawFrame(double timeSinceLaunch, double deltaTime, ImDrawData* draw_data)
 {
 	vkWaitForFences(vkInit.device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
 	uint32_t imageIndex;
-	VkResult result = vkAcquireNextImageKHR(vkInit.device, swapChain, UINT64_MAX,
-		imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+	VkResult result = vkAcquireNextImageKHR(
+		vkInit.device, swapChain, UINT64_MAX,
+		imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex
+	);
 
 	if (result == VK_ERROR_OUT_OF_DATE_KHR) {
 		recreateSwapChain();
@@ -359,9 +406,13 @@ void VulkanAndRTX::drawFrame(float timeSinceLaunch, ImDrawData* draw_data)
 
 	// Only reset the fence if we are submitting work
 	vkResetFences(vkInit.device, 1, &inFlightFences[currentFrame]);
-
 	vkResetCommandBuffer(commandBuffers[currentFrame], /*VkCommandBufferResetFlagBits*/ 0);
-	recordCommandBuffer(commandBuffers[currentFrame], imageIndex, draw_data);
+
+	recordCommandBuffer(
+		commandBuffers[currentFrame], imageIndex, 
+		timeSinceLaunch, deltaTime, 
+		draw_data
+	);
 
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -481,7 +532,11 @@ void VulkanAndRTX::updateShaderBuffers(uint32_t currentImage, float timeSinceLau
 		}
 	}
 }
-void VulkanAndRTX::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, ImDrawData* draw_data)
+void VulkanAndRTX::recordCommandBuffer(
+	VkCommandBuffer commandBuffer, uint32_t imageIndex, 
+	double timeSinceLaunch, double deltaTime, 
+	ImDrawData* draw_data
+)
 {
 	VkCommandBufferBeginInfo beginInfo{};
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -520,7 +575,7 @@ void VulkanAndRTX::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t i
 		drawModel(commandBuffer, sky);
 	}
 
-	// objects
+	// meshes and textures
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["object"]);
 	for (size_t modelIndex = 0; modelIndex < models.size(); ++modelIndex) {
 		for (size_t meshIndex = 0; meshIndex < models[modelIndex].meshes.size(); ++meshIndex) {
@@ -528,7 +583,7 @@ void VulkanAndRTX::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t i
 			const Material& material = models[modelIndex].materials[meshIndex];
 			const VkDescriptorSet& meshDescriptorSet = meshDescriptorSets[modelIndex][meshIndex][currentFrame];
 
-			if (material.diffuseTexture.imageView && material.diffuseTexture.sampler) {
+			if (material.diffuseTexture) {
 				addTextureToDescriptorSet(
 					material.diffuseTexture,
 					meshDescriptorSet, 2
@@ -540,7 +595,7 @@ void VulkanAndRTX::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t i
 					meshDescriptorSet, 2
 				);
 			}
-			if (material.emissiveTexture.imageView && material.emissiveTexture.sampler) {
+			if (material.emissiveTexture) {
 				addTextureToDescriptorSet(
 					material.emissiveTexture,
 					meshDescriptorSet, 3
@@ -576,7 +631,31 @@ void VulkanAndRTX::recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t i
 		}
 	}
 
-	ImGui_ImplVulkan_RenderDrawData(draw_data, commandBuffers[currentFrame]);
+	//ImGui_ImplVulkan_RenderDrawData(draw_data, commandBuffers[currentFrame]);
+
+	//vkCmdEndRenderPass(commandBuffer);
+
+	// Render NoesisGUI
+	//VkRenderPassBeginInfo noesisRenderPassInfo = {};
+	//noesisRenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	//noesisRenderPassInfo.renderPass = noesisRenderPass;
+	//noesisRenderPassInfo.framebuffer = swapChainFramebuffers[imageIndex];
+	//noesisRenderPassInfo.renderArea.offset = { 0, 0 };
+	//noesisRenderPassInfo.renderArea.extent = swapChainExtent;
+
+	//vkCmdBeginRenderPass(commandBuffer, &noesisRenderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+	//vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["noesis"]);
+	//NoesisApp::VKFactory::RecordingInfo recordingInfo{};
+	//recordingInfo.commandBuffer = commandBuffers[currentFrame];
+	//NoesisApp::VKFactory::SetCommandBuffer(noesisRenderDevice, recordingInfo);
+	//	
+	//noesisView->Update(deltaTime);
+	////noesisRenderDevice->BeginOnscreenRender();
+	//noesisView->GetRenderer()->UpdateRenderTree();
+	//noesisView->GetRenderer()->RenderOffscreen();
+	//noesisView->GetRenderer()->Render();
+	////noesisRenderDevice->EndOnscreenRender();
 
 	vkCmdEndRenderPass(commandBuffer);
 

@@ -6,26 +6,26 @@
 #ifndef CHARACTER_H
 #define CHARACTER_H
 
-typedef enum GamemodeBits {
-	CREATIVE = 0x00000000,
-	SURVIVAL = 0x00000001
-} GamemodeBits;
-typedef uint32_t Gamemodes;
+typedef enum Gamemode {
+	GAMEMODE_CREATIVE = 0,
+	GAMEMODE_SURVIVAL = 1
+} Gamemode;
 
 class Character
 {
 private:
 	double sensitivity = 0.125;
-
 	bool keys[1024] = { 0 };
+
+	Cuboid aabb = { glm::vec3(-0.3, -1.45, -0.3), glm::vec3(0.3, 0.25, 0.3) };
+	float maxSlopeAngle = 50.0f;
 
 	glm::vec3 velocity = glm::vec3(0.0f);
 	bool isOnGround = false;
 
-	glm::vec3 bound0 = glm::vec3(-0.3, -1.45, -0.3);
-	glm::vec3 bound1 = glm::vec3(0.3, 0.25, 0.3);
-
-	Gamemodes gamemode = CREATIVE;
+	Gamemode gamemode = GAMEMODE_CREATIVE;
+	float moveSpeed = 2.1f;
+	float jumpSpeed = 4.0f;
 
 public:
 	Camera camera;
@@ -38,12 +38,22 @@ public:
 
 	InteractableVolume* currentInteractingVolume = nullptr;
 
-	void movePerson(
-		float deltaTime, float moveSpeed, float jumpSpeed,
-		float gravity, Mesh& mesh
+	void handleKeyInput(
+		float deltaTime,
+		float gravity, const std::vector<Model>& models
 	);
 	bool checkCollisionWithMesh(
 		const Mesh& mesh,
+		const glm::vec3& cameraPosition,
+		glm::vec3& surfaceNormal
+	) const;
+	bool checkCollisionWithModel(
+		const Model& model,
+		const glm::vec3& cameraPosition,
+		glm::vec3& surfaceNormal
+	) const;
+	bool checkCollisionWithModels(
+		const std::vector<Model>& models,
 		const glm::vec3& cameraPosition,
 		glm::vec3& surfaceNormal
 	) const;

@@ -47,6 +47,7 @@ void VulkanInitializer::initializeVulkan(GLFWwindow* window)
 	setupDebugMessenger();
 	createSurface(window);
 	pickPhysicalDevice();
+	queueFamilyIndices = findQueueFamilies(physicalDevice);
 	createLogicalDevice();
 }
 
@@ -141,10 +142,8 @@ void VulkanInitializer::pickPhysicalDevice()
 // it's can be more than 1 logical device for each physical device
 void VulkanInitializer::createLogicalDevice()
 {
-	QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
-
 	std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-	std::set<uint32_t> uniqueQueueFamilies = { indices.graphicsFamily.value(), indices.presentFamily.value() };
+	std::set<uint32_t> uniqueQueueFamilies = { queueFamilyIndices.graphicsFamily.value(), queueFamilyIndices.presentFamily.value() };
 	float queuePriority = 1.0f;
 
 	for (uint32_t queueFamily : uniqueQueueFamilies) {
@@ -184,8 +183,8 @@ void VulkanInitializer::createLogicalDevice()
 		throw std::runtime_error("failed to create logical device!");
 	}
 
-	vkGetDeviceQueue(device, indices.graphicsFamily.value(), 0, &graphicsQueue);
-	vkGetDeviceQueue(device, indices.presentFamily.value(), 0, &presentQueue);
+	vkGetDeviceQueue(device, queueFamilyIndices.graphicsFamily.value(), 0, &graphicsQueue);
+	vkGetDeviceQueue(device, queueFamilyIndices.presentFamily.value(), 0, &presentQueue);
 }
 
 // checks of the GPUs for availability of some features
@@ -251,7 +250,7 @@ bool VulkanInitializer::checkDeviceExtensionSupport(VkPhysicalDevice device)
 	return requiredExtensions.empty();
 }
 
-// checking for requested validation layers to be suported by system
+// checking for requested validation layers to be supported by system
 bool VulkanInitializer::checkValidationLayerSupport()
 {
 	uint32_t layerCount;
@@ -306,7 +305,7 @@ void VulkanInitializer::findMaxUsableSampleCount(VkPhysicalDevice physicalDevice
 }
 
 // getting required extensions for GLFW and their number
-std::vector<const char*> VulkanInitializer::getRequiredExtensions()
+std::vector<const char*> VulkanInitializer::getRequiredExtensions() const
 {
 	uint32_t glfwExtensionCount = 0;
 	const char** glfwExtensions;
@@ -384,13 +383,15 @@ void VulkanInitializer::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCr
 	createInfo.pUserData = nullptr; // Optional
 }
 
-// function for debugging callbakcs(checking warnings, errors etc)
+// function for debugging callbacks(checking warnings, errors etc)
 // VKAPI_ATTR and VKAPI_CALL ensures that this function signature suitable for Vulkan
 VKAPI_ATTR VkBool32 VKAPI_CALL VulkanInitializer::debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
 	VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
 	void* pUserData)
 {
-	std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+	std::cerr << "\033[91m";
+	std::cerr << pCallbackData->pMessage << "\n\n";
+	std::cerr << "\033[0m";
 	//if (messageSeverity >= VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT) {
 	//    Message is important enough to show
 	//}

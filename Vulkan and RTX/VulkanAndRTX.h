@@ -10,6 +10,13 @@
 
 static const uint32_t BONES_NUM = 256;
 
+typedef enum PipelineType
+{
+	PIPELINE_TYPE_OBJECT = 0,
+	PIPELINE_TYPE_SKY = 1,
+	PIPELINE_TYPE_GUI = 2
+} PipelineType;
+
 class VulkanAndRTX {
 private:
 #pragma region
@@ -58,12 +65,15 @@ private:
 	std::vector<std::vector<std::vector<VkDescriptorSet>>> meshDescriptorSets;
 
 	ShaderStorageBufferObject							   boneSSBO;
-	std::vector<std::vector<std::vector<VkBuffer>>>		   boneUniformBuffers; // For all models and frames
+	std::vector<std::vector<std::vector<VkBuffer>>>		   boneUniformBuffers;
 	std::vector<std::vector<std::vector<VkDeviceMemory>>>  boneUniformBuffersMemory;
 
 	std::unique_ptr<TerrainGenerator> terrainGenerator;
 
 	GLFWwindow* window;
+	Noesis::Ptr<Noesis::IView>        noesisView;
+	Noesis::Ptr<Noesis::RenderDevice> noesisRenderDevice;
+
 	ImGui_ImplVulkanH_Window* vulkanWindow;
 	double lastMousePosX, lastMousePosY;
 
@@ -75,19 +85,18 @@ private:
 	float timeToSolvePuzzle = 0.0f;
 
 	float gravity = 9.81f;
-	float characterSpeed = 2.0f;
-	float jumpSpeed = 5.0f;
 	Character character;
 	VulkanInitializer vkInit;
 
 	VkSwapchainKHR			   swapChain;
 	std::vector<VkImage>	   swapChainImages;
-	VkFormat				   swapChainImageFormat;
+	VkFormat				   swapchainImageFormat;
 	VkExtent2D				   swapChainExtent;
 	std::vector<VkImageView>   swapChainImageViews;
 	std::vector<VkFramebuffer> swapChainFramebuffers;
 
 	VkRenderPass objectRenderPass;
+	VkRenderPass noesisRenderPass;
 	VkPipelineLayout pipelineLayout;
 
 	std::unordered_map<std::string, VkPipeline> pipelines;
@@ -97,36 +106,28 @@ private:
 
 	std::vector<VkSemaphore> imageAvailableSemaphores;
 	std::vector<VkSemaphore> renderFinishedSemaphores;
-	std::vector<VkFence> inFlightFences;
+	std::vector<VkFence>     inFlightFences;
 	uint32_t currentFrame = 0;
 
 	bool framebufferResized = false;
 
 	std::vector<Model> models;
-	Model sky;
-
-	VkSampler	   textureSampler;
+	Model			   sky;
 
 	Texture        grassTexture;
 	Texture		   dummyTexture;
 
-	VkImage        depthImage;
-	VkDeviceMemory depthImageMemory;
-	VkImageView    depthImageView;
+	Texture        depthTexture;
+	Texture        msaaTexture;
 
-	VkImage        colorImage;
-	VkDeviceMemory colorImageMemory;
-	VkImageView    colorImageView;
-
-	uint32_t mipLevels;
 #pragma endregion
 
 public:
 	void run();
 
 private:
-	// initializing GLFW and creating window
 	void createGLFWWindow();
+	void initializeNoesisGUI();
 
 	void setupImguiWindow(ImGui_ImplVulkanH_Window* wd, VkSurfaceKHR surface, 
 		size_t width, size_t height);
@@ -143,8 +144,10 @@ private:
 
 	void cleanupModels();
 	void cleanupModel(Model& model) const;
+	void cleanupTexture(Texture& texture) const;
+	void cleanupMaterial(Material& material) const;
 	void cleanupMemory();
-	// cleaning "out of date" swap chain
+
 	void cleanupSwapChain();
 	// recreating swap chain in some special cases
 	void recreateSwapChain();
@@ -153,10 +156,10 @@ private:
 	void framebufferResizeCallback(GLFWwindow* window, int width, int height);
 
 	void generateCubicLandscape(size_t landscapeWidth, size_t landscapeLenght, float_t cubeSize);
-	void generateCube(float x, float y, float z, float cubeSize);
-	void generateCuboid(float x, float y, float z,
+	void createCube(float x, float y, float z, float cubeSize);
+	void createCuboid(float x, float y, float z,
 		float width, float height, float length, glm::vec3 color);
-	void createSkyCube();
+	void createSkyModel(Model& model);
 
 	void loadObjModel(const std::string& filePath);
 	void loadGltfModel(const std::string& filePath);
@@ -182,10 +185,8 @@ private:
 	void generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels);
 
 	// how to sample through texels of the texture for drawing them on 3D model
-	void createTextureSampler(VkSampler& vkSampler) const;
-	void createTextureImageView(VkImage& textureImage, VkImageView& textureImageView);
+	void createTextureSampler(uint32_t& mipLevels, VkSampler& textureSampler) const;
 	VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels) const;
-	// transitioning image to the right layout
 	void transitionImageLayout(
 		VkImage image, VkFormat format, VkImageAspectFlags aspectMask,
 		VkImageLayout oldLayout, VkImageLayout newLayout,
@@ -193,15 +194,13 @@ private:
 	);
 
 	// creating image for MSAA sampling
-	void createColorResources();
-	// three objects for depth testing
-	void createDepthResources();
+	void createColorTexture(Texture& texture);
+	void createDepthTexture(Texture& texture);
 
 	// check if the format has stencil component
 	bool hasStencilComponent(VkFormat format);
 
-	// finding most appropriate format for the depth test
-	VkFormat findDepthFormat();
+	VkFormat findDepthFormat() const;
 	// finding most desirable format of color for a given situation
 	VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling,
 		VkFormatFeatureFlags features) const;
@@ -251,33 +250,42 @@ private:
 
 	void updateShaderBuffers(uint32_t currentImage, float timeSinceLaunch);
 	// Creating frames for presentation
-	void drawFrame(float timeSinceLaunch, ImDrawData* draw_data);
+	void drawFrame(double timeSinceLaunch, double deltaTime, ImDrawData* draw_data);
 
 	// create multiple command buffers
 	void createCommandBuffers();
 	// record commands to the command buffer
-	void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex, ImDrawData* draw_data);
+	void recordCommandBuffer(
+		VkCommandBuffer commandBuffer, uint32_t imageIndex,
+		double timeSinceLaunch, double deltaTime,
+		ImDrawData* draw_data
+	);
 
 	// creating swap chain with the best properties for current device
 	void createSwapChain();
 	void createSwapChainImageViews();
 	// creating framebuffer from each swap chain image view
 	void createSwapChainFramebuffers();
-	// chosing best present mode to window surface
+	// choosing best present mode to window surface
 	VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
-	// chosing best swap chain extent(resolution of the images)
+	// choosing best swap chain extent(resolution of the images)
 	VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
 	// choosing best surface format(color space and number of bits) for the swap chain
 	VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
 
 	// information about framebuffer attachments, how many color and depth buffers there will
 	// be, how many samples to use for each of them and how their contents should be treated
-	void createRenderPass(VkRenderPass& renderPass);
+	void createObjectRenderPass(VkRenderPass& renderPass) const;
+	void createGUIRenderPass(VkRenderPass& renderPass) const;
 
-	void createPipelineLayout(VkDescriptorSetLayout& descriptorSetLayout);
+	void createPipelineLayout(
+		VkDescriptorSetLayout& descriptorSetLayout, 
+		VkPipelineLayout& pipelineLayout
+	) const;
 	void createGraphicsPipeline(
-		const std::string prefix, 
-		const std::string& vertexShader, const std::string& fragmentShader
+		const PipelineType pipelineType, const std::string pipelineName,
+		const std::string& vertexShader, const std::string& fragmentShader,
+		const VkRenderPass& renderPass
 	);
 
 	// for specific queue family
@@ -286,9 +294,9 @@ private:
 	// Creating fences and semaphores
 	void createSyncObjects();
 
-	// reading bytecode files and returning its bytes
+	// reading byte code files and returning its bytes
 	static std::vector<char> readFile(const std::string& filename);
-	// wraping shader
+	// wrapping shader
 	VkShaderModule createShaderModule(const std::vector<char>& code) const;
 };
 

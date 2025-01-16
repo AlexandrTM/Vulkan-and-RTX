@@ -29,7 +29,7 @@ void VulkanAndRTX::createSwapChain()
 	createInfo.imageArrayLayers = 1;
 	createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-	QueueFamilyIndices indices = vkInit.findQueueFamilies(vkInit.physicalDevice);
+	QueueFamilyIndices indices = vkInit.queueFamilyIndices;
 	uint32_t queueFamilyIndices[] = { indices.graphicsFamily.value(), indices.presentFamily.value() };
 
 	if (indices.graphicsFamily != indices.presentFamily) {
@@ -45,7 +45,7 @@ void VulkanAndRTX::createSwapChain()
 	createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 	createInfo.clipped = VK_TRUE;
 	createInfo.presentMode = presentMode;
-	swapChainImageFormat = surfaceFormat.format;
+	swapchainImageFormat = surfaceFormat.format;
 	swapChainExtent = extent;
 
 	if (vkCreateSwapchainKHR(vkInit.device, &createInfo, nullptr, &swapChain) != VK_SUCCESS) {
@@ -64,7 +64,7 @@ void VulkanAndRTX::createSwapChainImageViews()
 	swapChainImageViews.resize(swapChainImages.size());
 
 	for (uint32_t i = 0; i < swapChainImages.size(); i++) {
-		swapChainImageViews[i] = createImageView(swapChainImages[i], swapChainImageFormat,
+		swapChainImageViews[i] = createImageView(swapChainImages[i], swapchainImageFormat,
 			VK_IMAGE_ASPECT_COLOR_BIT, 1);
 	}
 }
@@ -76,8 +76,8 @@ void VulkanAndRTX::createSwapChainFramebuffers()
 
 	for (size_t i = 0; i < swapChainImageViews.size(); i++) {
 		std::array<VkImageView, 3> attachments = {
-			colorImageView,
-			depthImageView,
+			msaaTexture.imageView,
+			depthTexture.imageView,
 			swapChainImageViews[i]
 		};
 
@@ -108,7 +108,7 @@ void VulkanAndRTX::recreateSwapChain()
 		ImGui_ImplVulkan_SetMinImageCount(MAX_FRAMES_IN_FLIGHT);
 		ImGui_ImplVulkanH_CreateOrResizeWindow(
 			vkInit.instance, vkInit.physicalDevice, vkInit.device, 
-			vulkanWindow, vkInit.findQueueFamilies(vkInit.physicalDevice).graphicsFamily.value(),
+			vulkanWindow, vkInit.queueFamilyIndices.graphicsFamily.value(),
 			nullptr, width, height, MAX_FRAMES_IN_FLIGHT
 		);
 		vulkanWindow->FrameIndex = 0;
@@ -121,11 +121,25 @@ void VulkanAndRTX::recreateSwapChain()
 
 	createSwapChain();
 	createSwapChainImageViews();
-	createRenderPass(objectRenderPass);
-	createGraphicsPipeline("object", "shaders/object.vert.spv", "shaders/object.frag.spv");
-	createGraphicsPipeline("sky", "shaders/sky.vert.spv", "shaders/sky.frag.spv");
-	createColorResources();
-	createDepthResources();
+	createObjectRenderPass(objectRenderPass);
+	createGUIRenderPass(noesisRenderPass);
+	createGraphicsPipeline(
+		PIPELINE_TYPE_OBJECT,
+		"object", "shaders/object.vert.spv", "shaders/object.frag.spv",
+		objectRenderPass
+	);
+	createGraphicsPipeline(
+		PIPELINE_TYPE_OBJECT,
+		"sky", "shaders/sky.vert.spv", "shaders/sky.frag.spv",
+		objectRenderPass
+	);
+	createGraphicsPipeline(
+		PIPELINE_TYPE_GUI,
+		"noesis", "shaders/noesis.vert.spv", "shaders/noesis.frag.spv",
+		noesisRenderPass
+	);
+	createColorTexture(msaaTexture);
+	createDepthTexture(depthTexture);
 	createSwapChainFramebuffers();
 	createCommandBuffers();
 	createDescriptorPool();
@@ -135,16 +149,10 @@ void VulkanAndRTX::recreateSwapChain()
 	createMeshDescriptorSets(MAX_FRAMES_IN_FLIGHT);
 }
 
-// cleaning "out of date" swap chain
 void VulkanAndRTX::cleanupSwapChain()
 {
-	vkDestroyImageView(vkInit.device, depthImageView, nullptr);
-	vkDestroyImage(vkInit.device, depthImage, nullptr);
-	vkFreeMemory(vkInit.device, depthImageMemory, nullptr);
-
-	vkDestroyImageView(vkInit.device, colorImageView, nullptr);
-	vkDestroyImage(vkInit.device, colorImage, nullptr);
-	vkFreeMemory(vkInit.device, colorImageMemory, nullptr);
+	cleanupTexture(depthTexture);
+	cleanupTexture(msaaTexture);
 
 	for (size_t i = 0; i < swapChainFramebuffers.size(); i++) {
 		vkDestroyFramebuffer(vkInit.device, swapChainFramebuffers[i], nullptr);
@@ -176,7 +184,7 @@ VkSurfaceFormatKHR VulkanAndRTX::chooseSwapSurfaceFormat(const std::vector<VkSur
 	return availableFormats[0];
 }
 
-// chosing best present mode to window surface
+// choosing best present mode to window surface
 VkPresentModeKHR VulkanAndRTX::chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes)
 {
 	for (const auto& availablePresentMode : availablePresentModes) {
@@ -192,7 +200,7 @@ VkPresentModeKHR VulkanAndRTX::chooseSwapPresentMode(const std::vector<VkPresent
 	return VK_PRESENT_MODE_IMMEDIATE_KHR;
 }
 
-// chosing best swap chain extent(resolution of the images)
+// choosing best swap chain extent(resolution of the images)
 VkExtent2D VulkanAndRTX::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities)
 {
 	if (capabilities.currentExtent.width != UINT32_MAX) {

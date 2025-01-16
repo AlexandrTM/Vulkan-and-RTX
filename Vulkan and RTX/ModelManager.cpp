@@ -9,14 +9,14 @@ void VulkanAndRTX::generateCubicLandscape(size_t landscapeWidth, size_t landscap
 		for (size_t j = 0; j < landscapeLenght; j++)
 		{
 			float random_height = 0.01 * (rand() % 51);
-			generateCube(0.0f + (float)i * cubeSize - landscapeWidth / 4,
+			createCube(0.0f + (float)i * cubeSize - landscapeWidth / 4,
 				-2 + random_height,
 				0.0f + (float)j * cubeSize - landscapeLenght / 4,
 				cubeSize);
 		}
 	}
 }
-void VulkanAndRTX::generateCube(float x, float y, float z, float cubeSize)
+void VulkanAndRTX::createCube(float x, float y, float z, float cubeSize)
 {
 	std::vector<Vertex> localVertices(24);
 	Model model;
@@ -142,7 +142,7 @@ void VulkanAndRTX::generateCube(float x, float y, float z, float cubeSize)
 	model.meshes.push_back(mesh);
 	models.push_back(model);
 }
-void VulkanAndRTX::generateCuboid(float x, float y, float z,
+void VulkanAndRTX::createCuboid(float x, float y, float z,
 	float width, float height, float length, glm::vec3 color)
 {
 	std::vector<Vertex> localVertices(24);
@@ -269,10 +269,9 @@ void VulkanAndRTX::generateCuboid(float x, float y, float z,
 	model.meshes.push_back(mesh);
 	models.push_back(model);
 }
-void VulkanAndRTX::createSkyCube()
+void VulkanAndRTX::createSkyModel(Model& model)
 {
 	std::vector<Vertex> localVertices(24);
-	Model model;
 	Mesh mesh;
 	
 #pragma region
@@ -393,7 +392,6 @@ void VulkanAndRTX::createSkyCube()
 		mesh.indices.push_back(localIndices[i]);
 	}
 	model.meshes.push_back(mesh);
-	sky = model;
 }
 
 void VulkanAndRTX::loadObjModel(const std::string& modelPath)
@@ -704,7 +702,7 @@ void VulkanAndRTX::createDummyTexture(std::array<uint8_t, 4> color, Texture& tex
 		VK_FORMAT_R8G8B8A8_SRGB,
 		VK_IMAGE_ASPECT_COLOR_BIT,
 		texture.mipLevels);
-	texture.sampler = textureSampler;
+	createTextureSampler(texture.mipLevels, texture.sampler);
 }
 void VulkanAndRTX::createTextureFromPath(const std::string& texturePath, Texture& texture)
 {
@@ -764,7 +762,7 @@ void VulkanAndRTX::createTextureFromPath(const std::string& texturePath, Texture
 		VK_FORMAT_R8G8B8A8_SRGB,
 		VK_IMAGE_ASPECT_COLOR_BIT,
 		texture.mipLevels);
-	texture.sampler = textureSampler;
+	createTextureSampler(texture.mipLevels, texture.sampler);
 }
 void VulkanAndRTX::createTextureFromEmbedded(const std::string& embeddedTextureName, Texture& texture, const aiScene* scene) {
 	const aiTexture* embeddedTexture = scene->GetEmbeddedTexture(embeddedTextureName.c_str());
@@ -843,7 +841,7 @@ void VulkanAndRTX::createTextureFromEmbedded(const std::string& embeddedTextureN
 		VK_FORMAT_R8G8B8A8_SRGB,
 		VK_IMAGE_ASPECT_COLOR_BIT,
 		texture.mipLevels);
-	texture.sampler = textureSampler;
+	createTextureSampler(texture.mipLevels, texture.sampler);
 
 	/*std::cout << "Embedded Texture Loaded:\n";
 	std::cout << " - Name: " << embeddedTextureName << "\n";
@@ -880,16 +878,16 @@ Material VulkanAndRTX::processMaterial(aiMaterial* aiMat, const aiScene* scene) 
 	//}
 
 	if (aiMat->GetTextureCount(aiTextureType_DIFFUSE) > 0) {
-		aiString texturePath;
 
+		aiString texturePath;
 		if (aiMat->GetTexture(aiTextureType_DIFFUSE, 0, &texturePath) == AI_SUCCESS) {
 			material.diffuseTexture = loadTexture(texturePath.C_Str(), scene);
 		}
 	}
 
 	if (aiMat->GetTextureCount(aiTextureType_EMISSIVE) > 0) {
-		aiString texturePath;
 
+		aiString texturePath;
 		if (aiMat->GetTexture(aiTextureType_EMISSIVE, 0, &texturePath) == AI_SUCCESS) {
 			material.emissiveTexture = loadTexture(texturePath.C_Str(), scene);
 		}
@@ -1029,7 +1027,7 @@ static void processBones(aiMesh* mesh, const aiScene* scene, Mesh& processedMesh
 			boneIndex = processedMesh.boneMap[boneName];
 		}
 
-		// Assign bone influences to vertices
+		// Assign bone weights to vertices
 		for (size_t j = 0; j < bone->mNumWeights; j++) {
 			uint32_t vertexID = bone->mWeights[j].mVertexId;
 			float weight = bone->mWeights[j].mWeight;
