@@ -85,17 +85,17 @@ void VulkanAndRTX::createObjectRenderPass(VkRenderPass& renderPass) const
 }
 void VulkanAndRTX::createGUIRenderPass(VkRenderPass& renderPass) const
 {
-	VkAttachmentDescription attachment = {};
-	attachment.format = swapchainImageFormat;
-	attachment.samples = VK_SAMPLE_COUNT_1_BIT;
-	attachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;  // Preserve content
-	attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	attachment.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-	attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+	VkAttachmentDescription colorAttachment{};
+	colorAttachment.format = swapchainImageFormat;
+	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;  // Preserve content
+	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
-	VkAttachmentReference colorAttachmentRef = {};
+	VkAttachmentReference colorAttachmentRef{};
 	colorAttachmentRef.attachment = 0;
 	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
@@ -104,14 +104,16 @@ void VulkanAndRTX::createGUIRenderPass(VkRenderPass& renderPass) const
 	subpass.colorAttachmentCount = 1;
 	subpass.pColorAttachments = &colorAttachmentRef;
 
-	VkRenderPassCreateInfo renderPassInfo = {};
+	VkRenderPassCreateInfo renderPassInfo{};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
 	renderPassInfo.attachmentCount = 1;
-	renderPassInfo.pAttachments = &attachment;
+	renderPassInfo.pAttachments = &colorAttachment;
 	renderPassInfo.subpassCount = 1;
 	renderPassInfo.pSubpasses = &subpass;
 
-	vkCreateRenderPass(vkInit.device, &renderPassInfo, nullptr, &renderPass);
+	if (vkCreateRenderPass(vkInit.device, &renderPassInfo, nullptr, &renderPass) != VK_SUCCESS) {
+		throw std::runtime_error("failed to create render pass!");
+	}
 }
 
 void VulkanAndRTX::createPipelineLayout(
@@ -346,7 +348,7 @@ void VulkanAndRTX::createGraphicsPipeline(
 	dynamicState.dynamicStateCount = static_cast<uint32_t>(dynamicStates.size());
 	dynamicState.pDynamicStates = dynamicStates.data();
 #pragma endregion
-
+	
 	createPipelineLayout(descriptorSetLayout, pipelineLayout);
 
 	// information about all stages
@@ -383,8 +385,31 @@ void VulkanAndRTX::createGraphicsPipeline(
 	vkDestroyShaderModule(vkInit.device, vertShaderModule, nullptr);
 }
 
+void VulkanAndRTX::createPipelines()
+{
+	createSwapChain();
+	createSwapChainImageViews();
+	createObjectRenderPass(objectRenderPass);
+	createGUIRenderPass(noesisRenderPass);
+	createGraphicsPipeline(
+		PIPELINE_TYPE_OBJECT,
+		"object", "shaders/object.vert.spv", "shaders/object.frag.spv",
+		objectRenderPass
+	);
+	createGraphicsPipeline(
+		PIPELINE_TYPE_SKY,
+		"sky", "shaders/sky.vert.spv", "shaders/sky.frag.spv",
+		objectRenderPass
+	);
+	createGraphicsPipeline(
+		PIPELINE_TYPE_GUI,
+		"noesis", "shaders/noesis.vert.spv", "shaders/noesis.frag.spv",
+		objectRenderPass
+	);
+}
+
 // Creating frames for presentation
-void VulkanAndRTX::drawFrame(double timeSinceLaunch, double deltaTime, ImDrawData* draw_data)
+void VulkanAndRTX::drawFrame(double timeSinceLaunch, double deltaTime/*, ImDrawData* draw_data*/)
 {
 	vkWaitForFences(vkInit.device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
@@ -410,20 +435,21 @@ void VulkanAndRTX::drawFrame(double timeSinceLaunch, double deltaTime, ImDrawDat
 
 	recordCommandBuffer(
 		commandBuffers[currentFrame], imageIndex, 
-		timeSinceLaunch, deltaTime, 
-		draw_data
+		timeSinceLaunch, deltaTime/*,
+		draw_data*/
 	);
+
+	VkSemaphore waitSemaphores[] = { imageAvailableSemaphores[currentFrame] };
+	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+	VkSemaphore signalSemaphores[] = { renderFinishedSemaphores[currentFrame] };
 
 	VkSubmitInfo submitInfo{};
 	submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 	submitInfo.waitSemaphoreCount = 1;
-	VkSemaphore waitSemaphores[] = { imageAvailableSemaphores[currentFrame] };
-	VkPipelineStageFlags waitStages[] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
 	submitInfo.pWaitSemaphores = waitSemaphores;
 	submitInfo.pWaitDstStageMask = waitStages;
 	submitInfo.commandBufferCount = 1;
 	submitInfo.pCommandBuffers = &commandBuffers[currentFrame];	
-	VkSemaphore signalSemaphores[] = { renderFinishedSemaphores[currentFrame] };
 	submitInfo.signalSemaphoreCount = 1;
 	submitInfo.pSignalSemaphores = signalSemaphores;
 
@@ -431,12 +457,12 @@ void VulkanAndRTX::drawFrame(double timeSinceLaunch, double deltaTime, ImDrawDat
 		throw std::runtime_error("failed to submit draw command buffer!");
 	}
 
+	VkSwapchainKHR swapChains[] = { swapChain };
+
 	VkPresentInfoKHR presentInfo{};
 	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 	presentInfo.waitSemaphoreCount = 1;
 	presentInfo.pWaitSemaphores = signalSemaphores;
-
-	VkSwapchainKHR swapChains[] = { swapChain };
 	presentInfo.swapchainCount = 1;
 	presentInfo.pSwapchains = swapChains;
 	presentInfo.pImageIndices = &imageIndex;
@@ -534,8 +560,8 @@ void VulkanAndRTX::updateShaderBuffers(uint32_t currentImage, float timeSinceLau
 }
 void VulkanAndRTX::recordCommandBuffer(
 	VkCommandBuffer commandBuffer, uint32_t imageIndex, 
-	double timeSinceLaunch, double deltaTime, 
-	ImDrawData* draw_data
+	double timeSinceLaunch, double deltaTime/*,
+	ImDrawData* draw_data*/
 )
 {
 	VkCommandBufferBeginInfo beginInfo{};
@@ -545,68 +571,82 @@ void VulkanAndRTX::recordCommandBuffer(
 		throw std::runtime_error("failed to begin recording command buffer!");
 	}
 
+	std::array<VkClearValue, 2> clearValues{};
+	clearValues[0].color = { {0.0f, 0.0f, 0.0f, 1.0f} };
+	clearValues[1].depthStencil = { 1.0f, 0 };
+
 	VkRenderPassBeginInfo renderPassInfo{};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	renderPassInfo.renderPass = objectRenderPass;
 	renderPassInfo.framebuffer = swapChainFramebuffers[imageIndex];
 	renderPassInfo.renderArea.offset = { 0, 0 };
 	renderPassInfo.renderArea.extent = swapChainExtent;
-
-	std::array<VkClearValue, 2> clearValues{};
-	clearValues[0].color = { {0.0f, 0.0f, 0.0f, 1.0f} };
-	clearValues[1].depthStencil = { 1.0f, 0 };
-
 	renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
 	renderPassInfo.pClearValues = clearValues.data();
 
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-	// sky
-	{
-		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["sky"]);
-		vkCmdBindDescriptorSets(
-			commandBuffer,
-			VK_PIPELINE_BIND_POINT_GRAPHICS,
-			pipelineLayout,
-			0, 1, &skyDescriptorSets[currentFrame],
-			0, nullptr
-		);
+	drawSky(commandBuffer, pipelines["sky"]);
+	drawObjects(commandBuffer, pipelines["object"]);
 
-		drawModel(commandBuffer, sky);
-	}
+	//ImGui_ImplVulkan_RenderDrawData(draw_data, commandBuffers[currentFrame]);
 
-	// meshes and textures
+	vkCmdEndRenderPass(commandBuffer);
+
+	// Render NoesisGUI
+	/*VkRenderPassBeginInfo noesisRenderPassInfo = {};
+	noesisRenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	noesisRenderPassInfo.renderPass = objectRenderPass;
+	noesisRenderPassInfo.framebuffer = swapChainFramebuffers[imageIndex];
+	noesisRenderPassInfo.renderArea.offset = { 0, 0 };
+	noesisRenderPassInfo.renderArea.extent = swapChainExtent;
+	noesisRenderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+	noesisRenderPassInfo.pClearValues = clearValues.data();
+
+	vkCmdBeginRenderPass(commandBuffer, &noesisRenderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["object"]);
+	NoesisApp::VKFactory::RecordingInfo recordingInfo{};
+	recordingInfo.commandBuffer = commandBuffers[currentFrame];
+	NoesisApp::VKFactory::SetCommandBuffer(noesisRenderDevice, recordingInfo);
+		
+	noesisView->Update(timeSinceLaunch);
+	//noesisRenderDevice->BeginOnscreenRender();
+	noesisView->GetRenderer()->UpdateRenderTree();
+	noesisView->GetRenderer()->RenderOffscreen();
+	noesisView->GetRenderer()->Render();
+	//noesisRenderDevice->EndOnscreenRender();
+
+	vkCmdEndRenderPass(commandBuffer);*/
+
+	if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
+		throw std::runtime_error("failed to record command buffer!");
+	}
+}
+void VulkanAndRTX::drawSky(VkCommandBuffer commandBuffer, VkPipeline& pipeline)
+{
+	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+	vkCmdBindDescriptorSets(
+		commandBuffer,
+		VK_PIPELINE_BIND_POINT_GRAPHICS,
+		pipelineLayout,
+		0, 1, &skyDescriptorSets[currentFrame],
+		0, nullptr
+	);
+
+	drawModel(commandBuffer, sky);
+}
+void VulkanAndRTX::drawObjects(VkCommandBuffer commandBuffer, VkPipeline& pipeline)
+{
+	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 	for (size_t modelIndex = 0; modelIndex < models.size(); ++modelIndex) {
 		for (size_t meshIndex = 0; meshIndex < models[modelIndex].meshes.size(); ++meshIndex) {
 			const Mesh& mesh = models[modelIndex].meshes[meshIndex];
 			const Material& material = models[modelIndex].materials[meshIndex];
 			const VkDescriptorSet& meshDescriptorSet = meshDescriptorSets[modelIndex][meshIndex][currentFrame];
 
-			if (material.diffuseTexture) {
-				addTextureToDescriptorSet(
-					material.diffuseTexture,
-					meshDescriptorSet, 2
-				);
-			}
-			else {
-				addTextureToDescriptorSet(
-					dummyTexture,
-					meshDescriptorSet, 2
-				);
-			}
-			if (material.emissiveTexture) {
-				addTextureToDescriptorSet(
-					material.emissiveTexture,
-					meshDescriptorSet, 3
-				);
-			}
-			else {
-				addTextureToDescriptorSet(
-					dummyTexture,
-					meshDescriptorSet, 3
-				);
-			}
+			addTextureToDescriptorSetIfExist(material.diffuseTexture, meshDescriptorSet, 2);
+			addTextureToDescriptorSetIfExist(material.emissiveTexture, meshDescriptorSet, 3);
 
 			if (models[modelIndex].meshes[meshIndex].bones.size() > 0) {
 				// adding bone data
@@ -621,7 +661,7 @@ void VulkanAndRTX::recordCommandBuffer(
 			// Bind per-mesh descriptor set
 			vkCmdBindDescriptorSets(
 				commandBuffer,
-				VK_PIPELINE_BIND_POINT_GRAPHICS, 
+				VK_PIPELINE_BIND_POINT_GRAPHICS,
 				pipelineLayout,
 				0, 1, &meshDescriptorSet,
 				0, nullptr
@@ -629,38 +669,6 @@ void VulkanAndRTX::recordCommandBuffer(
 
 			drawMesh(commandBuffer, mesh);
 		}
-	}
-
-	//ImGui_ImplVulkan_RenderDrawData(draw_data, commandBuffers[currentFrame]);
-
-	//vkCmdEndRenderPass(commandBuffer);
-
-	// Render NoesisGUI
-	//VkRenderPassBeginInfo noesisRenderPassInfo = {};
-	//noesisRenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	//noesisRenderPassInfo.renderPass = noesisRenderPass;
-	//noesisRenderPassInfo.framebuffer = swapChainFramebuffers[imageIndex];
-	//noesisRenderPassInfo.renderArea.offset = { 0, 0 };
-	//noesisRenderPassInfo.renderArea.extent = swapChainExtent;
-
-	//vkCmdBeginRenderPass(commandBuffer, &noesisRenderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-	//vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["noesis"]);
-	//NoesisApp::VKFactory::RecordingInfo recordingInfo{};
-	//recordingInfo.commandBuffer = commandBuffers[currentFrame];
-	//NoesisApp::VKFactory::SetCommandBuffer(noesisRenderDevice, recordingInfo);
-	//	
-	//noesisView->Update(deltaTime);
-	////noesisRenderDevice->BeginOnscreenRender();
-	//noesisView->GetRenderer()->UpdateRenderTree();
-	//noesisView->GetRenderer()->RenderOffscreen();
-	//noesisView->GetRenderer()->Render();
-	////noesisRenderDevice->EndOnscreenRender();
-
-	vkCmdEndRenderPass(commandBuffer);
-
-	if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
-		throw std::runtime_error("failed to record command buffer!");
 	}
 }
 
@@ -800,6 +808,24 @@ void VulkanAndRTX::addTextureToDescriptorSet(
 	descriptorWrite.pImageInfo = &imageInfo;
 
 	vkUpdateDescriptorSets(vkInit.device, 1, &descriptorWrite, 0, nullptr);
+}
+void VulkanAndRTX::addTextureToDescriptorSetIfExist(
+	const Texture& texture,
+	VkDescriptorSet descriptorSet, uint32_t dstBinding
+) const
+{
+	if (texture) {
+		addTextureToDescriptorSet(
+			texture,
+			descriptorSet, dstBinding
+		);
+	}
+	else {
+		addTextureToDescriptorSet(
+			dummyTexture,
+			descriptorSet, dstBinding
+		);
+	}
 }
 void VulkanAndRTX::addBufferToDescriptorSet(
 	VkDescriptorSet descriptorSet, VkBuffer buffer,

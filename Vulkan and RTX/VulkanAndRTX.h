@@ -75,9 +75,9 @@ private:
 	Noesis::Ptr<Noesis::RenderDevice> noesisRenderDevice;
 
 	ImGui_ImplVulkanH_Window* vulkanWindow;
+	ImGuiIO io;
 	double lastMousePosX, lastMousePosY;
 
-	ImGuiIO io;
 	int puzzleInput = 0;
 	bool puzzleGenerated = false;
 	int puzzleAnswer = 0;
@@ -128,6 +128,7 @@ public:
 private:
 	void createGLFWWindow();
 	void initializeNoesisGUI();
+	void setXamlTheme(const std::string& themePath);
 
 	void setupImguiWindow(ImGui_ImplVulkanH_Window* wd, VkSurfaceKHR surface, 
 		size_t width, size_t height);
@@ -239,6 +240,10 @@ private:
 		const Texture& texture,
 		VkDescriptorSet descriptorSet, uint32_t dstBinding
 	) const;
+	void addTextureToDescriptorSetIfExist(
+		const Texture& texture,
+		VkDescriptorSet descriptorSet, uint32_t dstBinding
+	) const;
 	void addBufferToDescriptorSet(
 		VkDescriptorSet descriptorSet, VkBuffer buffer,
 		VkDescriptorType descriptorType,
@@ -250,16 +255,18 @@ private:
 
 	void updateShaderBuffers(uint32_t currentImage, float timeSinceLaunch);
 	// Creating frames for presentation
-	void drawFrame(double timeSinceLaunch, double deltaTime, ImDrawData* draw_data);
+	void drawFrame(double timeSinceLaunch, double deltaTime/*, ImDrawData* draw_data*/);
 
 	// create multiple command buffers
 	void createCommandBuffers();
 	// record commands to the command buffer
 	void recordCommandBuffer(
 		VkCommandBuffer commandBuffer, uint32_t imageIndex,
-		double timeSinceLaunch, double deltaTime,
-		ImDrawData* draw_data
+		double timeSinceLaunch, double deltaTime/*,
+		ImDrawData* draw_data*/
 	);
+	void drawSky(VkCommandBuffer commandBuffer, VkPipeline& pipeline);
+	void drawObjects(VkCommandBuffer commandBuffer, VkPipeline& pipeline);
 
 	// creating swap chain with the best properties for current device
 	void createSwapChain();
@@ -287,6 +294,7 @@ private:
 		const std::string& vertexShader, const std::string& fragmentShader,
 		const VkRenderPass& renderPass
 	);
+	void createPipelines();
 
 	// for specific queue family
 	void createCommandPool();

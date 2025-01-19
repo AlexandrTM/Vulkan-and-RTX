@@ -11,9 +11,9 @@ void VulkanAndRTX::run()
 	vkInit.initializeVulkan(window);
 	prepareResources();
 	vulkanWindow = &g_MainWindowData;
-	setupImguiWindow(vulkanWindow, vkInit.surface, windowWidth, windowHeight);
-	setupImGui();
-	initializeNoesisGUI();
+	//setupImguiWindow(vulkanWindow, vkInit.surface, windowWidth, windowHeight);
+	//setupImGui();
+	//initializeNoesisGUI();
 	mainLoop();
 	cleanupMemory();
 }
@@ -72,8 +72,6 @@ void VulkanAndRTX::createGLFWWindow()
 }
 void VulkanAndRTX::initializeNoesisGUI()
 {
-	Noesis::GUI::Init();
-
 #ifdef NDEBUG
 	Noesis::SetLogHandler(
 		[](const char* file, uint32_t line, uint32_t level, const char* channel, const char* message) {
@@ -82,14 +80,38 @@ void VulkanAndRTX::initializeNoesisGUI()
 	);
 	Noesis::SetErrorHandler(
 		[](const char* file, uint32_t line, const char* message, bool fatal) {
-		printf("[%s:%u] %s: %s\n", file, line, message, fatal ? "true" : "false");
+			printf("[%s:%u] %s: %s\n", file, line, message, fatal ? "true" : "false");
 		}
 	);
 #endif
 
-	std::string xamlRootPath = std::filesystem::current_path().string();
-	Noesis::Ptr<NoesisApp::LocalXamlProvider> xamlProvider = *new NoesisApp::LocalXamlProvider(xamlRootPath.c_str());
+	//Noesis::GUI::SetLicense(NS_LICENSE_NAME, NS_LICENSE_KEY);
+	Noesis::GUI::Init();
+
+	std::string currentPath = std::filesystem::current_path().string();
+	std::string xamlRootPath = currentPath + "/xaml";
+	std::string fontsRootPath = currentPath + "/fonts";
+	std::string texturesRootPath = currentPath + "/textures";
+
+	Noesis::Ptr<NoesisApp::LocalXamlProvider> xamlProvider =
+		*new NoesisApp::LocalXamlProvider(xamlRootPath.c_str());
+	Noesis::Ptr<NoesisApp::LocalFontProvider> fontProvider =
+		*new NoesisApp::LocalFontProvider(fontsRootPath.c_str());
+	Noesis::Ptr<NoesisApp::LocalTextureProvider> textureProvider =
+		*new NoesisApp::LocalTextureProvider(texturesRootPath.c_str());
+
 	Noesis::GUI::SetXamlProvider(xamlProvider);
+	Noesis::GUI::SetFontProvider(fontProvider);
+	Noesis::GUI::SetTextureProvider(textureProvider);
+
+	//Noesis::GUI::SetFontProvider(Noesis::MakePtr<NoesisApp::LocalFontProvider>("./fonts"));
+	/*Noesis::GUI::SetXamlProvider(Noesis::MakePtr<NoesisApp::LocalXamlProvider>("."));
+	Noesis::GUI::SetFontProvider(Noesis::MakePtr<NoesisApp::LocalFontProvider>("."));
+	Noesis::GUI::SetTextureProvider(Noesis::MakePtr<NoesisApp::LocalTextureProvider>("."));
+
+	Noesis::GUI::LoadApplicationResources(NoesisApp::Theme::DarkBlue());*/
+
+	//Noesis::GUI::LoadApplicationResources("themes/NoesisTheme.DarkBlue.xaml");
 
 	NoesisApp::VKFactory::InstanceInfo instanceInfo{};
 	instanceInfo.instance = vkInit.instance;
@@ -111,21 +133,39 @@ void VulkanAndRTX::initializeNoesisGUI()
 
     // Load your XAML file
     Noesis::Ptr<Noesis::FrameworkElement> xamlElement = Noesis::GUI::LoadXaml
-		<Noesis::FrameworkElement>(Noesis::Uri("UI/MainMenu.xaml"));
+		<Noesis::FrameworkElement>(Noesis::Uri("MainMenu.xaml"));
 	if (!xamlElement) {
 		throw std::runtime_error("Failed to load XAML file");
 	}
-	
+
 	// Create a renderer for the XAML element
 	noesisView = Noesis::GUI::CreateView(xamlElement);
 	if (!noesisView) {
 		throw std::runtime_error("Failed to create Noesis renderer");
 	}
 
-	noesisView->SetSize(swapChainExtent.width, swapChainExtent.height);
-
-    // Attach the render device to the renderer
 	noesisView->GetRenderer()->Init(noesisRenderDevice);
+	noesisView->SetSize(swapChainExtent.width, swapChainExtent.height);
+    // Attach the render device to the renderer
+
+	//setXamlTheme("../themes/NoesisTheme.DarkBlue.xaml");
+}
+void VulkanAndRTX::setXamlTheme(const std::string& themePath)
+{
+	Noesis::Ptr<Noesis::ResourceDictionary> theme =
+		Noesis::GUI::LoadXaml<Noesis::ResourceDictionary>(Noesis::Uri(themePath.c_str()));
+
+	if (!theme) {
+		throw std::runtime_error("Failed to load theme: " + themePath);
+	}
+
+	// Update the merged dictionaries
+	auto mergedDictionaries = noesisView->GetContent()->GetResources()->GetMergedDictionaries();
+	mergedDictionaries->Clear();
+	mergedDictionaries->Add(theme);
+
+	// Force a UI update
+	noesisView->GetRenderer()->UpdateRenderTree();
 }
 
 void VulkanAndRTX::setupImGui() {
@@ -220,26 +260,8 @@ void VulkanAndRTX::prepareResources()
 	//deltaTime = std::chrono::duration<double, std::chrono::seconds::period>(currentTime - previousTime).count();
 	//std::cout << "time to create gpp: " << deltaTime << "\n";
 	
-	createSwapChain();
-	createSwapChainImageViews();
-	createObjectRenderPass(objectRenderPass);
-	createGUIRenderPass(noesisRenderPass);
 	createDescriptorSetLayout(descriptorSetLayout);
-	createGraphicsPipeline(
-		PIPELINE_TYPE_OBJECT,
-		"object", "shaders/object.vert.spv", "shaders/object.frag.spv",
-		objectRenderPass
-	);
-	createGraphicsPipeline(
-		PIPELINE_TYPE_SKY,
-		"sky", "shaders/sky.vert.spv", "shaders/sky.frag.spv",
-		objectRenderPass
-	);
-	createGraphicsPipeline(
-		PIPELINE_TYPE_GUI,
-		"noesis", "shaders/noesis.vert.spv", "shaders/noesis.frag.spv",
-		noesisRenderPass
-	);
+	createPipelines();
 	createCommandPool();
 	createColorTexture(msaaTexture);
 	createDepthTexture(depthTexture);
@@ -247,7 +269,7 @@ void VulkanAndRTX::prepareResources()
 
 	createTextureFromPath("textures/grass001.png", grassTexture);
 	createDummyTexture({ 0, 0, 0, 255 }, dummyTexture);
-
+	
 	TerrainData terrainData = {
 		100, 100, // chunkWidth, chunkLength
 		4, 4,     // chunkRows, chunkCols
@@ -305,7 +327,6 @@ void VulkanAndRTX::mainLoop()
 	float fps = 0;
 	bool fpsMenu = false;
 	while (!glfwWindowShouldClose(window)) {
-		// accurate time measurement for synchronization
 		currentTime = std::chrono::high_resolution_clock::now();
 		deltaTime = std::chrono::duration<double, std::chrono::seconds::period>(currentTime - previousTime).count();
 		previousTime = currentTime;
@@ -319,11 +340,12 @@ void VulkanAndRTX::mainLoop()
 		}
 		//restrictCharacterMovement(character.camera);
 
-		// Start the ImGui frame
+		// ImGui
+		/*// Start the ImGui frame
 		ImGui_ImplVulkan_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
 		ImGui::NewFrame();
-		
+
 		// fps meter
 		{
 			counter++;
@@ -345,7 +367,7 @@ void VulkanAndRTX::mainLoop()
 			ImGui::PopStyleColor(); // Pop color style
 			ImGui::End();
 		}
-		
+			
 		// interaction menu
 		{
 			if (character.currentInteractingVolume && character.currentInteractingVolume->isOpen) {
@@ -393,8 +415,9 @@ void VulkanAndRTX::mainLoop()
 		}
 
 		ImGui::Render();
-		ImDrawData* draw_data = ImGui::GetDrawData();
-		drawFrame(timeSinceLaunch, deltaTime, draw_data);
+		ImDrawData* draw_data = ImGui::GetDrawData();*/
+
+		drawFrame(timeSinceLaunch, deltaTime/*, draw_data*/);
 	}
 
 	vkDeviceWaitIdle(vkInit.device);
@@ -471,7 +494,7 @@ void VulkanAndRTX::cleanupMemory()
 	}
 	Noesis::GUI::Shutdown();
 
-	cleanupImGui();
+	//cleanupImGui();
 
 	cleanupModels();
 	cleanupTexture(grassTexture);

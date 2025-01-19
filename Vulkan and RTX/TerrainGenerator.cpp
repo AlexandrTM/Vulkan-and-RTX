@@ -36,7 +36,7 @@ std::vector<std::vector<float>> TerrainGenerator::generateDiamondHeightMap(
 void TerrainGenerator::generateTerrain(
     float startX, float startY, float startZ,
     const TerrainData& terrainData,
-    std::vector<Model>& models, Texture& grassTexture, float metricTextureSize,
+    std::vector<Model>& models, Texture& terrainTexture, float metricTextureSize,
     TerrainGenerator* terrainGenerator, size_t seed
 ) {
     Model model;
@@ -61,9 +61,9 @@ void TerrainGenerator::generateTerrain(
 
             model.meshes.push_back(mesh);
             Material material{};
-            material.diffuseTexture = grassTexture;
+            material.diffuseTexture = terrainTexture;
             model.materials.push_back(material);
-            model.checkCollision = true;
+            model.isCollidable = true;
         }
     }
 

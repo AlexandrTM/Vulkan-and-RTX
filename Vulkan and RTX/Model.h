@@ -110,7 +110,7 @@ struct Model {
 
     std::vector<Animation>                  animations;
 
-    bool                                    checkCollision = false;
+    bool                                    isCollidable = false;
     bool                                    isLoaded = false;  // Dynamic loading flag
 };
 

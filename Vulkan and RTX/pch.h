@@ -13,6 +13,9 @@
 #include "imgui_impl_vulkan.h"
 #endif
 
+#include <QtWidgets/qapplication.h>
+#include <QtWidgets/qabstractbutton.h>
+
 #define GLM_ENABLE_EXPERIMENTAL
 #include <gtx/hash.hpp>
 #include <gtx/string_cast.hpp>

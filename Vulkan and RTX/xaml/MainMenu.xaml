@@ -1,0 +1,8 @@
+<Grid
+  xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
+    <StackPanel VerticalAlignment="Center" Width="200" TextElement.FontSize="25">
+      <TextBlock Text="Foreground" FontFamily="../fonts/#LCDMono2" TextAlignment="Center" Margin="4" Foreground="#FF3298B5"/>
+      <TextBlock Text="Background" FontFamily="../fonts/#LCDMono2" TextAlignment="Center" Margin="3" Padding="1" Background="#FF11FF00" Foreground="#FFFFFFFF"/>
+    </StackPanel>
+</Grid>

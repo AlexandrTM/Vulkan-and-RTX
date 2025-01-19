@@ -239,10 +239,11 @@ bool Character::checkCollisionWithModel(
 	glm::vec3& surfaceNormal
 ) const
 {
-	for (size_t i = 0; i < model.meshes.size(); i++) {
-		if (model.checkCollision && 
-			checkCollisionWithMesh(model.meshes[i], cameraPosition, surfaceNormal)) {
-			return true;
+	if (model.isCollidable) {
+		for (size_t i = 0; i < model.meshes.size(); i++) {
+			if (checkCollisionWithMesh(model.meshes[i], cameraPosition, surfaceNormal)) {
+				return true;
+			}
 		}
 	}
 	return false;

@@ -33,7 +33,7 @@ public:
     static void generateTerrain(
         float startX, float startY, float startZ,
         const TerrainData& terrainData,
-        std::vector<Model>& models, Texture& grassTexture, float metricTextureSize,
+        std::vector<Model>& models, Texture& terrainTexture, float metricTextureSize,
         TerrainGenerator* terrainGenerator, size_t seed
     );
 

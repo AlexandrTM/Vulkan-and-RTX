@@ -119,25 +119,7 @@ void VulkanAndRTX::recreateSwapChain()
 
 	cleanupSwapChain();
 
-	createSwapChain();
-	createSwapChainImageViews();
-	createObjectRenderPass(objectRenderPass);
-	createGUIRenderPass(noesisRenderPass);
-	createGraphicsPipeline(
-		PIPELINE_TYPE_OBJECT,
-		"object", "shaders/object.vert.spv", "shaders/object.frag.spv",
-		objectRenderPass
-	);
-	createGraphicsPipeline(
-		PIPELINE_TYPE_OBJECT,
-		"sky", "shaders/sky.vert.spv", "shaders/sky.frag.spv",
-		objectRenderPass
-	);
-	createGraphicsPipeline(
-		PIPELINE_TYPE_GUI,
-		"noesis", "shaders/noesis.vert.spv", "shaders/noesis.frag.spv",
-		noesisRenderPass
-	);
+	createPipelines();
 	createColorTexture(msaaTexture);
 	createDepthTexture(depthTexture);
 	createSwapChainFramebuffers();
