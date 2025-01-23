@@ -119,16 +119,16 @@ void VulkanAndRTX::recreateSwapChain()
 
 	cleanupSwapChain();
 
-	createPipelines();
+	createPipelinesAndSwapchain();
 	createColorTexture(msaaTexture);
 	createDepthTexture(depthTexture);
 	createSwapChainFramebuffers();
 	createCommandBuffers();
 	createDescriptorPool();
-	createSkyUniformBuffers(MAX_FRAMES_IN_FLIGHT);
-	createSkyDescriptorSets(MAX_FRAMES_IN_FLIGHT);
-	createMeshShaderBuffers(MAX_FRAMES_IN_FLIGHT);
-	createMeshDescriptorSets(MAX_FRAMES_IN_FLIGHT);
+	createShaderBuffers(sky, MAX_FRAMES_IN_FLIGHT);
+	createShaderBuffers(models, MAX_FRAMES_IN_FLIGHT);
+	createDescriptorSets(sky, MAX_FRAMES_IN_FLIGHT);
+	createDescriptorSets(models, MAX_FRAMES_IN_FLIGHT);
 }
 
 void VulkanAndRTX::cleanupSwapChain()
@@ -144,6 +144,7 @@ void VulkanAndRTX::cleanupSwapChain()
 		vkDestroyPipeline(vkInit.device, pipeline.second, nullptr);
 	}
 	vkDestroyPipelineLayout(vkInit.device, pipelineLayout, nullptr);
+
 	vkDestroyRenderPass(vkInit.device, objectRenderPass, nullptr);
 
 	for (size_t i = 0; i < swapChainImageViews.size(); i++) {

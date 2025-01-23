@@ -10,7 +10,7 @@ void VulkanAndRTX::run()
 	character.initializeInputHandler(window);
 	vkInit.initializeVulkan(window);
 	prepareResources();
-	vulkanWindow = &g_MainWindowData;
+	//vulkanWindow = &g_MainWindowData;
 	//setupImguiWindow(vulkanWindow, vkInit.surface, windowWidth, windowHeight);
 	//setupImGui();
 	//initializeNoesisGUI();
@@ -247,7 +247,7 @@ void VulkanAndRTX::framebufferResizeCallback(GLFWwindow* window, int width, int 
 	auto app = reinterpret_cast<VulkanAndRTX*>(glfwGetWindowUserPointer(window));
 	app->framebufferResized = true;
 	character.camera.setViewportSize(width, height);
-	noesisView->SetSize(width, height);
+	//noesisView->SetSize(width, height);
 }
 
 void VulkanAndRTX::prepareResources()
@@ -256,12 +256,14 @@ void VulkanAndRTX::prepareResources()
 	//float deltaTime;
 	//std::chrono::high_resolution_clock::time_point previousTime = std::chrono::high_resolution_clock::now();
 	
-	//currentTime = std::chrono::high_resolution_clock::now();
-	//deltaTime = std::chrono::duration<double, std::chrono::seconds::period>(currentTime - previousTime).count();
-	//std::cout << "time to create gpp: " << deltaTime << "\n";
+	/*currentTime = std::chrono::high_resolution_clock::now();
+	deltaTime = std::chrono::duration<double, std::chrono::seconds::period>(currentTime - previousTime).count();
+	if (deltaTime > 0.00001) {
+		std::cout << "time to create gpp: " << deltaTime << "\n";
+	}*/
 	
 	createDescriptorSetLayout(descriptorSetLayout);
-	createPipelines();
+	createPipelinesAndSwapchain();
 	createCommandPool();
 	createColorTexture(msaaTexture);
 	createDepthTexture(depthTexture);
@@ -287,7 +289,7 @@ void VulkanAndRTX::prepareResources()
 		terrainGenerator.get(), 1
 	);
 
-	// loadModelsFromDirectory("models", models);
+	loadModelsFromDirectory("models", models);
 
 	createSkyModel(sky);
 
@@ -306,10 +308,10 @@ void VulkanAndRTX::prepareResources()
 
 	createDescriptorPool();
 
-	createSkyUniformBuffers(MAX_FRAMES_IN_FLIGHT);
-	createMeshShaderBuffers(MAX_FRAMES_IN_FLIGHT);
-	createSkyDescriptorSets(MAX_FRAMES_IN_FLIGHT);
-	createMeshDescriptorSets(MAX_FRAMES_IN_FLIGHT);
+	createShaderBuffers(sky, MAX_FRAMES_IN_FLIGHT);
+	createShaderBuffers(models, MAX_FRAMES_IN_FLIGHT);
+	createDescriptorSets(sky, MAX_FRAMES_IN_FLIGHT);
+	createDescriptorSets(models, MAX_FRAMES_IN_FLIGHT);
 
 	createCommandBuffers();
 	createSyncObjects();
@@ -322,7 +324,7 @@ void VulkanAndRTX::mainLoop()
 	double deltaTime;
 	double timeSinceLaunch = 0.0f;
 	
-	int counter = 0;
+	uint32_t counter = 0;
 	float accumulator = 0;
 	float fps = 0;
 	bool fpsMenu = false;
@@ -336,10 +338,11 @@ void VulkanAndRTX::mainLoop()
 		if (!character.currentInteractingVolume) {
 			character.handleKeyInput(
 				deltaTime, 
-				gravity, models);
+				gravity, models
+			);
 		}
 		//restrictCharacterMovement(character.camera);
-
+		
 		// ImGui
 		/*// Start the ImGui frame
 		ImGui_ImplVulkan_NewFrame();
@@ -441,16 +444,26 @@ void VulkanAndRTX::cleanupModels()
 }
 void VulkanAndRTX::cleanupModel(Model& model) const
 {
-	for (size_t i = 0; i < model.meshes.size(); i++) {
-		vkDestroyBuffer(vkInit.device, model.meshes[i].indexBuffer, nullptr);
-		vkFreeMemory(vkInit.device, model.meshes[i].indexBufferMemory, nullptr);
+	for (Mesh& mesh : model.meshes) {
+		vkDestroyBuffer(vkInit.device, mesh.indexBuffer, nullptr);
+		vkFreeMemory(vkInit.device, mesh.indexBufferMemory, nullptr);
 
-		vkDestroyBuffer(vkInit.device, model.meshes[i].vertexBuffer, nullptr);
-		vkFreeMemory(vkInit.device, model.meshes[i].vertexBufferMemory, nullptr);
+		vkDestroyBuffer(vkInit.device, mesh.vertexBuffer, nullptr);
+		vkFreeMemory(vkInit.device, mesh.vertexBufferMemory, nullptr);
+
+		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+			vkDestroyBuffer(vkInit.device, mesh.UBOBuffers[i], nullptr);
+			vkFreeMemory(vkInit.device, mesh.UBOBuffersMemory[i], nullptr);
+
+			if (mesh.bones.size() > 0) {
+				vkDestroyBuffer(vkInit.device, mesh.boneSSBOBuffers[i], nullptr);
+				vkFreeMemory(vkInit.device, mesh.boneSSBOBuffersMemory[i], nullptr);
+			}
+		}
 	}
-	for (size_t i = 0; i < model.materials.size(); i++)
+	for (Material& material : model.materials)
 	{
-		// cleanupMaterial(model.materials[i]);
+		// cleanupMaterial(material);
 	}
 }
 void VulkanAndRTX::cleanupMaterial(Material& material) const
@@ -485,7 +498,7 @@ void VulkanAndRTX::cleanupMemory()
 	/*if (noesisRenderer) {
 		noesisRenderer->Shutdown();
 		noesisRenderer.Reset();
-	}*/
+	}
 	if (noesisView) {
 		noesisView.Reset();
 	}
@@ -494,18 +507,13 @@ void VulkanAndRTX::cleanupMemory()
 	}
 	Noesis::GUI::Shutdown();
 
-	//cleanupImGui();
+	cleanupImGui();*/
 
 	cleanupModels();
 	cleanupTexture(grassTexture);
 	cleanupTexture(dummyTexture);
 
 	cleanupSwapChain();
-
-	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-		vkDestroyBuffer(vkInit.device, skyUniformBuffers[i], nullptr);
-		vkFreeMemory(vkInit.device, skyUniformBuffersMemory[i], nullptr);
-	}
 
 	// will free all allocated descriptor sets from this pool
 	vkDestroyDescriptorPool(vkInit.device, descriptorPool, nullptr);
@@ -574,7 +582,7 @@ void VulkanAndRTX::restrictCharacterMovement(Camera& camera)
 	}
 }
 
-std::string VulkanAndRTX::createPuzzleEquation(std::string name, int& answer)
+std::string VulkanAndRTX::createPuzzleEquation(std::string name, int32_t& answer)
 {
 	std::stringstream puzzleEquation;
 

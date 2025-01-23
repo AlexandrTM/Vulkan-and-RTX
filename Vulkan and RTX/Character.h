@@ -14,7 +14,7 @@ typedef enum Gamemode {
 class Character
 {
 private:
-	double sensitivity = 0.125;
+	double mouseSensitivity = 0.125;
 	bool keys[1024] = { 0 };
 
 	Cuboid aabb = { glm::vec3(-0.3, -1.45, -0.3), glm::vec3(0.3, 0.25, 0.3) };
@@ -42,17 +42,17 @@ public:
 		float deltaTime,
 		float gravity, const std::vector<Model>& models
 	);
-	bool checkCollisionWithMesh(
+	bool checkCollision(
 		const Mesh& mesh,
 		const glm::vec3& cameraPosition,
 		glm::vec3& surfaceNormal
 	) const;
-	bool checkCollisionWithModel(
+	bool checkCollision(
 		const Model& model,
 		const glm::vec3& cameraPosition,
 		glm::vec3& surfaceNormal
 	) const;
-	bool checkCollisionWithModels(
+	bool checkCollision(
 		const std::vector<Model>& models,
 		const glm::vec3& cameraPosition,
 		glm::vec3& surfaceNormal

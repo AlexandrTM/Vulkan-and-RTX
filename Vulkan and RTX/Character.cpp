@@ -45,11 +45,11 @@ void Character::keyCallback(GLFWwindow* window, int key, int scancode, int actio
 	// altering mouse sensitivity
 	if (key == GLFW_KEY_UP && action == GLFW_PRESS)
 	{
-		sensitivity = std::clamp(sensitivity * 1.3, 0.001, 10.0);
+		mouseSensitivity = std::clamp(mouseSensitivity * 1.3, 0.001, 10.0);
 	}
 	if (key == GLFW_KEY_DOWN && action == GLFW_PRESS)
 	{
-		sensitivity = std::clamp(sensitivity * 0.75, 0.001, 10.0);
+		mouseSensitivity = std::clamp(mouseSensitivity * 0.75, 0.001, 10.0);
 	}
 
 	if (key == GLFW_KEY_F && action == GLFW_RELEASE) {
@@ -93,13 +93,13 @@ void Character::mouseButtonCallback(GLFWwindow* window, int button, int action, 
 	if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) 
 	{
 		camera.setVerticalFov(60.0f);
-		sensitivity = 0.125;
+		mouseSensitivity = 0.125;
 	}
 }
 void Character::mouseCallback(GLFWwindow* window, double xpos, double ypos)
 {
 	if (!currentInteractingVolume) {
-		camera.rotate(xpos, ypos, sensitivity);
+		camera.rotate(xpos, ypos, mouseSensitivity);
 	}
 }
 // mouse wheel handling
@@ -119,7 +119,7 @@ void Character::handleKeyInput(
 	
 	glm::vec3 verticalWorldAxis = camera.getVerticalWorldAxis();
 	glm::vec3 cameraDirection = camera.getDirection();
-	glm::vec3 position = camera.getLookFrom();
+	glm::vec3 cameraPosition = camera.getLookFrom();
 	glm::vec3 rightVector = glm::normalize(glm::cross(cameraDirection, verticalWorldAxis));
 
 	if (keys[GLFW_KEY_LEFT_CONTROL]) {
@@ -143,7 +143,7 @@ void Character::handleKeyInput(
 		horizontalDisplacement += rightVector * movementSpeed;
 	}
 	if (keys[GLFW_KEY_SPACE]) {
-		if (gamemode == GAMEMODE_SURVIVAL && isOnGround) {
+		if (isOnGround && gamemode == GAMEMODE_SURVIVAL) {
 			velocity.y = jumpSpeed;
 			isOnGround = false;
 		}
@@ -164,7 +164,7 @@ void Character::handleKeyInput(
 
 	glm::vec3 surfaceNormal;
 	// horizontal check
-	if (checkCollisionWithModels(models, position + horizontalDisplacement, surfaceNormal)) {
+	if (checkCollision(models, cameraPosition + horizontalDisplacement, surfaceNormal)) {
 		float slopeAngle = glm::degrees(glm::acos(glm::dot(surfaceNormal, verticalWorldAxis)));
 
 		if (slopeAngle <= maxSlopeAngle) {
@@ -173,7 +173,7 @@ void Character::handleKeyInput(
 			horizontalDisplacement -= slopeAdjustment;
 
 			// slight vertical correction, to not get stuck in ground
-			// position.y += std::abs(slopeAdjustment.y * 0.01f);
+			// cameraPosition.y += std::abs(slopeAdjustment.y * 0.01f);
 		}
 		else {
 			// Too steep, restrict movement
@@ -187,7 +187,7 @@ void Character::handleKeyInput(
 	}
 
 	// vertical check
-	if (checkCollisionWithModels(models, position + verticalDisplacement, surfaceNormal)) {
+	if (checkCollision(models, cameraPosition + verticalDisplacement, surfaceNormal)) {
 		velocity.y = 0.0f;
 		isOnGround = true;
 		verticalDisplacement = glm::vec3(0.0f);
@@ -196,24 +196,29 @@ void Character::handleKeyInput(
 		isOnGround = false;
 	}
 
-	position += verticalDisplacement;
-	position += horizontalDisplacement;
+	cameraPosition += verticalDisplacement;
+	cameraPosition += horizontalDisplacement;
 
-	camera.setLookFrom(position);
+	camera.setLookFrom(cameraPosition);
 }
 
+glm::vec3 characterBoxMin{};
+glm::vec3 characterBoxMax{};
 
-bool Character::checkCollisionWithMesh(
+glm::vec3 meshBoxMin{};
+glm::vec3 meshBoxMax{};
+
+bool Character::checkCollision(
 	const Mesh& mesh, 
 	const glm::vec3& cameraPosition, 
 	glm::vec3& surfaceNormal
 ) const
 {
-	glm::vec3 characterBoxMin = cameraPosition + aabb.min;
-	glm::vec3 characterBoxMax = cameraPosition + aabb.max;
+	characterBoxMin = cameraPosition + aabb.min;
+	characterBoxMax = cameraPosition + aabb.max;
 
-	glm::vec3 meshBoxMin = mesh.aabb.min;
-	glm::vec3 meshBoxMax = mesh.aabb.max;
+	meshBoxMin = mesh.aabb.min;
+	meshBoxMax = mesh.aabb.max;
 
 	// Cuboid characterAABB = { mesh.aabb.min, mesh.aabb.max };
 	// Cuboid meshAABB = { cameraPosition + aabb.min, cameraPosition + aabb.max };
@@ -233,7 +238,7 @@ bool Character::checkCollisionWithMesh(
 	}
 	return false;
 }
-bool Character::checkCollisionWithModel(
+bool Character::checkCollision(
 	const Model& model, 
 	const glm::vec3& cameraPosition, 
 	glm::vec3& surfaceNormal
@@ -241,21 +246,21 @@ bool Character::checkCollisionWithModel(
 {
 	if (model.isCollidable) {
 		for (size_t i = 0; i < model.meshes.size(); i++) {
-			if (checkCollisionWithMesh(model.meshes[i], cameraPosition, surfaceNormal)) {
+			if (checkCollision(model.meshes[i], cameraPosition, surfaceNormal)) {
 				return true;
 			}
 		}
 	}
 	return false;
 }
-bool Character::checkCollisionWithModels(
+bool Character::checkCollision(
 	const std::vector<Model>& models, 
 	const glm::vec3& cameraPosition, 
 	glm::vec3& surfaceNormal
 ) const
 {
 	for (size_t i = 0; i < models.size(); i++) {
-		if (checkCollisionWithModel(models[i], cameraPosition, surfaceNormal)) {
+		if (checkCollision(models[i], cameraPosition, surfaceNormal)) {
 			return true;
 		}
 	}

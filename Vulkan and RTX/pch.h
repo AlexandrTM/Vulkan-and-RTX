@@ -14,7 +14,9 @@
 #endif
 
 #include <QtWidgets/qapplication.h>
-#include <QtWidgets/qabstractbutton.h>
+#include <QtWidgets/qpushbutton.h>
+#include <QtWidgets/qmainwindow.h>
+#include <QtWidgets/qwidget.h>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <gtx/hash.hpp>

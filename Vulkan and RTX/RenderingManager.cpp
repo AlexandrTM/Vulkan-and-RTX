@@ -385,12 +385,12 @@ void VulkanAndRTX::createGraphicsPipeline(
 	vkDestroyShaderModule(vkInit.device, vertShaderModule, nullptr);
 }
 
-void VulkanAndRTX::createPipelines()
+void VulkanAndRTX::createPipelinesAndSwapchain()
 {
 	createSwapChain();
 	createSwapChainImageViews();
 	createObjectRenderPass(objectRenderPass);
-	createGUIRenderPass(noesisRenderPass);
+	// createGUIRenderPass(noesisRenderPass);
 	createGraphicsPipeline(
 		PIPELINE_TYPE_OBJECT,
 		"object", "shaders/object.vert.spv", "shaders/object.frag.spv",
@@ -506,17 +506,14 @@ void VulkanAndRTX::updateShaderBuffers(uint32_t currentImage, float timeSinceLau
 	skyUBO.observer = character.camera.getLookFrom();
 
 	void* data;
-	vkMapMemory(vkInit.device, skyUniformBuffersMemory[currentImage],
+	vkMapMemory(vkInit.device, sky.meshes[0].UBOBuffersMemory[currentImage],
 		0, sizeof(UniformBufferObject), 0, &data);
 	memcpy(data, &skyUBO, sizeof(UniformBufferObject));
-	vkUnmapMemory(vkInit.device, skyUniformBuffersMemory[currentImage]);
+	vkUnmapMemory(vkInit.device, sky.meshes[0].UBOBuffersMemory[currentImage]);
 
 	// Update per-mesh shader buffers
-	for (size_t modelIndex = 0; modelIndex < models.size(); ++modelIndex) {
-		Model& model = models[modelIndex];
-
-		for (size_t meshIndex = 0; meshIndex < model.meshes.size(); ++meshIndex) {
-			Mesh& mesh = model.meshes[meshIndex];
+	for (Model& model : models) {
+		for (Mesh& mesh : model.meshes) {
 
 			// update bones
 			if (mesh.bones.size() > 0) {
@@ -524,23 +521,17 @@ void VulkanAndRTX::updateShaderBuffers(uint32_t currentImage, float timeSinceLau
 					boneSSBO.boneTransforms[i] = mesh.bones[i].finalTransform;
 					//std::cout << glm::to_string(boneUBO.boneTransforms[i]) << "\n";
 				}
-			}
-			else {
-				for (size_t i = 0; i < mesh.bones.size(); i++) {
-					boneSSBO.boneTransforms[i] = glm::mat4(1.0);
-				}
-			}
 
-			vkMapMemory(vkInit.device, boneUniformBuffersMemory[modelIndex][meshIndex][currentImage],
-						0, sizeof(glm::mat4) * BONES_NUM, 0, &data);
-			memcpy(data, boneSSBO.boneTransforms.data(), sizeof(glm::mat4) * BONES_NUM);
+				vkMapMemory(vkInit.device, mesh.boneSSBOBuffersMemory[currentImage],
+					0, sizeof(glm::mat4)* BONES_NUM, 0, &data);
+				memcpy(data, boneSSBO.boneTransforms.data(), sizeof(glm::mat4)* BONES_NUM);
+				vkUnmapMemory(vkInit.device, mesh.boneSSBOBuffersMemory[currentImage]);
+			}
 
 			/*glm::mat4* mappedMatrices = reinterpret_cast<glm::mat4*>(data);
 			for (size_t i = 0; i < BONES_NUM; ++i) {
 				std::cout << "Matrix " << i << ": " << glm::to_string(mappedMatrices[i]) << std::endl;
 			}*/
-
-			vkUnmapMemory(vkInit.device, boneUniformBuffersMemory[modelIndex][meshIndex][currentImage]);
 
 			//meshUBO.model = mesh.transform;
 			meshUBO.model = glm::mat4(1.0);
@@ -549,12 +540,10 @@ void VulkanAndRTX::updateShaderBuffers(uint32_t currentImage, float timeSinceLau
 			meshUBO.sun = sun;
 			meshUBO.observer = character.camera.getLookFrom();
 
-			vkMapMemory(vkInit.device,
-				meshUniformBuffersMemory[modelIndex][meshIndex][currentImage],
+			vkMapMemory(vkInit.device, mesh.UBOBuffersMemory[currentImage],
 				0, sizeof(UniformBufferObject), 0, &data);
 			memcpy(data, &meshUBO, sizeof(UniformBufferObject));
-			vkUnmapMemory(vkInit.device,
-				meshUniformBuffersMemory[modelIndex][meshIndex][currentImage]);
+			vkUnmapMemory(vkInit.device, mesh.UBOBuffersMemory[currentImage]);
 		}
 	}
 }
@@ -586,8 +575,8 @@ void VulkanAndRTX::recordCommandBuffer(
 
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-	drawSky(commandBuffer, pipelines["sky"]);
-	drawObjects(commandBuffer, pipelines["object"]);
+	recordSkyModelToCommandBuffer(commandBuffer, pipelines["sky"]);
+	recordModelsToCommandBuffer(models, commandBuffer, pipelines["object"]);
 
 	//ImGui_ImplVulkan_RenderDrawData(draw_data, commandBuffers[currentFrame]);
 
@@ -623,36 +612,39 @@ void VulkanAndRTX::recordCommandBuffer(
 		throw std::runtime_error("failed to record command buffer!");
 	}
 }
-void VulkanAndRTX::drawSky(VkCommandBuffer commandBuffer, VkPipeline& pipeline)
+void VulkanAndRTX::recordSkyModelToCommandBuffer(VkCommandBuffer commandBuffer, VkPipeline& pipeline)
 {
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 	vkCmdBindDescriptorSets(
 		commandBuffer,
 		VK_PIPELINE_BIND_POINT_GRAPHICS,
 		pipelineLayout,
-		0, 1, &skyDescriptorSets[currentFrame],
+		0, 1, &sky.meshes[0].descriptorSets[currentFrame],
 		0, nullptr
 	);
 
-	drawModel(commandBuffer, sky);
+	bindVertexAndIndexBuffersToCommandBuffer(sky, commandBuffer);
 }
-void VulkanAndRTX::drawObjects(VkCommandBuffer commandBuffer, VkPipeline& pipeline)
+void VulkanAndRTX::recordModelsToCommandBuffer(
+	std::vector<Model>& models,
+	VkCommandBuffer commandBuffer, VkPipeline& pipeline
+)
 {
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-	for (size_t modelIndex = 0; modelIndex < models.size(); ++modelIndex) {
-		for (size_t meshIndex = 0; meshIndex < models[modelIndex].meshes.size(); ++meshIndex) {
-			const Mesh& mesh = models[modelIndex].meshes[meshIndex];
-			const Material& material = models[modelIndex].materials[meshIndex];
-			const VkDescriptorSet& meshDescriptorSet = meshDescriptorSets[modelIndex][meshIndex][currentFrame];
+	for (const Model& model : models) {
+		for (size_t meshIndex = 0; meshIndex < model.meshes.size(); ++meshIndex) {
+			const Mesh& mesh = model.meshes[meshIndex];
+			const Material& material = model.materials[meshIndex];
+			const VkDescriptorSet& meshDescriptorSet = mesh.descriptorSets[currentFrame];
 
-			addTextureToDescriptorSetIfExist(material.diffuseTexture, meshDescriptorSet, 2);
-			addTextureToDescriptorSetIfExist(material.emissiveTexture, meshDescriptorSet, 3);
+			addTextureIfExistToDescriptorSet(material.diffuseTexture, meshDescriptorSet, 2);
+			addTextureIfExistToDescriptorSet(material.emissiveTexture, meshDescriptorSet, 3);
 
-			if (models[modelIndex].meshes[meshIndex].bones.size() > 0) {
+			if (mesh.bones.size() > 0) {
 				// adding bone data
 				addBufferToDescriptorSet(
 					meshDescriptorSet,
-					boneUniformBuffers[modelIndex][meshIndex][currentFrame],
+					mesh.boneSSBOBuffers[currentFrame],
 					VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
 					sizeof(glm::mat4) * BONES_NUM, 1
 				);
@@ -667,7 +659,7 @@ void VulkanAndRTX::drawObjects(VkCommandBuffer commandBuffer, VkPipeline& pipeli
 				0, nullptr
 			);
 
-			drawMesh(commandBuffer, mesh);
+			bindVertexAndIndexBuffersToCommandBuffer(mesh, commandBuffer);
 		}
 	}
 }
@@ -809,7 +801,7 @@ void VulkanAndRTX::addTextureToDescriptorSet(
 
 	vkUpdateDescriptorSets(vkInit.device, 1, &descriptorWrite, 0, nullptr);
 }
-void VulkanAndRTX::addTextureToDescriptorSetIfExist(
+void VulkanAndRTX::addTextureIfExistToDescriptorSet(
 	const Texture& texture,
 	VkDescriptorSet descriptorSet, uint32_t dstBinding
 ) const
@@ -849,109 +841,73 @@ void VulkanAndRTX::addBufferToDescriptorSet(
 
 	vkUpdateDescriptorSets(vkInit.device, 1, &descriptorWrite, 0, nullptr);
 }
-void VulkanAndRTX::createSkyUniformBuffers(size_t swapChainImageCount)
-{
-	skyUniformBuffers.resize(swapChainImageCount);
-	skyUniformBuffersMemory.resize(swapChainImageCount);
 
-	for (size_t i = 0; i < swapChainImageCount; i++) {
+void VulkanAndRTX::createShaderBuffers(std::vector<Model>& models, size_t swapChainImageCount)
+{
+	for (Model& model : models) {
+		createShaderBuffers(model, swapChainImageCount);
+	}
+}
+void VulkanAndRTX::createShaderBuffers(Model& model, size_t swapChainImageCount)
+{
+	for (Mesh& mesh : model.meshes) {
+		createShaderBuffers(mesh, swapChainImageCount);
+	}
+}
+void VulkanAndRTX::createShaderBuffers(Mesh& mesh, size_t swapChainImageCount)
+{
+	for (size_t frameIndex = 0; frameIndex < swapChainImageCount; ++frameIndex) {
 		createBuffer(
 			sizeof(UniformBufferObject),
 			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-			skyUniformBuffers[i],
-			skyUniformBuffersMemory[i]
+			mesh.UBOBuffers[frameIndex],
+			mesh.UBOBuffersMemory[frameIndex]
 		);
-	}
-}
-void VulkanAndRTX::createMeshShaderBuffers(size_t swapChainImageCount)
-{
-	meshUniformBuffers.resize(models.size());
-	boneUniformBuffers.resize(models.size());
-	meshUniformBuffersMemory.resize(models.size());
-	boneUniformBuffersMemory.resize(models.size());
 
-	for (size_t i = 0; i < BONES_NUM; ++i) {
-		boneSSBO.boneTransforms[i] = glm::mat4(0.0f);
-	}
-
-	for (size_t modelIndex = 0; modelIndex < models.size(); ++modelIndex) {
-		const Model& model = models[modelIndex];
-
-		meshUniformBuffers[modelIndex].resize(model.meshes.size());
-		boneUniformBuffers[modelIndex].resize(model.meshes.size());
-		meshUniformBuffersMemory[modelIndex].resize(model.meshes.size());
-		boneUniformBuffersMemory[modelIndex].resize(model.meshes.size());
-
-		for (size_t meshIndex = 0; meshIndex < model.meshes.size(); ++meshIndex) {
-			meshUniformBuffers[modelIndex][meshIndex].resize(swapChainImageCount);
-			boneUniformBuffers[modelIndex][meshIndex].resize(swapChainImageCount);
-			meshUniformBuffersMemory[modelIndex][meshIndex].resize(swapChainImageCount);
-			boneUniformBuffersMemory[modelIndex][meshIndex].resize(swapChainImageCount);
-
-			for (size_t frameIndex = 0; frameIndex < swapChainImageCount; ++frameIndex) {
-				createBuffer(
-					sizeof(UniformBufferObject),
-					VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-					meshUniformBuffers[modelIndex][meshIndex][frameIndex],
-					meshUniformBuffersMemory[modelIndex][meshIndex][frameIndex]
-				);
-
-				createBuffer(
-					sizeof(glm::mat4) * BONES_NUM,
-					VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-					VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
-					boneUniformBuffers[modelIndex][meshIndex][frameIndex],
-					boneUniformBuffersMemory[modelIndex][meshIndex][frameIndex]
-				);
-			}
+		if (mesh.bones.size() > 0) {
+			createBuffer(
+				sizeof(glm::mat4) * BONES_NUM,
+				VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+				mesh.boneSSBOBuffers[frameIndex],
+				mesh.boneSSBOBuffersMemory[frameIndex]
+			);
 		}
 	}
 }
-void VulkanAndRTX::createSkyDescriptorSets(size_t swapChainImageCount)
-{
-	skyDescriptorSets.resize(swapChainImageCount);
 
-	for (size_t i = 0; i < skyDescriptorSets.size(); i++) {
+void VulkanAndRTX::createDescriptorSets(std::vector<Model>& models, size_t swapChainImageCount)
+{
+	for (Model& model : models) {
+		createDescriptorSets(model, swapChainImageCount);
+	}
+}
+void VulkanAndRTX::createDescriptorSets(Model& model, size_t swapChainImageCount)
+{
+	for (Mesh& mesh : model.meshes) {
+		createDescriptorSets(mesh, swapChainImageCount);
+	}
+}
+void VulkanAndRTX::createDescriptorSets(Mesh& mesh, size_t swapChainImageCount)
+{
+	for (size_t frameIndex = 0; frameIndex < swapChainImageCount; ++frameIndex) {
 		createDescriptorSet(
-			skyDescriptorSets[i],
-			skyUniformBuffers[i],
+			mesh.descriptorSets[frameIndex],
+			mesh.UBOBuffers[frameIndex],
 			VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
 			sizeof(UniformBufferObject), 0
 		);
 	}
 }
-void VulkanAndRTX::createMeshDescriptorSets(size_t swapChainImageCount)
-{
-	meshDescriptorSets.resize(models.size());
 
-	for (size_t modelIndex = 0; modelIndex < models.size(); ++modelIndex) {
-		const Model& model = models[modelIndex];
-		meshDescriptorSets[modelIndex].resize(model.meshes.size());
-
-		for (size_t meshIndex = 0; meshIndex < model.meshes.size(); ++meshIndex) {
-			meshDescriptorSets[modelIndex][meshIndex].resize(swapChainImageCount);
-
-			for (size_t frameIndex = 0; frameIndex < swapChainImageCount; ++frameIndex) {
-				createDescriptorSet(
-					meshDescriptorSets[modelIndex][meshIndex][frameIndex],
-					meshUniformBuffers[modelIndex][meshIndex][frameIndex],
-					VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-					sizeof(UniformBufferObject), 0
-				);
-			}
-		}
-	}
-}
-
-void VulkanAndRTX::drawModel(VkCommandBuffer commandBuffer, const Model& model)
+void VulkanAndRTX::bindVertexAndIndexBuffersToCommandBuffer(const Model& model, VkCommandBuffer commandBuffer)
 {
 	for (const Mesh& mesh : model.meshes) {
-		drawMesh(commandBuffer, mesh);
+		bindVertexAndIndexBuffersToCommandBuffer(mesh, commandBuffer);
 	}
 }
-void VulkanAndRTX::drawMesh(VkCommandBuffer commandBuffer, const Mesh& mesh)
+void VulkanAndRTX::bindVertexAndIndexBuffersToCommandBuffer(const Mesh& mesh, VkCommandBuffer commandBuffer)
 {
 	VkDeviceSize offsets[] = { 0 };
 

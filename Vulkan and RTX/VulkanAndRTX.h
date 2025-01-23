@@ -8,8 +8,6 @@
 #ifndef VULKAN_AND_RTX_H
 #define VULKAN_AND_RTX_H
 
-static const uint32_t BONES_NUM = 256;
-
 typedef enum PipelineType
 {
 	PIPELINE_TYPE_OBJECT = 0,
@@ -17,15 +15,34 @@ typedef enum PipelineType
 	PIPELINE_TYPE_GUI = 2
 } PipelineType;
 
+struct UniformBufferObject
+{
+	alignas(16) glm::mat4 model;
+	alignas(16) glm::mat4 view;
+	alignas(16) glm::mat4 projection;
+	alignas(16) glm::vec3 sun;
+	alignas(16) glm::vec3 observer;
+	alignas(4) float visibilityRange = 6000;
+};
+
+struct ShaderStorageBufferObject
+{
+	alignas(16) std::vector<glm::mat4> boneTransforms;
+
+	ShaderStorageBufferObject() {
+		boneTransforms.resize(BONES_NUM);
+		for (size_t i = 0; i < BONES_NUM; ++i) {
+			boneTransforms[i] = glm::mat4(1.0f);
+		}
+	}
+};
+
 class VulkanAndRTX {
 private:
 #pragma region
 
 	uint32_t windowWidth = 800;
 	uint32_t windowHeight = 450;
-	const int MAX_FRAMES_IN_FLIGHT = 2;
-
-	const std::string MODEL_PATH = "models/model.obj";
 
 #pragma endregion
 #pragma region
@@ -33,40 +50,9 @@ private:
 	VkDescriptorPool            descriptorPool;
 	VkDescriptorSetLayout       descriptorSetLayout;
 
-	// MVP matrix and other info for shaders
-	struct UniformBufferObject {
-		alignas(16) glm::mat4 model;
-		alignas(16) glm::mat4 view;
-		alignas(16) glm::mat4 projection;
-		alignas(16) glm::vec3 sun;
-		alignas(16) glm::vec3 observer;
-		alignas(4) float visibilityRange = 6000;
-	};
-
-	struct ShaderStorageBufferObject {
-		alignas(16) std::vector<glm::mat4> boneTransforms;
-
-		ShaderStorageBufferObject() {
-			boneTransforms.resize(BONES_NUM);
-			for (size_t i = 0; i < BONES_NUM; ++i) {
-				boneTransforms[i] = glm::mat4(1.0f); // Initialize each matrix to zero
-			}
-		}
-	};
-
-	UniformBufferObject									   skyUBO;
-	std::vector<VkBuffer>								   skyUniformBuffers;
-	std::vector<VkDeviceMemory>							   skyUniformBuffersMemory;
-	std::vector<VkDescriptorSet>						   skyDescriptorSets;
-
-	UniformBufferObject									   meshUBO;
-	std::vector<std::vector<std::vector<VkBuffer>>>        meshUniformBuffers; // For all models, meshes, and frames
-	std::vector<std::vector<std::vector<VkDeviceMemory>>>  meshUniformBuffersMemory;
-	std::vector<std::vector<std::vector<VkDescriptorSet>>> meshDescriptorSets;
-
-	ShaderStorageBufferObject							   boneSSBO;
-	std::vector<std::vector<std::vector<VkBuffer>>>		   boneUniformBuffers;
-	std::vector<std::vector<std::vector<VkDeviceMemory>>>  boneUniformBuffersMemory;
+	UniformBufferObject			skyUBO;
+	UniformBufferObject			meshUBO;
+	ShaderStorageBufferObject	boneSSBO;
 
 	std::unique_ptr<TerrainGenerator> terrainGenerator;
 
@@ -78,9 +64,9 @@ private:
 	ImGuiIO io;
 	double lastMousePosX, lastMousePosY;
 
-	int puzzleInput = 0;
+	int32_t puzzleInput = 0;
 	bool puzzleGenerated = false;
-	int puzzleAnswer = 0;
+	int32_t puzzleAnswer = 0;
 	std::string puzzleEquation;
 	float timeToSolvePuzzle = 0.0f;
 
@@ -135,7 +121,7 @@ private:
 	void setupImGui();
 	void cleanupImGui();
 	void check_vk_result(VkResult err);
-	std::string createPuzzleEquation(std::string name, int& answer);
+	std::string createPuzzleEquation(std::string name, int32_t& answer);
 
 	void prepareResources();
 
@@ -224,10 +210,13 @@ private:
 	void createVertexBuffer(Mesh& mesh);
 	void createIndexBuffer(Mesh& mesh);
 
-	void createSkyUniformBuffers(size_t swapChainImageCount);
-	void createMeshShaderBuffers(size_t swapChainImageCount);
-	void createSkyDescriptorSets(size_t swapChainImageCount);
-	void createMeshDescriptorSets(size_t swapChainImageCount);
+	void createShaderBuffers(std::vector<Model>& models, size_t swapChainImageCount);
+	void createShaderBuffers(Model& model, size_t swapChainImageCount);
+	void createShaderBuffers(Mesh& mesh, size_t swapChainImageCount);
+
+	void createDescriptorSets(std::vector<Model>& models, size_t swapChainImageCount);
+	void createDescriptorSets(Model& model, size_t swapChainImageCount);
+	void createDescriptorSets(Mesh& mesh, size_t swapChainImageCount);
 
 	void createDescriptorPool();
 	void createDescriptorSetLayout(VkDescriptorSetLayout& descriptorSetLayout) const;
@@ -240,7 +229,7 @@ private:
 		const Texture& texture,
 		VkDescriptorSet descriptorSet, uint32_t dstBinding
 	) const;
-	void addTextureToDescriptorSetIfExist(
+	void addTextureIfExistToDescriptorSet(
 		const Texture& texture,
 		VkDescriptorSet descriptorSet, uint32_t dstBinding
 	) const;
@@ -250,8 +239,8 @@ private:
 		size_t bufferSize, uint32_t dstBinding
 	) const;
 
-	void drawModel(VkCommandBuffer commandBuffer, const Model& model);
-	void drawMesh(VkCommandBuffer commandBuffer, const Mesh& mesh);
+	void bindVertexAndIndexBuffersToCommandBuffer(const Model& model, VkCommandBuffer commandBuffer);
+	void bindVertexAndIndexBuffersToCommandBuffer(const Mesh& mesh, VkCommandBuffer commandBuffer);
 
 	void updateShaderBuffers(uint32_t currentImage, float timeSinceLaunch);
 	// Creating frames for presentation
@@ -265,8 +254,11 @@ private:
 		double timeSinceLaunch, double deltaTime/*,
 		ImDrawData* draw_data*/
 	);
-	void drawSky(VkCommandBuffer commandBuffer, VkPipeline& pipeline);
-	void drawObjects(VkCommandBuffer commandBuffer, VkPipeline& pipeline);
+	void recordSkyModelToCommandBuffer(VkCommandBuffer commandBuffer, VkPipeline& pipeline);
+	void recordModelsToCommandBuffer(
+		std::vector<Model>& models,
+		VkCommandBuffer commandBuffer, VkPipeline& pipeline
+	);
 
 	// creating swap chain with the best properties for current device
 	void createSwapChain();
@@ -294,7 +286,7 @@ private:
 		const std::string& vertexShader, const std::string& fragmentShader,
 		const VkRenderPass& renderPass
 	);
-	void createPipelines();
+	void createPipelinesAndSwapchain();
 
 	// for specific queue family
 	void createCommandPool();

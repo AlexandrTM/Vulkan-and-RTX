@@ -4,6 +4,9 @@
 #ifndef MODEL
 #define MODEL
 
+static const uint32_t BONES_NUM = 256;
+static const uint32_t MAX_FRAMES_IN_FLIGHT = 2;
+
 // Animation Key Types
 struct PositionKey {
     double                                  time;
@@ -28,7 +31,6 @@ struct AnimationChannel {
     std::vector<ScalingKey>                 scalingKeys;
 };
 
-// Animation Data
 struct Animation {
     std::string                             name;             // Name of the animation
     double                                  duration;         // Duration of the animation in ticks
@@ -93,6 +95,13 @@ struct Mesh
 
     std::vector<Bone>                       bones;
     std::unordered_map<std::string, size_t> boneMap;
+
+    std::vector<VkDescriptorSet>            descriptorSets        = std::vector<VkDescriptorSet>(MAX_FRAMES_IN_FLIGHT, VK_NULL_HANDLE);
+
+    std::vector<VkBuffer>                   UBOBuffers            = std::vector<VkBuffer>(MAX_FRAMES_IN_FLIGHT, VK_NULL_HANDLE);
+    std::vector<VkDeviceMemory>             UBOBuffersMemory      = std::vector<VkDeviceMemory>(MAX_FRAMES_IN_FLIGHT, VK_NULL_HANDLE);
+    std::vector<VkBuffer>		            boneSSBOBuffers       = std::vector<VkBuffer>(MAX_FRAMES_IN_FLIGHT, VK_NULL_HANDLE);
+    std::vector<VkDeviceMemory>             boneSSBOBuffersMemory = std::vector<VkDeviceMemory>(MAX_FRAMES_IN_FLIGHT, VK_NULL_HANDLE);
 };
 
 struct Model {
