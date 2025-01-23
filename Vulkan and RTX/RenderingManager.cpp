@@ -575,8 +575,10 @@ void VulkanAndRTX::recordCommandBuffer(
 
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 
-	recordSkyModelToCommandBuffer(commandBuffer, pipelines["sky"]);
-	recordModelsToCommandBuffer(models, commandBuffer, pipelines["object"]);
+	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["sky"]);
+	recordModelToCommandBuffer(sky, commandBuffer);
+	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["object"]);
+	recordModelsToCommandBuffer(models, commandBuffer);
 
 	//ImGui_ImplVulkan_RenderDrawData(draw_data, commandBuffers[currentFrame]);
 
@@ -612,55 +614,49 @@ void VulkanAndRTX::recordCommandBuffer(
 		throw std::runtime_error("failed to record command buffer!");
 	}
 }
-void VulkanAndRTX::recordSkyModelToCommandBuffer(VkCommandBuffer commandBuffer, VkPipeline& pipeline)
-{
-	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-	vkCmdBindDescriptorSets(
-		commandBuffer,
-		VK_PIPELINE_BIND_POINT_GRAPHICS,
-		pipelineLayout,
-		0, 1, &sky.meshes[0].descriptorSets[currentFrame],
-		0, nullptr
-	);
 
-	bindVertexAndIndexBuffersToCommandBuffer(sky, commandBuffer);
-}
-void VulkanAndRTX::recordModelsToCommandBuffer(
-	std::vector<Model>& models,
-	VkCommandBuffer commandBuffer, VkPipeline& pipeline
-)
+void VulkanAndRTX::recordModelsToCommandBuffer(const std::vector<Model>& models, VkCommandBuffer commandBuffer)
 {
-	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 	for (const Model& model : models) {
-		for (size_t meshIndex = 0; meshIndex < model.meshes.size(); ++meshIndex) {
-			const Mesh& mesh = model.meshes[meshIndex];
-			const Material& material = model.materials[meshIndex];
-			const VkDescriptorSet& meshDescriptorSet = mesh.descriptorSets[currentFrame];
+		recordModelToCommandBuffer(model, commandBuffer);
+	}
+}
+void VulkanAndRTX::recordModelToCommandBuffer(const Model& model, VkCommandBuffer commandBuffer)
+{
+	for (const Mesh& mesh : model.meshes) {
+		const Material& material = mesh.material;
+		const VkDescriptorSet& meshDescriptorSet = mesh.descriptorSets[currentFrame];
 
-			addTextureIfExistToDescriptorSet(material.diffuseTexture, meshDescriptorSet, 2);
-			addTextureIfExistToDescriptorSet(material.emissiveTexture, meshDescriptorSet, 3);
+		addBufferToDescriptorSet(
+			meshDescriptorSet,
+			mesh.UBOBuffers[currentFrame],
+			VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+			sizeof(UniformBufferObject), 0
+		);
 
-			if (mesh.bones.size() > 0) {
-				// adding bone data
-				addBufferToDescriptorSet(
-					meshDescriptorSet,
-					mesh.boneSSBOBuffers[currentFrame],
-					VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-					sizeof(glm::mat4) * BONES_NUM, 1
-				);
-			}
-
-			// Bind per-mesh descriptor set
-			vkCmdBindDescriptorSets(
-				commandBuffer,
-				VK_PIPELINE_BIND_POINT_GRAPHICS,
-				pipelineLayout,
-				0, 1, &meshDescriptorSet,
-				0, nullptr
+		if (mesh.bones.size() > 0) {
+			// adding bone data
+			addBufferToDescriptorSet(
+				meshDescriptorSet,
+				mesh.boneSSBOBuffers[currentFrame],
+				VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+				sizeof(glm::mat4) * BONES_NUM, 1
 			);
-
-			bindVertexAndIndexBuffersToCommandBuffer(mesh, commandBuffer);
 		}
+
+		addTextureIfExistToDescriptorSet(material.diffuseTexture, meshDescriptorSet, 2);
+		addTextureIfExistToDescriptorSet(material.emissiveTexture, meshDescriptorSet, 3);
+
+		// Bind per-mesh descriptor set
+		vkCmdBindDescriptorSets(
+			commandBuffer,
+			VK_PIPELINE_BIND_POINT_GRAPHICS,
+			pipelineLayout,
+			0, 1, &meshDescriptorSet,
+			0, nullptr
+		);
+
+		bindVertexAndIndexBuffersToCommandBuffer(mesh, commandBuffer);
 	}
 }
 
@@ -748,37 +744,17 @@ void VulkanAndRTX::createDescriptorSetLayout(VkDescriptorSetLayout& descriptorSe
 		throw std::runtime_error("failed to create descriptor set layout!");
 	}
 }
-void VulkanAndRTX::createDescriptorSet(
-	VkDescriptorSet& descriptorSet,
-	VkBuffer buffer, VkDescriptorType descriptorType, 
-	size_t bufferSize, uint32_t dstBinding
-)
+void VulkanAndRTX::createDescriptorSet(VkDescriptorSet& descriptorSet)
 {
 	VkDescriptorSetAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
 	allocInfo.descriptorPool = descriptorPool;  // Make sure you have a valid descriptor pool
 	allocInfo.descriptorSetCount = 1;
-	allocInfo.pSetLayouts = &descriptorSetLayout;  // Ensure the layout matches UBO binding requirements
+	allocInfo.pSetLayouts = &descriptorSetLayout;  // Ensure the layout matches shader buffer binding requirements
 
 	if (vkAllocateDescriptorSets(vkInit.device, &allocInfo, &descriptorSet) != VK_SUCCESS) {
 		throw std::runtime_error("Failed to allocate descriptor set!");
 	}
-
-	VkDescriptorBufferInfo bufferInfo{};
-	bufferInfo.buffer = buffer;
-	bufferInfo.offset = 0;
-	bufferInfo.range = bufferSize;
-
-	VkWriteDescriptorSet descriptorWrite{};
-	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-	descriptorWrite.descriptorType = descriptorType;
-	descriptorWrite.dstSet = descriptorSet;
-	descriptorWrite.dstBinding = dstBinding;
-	descriptorWrite.descriptorCount = 1;
-	descriptorWrite.dstArrayElement = 0;
-	descriptorWrite.pBufferInfo = &bufferInfo;
-
-	vkUpdateDescriptorSets(vkInit.device, 1, &descriptorWrite, 0, nullptr);
 }
 void VulkanAndRTX::addTextureToDescriptorSet(
 	const Texture& texture,
@@ -892,21 +868,16 @@ void VulkanAndRTX::createDescriptorSets(Model& model, size_t swapChainImageCount
 void VulkanAndRTX::createDescriptorSets(Mesh& mesh, size_t swapChainImageCount)
 {
 	for (size_t frameIndex = 0; frameIndex < swapChainImageCount; ++frameIndex) {
-		createDescriptorSet(
-			mesh.descriptorSets[frameIndex],
-			mesh.UBOBuffers[frameIndex],
-			VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-			sizeof(UniformBufferObject), 0
-		);
+		createDescriptorSet(mesh.descriptorSets[frameIndex]);
 	}
 }
 
-void VulkanAndRTX::bindVertexAndIndexBuffersToCommandBuffer(const Model& model, VkCommandBuffer commandBuffer)
+/*void VulkanAndRTX::bindVertexAndIndexBuffersToCommandBuffer(const Model& model, VkCommandBuffer commandBuffer)
 {
 	for (const Mesh& mesh : model.meshes) {
 		bindVertexAndIndexBuffersToCommandBuffer(mesh, commandBuffer);
 	}
-}
+}*/
 void VulkanAndRTX::bindVertexAndIndexBuffersToCommandBuffer(const Mesh& mesh, VkCommandBuffer commandBuffer)
 {
 	VkDeviceSize offsets[] = { 0 };

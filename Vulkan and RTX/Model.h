@@ -88,13 +88,14 @@ struct Mesh
     glm::mat4                               transform = glm::mat4(1.0f);
     Cuboid                                  aabb;
 
+    Material                                material;
+    std::vector<Bone>                       bones;
+    std::unordered_map<std::string, size_t> boneMap;
+
     VkBuffer                                vertexBuffer;
     VkDeviceMemory                          vertexBufferMemory;
     VkBuffer                                indexBuffer;
     VkDeviceMemory                          indexBufferMemory;
-
-    std::vector<Bone>                       bones;
-    std::unordered_map<std::string, size_t> boneMap;
 
     std::vector<VkDescriptorSet>            descriptorSets        = std::vector<VkDescriptorSet>(MAX_FRAMES_IN_FLIGHT, VK_NULL_HANDLE);
 
@@ -106,7 +107,6 @@ struct Mesh
 
 struct Model {
     std::vector<Mesh>                       meshes;
-    std::vector<Material>                   materials;
     glm::vec3                               position;
     glm::vec3                               scale;
     glm::quat                               rotation;

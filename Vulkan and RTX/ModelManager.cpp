@@ -1145,13 +1145,14 @@ void VulkanAndRTX::processNode(
 			scene
 		);
 		processedMesh.transform = globalTransform;
-		parentModel.meshes.push_back(processedMesh);
 
 		if (mesh->mMaterialIndex >= 0) {
 			aiMaterial* material = scene->mMaterials[mesh->mMaterialIndex];
 			Material processedMaterial = processMaterial(material, scene);
-			parentModel.materials.push_back(processedMaterial);
+			processedMesh.material = processedMaterial;
 		}
+
+		parentModel.meshes.push_back(processedMesh);
 	}
 
 	for (size_t i = 0; i < node->mNumChildren; i++) {

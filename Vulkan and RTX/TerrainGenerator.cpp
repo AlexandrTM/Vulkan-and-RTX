@@ -59,10 +59,11 @@ void TerrainGenerator::generateTerrain(
                 heightmap, terrainData.gridSize, mesh, metricTextureSize
             );
 
-            model.meshes.push_back(mesh);
             Material material{};
             material.diffuseTexture = terrainTexture;
-            model.materials.push_back(material);
+            mesh.material = material;
+
+            model.meshes.push_back(mesh);
             model.isCollidable = true;
         }
     }

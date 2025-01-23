@@ -220,11 +220,7 @@ private:
 
 	void createDescriptorPool();
 	void createDescriptorSetLayout(VkDescriptorSetLayout& descriptorSetLayout) const;
-	void createDescriptorSet(
-		VkDescriptorSet& descriptorSet,
-		VkBuffer buffer, VkDescriptorType descriptorType,
-		size_t bufferSize, uint32_t dstBinding
-	);
+	void createDescriptorSet(VkDescriptorSet& descriptorSet);
 	void addTextureToDescriptorSet(
 		const Texture& texture,
 		VkDescriptorSet descriptorSet, uint32_t dstBinding
@@ -239,7 +235,7 @@ private:
 		size_t bufferSize, uint32_t dstBinding
 	) const;
 
-	void bindVertexAndIndexBuffersToCommandBuffer(const Model& model, VkCommandBuffer commandBuffer);
+	// void bindVertexAndIndexBuffersToCommandBuffer(const Model& model, VkCommandBuffer commandBuffer);
 	void bindVertexAndIndexBuffersToCommandBuffer(const Mesh& mesh, VkCommandBuffer commandBuffer);
 
 	void updateShaderBuffers(uint32_t currentImage, float timeSinceLaunch);
@@ -254,11 +250,8 @@ private:
 		double timeSinceLaunch, double deltaTime/*,
 		ImDrawData* draw_data*/
 	);
-	void recordSkyModelToCommandBuffer(VkCommandBuffer commandBuffer, VkPipeline& pipeline);
-	void recordModelsToCommandBuffer(
-		std::vector<Model>& models,
-		VkCommandBuffer commandBuffer, VkPipeline& pipeline
-	);
+	void recordModelsToCommandBuffer(const std::vector<Model>& models, VkCommandBuffer commandBuffer);
+	void recordModelToCommandBuffer(const Model& model, VkCommandBuffer commandBuffer);
 
 	// creating swap chain with the best properties for current device
 	void createSwapChain();

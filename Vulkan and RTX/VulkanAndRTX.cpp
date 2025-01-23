@@ -343,6 +343,19 @@ void VulkanAndRTX::mainLoop()
 		}
 		//restrictCharacterMovement(character.camera);
 		
+		// fps meter
+		/*{
+			counter++;
+			accumulator += deltaTime;
+			if (accumulator >= 1.1) {
+				fps = 1 / (accumulator / counter);
+				counter = 0;
+				accumulator = 0;
+			}
+
+			std::cout <<  "fps: " << fps << "\n";
+		}*/
+
 		// ImGui
 		/*// Start the ImGui frame
 		ImGui_ImplVulkan_NewFrame();
@@ -460,10 +473,8 @@ void VulkanAndRTX::cleanupModel(Model& model) const
 				vkFreeMemory(vkInit.device, mesh.boneSSBOBuffersMemory[i], nullptr);
 			}
 		}
-	}
-	for (Material& material : model.materials)
-	{
-		// cleanupMaterial(material);
+
+		// cleanupMaterial(mesh.material);
 	}
 }
 void VulkanAndRTX::cleanupMaterial(Material& material) const
