@@ -194,22 +194,22 @@ bool VulkanInitializer::isDeviceSuitable(VkPhysicalDevice device)
 
 	bool extensionsSupported = checkDeviceExtensionSupport(device);
 
-	bool swapChainAdequate = false;
+	bool swapchainAdequate = false;
 	if (extensionsSupported) {
-		SwapChainSupportDetails swapChainSupport = querySwapChainSupport(device);
-		swapChainAdequate = !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
+		SwapchainSupportDetails swapchainSupport = querySwapchainSupport(device);
+		swapchainAdequate = !swapchainSupport.formats.empty() && !swapchainSupport.presentModes.empty();
 	}
 
 	VkPhysicalDeviceFeatures supportedFeatures;
 	vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
 
-	return indices.isComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy;
+	return indices.isComplete() && extensionsSupported && swapchainAdequate && supportedFeatures.samplerAnisotropy;
 }
 
 // querying swap chain details, they specific for each device
-SwapChainSupportDetails VulkanInitializer::querySwapChainSupport(VkPhysicalDevice device) const
+SwapchainSupportDetails VulkanInitializer::querySwapchainSupport(VkPhysicalDevice device) const
 {
-	SwapChainSupportDetails details;
+	SwapchainSupportDetails details;
 	vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface, &details.capabilities);
 
 	uint32_t formatCount;

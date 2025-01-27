@@ -17,6 +17,8 @@
 #include <QtWidgets/qpushbutton.h>
 #include <QtWidgets/qmainwindow.h>
 #include <QtWidgets/qwidget.h>
+#include <QtGui/qvulkanwindow.h>
+#include <QtGui/qvulkaninstance.h>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <gtx/hash.hpp>

@@ -16,7 +16,7 @@ struct QueueFamilyIndices {
 };
 
 // properties of the swap chain
-struct SwapChainSupportDetails {
+struct SwapchainSupportDetails {
     VkSurfaceCapabilitiesKHR capabilities;
     std::vector<VkSurfaceFormatKHR> formats;
     std::vector<VkPresentModeKHR> presentModes;
@@ -58,7 +58,7 @@ struct VulkanInitializer
     bool isDeviceSuitable(VkPhysicalDevice device);
 
     // querying swap chain details, they specific for each device
-    SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device) const;
+    SwapchainSupportDetails querySwapchainSupport(VkPhysicalDevice device) const;
 
     // check for extensions suitability of the GPUs
     bool checkDeviceExtensionSupport(VkPhysicalDevice device);

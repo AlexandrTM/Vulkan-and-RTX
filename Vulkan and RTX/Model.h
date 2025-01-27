@@ -64,7 +64,8 @@ struct Texture {
             image       != VK_NULL_HANDLE &&
 			imageMemory != VK_NULL_HANDLE &&
 			imageView   != VK_NULL_HANDLE &&
-			sampler     != VK_NULL_HANDLE;
+			sampler     != VK_NULL_HANDLE &&
+            mipLevels   != 0;
 	}
 };
 
@@ -85,24 +86,24 @@ struct Mesh
 {
     std::vector<Vertex>                     vertices;
     std::vector<uint32_t>                   indices;
-    glm::mat4                               transform = glm::mat4(1.0f);
+    glm::mat4                               transform             = glm::mat4(1.0f);
     Cuboid                                  aabb;
 
     Material                                material;
     std::vector<Bone>                       bones;
     std::unordered_map<std::string, size_t> boneMap;
 
-    VkBuffer                                vertexBuffer;
-    VkDeviceMemory                          vertexBufferMemory;
-    VkBuffer                                indexBuffer;
-    VkDeviceMemory                          indexBufferMemory;
+    VkBuffer                                vertexBuffer          = VK_NULL_HANDLE;
+    VkDeviceMemory                          vertexBufferMemory    = VK_NULL_HANDLE;
+    VkBuffer                                indexBuffer           = VK_NULL_HANDLE;
+    VkDeviceMemory                          indexBufferMemory     = VK_NULL_HANDLE;
 
     std::vector<VkDescriptorSet>            descriptorSets        = std::vector<VkDescriptorSet>(MAX_FRAMES_IN_FLIGHT, VK_NULL_HANDLE);
 
-    std::vector<VkBuffer>                   UBOBuffers            = std::vector<VkBuffer>(MAX_FRAMES_IN_FLIGHT, VK_NULL_HANDLE);
-    std::vector<VkDeviceMemory>             UBOBuffersMemory      = std::vector<VkDeviceMemory>(MAX_FRAMES_IN_FLIGHT, VK_NULL_HANDLE);
-    std::vector<VkBuffer>		            boneSSBOBuffers       = std::vector<VkBuffer>(MAX_FRAMES_IN_FLIGHT, VK_NULL_HANDLE);
-    std::vector<VkDeviceMemory>             boneSSBOBuffersMemory = std::vector<VkDeviceMemory>(MAX_FRAMES_IN_FLIGHT, VK_NULL_HANDLE);
+    std::vector<VkBuffer>                   UBOBuffers            = std::vector<VkBuffer>       (MAX_FRAMES_IN_FLIGHT, VK_NULL_HANDLE);
+    std::vector<VkDeviceMemory>             UBOBuffersMemory      = std::vector<VkDeviceMemory> (MAX_FRAMES_IN_FLIGHT, VK_NULL_HANDLE);
+    std::vector<VkBuffer>		            boneSSBOBuffers       = std::vector<VkBuffer>       (MAX_FRAMES_IN_FLIGHT, VK_NULL_HANDLE);
+    std::vector<VkDeviceMemory>             boneSSBOBuffersMemory = std::vector<VkDeviceMemory> (MAX_FRAMES_IN_FLIGHT, VK_NULL_HANDLE);
 };
 
 struct Model {

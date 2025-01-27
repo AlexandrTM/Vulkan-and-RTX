@@ -145,7 +145,7 @@ void VulkanAndRTX::initializeNoesisGUI()
 	}
 
 	noesisView->GetRenderer()->Init(noesisRenderDevice);
-	noesisView->SetSize(swapChainExtent.width, swapChainExtent.height);
+	noesisView->SetSize(swapchainExtent.width, swapchainExtent.height);
     // Attach the render device to the renderer
 
 	//setXamlTheme("../themes/NoesisTheme.DarkBlue.xaml");
@@ -231,7 +231,7 @@ void VulkanAndRTX::setupImguiWindow(ImGui_ImplVulkanH_Window* wd,
 	wd->PresentMode = ImGui_ImplVulkanH_SelectPresentMode(vkInit.physicalDevice, wd->Surface, &present_modes[0], IM_ARRAYSIZE(present_modes));
 	//printf("[vulkan] Selected PresentMode = %d\n", wd->PresentMode);
 
-	// Create SwapChain, RenderPass, Framebuffer, etc.
+	// Create Swapchain, RenderPass, Framebuffer, etc.
 #ifdef NDEBUG
 	IM_ASSERT(g_MinImageCount >= 2);
 #endif // !NDEBUG
@@ -267,7 +267,9 @@ void VulkanAndRTX::prepareResources()
 	createCommandPool();
 	createColorTexture(msaaTexture);
 	createDepthTexture(depthTexture);
-	createSwapChainFramebuffers();
+	createSwapchainFramebuffers();
+	createCommandBuffers();
+	createSyncObjects();
 
 	createTextureFromPath("textures/grass001.png", grassTexture);
 	createDummyTexture({ 0, 0, 0, 255 }, dummyTexture);
@@ -312,9 +314,6 @@ void VulkanAndRTX::prepareResources()
 	createShaderBuffers(models, MAX_FRAMES_IN_FLIGHT);
 	createDescriptorSets(sky, MAX_FRAMES_IN_FLIGHT);
 	createDescriptorSets(models, MAX_FRAMES_IN_FLIGHT);
-
-	createCommandBuffers();
-	createSyncObjects();
 }
 
 void VulkanAndRTX::mainLoop()
@@ -325,8 +324,8 @@ void VulkanAndRTX::mainLoop()
 	double timeSinceLaunch = 0.0f;
 	
 	uint32_t counter = 0;
-	float accumulator = 0;
-	float fps = 0;
+	double accumulator = 0;
+	double fps = 0;
 	bool fpsMenu = false;
 	while (!glfwWindowShouldClose(window)) {
 		currentTime = std::chrono::high_resolution_clock::now();
@@ -355,7 +354,7 @@ void VulkanAndRTX::mainLoop()
 
 			std::cout <<  "fps: " << fps << "\n";
 		}*/
-
+		
 		// ImGui
 		/*// Start the ImGui frame
 		ImGui_ImplVulkan_NewFrame();
@@ -432,7 +431,7 @@ void VulkanAndRTX::mainLoop()
 
 		ImGui::Render();
 		ImDrawData* draw_data = ImGui::GetDrawData();*/
-
+		
 		drawFrame(timeSinceLaunch, deltaTime/*, draw_data*/);
 	}
 
@@ -447,35 +446,37 @@ void VulkanAndRTX::cleanupImGui() {
     ImGui::DestroyContext();
 }
 
-void VulkanAndRTX::cleanupModels()
+void VulkanAndRTX::cleanupModels(std::vector<Model>& models) const
 {
-	for (size_t i = 0; i < models.size(); i++) {
-		cleanupModel(models[i]);
+	for (Model& model : models) {
+		cleanupModel(model);
 	}
-
-	cleanupModel(sky);
 }
 void VulkanAndRTX::cleanupModel(Model& model) const
 {
 	for (Mesh& mesh : model.meshes) {
-		vkDestroyBuffer(vkInit.device, mesh.indexBuffer, nullptr);
-		vkFreeMemory(vkInit.device, mesh.indexBufferMemory, nullptr);
-
-		vkDestroyBuffer(vkInit.device, mesh.vertexBuffer, nullptr);
-		vkFreeMemory(vkInit.device, mesh.vertexBufferMemory, nullptr);
-
-		for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-			vkDestroyBuffer(vkInit.device, mesh.UBOBuffers[i], nullptr);
-			vkFreeMemory(vkInit.device, mesh.UBOBuffersMemory[i], nullptr);
-
-			if (mesh.bones.size() > 0) {
-				vkDestroyBuffer(vkInit.device, mesh.boneSSBOBuffers[i], nullptr);
-				vkFreeMemory(vkInit.device, mesh.boneSSBOBuffersMemory[i], nullptr);
-			}
-		}
-
-		// cleanupMaterial(mesh.material);
+		cleanupMesh(mesh);
 	}
+}
+void VulkanAndRTX::cleanupMesh(Mesh& mesh) const
+{
+	vkDestroyBuffer(vkInit.device, mesh.indexBuffer, nullptr);
+	vkFreeMemory(vkInit.device, mesh.indexBufferMemory, nullptr);
+
+	vkDestroyBuffer(vkInit.device, mesh.vertexBuffer, nullptr);
+	vkFreeMemory(vkInit.device, mesh.vertexBufferMemory, nullptr);
+
+	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+		vkDestroyBuffer(vkInit.device, mesh.UBOBuffers[i], nullptr);
+		vkFreeMemory(vkInit.device, mesh.UBOBuffersMemory[i], nullptr);
+
+		if (mesh.bones.size() > 0) {
+			vkDestroyBuffer(vkInit.device, mesh.boneSSBOBuffers[i], nullptr);
+			vkFreeMemory(vkInit.device, mesh.boneSSBOBuffersMemory[i], nullptr);
+		}
+	}
+
+	// cleanupMaterial(mesh.material);
 }
 void VulkanAndRTX::cleanupMaterial(Material& material) const
 {
@@ -520,11 +521,12 @@ void VulkanAndRTX::cleanupMemory()
 
 	cleanupImGui();*/
 
-	cleanupModels();
+	cleanupModels(models);
+	cleanupModel(sky);
 	cleanupTexture(grassTexture);
 	cleanupTexture(dummyTexture);
 
-	cleanupSwapChain();
+	cleanupSwapchain();
 
 	// will free all allocated descriptor sets from this pool
 	vkDestroyDescriptorPool(vkInit.device, descriptorPool, nullptr);
@@ -762,6 +764,7 @@ VkShaderModule VulkanAndRTX::createShaderModule(const std::vector<char>& code) c
 static int runVulkanAndRTX() {
 	srand(static_cast<unsigned>(time(0))); // Seed the random number generator once
 	VulkanAndRTX app;
+
 	try {
 		app.run();
 		return EXIT_SUCCESS;

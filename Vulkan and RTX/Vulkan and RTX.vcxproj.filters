@@ -60,7 +60,7 @@
     <ClCompile Include="Vertex.cpp">
       <Filter>source</Filter>
     </ClCompile>
-    <ClCompile Include="SwapChainManager.cpp">
+    <ClCompile Include="SwapchainManager.cpp">
       <Filter>source\main class split</Filter>
     </ClCompile>
     <ClCompile Include="ImageManager.cpp">

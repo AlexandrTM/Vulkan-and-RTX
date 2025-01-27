@@ -14,7 +14,7 @@ namespace StellarCalculations
 
 	double calculateSunDeclination(double dayOfYear);
 	double calculateHourAngle(double timeOfDay, double longitude);
-	glm::vec3 calculateSunPosition(float timeSinceLaunch);
+	glm::vec3 calculateSunPosition(double timeSinceLaunch);
 }
 
 #endif // STELLAR_CALCULATIONS

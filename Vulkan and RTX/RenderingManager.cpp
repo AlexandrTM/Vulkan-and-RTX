@@ -205,16 +205,16 @@ void VulkanAndRTX::createGraphicsPipeline(
 	VkViewport viewport{};
 	viewport.x = 0.0f;
 	viewport.y = 0.0f;
-	viewport.width = (float)swapChainExtent.width;
-	viewport.height = (float)swapChainExtent.height;
+	viewport.width = (float)swapchainExtent.width;
+	viewport.height = (float)swapchainExtent.height;
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 
 	// filtering the pixel that was taken from the rasterizer, in our case its all pixels
 	VkRect2D scissor{};
 	scissor.offset = { 0, 0 };
-	scissor.extent.height = swapChainExtent.height;
-	scissor.extent.width = swapChainExtent.width;
+	scissor.extent.height = swapchainExtent.height;
+	scissor.extent.width = swapchainExtent.width;
 
 	// combining previous two features, its can be more that one scissor rectangle and viewport
 	VkPipelineViewportStateCreateInfo viewportState{};
@@ -387,8 +387,8 @@ void VulkanAndRTX::createGraphicsPipeline(
 
 void VulkanAndRTX::createPipelinesAndSwapchain()
 {
-	createSwapChain();
-	createSwapChainImageViews();
+	createSwapchain();
+	createSwapchainImageViews();
 	createObjectRenderPass(objectRenderPass);
 	// createGUIRenderPass(noesisRenderPass);
 	createGraphicsPipeline(
@@ -401,11 +401,11 @@ void VulkanAndRTX::createPipelinesAndSwapchain()
 		"sky", "shaders/sky.vert.spv", "shaders/sky.frag.spv",
 		objectRenderPass
 	);
-	createGraphicsPipeline(
+	/*createGraphicsPipeline(
 		PIPELINE_TYPE_GUI,
 		"noesis", "shaders/noesis.vert.spv", "shaders/noesis.frag.spv",
 		objectRenderPass
-	);
+	);*/
 }
 
 // Creating frames for presentation
@@ -415,12 +415,12 @@ void VulkanAndRTX::drawFrame(double timeSinceLaunch, double deltaTime/*, ImDrawD
 
 	uint32_t imageIndex;
 	VkResult result = vkAcquireNextImageKHR(
-		vkInit.device, swapChain, UINT64_MAX,
+		vkInit.device, swapchain, UINT64_MAX,
 		imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex
 	);
 
 	if (result == VK_ERROR_OUT_OF_DATE_KHR) {
-		recreateSwapChain();
+		recreateSwapchain();
 		return;
 	}
 	else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
@@ -457,21 +457,21 @@ void VulkanAndRTX::drawFrame(double timeSinceLaunch, double deltaTime/*, ImDrawD
 		throw std::runtime_error("failed to submit draw command buffer!");
 	}
 
-	VkSwapchainKHR swapChains[] = { swapChain };
+	VkSwapchainKHR swapchains[] = { swapchain };
 
 	VkPresentInfoKHR presentInfo{};
 	presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 	presentInfo.waitSemaphoreCount = 1;
 	presentInfo.pWaitSemaphores = signalSemaphores;
 	presentInfo.swapchainCount = 1;
-	presentInfo.pSwapchains = swapChains;
+	presentInfo.pSwapchains = swapchains;
 	presentInfo.pImageIndices = &imageIndex;
 
 	result = vkQueuePresentKHR(vkInit.presentQueue, &presentInfo);
 
 	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || framebufferResized) {
 		framebufferResized = false;
-		recreateSwapChain();
+		recreateSwapchain();
 	}
 	else if (result != VK_SUCCESS) {
 		throw std::runtime_error("failed to present swap chain image!");
@@ -480,7 +480,7 @@ void VulkanAndRTX::drawFrame(double timeSinceLaunch, double deltaTime/*, ImDrawD
 	currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
-void VulkanAndRTX::updateShaderBuffers(uint32_t currentImage, float timeSinceLaunch)
+void VulkanAndRTX::updateShaderBuffers(uint32_t currentImage, double timeSinceLaunch)
 {
 	glm::mat4 view = glm::lookAt(
 		character.camera.getLookFrom(),
@@ -490,12 +490,15 @@ void VulkanAndRTX::updateShaderBuffers(uint32_t currentImage, float timeSinceLau
 
 	glm::mat4 projection = glm::perspective(
 		glm::radians(character.camera.getVerticalFov()),
-		swapChainExtent.width / (float)swapChainExtent.height, 
+		swapchainExtent.width / (float)swapchainExtent.height, 
 		0.01f, 100000.0f
 	);
 	projection[1][1] *= -1;
 
 	glm::vec3 sun = StellarCalculations::calculateSunPosition(timeSinceLaunch);
+	/*glm::vec3 sun = StellarCalculations::calculateSunPosition(
+		std::chrono::high_resolution_clock::now().time_since_epoch().count() / 1e9
+	);*/
 
 	// add transpose(inverse(ubo.model)) if doing non uniform scaling
 
@@ -506,15 +509,16 @@ void VulkanAndRTX::updateShaderBuffers(uint32_t currentImage, float timeSinceLau
 	skyUBO.observer = character.camera.getLookFrom();
 
 	void* data;
-	vkMapMemory(vkInit.device, sky.meshes[0].UBOBuffersMemory[currentImage],
-		0, sizeof(UniformBufferObject), 0, &data);
-	memcpy(data, &skyUBO, sizeof(UniformBufferObject));
-	vkUnmapMemory(vkInit.device, sky.meshes[0].UBOBuffersMemory[currentImage]);
+	for (Mesh& mesh : sky.meshes) {
+		vkMapMemory(vkInit.device, mesh.UBOBuffersMemory[currentImage],
+			0, sizeof(UniformBufferObject), 0, &data);
+		memcpy(data, &skyUBO, sizeof(UniformBufferObject));
+		vkUnmapMemory(vkInit.device, mesh.UBOBuffersMemory[currentImage]);
+	}
 
 	// Update per-mesh shader buffers
 	for (Model& model : models) {
 		for (Mesh& mesh : model.meshes) {
-
 			// update bones
 			if (mesh.bones.size() > 0) {
 				for (size_t i = 0; i < mesh.bones.size(); i++) {
@@ -567,9 +571,9 @@ void VulkanAndRTX::recordCommandBuffer(
 	VkRenderPassBeginInfo renderPassInfo{};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	renderPassInfo.renderPass = objectRenderPass;
-	renderPassInfo.framebuffer = swapChainFramebuffers[imageIndex];
+	renderPassInfo.framebuffer = swapchainFramebuffers[imageIndex];
 	renderPassInfo.renderArea.offset = { 0, 0 };
-	renderPassInfo.renderArea.extent = swapChainExtent;
+	renderPassInfo.renderArea.extent = swapchainExtent;
 	renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
 	renderPassInfo.pClearValues = clearValues.data();
 
@@ -588,9 +592,9 @@ void VulkanAndRTX::recordCommandBuffer(
 	/*VkRenderPassBeginInfo noesisRenderPassInfo = {};
 	noesisRenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	noesisRenderPassInfo.renderPass = objectRenderPass;
-	noesisRenderPassInfo.framebuffer = swapChainFramebuffers[imageIndex];
+	noesisRenderPassInfo.framebuffer = swapchainFramebuffers[imageIndex];
 	noesisRenderPassInfo.renderArea.offset = { 0, 0 };
-	noesisRenderPassInfo.renderArea.extent = swapChainExtent;
+	noesisRenderPassInfo.renderArea.extent = swapchainExtent;
 	noesisRenderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
 	noesisRenderPassInfo.pClearValues = clearValues.data();
 
@@ -818,21 +822,21 @@ void VulkanAndRTX::addBufferToDescriptorSet(
 	vkUpdateDescriptorSets(vkInit.device, 1, &descriptorWrite, 0, nullptr);
 }
 
-void VulkanAndRTX::createShaderBuffers(std::vector<Model>& models, size_t swapChainImageCount)
+void VulkanAndRTX::createShaderBuffers(std::vector<Model>& models, size_t swapchainImageCount)
 {
 	for (Model& model : models) {
-		createShaderBuffers(model, swapChainImageCount);
+		createShaderBuffers(model, swapchainImageCount);
 	}
 }
-void VulkanAndRTX::createShaderBuffers(Model& model, size_t swapChainImageCount)
+void VulkanAndRTX::createShaderBuffers(Model& model, size_t swapchainImageCount)
 {
 	for (Mesh& mesh : model.meshes) {
-		createShaderBuffers(mesh, swapChainImageCount);
+		createShaderBuffers(mesh, swapchainImageCount);
 	}
 }
-void VulkanAndRTX::createShaderBuffers(Mesh& mesh, size_t swapChainImageCount)
+void VulkanAndRTX::createShaderBuffers(Mesh& mesh, size_t swapchainImageCount)
 {
-	for (size_t frameIndex = 0; frameIndex < swapChainImageCount; ++frameIndex) {
+	for (size_t frameIndex = 0; frameIndex < swapchainImageCount; ++frameIndex) {
 		createBuffer(
 			sizeof(UniformBufferObject),
 			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
@@ -853,21 +857,21 @@ void VulkanAndRTX::createShaderBuffers(Mesh& mesh, size_t swapChainImageCount)
 	}
 }
 
-void VulkanAndRTX::createDescriptorSets(std::vector<Model>& models, size_t swapChainImageCount)
+void VulkanAndRTX::createDescriptorSets(std::vector<Model>& models, size_t swapchainImageCount)
 {
 	for (Model& model : models) {
-		createDescriptorSets(model, swapChainImageCount);
+		createDescriptorSets(model, swapchainImageCount);
 	}
 }
-void VulkanAndRTX::createDescriptorSets(Model& model, size_t swapChainImageCount)
+void VulkanAndRTX::createDescriptorSets(Model& model, size_t swapchainImageCount)
 {
 	for (Mesh& mesh : model.meshes) {
-		createDescriptorSets(mesh, swapChainImageCount);
+		createDescriptorSets(mesh, swapchainImageCount);
 	}
 }
-void VulkanAndRTX::createDescriptorSets(Mesh& mesh, size_t swapChainImageCount)
+void VulkanAndRTX::createDescriptorSets(Mesh& mesh, size_t swapchainImageCount)
 {
-	for (size_t frameIndex = 0; frameIndex < swapChainImageCount; ++frameIndex) {
+	for (size_t frameIndex = 0; frameIndex < swapchainImageCount; ++frameIndex) {
 		createDescriptorSet(mesh.descriptorSets[frameIndex]);
 	}
 }

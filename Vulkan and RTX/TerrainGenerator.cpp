@@ -45,8 +45,8 @@ void TerrainGenerator::generateTerrain(
         for (size_t chunkZ = 0; chunkZ < terrainData.chunkRows; ++chunkZ) {
             Mesh mesh;
 
-            float chunkXoffset = chunkX * terrainData.chunkWidth;
-            float chunkZoffset = chunkZ * terrainData.chunkLength;
+            size_t chunkXoffset = chunkX * terrainData.chunkWidth;
+            size_t chunkZoffset = chunkZ * terrainData.chunkLength;
 
             auto heightmap = terrainGenerator->generatePerlinHeightMap(
                 chunkXoffset, chunkZoffset,
@@ -54,8 +54,14 @@ void TerrainGenerator::generateTerrain(
                 terrainData.scale, terrainData.height
             );
 
+            glm::vec3 chunkOffset = glm::vec3(
+                startX + chunkXoffset * terrainData.gridSize, 
+                startY, 
+                startZ + chunkZoffset * terrainData.gridSize
+            );
+
             terrainGenerator->generateTerrainMesh(
-                startX + chunkXoffset * terrainData.gridSize, startY, startZ + chunkZoffset * terrainData.gridSize,
+                chunkOffset,
                 heightmap, terrainData.gridSize, mesh, metricTextureSize
             );
 
@@ -213,7 +219,7 @@ float TerrainGenerator::perlinNoise(float x, float y, float z) {
 }
 
 void TerrainGenerator::generateTerrainMesh(
-    float offsetX, float offsetY, float offsetZ,
+    glm::vec3 offset,
     const std::vector<std::vector<float>>& heightmap, 
     float gridSize, 
     Mesh& mesh, float metricTextureSize
@@ -225,16 +231,16 @@ void TerrainGenerator::generateTerrainMesh(
     // Generate vertices
     for (size_t i = 0; i < width; i++) {
         for (size_t j = 0; j < length; j++) {
-            float x0 = static_cast<float>(i);
-            float y0 =          heightmap[i]    [j];
+            float x0 = static_cast<float>(i    );
+            float y0 =          heightmap[i    ][j];
             float z0 = static_cast<float>       (j);
 
             float x1 = static_cast<float>(i + 1);
             float y1 =          heightmap[i + 1][j];
             float z1 = static_cast<float>       (j);
 
-            float x2 = static_cast<float>(i);
-            float y2 =          heightmap[i]    [j + 1];
+            float x2 = static_cast<float>(i    );
+            float y2 =          heightmap[i    ][j + 1];
             float z2 = static_cast<float>       (j + 1);
 
             float x3 = static_cast<float>(i + 1);
@@ -243,10 +249,10 @@ void TerrainGenerator::generateTerrainMesh(
 
             // Create vertex
             Vertex v0{}, v1{}, v2{}, v3{};
-            v0.position = glm::vec3(x0, y0, z0) * gridSize + glm::vec3(offsetX, offsetY, offsetZ);
-            v1.position = glm::vec3(x1, y1, z1) * gridSize + glm::vec3(offsetX, offsetY, offsetZ);
-            v2.position = glm::vec3(x2, y2, z2) * gridSize + glm::vec3(offsetX, offsetY, offsetZ);
-            v3.position = glm::vec3(x3, y3, z3) * gridSize + glm::vec3(offsetX, offsetY, offsetZ);
+            v0.position = glm::vec3(x0, y0, z0) * gridSize + offset;
+            v1.position = glm::vec3(x1, y1, z1) * gridSize + offset;
+            v2.position = glm::vec3(x2, y2, z2) * gridSize + offset;
+            v3.position = glm::vec3(x3, y3, z3) * gridSize + offset;
 
             v0.color = glm::vec3(1.0f);
             v1.color = glm::vec3(1.0f);

@@ -4,7 +4,7 @@
 #include "Vertex.h"
 #include "Model.h"
 #include "TerrainGenerator.h"
-
+	
 #ifndef VULKAN_AND_RTX_H
 #define VULKAN_AND_RTX_H
 
@@ -22,19 +22,12 @@ struct UniformBufferObject
 	alignas(16) glm::mat4 projection;
 	alignas(16) glm::vec3 sun;
 	alignas(16) glm::vec3 observer;
-	alignas(4) float visibilityRange = 6000;
+	alignas(4)  float visibilityRange = 6000;
 };
 
 struct ShaderStorageBufferObject
 {
-	alignas(16) std::vector<glm::mat4> boneTransforms;
-
-	ShaderStorageBufferObject() {
-		boneTransforms.resize(BONES_NUM);
-		for (size_t i = 0; i < BONES_NUM; ++i) {
-			boneTransforms[i] = glm::mat4(1.0f);
-		}
-	}
+	alignas(16) std::vector<glm::mat4> boneTransforms = std::vector<glm::mat4>(BONES_NUM, glm::mat4(1.0f));
 };
 
 class VulkanAndRTX {
@@ -74,12 +67,12 @@ private:
 	Character character;
 	VulkanInitializer vkInit;
 
-	VkSwapchainKHR			   swapChain;
-	std::vector<VkImage>	   swapChainImages;
+	VkSwapchainKHR			   swapchain;
+	std::vector<VkImage>	   swapchainImages;
 	VkFormat				   swapchainImageFormat;
-	VkExtent2D				   swapChainExtent;
-	std::vector<VkImageView>   swapChainImageViews;
-	std::vector<VkFramebuffer> swapChainFramebuffers;
+	VkExtent2D				   swapchainExtent;
+	std::vector<VkImageView>   swapchainImageViews;
+	std::vector<VkFramebuffer> swapchainFramebuffers;
 
 	VkRenderPass objectRenderPass;
 	VkRenderPass noesisRenderPass;
@@ -129,15 +122,16 @@ private:
 
 	void restrictCharacterMovement(Camera& camera);
 
-	void cleanupModels();
+	void cleanupModels(std::vector<Model>& models) const;
 	void cleanupModel(Model& model) const;
+	void cleanupMesh(Mesh& mesh) const;
 	void cleanupTexture(Texture& texture) const;
 	void cleanupMaterial(Material& material) const;
 	void cleanupMemory();
 
-	void cleanupSwapChain();
+	void cleanupSwapchain();
 	// recreating swap chain in some special cases
-	void recreateSwapChain();
+	void recreateSwapchain();
 
 	// set "framebufferResized" to "true" if window was resized or moved
 	void framebufferResizeCallback(GLFWwindow* window, int width, int height);
@@ -210,13 +204,13 @@ private:
 	void createVertexBuffer(Mesh& mesh);
 	void createIndexBuffer(Mesh& mesh);
 
-	void createShaderBuffers(std::vector<Model>& models, size_t swapChainImageCount);
-	void createShaderBuffers(Model& model, size_t swapChainImageCount);
-	void createShaderBuffers(Mesh& mesh, size_t swapChainImageCount);
+	void createShaderBuffers(std::vector<Model>& models, size_t swapchainImageCount);
+	void createShaderBuffers(Model& model, size_t swapchainImageCount);
+	void createShaderBuffers(Mesh& mesh, size_t swapchainImageCount);
 
-	void createDescriptorSets(std::vector<Model>& models, size_t swapChainImageCount);
-	void createDescriptorSets(Model& model, size_t swapChainImageCount);
-	void createDescriptorSets(Mesh& mesh, size_t swapChainImageCount);
+	void createDescriptorSets(std::vector<Model>& models, size_t swapchainImageCount);
+	void createDescriptorSets(Model& model, size_t swapchainImageCount);
+	void createDescriptorSets(Mesh& mesh, size_t swapchainImageCount);
 
 	void createDescriptorPool();
 	void createDescriptorSetLayout(VkDescriptorSetLayout& descriptorSetLayout) const;
@@ -238,7 +232,7 @@ private:
 	// void bindVertexAndIndexBuffersToCommandBuffer(const Model& model, VkCommandBuffer commandBuffer);
 	void bindVertexAndIndexBuffersToCommandBuffer(const Mesh& mesh, VkCommandBuffer commandBuffer);
 
-	void updateShaderBuffers(uint32_t currentImage, float timeSinceLaunch);
+	void updateShaderBuffers(uint32_t currentImage, double timeSinceLaunch);
 	// Creating frames for presentation
 	void drawFrame(double timeSinceLaunch, double deltaTime/*, ImDrawData* draw_data*/);
 
@@ -254,16 +248,16 @@ private:
 	void recordModelToCommandBuffer(const Model& model, VkCommandBuffer commandBuffer);
 
 	// creating swap chain with the best properties for current device
-	void createSwapChain();
-	void createSwapChainImageViews();
+	void createSwapchain();
+	void createSwapchainImageViews();
 	// creating framebuffer from each swap chain image view
-	void createSwapChainFramebuffers();
+	void createSwapchainFramebuffers();
 	// choosing best present mode to window surface
-	VkPresentModeKHR chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
+	VkPresentModeKHR chooseSwapchainPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
 	// choosing best swap chain extent(resolution of the images)
-	VkExtent2D chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities);
+	VkExtent2D chooseSwapchainExtent(const VkSurfaceCapabilitiesKHR& capabilities);
 	// choosing best surface format(color space and number of bits) for the swap chain
-	VkSurfaceFormatKHR chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
+	VkSurfaceFormatKHR chooseSwapchainSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
 
 	// information about framebuffer attachments, how many color and depth buffers there will
 	// be, how many samples to use for each of them and how their contents should be treated

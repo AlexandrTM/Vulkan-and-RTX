@@ -38,7 +38,7 @@ public:
     );
 
     void generateTerrainMesh(
-        float offsetX, float offsetY, float offsetZ,
+        glm::vec3 offset,
         const std::vector<std::vector<float>>& heightmap,
         float gridSize,
         Mesh& mesh, float metricTextureSize

@@ -327,7 +327,7 @@ void VulkanAndRTX::createColorTexture(Texture& texture)
 	uint32_t mipLevels = 1;
 
 	createImage(
-		swapChainExtent.width, swapChainExtent.height, mipLevels, vkInit.colorSamples, colorFormat,
+		swapchainExtent.width, swapchainExtent.height, mipLevels, vkInit.colorSamples, colorFormat,
 		VK_IMAGE_TILING_OPTIMAL, 
 		VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
@@ -344,7 +344,7 @@ void VulkanAndRTX::createDepthTexture(Texture& texture)
 	uint32_t mipLevels = 1;
 
 	createImage(
-		swapChainExtent.width, swapChainExtent.height, mipLevels, vkInit.colorSamples, depthFormat,
+		swapchainExtent.width, swapchainExtent.height, mipLevels, vkInit.colorSamples, depthFormat,
 		VK_IMAGE_TILING_OPTIMAL, 
 		VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 

@@ -225,7 +225,7 @@ bool Character::checkCollision(
 	
 	if (isAABBOverlap(characterBoxMin, characterBoxMax, meshBoxMin, meshBoxMax)) {
 		for (size_t i = 0; i < mesh.indices.size(); i += 3) {
-			const glm::vec3& v0 = mesh.vertices[mesh.indices[i]].position;
+			const glm::vec3& v0 = mesh.vertices[mesh.indices[i    ]].position;
 			const glm::vec3& v1 = mesh.vertices[mesh.indices[i + 1]].position;
 			const glm::vec3& v2 = mesh.vertices[mesh.indices[i + 2]].position;
 			const glm::vec3& triangleNormal = mesh.vertices[mesh.indices[i]].normal;

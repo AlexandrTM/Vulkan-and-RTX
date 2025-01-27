@@ -2,20 +2,20 @@
 #include "VulkanAndRTX.h"
 
 // creating swap chain with the best properties for current device
-void VulkanAndRTX::createSwapChain()
+void VulkanAndRTX::createSwapchain()
 {
-	SwapChainSupportDetails swapChainSupport = vkInit.querySwapChainSupport(vkInit.physicalDevice);
+	SwapchainSupportDetails swapchainSupport = vkInit.querySwapchainSupport(vkInit.physicalDevice);
 
-	VkSurfaceFormatKHR surfaceFormat = chooseSwapSurfaceFormat(swapChainSupport.formats);
-	VkPresentModeKHR presentMode = chooseSwapPresentMode(swapChainSupport.presentModes);
+	VkSurfaceFormatKHR surfaceFormat = chooseSwapchainSurfaceFormat(swapchainSupport.formats);
+	VkPresentModeKHR presentMode = chooseSwapchainPresentMode(swapchainSupport.presentModes);
 	std::cout << "current present mode: " << presentMode << "\n";
-	VkExtent2D extent = chooseSwapExtent(swapChainSupport.capabilities);
+	VkExtent2D extent = chooseSwapchainExtent(swapchainSupport.capabilities);
 
-	uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
+	uint32_t imageCount = swapchainSupport.capabilities.minImageCount + 1;
 
-	if (swapChainSupport.capabilities.maxImageCount > 0 &&
-		imageCount > swapChainSupport.capabilities.maxImageCount) {
-		imageCount = swapChainSupport.capabilities.maxImageCount;
+	if (swapchainSupport.capabilities.maxImageCount > 0 &&
+		imageCount > swapchainSupport.capabilities.maxImageCount) {
+		imageCount = swapchainSupport.capabilities.maxImageCount;
 	}
 
 	VkSwapchainCreateInfoKHR createInfo{};
@@ -41,44 +41,44 @@ void VulkanAndRTX::createSwapChain()
 		createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
 	}
 
-	createInfo.preTransform = swapChainSupport.capabilities.currentTransform;
+	createInfo.preTransform = swapchainSupport.capabilities.currentTransform;
 	createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
 	createInfo.clipped = VK_TRUE;
 	createInfo.presentMode = presentMode;
 	swapchainImageFormat = surfaceFormat.format;
-	swapChainExtent = extent;
+	swapchainExtent = extent;
 
-	if (vkCreateSwapchainKHR(vkInit.device, &createInfo, nullptr, &swapChain) != VK_SUCCESS) {
+	if (vkCreateSwapchainKHR(vkInit.device, &createInfo, nullptr, &swapchain) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create swap chain!");
 	}
 
 	// make sure that swap chain image count is adequate
-	vkGetSwapchainImagesKHR(vkInit.device, swapChain, &imageCount, nullptr);
-	swapChainImages.resize(imageCount);
+	vkGetSwapchainImagesKHR(vkInit.device, swapchain, &imageCount, nullptr);
+	swapchainImages.resize(imageCount);
 	// getting images from the swap chain
-	vkGetSwapchainImagesKHR(vkInit.device, swapChain, &imageCount, swapChainImages.data());
+	vkGetSwapchainImagesKHR(vkInit.device, swapchain, &imageCount, swapchainImages.data());
 }
 
-void VulkanAndRTX::createSwapChainImageViews()
+void VulkanAndRTX::createSwapchainImageViews()
 {
-	swapChainImageViews.resize(swapChainImages.size());
+	swapchainImageViews.resize(swapchainImages.size());
 
-	for (uint32_t i = 0; i < swapChainImages.size(); i++) {
-		swapChainImageViews[i] = createImageView(swapChainImages[i], swapchainImageFormat,
+	for (uint32_t i = 0; i < swapchainImages.size(); i++) {
+		swapchainImageViews[i] = createImageView(swapchainImages[i], swapchainImageFormat,
 			VK_IMAGE_ASPECT_COLOR_BIT, 1);
 	}
 }
 
 // creating framebuffer from each swap chain image view
-void VulkanAndRTX::createSwapChainFramebuffers()
+void VulkanAndRTX::createSwapchainFramebuffers()
 {
-	swapChainFramebuffers.resize(swapChainImageViews.size());
+	swapchainFramebuffers.resize(swapchainImageViews.size());
 
-	for (size_t i = 0; i < swapChainImageViews.size(); i++) {
+	for (size_t i = 0; i < swapchainImageViews.size(); i++) {
 		std::array<VkImageView, 3> attachments = {
 			msaaTexture.imageView,
 			depthTexture.imageView,
-			swapChainImageViews[i]
+			swapchainImageViews[i]
 		};
 
 		VkFramebufferCreateInfo framebufferInfo{};
@@ -86,18 +86,18 @@ void VulkanAndRTX::createSwapChainFramebuffers()
 		framebufferInfo.renderPass = objectRenderPass;
 		framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
 		framebufferInfo.pAttachments = attachments.data();
-		framebufferInfo.width = swapChainExtent.width;
-		framebufferInfo.height = swapChainExtent.height;
+		framebufferInfo.width = swapchainExtent.width;
+		framebufferInfo.height = swapchainExtent.height;
 		framebufferInfo.layers = 1;
 
-		if (vkCreateFramebuffer(vkInit.device, &framebufferInfo, nullptr, &swapChainFramebuffers[i]) != VK_SUCCESS) {
+		if (vkCreateFramebuffer(vkInit.device, &framebufferInfo, nullptr, &swapchainFramebuffers[i]) != VK_SUCCESS) {
 			throw std::runtime_error("failed to create framebuffer! " + i);
 		}
 	}
 }
 
 // recreating swap chain in some special cases
-void VulkanAndRTX::recreateSwapChain()
+void VulkanAndRTX::recreateSwapchain()
 {
 	int width = 0, height = 0;
 	glfwGetFramebufferSize(window, &width, &height);
@@ -117,12 +117,12 @@ void VulkanAndRTX::recreateSwapChain()
 	// waiting for previous swap chain to stop rendering
 	vkDeviceWaitIdle(vkInit.device);
 
-	cleanupSwapChain();
+	cleanupSwapchain();
 
 	createPipelinesAndSwapchain();
 	createColorTexture(msaaTexture);
 	createDepthTexture(depthTexture);
-	createSwapChainFramebuffers();
+	createSwapchainFramebuffers();
 	createCommandBuffers();
 	createDescriptorPool();
 	createShaderBuffers(sky, MAX_FRAMES_IN_FLIGHT);
@@ -131,13 +131,13 @@ void VulkanAndRTX::recreateSwapChain()
 	createDescriptorSets(models, MAX_FRAMES_IN_FLIGHT);
 }
 
-void VulkanAndRTX::cleanupSwapChain()
+void VulkanAndRTX::cleanupSwapchain()
 {
 	cleanupTexture(depthTexture);
 	cleanupTexture(msaaTexture);
 
-	for (size_t i = 0; i < swapChainFramebuffers.size(); i++) {
-		vkDestroyFramebuffer(vkInit.device, swapChainFramebuffers[i], nullptr);
+	for (size_t i = 0; i < swapchainFramebuffers.size(); i++) {
+		vkDestroyFramebuffer(vkInit.device, swapchainFramebuffers[i], nullptr);
 	}
 
 	for (auto& pipeline : pipelines) {
@@ -147,15 +147,15 @@ void VulkanAndRTX::cleanupSwapChain()
 
 	vkDestroyRenderPass(vkInit.device, objectRenderPass, nullptr);
 
-	for (size_t i = 0; i < swapChainImageViews.size(); i++) {
-		vkDestroyImageView(vkInit.device, swapChainImageViews[i], nullptr);
+	for (size_t i = 0; i < swapchainImageViews.size(); i++) {
+		vkDestroyImageView(vkInit.device, swapchainImageViews[i], nullptr);
 	}
 
-	vkDestroySwapchainKHR(vkInit.device, swapChain, nullptr);
+	vkDestroySwapchainKHR(vkInit.device, swapchain, nullptr);
 }
 
-// choosing best surface format(color space and number of bits) for the swap chain
-VkSurfaceFormatKHR VulkanAndRTX::chooseSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
+// choosing best surface format(color space and number of bits) for the swapchain
+VkSurfaceFormatKHR VulkanAndRTX::chooseSwapchainSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
 {
 	for (const auto& availableFormat : availableFormats) {
 		if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB &&
@@ -168,7 +168,7 @@ VkSurfaceFormatKHR VulkanAndRTX::chooseSwapSurfaceFormat(const std::vector<VkSur
 }
 
 // choosing best present mode to window surface
-VkPresentModeKHR VulkanAndRTX::chooseSwapPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes)
+VkPresentModeKHR VulkanAndRTX::chooseSwapchainPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes)
 {
 	for (const auto& availablePresentMode : availablePresentModes) {
 		// unlimited framerate VK_PRESENT_MODE_IMMEDIATE_KHR
@@ -184,7 +184,7 @@ VkPresentModeKHR VulkanAndRTX::chooseSwapPresentMode(const std::vector<VkPresent
 }
 
 // choosing best swap chain extent(resolution of the images)
-VkExtent2D VulkanAndRTX::chooseSwapExtent(const VkSurfaceCapabilitiesKHR& capabilities)
+VkExtent2D VulkanAndRTX::chooseSwapchainExtent(const VkSurfaceCapabilitiesKHR& capabilities)
 {
 	if (capabilities.currentExtent.width != UINT32_MAX) {
 		return capabilities.currentExtent;

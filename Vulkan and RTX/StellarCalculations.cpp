@@ -19,7 +19,7 @@ namespace StellarCalculations
 			- 0.5) * glm::two_pi<double>();
 	}
 
-	glm::vec3 calculateSunPosition(float timeSinceLaunch)
+	glm::vec3 calculateSunPosition(double timeSinceLaunch)
 	{
 		timeSinceLaunch += secondsInDay / 4;
 		double timeOfDay = std::fmod(timeSinceLaunch, secondsInDay) / secondsInDay;

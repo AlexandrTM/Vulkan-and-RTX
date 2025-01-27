@@ -9,10 +9,12 @@ void VulkanAndRTX::generateCubicLandscape(size_t landscapeWidth, size_t landscap
 		for (size_t j = 0; j < landscapeLenght; j++)
 		{
 			float random_height = 0.01 * (rand() % 51);
-			createCube(0.0f + (float)i * cubeSize - landscapeWidth / 4,
+			createCube(
+				0.0f + (float)i * cubeSize - landscapeWidth / 4,
 				-2 + random_height,
 				0.0f + (float)j * cubeSize - landscapeLenght / 4,
-				cubeSize);
+				cubeSize
+			);
 		}
 	}
 }
@@ -878,7 +880,7 @@ Material VulkanAndRTX::processMaterial(aiMaterial* aiMat, const aiScene* scene) 
 	//}
 
 	if (aiMat->GetTextureCount(aiTextureType_DIFFUSE) > 0) {
-
+		
 		aiString texturePath;
 		if (aiMat->GetTexture(aiTextureType_DIFFUSE, 0, &texturePath) == AI_SUCCESS) {
 			material.diffuseTexture = loadTexture(texturePath.C_Str(), scene);
