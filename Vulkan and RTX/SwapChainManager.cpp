@@ -100,18 +100,11 @@ void VulkanAndRTX::createSwapchainFramebuffers()
 void VulkanAndRTX::recreateSwapchain()
 {
 	int width = 0, height = 0;
-	glfwGetFramebufferSize(window, &width, &height);
-	// stops rendering if window out of view
+	// glfwGetFramebufferSize(glfwWindow, &width, &height);
+	// stops rendering if glfwWindow out of view
 	while (width == 0 || height == 0) {
-		glfwGetFramebufferSize(window, &width, &height);
-		glfwWaitEvents();
-		ImGui_ImplVulkan_SetMinImageCount(MAX_FRAMES_IN_FLIGHT);
-		ImGui_ImplVulkanH_CreateOrResizeWindow(
-			vkInit.instance, vkInit.physicalDevice, vkInit.device, 
-			vulkanWindow, vkInit.queueFamilyIndices.graphicsFamily.value(),
-			nullptr, width, height, MAX_FRAMES_IN_FLIGHT
-		);
-		vulkanWindow->FrameIndex = 0;
+		// glfwGetFramebufferSize(glfwWindow, &width, &height);
+		// glfwWaitEvents();
 	}
 
 	// waiting for previous swap chain to stop rendering
@@ -167,7 +160,7 @@ VkSurfaceFormatKHR VulkanAndRTX::chooseSwapchainSurfaceFormat(const std::vector<
 	return availableFormats[0];
 }
 
-// choosing best present mode to window surface
+// choosing best present mode to glfwWindow surface
 VkPresentModeKHR VulkanAndRTX::chooseSwapchainPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes)
 {
 	for (const auto& availablePresentMode : availablePresentModes) {
@@ -190,12 +183,11 @@ VkExtent2D VulkanAndRTX::chooseSwapchainExtent(const VkSurfaceCapabilitiesKHR& c
 		return capabilities.currentExtent;
 	}
 	else {
-		int width, height;
-		glfwGetFramebufferSize(window, &width, &height);
+		QSize windowSize = qtWindow->size();
 
 		VkExtent2D actualExtent = {
-			static_cast<uint32_t>(width),
-			static_cast<uint32_t>(height)
+			static_cast<uint32_t>(windowSize.width()),
+			static_cast<uint32_t>(windowSize.height())
 		};
 
 		actualExtent.width = std::clamp(actualExtent.width, capabilities.minImageExtent.width,

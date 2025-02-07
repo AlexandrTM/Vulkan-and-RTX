@@ -31,9 +31,6 @@
     <Filter Include="headers\precompiled\implementation macros">
       <UniqueIdentifier>{11f1ff4e-c158-4bc5-b19f-0398e6c2a40e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="headers\imgui">
-      <UniqueIdentifier>{e02785ed-bb1e-4af5-b620-6d24351110bc}</UniqueIdentifier>
-    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -108,29 +105,11 @@
     <ClCompile Include="InteractableVolume.cpp">
       <Filter>source</Filter>
     </ClCompile>
-    <ClCompile Include="imgui_draw.cpp">
-      <Filter>headers\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="imgui_impl_glfw.cpp">
-      <Filter>headers\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="imgui_impl_vulkan.cpp">
-      <Filter>headers\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="imgui_tables.cpp">
-      <Filter>headers\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="imgui_widgets.cpp">
-      <Filter>headers\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="imgui.cpp">
-      <Filter>headers\imgui</Filter>
-    </ClCompile>
-    <ClCompile Include="imgui_demo.cpp">
-      <Filter>headers\imgui</Filter>
-    </ClCompile>
     <ClCompile Include="Item.cpp">
       <Filter>characteristics</Filter>
+    </ClCompile>
+    <ClCompile Include="VulkanQtWindow.cpp">
+      <Filter>source</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -158,9 +137,6 @@
     <ClInclude Include="Camera.h">
       <Filter>headers</Filter>
     </ClInclude>
-    <ClInclude Include="VulkanAndRTX.h">
-      <Filter>headers</Filter>
-    </ClInclude>
     <ClInclude Include="Vertex.h">
       <Filter>headers</Filter>
     </ClInclude>
@@ -182,30 +158,6 @@
     <ClInclude Include="InteractableVolume.h">
       <Filter>headers</Filter>
     </ClInclude>
-    <ClInclude Include="imgui_impl_glfw.h">
-      <Filter>headers\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="imgui_impl_vulkan.h">
-      <Filter>headers\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="imgui_internal.h">
-      <Filter>headers\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="imstb_rectpack.h">
-      <Filter>headers\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="imstb_textedit.h">
-      <Filter>headers\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="imstb_truetype.h">
-      <Filter>headers\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="imconfig.h">
-      <Filter>headers\imgui</Filter>
-    </ClInclude>
-    <ClInclude Include="imgui.h">
-      <Filter>headers\imgui</Filter>
-    </ClInclude>
     <ClInclude Include="Item.h">
       <Filter>characteristics</Filter>
     </ClInclude>
@@ -219,5 +171,13 @@
     <Image Include="icon1.ico">
       <Filter>assets</Filter>
     </Image>
+  </ItemGroup>
+  <ItemGroup>
+    <QtMoc Include="VulkanQtWindow.h">
+      <Filter>headers</Filter>
+    </QtMoc>
+    <QtMoc Include="VulkanAndRTX.h">
+      <Filter>headers</Filter>
+    </QtMoc>
   </ItemGroup>
 </Project>

@@ -6,19 +6,15 @@
 #include <GLFW/glfw3.h>
 #endif
 
-#ifndef IMGUI_DEFINE_MATH_OPERATORS
-#define IMGUI_DEFINE_MATH_OPERATORS
-#include "imgui.h"
-#include "imgui_impl_glfw.h"
-#include "imgui_impl_vulkan.h"
-#endif
-
-#include <QtWidgets/qapplication.h>
-#include <QtWidgets/qpushbutton.h>
-#include <QtWidgets/qmainwindow.h>
-#include <QtWidgets/qwidget.h>
-#include <QtGui/qvulkanwindow.h>
-#include <QtGui/qvulkaninstance.h>
+#include <QApplication>
+#include <QGuiApplication>
+#include <QPushButton>
+#include <QWidget>
+#include <QWindow>
+#include <QMainWindow>
+#include <QVulkanWindow>
+#include <QVulkanInstance>
+#include <QVulkanFunctions>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <gtx/hash.hpp>
@@ -28,8 +24,6 @@
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
 #include <meshoptimizer.h>
-
-#include <NoesisPCH.h>
 
 #define GLM_FORCE_RADIANS
 #define GLM_FORCE_DEPTH_ZERO_TO_ONE

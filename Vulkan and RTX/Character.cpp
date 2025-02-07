@@ -2,57 +2,24 @@
 #include "Character.h"
 #include "Camera.h"
 
-void Character::initializeInputHandler(GLFWwindow* window)
+void Character::handleKeyInput()
 {
-	glfwSetWindowUserPointer(window, this);
-
-	glfwSetKeyCallback(window, [](GLFWwindow* window, int key, int scancode, int action, int mode) {
-		Character* character = static_cast<Character*>(glfwGetWindowUserPointer(window));
-		character->keyCallback(window, key, scancode, action, mode);
-		});
-
-	glfwSetMouseButtonCallback(window, [](GLFWwindow* window, int button, int action, int mods) {
-		Character* character = static_cast<Character*>(glfwGetWindowUserPointer(window));
-		character->mouseButtonCallback(window, button, action, mods);
-		});
-
-	glfwSetCursorPosCallback(window, [](GLFWwindow* window, double xpos, double ypos) {
-		Character* character = static_cast<Character*>(glfwGetWindowUserPointer(window));
-		character->mouseCallback(window, xpos, ypos);
-		});
-
-	glfwSetScrollCallback(window, [](GLFWwindow* window, double xoffset, double yoffset) {
-		Character* character = static_cast<Character*>(glfwGetWindowUserPointer(window));
-		character->scrollCallback(window, xoffset, yoffset);
-		});
-}
-
-void Character::keyCallback(GLFWwindow* window, int key, int scancode, int action, int mode)
-{
-	if (key >= 0 && key < 1024)
-	{
-		if (action == GLFW_PRESS)
-			keys[key] = true;
-		else if (action == GLFW_RELEASE)
-			keys[key] = false;
-	}
-
-	if (key == GLFW_KEY_ESCAPE && action == GLFW_PRESS) 
-	{
-		glfwSetWindowShouldClose(window, GL_TRUE);
+	if (keys[Qt::Key_Escape]) {
+		QCoreApplication::instance()->setProperty("quit", true);
+		QCoreApplication::quit();
 	}
 
 	// altering mouse sensitivity
-	if (key == GLFW_KEY_UP && action == GLFW_PRESS)
+	if (keys[Qt::Key_Up])
 	{
 		mouseSensitivity = std::clamp(mouseSensitivity * 1.3, 0.001, 10.0);
 	}
-	if (key == GLFW_KEY_DOWN && action == GLFW_PRESS)
+	if (keys[Qt::Key_Down])
 	{
 		mouseSensitivity = std::clamp(mouseSensitivity * 0.75, 0.001, 10.0);
 	}
 
-	if (key == GLFW_KEY_F && action == GLFW_RELEASE) {
+	if (keys[Qt::Key_F]) {
 		if (currentInteractingVolume == nullptr) {
 			for (size_t i = 0; i < interactableCuboids.size(); i++) {
 				if (interactableCuboids[i].rayIntersectsCuboid(
@@ -63,9 +30,9 @@ void Character::keyCallback(GLFWwindow* window, int key, int scancode, int actio
 			}
 		}
 	}
-
+	
 	// changing mipmap level of detail
-	/*if (key == GLFW_KEY_LEFT && action == GLFW_PRESS)
+	/*if (keys[Qt::Key_Left)
 	{
 		if (!(currentMinMipLevels < 0.0f))
 		{
@@ -76,7 +43,7 @@ void Character::keyCallback(GLFWwindow* window, int key, int scancode, int actio
 			currentMinMipLevels = 0.0f;
 		}
 	}
-	if (key == GLFW_KEY_RIGHT && action == GLFW_PRESS)
+	if (keys[Qt::Key_Right)
 	{
 		if (!(currentMinMipLevels > 14.0f))
 		{
@@ -88,27 +55,9 @@ void Character::keyCallback(GLFWwindow* window, int key, int scancode, int actio
 		}
 	}*/
 }
-void Character::mouseButtonCallback(GLFWwindow* window, int button, int action, int mods)
-{
-	if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS) 
-	{
-		camera.setVerticalFov(60.0f);
-		mouseSensitivity = 0.125;
-	}
-}
-void Character::mouseCallback(GLFWwindow* window, double xpos, double ypos)
-{
-	if (!currentInteractingVolume) {
-		camera.rotate(xpos, ypos, mouseSensitivity);
-	}
-}
-// mouse wheel handling
-void Character::scrollCallback(GLFWwindow* window, double xoffset, double yoffset)
-{
-	camera.setVerticalFov(std::clamp(camera.getVerticalFov() - static_cast<float>(yoffset), 0.1f, 130.0f));
-}
 
-void Character::handleKeyInput(
+
+void Character::handleCharacterMovement(
 	float deltaTime, 
 	float gravity, const std::vector<Model>& models
 )
@@ -122,27 +71,27 @@ void Character::handleKeyInput(
 	glm::vec3 cameraPosition = camera.getLookFrom();
 	glm::vec3 rightVector = glm::normalize(glm::cross(cameraDirection, verticalWorldAxis));
 
-	if (keys[GLFW_KEY_LEFT_CONTROL]) {
+	if (keys[Qt::Key_Control]) {
 		movementSpeed *= 1.9;
 	}
-	if (keys[GLFW_KEY_LEFT_ALT]) {
+	if (keys[Qt::Key_Alt]) {
 		movementSpeed *= 0.4;
 	}
-	if (keys[GLFW_KEY_W]) {
+	if (keys[Qt::Key_W]) {
 		horizontalDisplacement += movementSpeed * glm::normalize(
 			glm::vec3(cameraDirection.x, 0.0f, cameraDirection.z));
 	}
-	if (keys[GLFW_KEY_A]) {
+	if (keys[Qt::Key_A]) {
 		horizontalDisplacement -= rightVector * movementSpeed;
 	}
-	if (keys[GLFW_KEY_S]) {
+	if (keys[Qt::Key_S]) {
 		horizontalDisplacement -= movementSpeed * glm::normalize(
 			glm::vec3(cameraDirection.x, 0.0f, cameraDirection.z));
 	}
-	if (keys[GLFW_KEY_D]) {
+	if (keys[Qt::Key_D]) {
 		horizontalDisplacement += rightVector * movementSpeed;
 	}
-	if (keys[GLFW_KEY_SPACE]) {
+	if (keys[Qt::Key_Space]) {
 		if (isOnGround && gamemode == GAMEMODE_SURVIVAL) {
 			velocity.y = jumpSpeed;
 			isOnGround = false;
@@ -151,7 +100,7 @@ void Character::handleKeyInput(
 			verticalDisplacement += verticalWorldAxis * movementSpeed * 0.7f;
 		}
 	}
-	if (keys[GLFW_KEY_LEFT_SHIFT]) {
+	if (keys[Qt::Key_Shift]) {
 		if (gamemode == GAMEMODE_CREATIVE) {
 			verticalDisplacement -= verticalWorldAxis * movementSpeed * 0.8f;
 		}

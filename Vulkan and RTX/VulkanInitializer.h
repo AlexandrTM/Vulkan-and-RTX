@@ -45,9 +45,7 @@ struct VulkanInitializer
         const bool enableValidationLayers = true;
     #endif
 
-    void initializeVulkan(GLFWwindow* window);
-
-    void createSurface(GLFWwindow* window);
+    void initializeVulkan(QVulkanInstance* qInstance);
 
     void createInstance();
     void setupDebugMessenger();
@@ -68,12 +66,19 @@ struct VulkanInitializer
 
     // creating info for debugMessenger
     void populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCreateInfoEXT& createInfo);
-    void DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger,
-        const VkAllocationCallbacks* pAllocator);
+    VkResult CreateDebugUtilsMessengerEXT(
+        VkInstance instance,
+        const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
+        const VkAllocationCallbacks* pAllocator,
+        VkDebugUtilsMessengerEXT* pDebugMessenger
+    );
+    void DestroyDebugUtilsMessengerEXT(
+        VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger,
+        const VkAllocationCallbacks* pAllocator
+    );
 
     void findMaxUsableSampleCount(VkPhysicalDevice physicalDevice);
 
-    // getting required extensions for GLFW and their number
     std::vector<const char*> getRequiredExtensions() const;
 
     // finding needed queue families

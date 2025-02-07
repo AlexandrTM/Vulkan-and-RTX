@@ -14,8 +14,6 @@ typedef enum Gamemode {
 class Character
 {
 private:
-	double mouseSensitivity = 0.125;
-	bool keys[1024] = { 0 };
 
 	Cuboid aabb = { glm::vec3(-0.3, -1.45, -0.3), glm::vec3(0.3, 0.25, 0.3) };
 	float maxSlopeAngle = 50.0f;
@@ -29,6 +27,8 @@ private:
 
 public:
 	Camera camera;
+	double mouseSensitivity = 0.125;
+	std::unordered_map<int, bool> keys;
 
 	std::vector<InteractableVolume> interactableCuboids = { 
 		InteractableVolume(glm::vec3(20.0, 0.0, -10.0), glm::vec3(21.75, 4.75, -8.25), "easy"),
@@ -38,10 +38,12 @@ public:
 
 	InteractableVolume* currentInteractingVolume = nullptr;
 
-	void handleKeyInput(
+	void handleCharacterMovement(
 		float deltaTime,
 		float gravity, const std::vector<Model>& models
 	);
+	void handleKeyInput();
+
 	bool checkCollision(
 		const Mesh& mesh,
 		const glm::vec3& cameraPosition,
@@ -71,14 +73,6 @@ public:
 		const glm::vec3& axis, const glm::vec3& boxHalfSize,
 		const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2
 	);
-
-	void initializeInputHandler(GLFWwindow* window);
-
-	void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mode);
-	void mouseButtonCallback(GLFWwindow* window, int button, int action, int mods);
-	void mouseCallback(GLFWwindow* window, double xpos, double ypos);
-	// mouse wheel handling
-	void scrollCallback(GLFWwindow* window, double xoffset, double yoffset);
 };
 
 #endif // !CHARACTER_H

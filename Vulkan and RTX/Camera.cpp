@@ -49,7 +49,7 @@ Camera::Camera(
 	_roll = roll;
 }
 
-void Camera::rotate(double xpos, double ypos, double sensitivity)
+void Camera::rotateAbsolute(double xpos, double ypos, double sensitivity)
 {
 	if (_firstMouse)
 	{
@@ -78,6 +78,29 @@ void Camera::rotate(double xpos, double ypos, double sensitivity)
 	}
 
 	_yaw = _yaw + xoffset;
+
+	glm::vec3 front{};
+	front.x = cos(glm::radians(_yaw)) * cos(glm::radians(_pitch));
+	front.y = sin(glm::radians(_pitch));
+	front.z = sin(glm::radians(_yaw)) * cos(glm::radians(_pitch));
+	_cameraDirection = glm::normalize(front);
+}
+void Camera::rotateRelative(double dx, double dy, double sensitivity)
+{
+	dx *= sensitivity;
+	dy *= -sensitivity;
+
+	if (_pitch + dy > 89.99) {
+		_pitch = 89.99;
+	}
+	else if (_pitch + dy < -89.99) {
+		_pitch = -89.99;
+	}
+	else {
+		_pitch = _pitch + dy;
+	}
+
+	_yaw = _yaw + dx;
 
 	glm::vec3 front{};
 	front.x = cos(glm::radians(_yaw)) * cos(glm::radians(_pitch));

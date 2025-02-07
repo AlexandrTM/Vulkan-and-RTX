@@ -12,10 +12,12 @@ const std::vector<const char*> deviceExtensions = {
 };
 
 // finding address "vkCreateDebugUtilsMessengerEXT" function for our "instance" and then executing it
-static VkResult CreateDebugUtilsMessengerEXT(VkInstance instance,
+VkResult VulkanInitializer::CreateDebugUtilsMessengerEXT(
+	VkInstance instance,
 	const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
 	const VkAllocationCallbacks* pAllocator,
-	VkDebugUtilsMessengerEXT* pDebugMessenger)
+	VkDebugUtilsMessengerEXT* pDebugMessenger
+)
 {
 	auto func = (PFN_vkCreateDebugUtilsMessengerEXT)
 		// finding address of the vkCreateDebugUtilsMessengerEXT function
@@ -29,9 +31,10 @@ static VkResult CreateDebugUtilsMessengerEXT(VkInstance instance,
 }
 
 // finding address "vkDestroyDebugUtilsMessengerEXT" function for our "instance" and then executing it
-void VulkanInitializer::DestroyDebugUtilsMessengerEXT(VkInstance instance,
-	VkDebugUtilsMessengerEXT debugMessenger,
-	const VkAllocationCallbacks* pAllocator)
+void VulkanInitializer::DestroyDebugUtilsMessengerEXT(
+	VkInstance instance, VkDebugUtilsMessengerEXT debugMessenger,
+	const VkAllocationCallbacks* pAllocator
+)
 {
 	auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)
 		// finding address of the vkDestroyDebugUtilsMessengerEXT function
@@ -41,22 +44,14 @@ void VulkanInitializer::DestroyDebugUtilsMessengerEXT(VkInstance instance,
 	}
 }
 
-void VulkanInitializer::initializeVulkan(GLFWwindow* window) 
+void VulkanInitializer::initializeVulkan(QVulkanInstance* qInstance)
 {
+	instance = qInstance->vkInstance();
 	createInstance();
-	setupDebugMessenger();
-	createSurface(window);
+	//setupDebugMessenger();
 	pickPhysicalDevice();
 	queueFamilyIndices = findQueueFamilies(physicalDevice);
 	createLogicalDevice();
-}
-
-// creating window surface for the specific window
-void VulkanInitializer::createSurface(GLFWwindow* window)
-{
-	if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create window surface!");
-	}
 }
 
 void VulkanInitializer::createInstance()
@@ -64,8 +59,8 @@ void VulkanInitializer::createInstance()
 	if (enableValidationLayers && !checkValidationLayerSupport()) {
 		throw std::runtime_error("validation layers requested, but not available!");
 	}
-
-	VkApplicationInfo appInfo{};
+	
+	/*VkApplicationInfo appInfo{};
 	appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
 	appInfo.pApplicationName = "Vulkan and RTX";
 	appInfo.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
@@ -96,7 +91,7 @@ void VulkanInitializer::createInstance()
 
 	if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create instance!");
-	}
+	}*/
 }
 
 // picking most wanted GPU for "instance", it also can be CPU or something
@@ -304,20 +299,20 @@ void VulkanInitializer::findMaxUsableSampleCount(VkPhysicalDevice physicalDevice
 	std::cout << "colorSamples: " << colorSamples << " " << "depthSamples: " << depthSamples << "\n";
 }
 
-// getting required extensions for GLFW and their number
 std::vector<const char*> VulkanInitializer::getRequiredExtensions() const
 {
-	uint32_t glfwExtensionCount = 0;
-	const char** glfwExtensions;
-	glfwExtensions = glfwGetRequiredInstanceExtensions(&glfwExtensionCount);
+	QByteArrayList qtExtensions = QVulkanInstance().extensions();
 
-	std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
-
-	if (enableValidationLayers) {
-		extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+	std::vector<const char*> extensions;
+	for (const QByteArray& ext : qtExtensions) {
+		extensions.push_back(ext.constData());
 	}
 
-	return extensions;
+    if (enableValidationLayers) {
+        extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+    }
+
+    return extensions;
 }
 
 // finding needed queue families

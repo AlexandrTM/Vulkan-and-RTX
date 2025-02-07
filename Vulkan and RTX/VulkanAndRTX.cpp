@@ -1,253 +1,103 @@
 #include "pch.h"
 #include "VulkanAndRTX.h"
 #include "TerrainGenerator.h"
-
-static ImGui_ImplVulkanH_Window g_MainWindowData;
+#include "VulkanQtWindow.h"
 
 void VulkanAndRTX::run()
 {
-	createGLFWWindow();
-	character.initializeInputHandler(window);
-	vkInit.initializeVulkan(window);
+	// createGLFWWindow();
+	// character.initializeInputHandler();
+	createQtWindow();
+	vkInit.initializeVulkan(&qVulkanInstance);
 	prepareResources();
-	//vulkanWindow = &g_MainWindowData;
-	//setupImguiWindow(vulkanWindow, vkInit.surface, windowWidth, windowHeight);
-	//setupImGui();
-	//initializeNoesisGUI();
 	mainLoop();
 	cleanupMemory();
 }
 
-// initializing GLFW and creating window
-void VulkanAndRTX::createGLFWWindow()
+//void VulkanAndRTX::createGLFWWindow()
+//{
+//	glfwInit();
+//
+//	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
+//	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+//	glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_FALSE);
+//
+//	glfwWindow = glfwCreateWindow(windowWidth, windowHeight, "Vulkan and RTX", nullptr, nullptr);
+//	glfwSetInputMode(glfwWindow, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+//
+//	GLFWmonitor* monitor = glfwGetPrimaryMonitor();
+//	int count;
+//	GLFWmonitor** monitors = glfwGetMonitors(&count);
+//	std::cout << "monitor count: " << count << "\n";
+//	const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+//	std::cout << "current monitor mode: " << mode->redBits << " " << mode->greenBits << " " << mode->blueBits
+//		<< " " << mode->width << " " << mode->height << " " << mode->refreshRate << "\n";
+//
+//	// setting glfwWindow to the center
+//	glfwSetWindowPos(glfwWindow, mode->width / 2 - windowWidth / 2, mode->height / 2 - windowHeight / 2 - 30);
+//
+//	/*int width_mm, height_mm;
+//	glfwGetMonitorPhysicalSize(monitor, &width_mm, &height_mm);
+//	std::cout << "monitor width, height: " << width_mm << " " << height_mm << "\n";
+//	const char* name = glfwGetMonitorName(monitor);
+//	std::cout << "monitor name: " << name << "\n";
+//
+//	int count1;
+//	const GLFWvidmode* modes = glfwGetVideoModes(monitor, &count1);
+//
+//	for (int i = 0; i < count1; i++)
+//	{
+//		std::cout << "video mode: " << i << " " << modes[i].redBits << " " << modes[i].greenBits << " " << modes[i].blueBits << " "
+//			<< modes[i].width << " " << modes[i].height << " " << modes[i].refreshRate << "\n";
+//	}*/
+//
+//	// Icon creation
+//#pragma region
+//	int width, height;
+//	int channels;
+//	unsigned char* pixels = stbi_load("textures/icon.png", &width, &height, &channels, 4);
+//
+//	GLFWimage windowIcon[1]{};
+//	windowIcon[0].height = height;
+//	windowIcon[0].width = width;
+//	windowIcon[0].pixels = pixels;
+//
+//	glfwSetWindowIcon(glfwWindow, 1, windowIcon);
+//#pragma endregion
+//}
+void VulkanAndRTX::createQtWindow()
 {
-	glfwInit();
+	qVulkanInstance.setApiVersion(QVersionNumber(1, 0));
+	/*auto supportedExtensions = qVulkanInstance.extensions();
+	qDebug() << "Supported extensions:" << supportedExtensions;*/
 
-	glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-	glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
-	glfwWindowHint(GLFW_DOUBLEBUFFER, GLFW_FALSE);
-
-	window = glfwCreateWindow(windowWidth, windowHeight, "Vulkan and RTX", nullptr, nullptr);
-	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
-	GLFWmonitor* monitor = glfwGetPrimaryMonitor();
-	int count;
-	GLFWmonitor** monitors = glfwGetMonitors(&count);
-	std::cout << "monitor count: " << count << "\n";
-	const GLFWvidmode* mode = glfwGetVideoMode(monitor);
-	std::cout << "current monitor mode: " << mode->redBits << " " << mode->greenBits << " " << mode->blueBits
-		<< " " << mode->width << " " << mode->height << " " << mode->refreshRate << "\n";
-
-	// setting window to the center
-	glfwSetWindowPos(window, mode->width / 2 - windowWidth / 2, mode->height / 2 - windowHeight / 2 - 30);
-
-	/*int width_mm, height_mm;
-	glfwGetMonitorPhysicalSize(monitor, &width_mm, &height_mm);
-	std::cout << "monitor width, height: " << width_mm << " " << height_mm << "\n";
-	const char* name = glfwGetMonitorName(monitor);
-	std::cout << "monitor name: " << name << "\n";
-
-	int count1;
-	const GLFWvidmode* modes = glfwGetVideoModes(monitor, &count1);
-
-	for (int i = 0; i < count1; i++)
-	{
-		std::cout << "video mode: " << i << " " << modes[i].redBits << " " << modes[i].greenBits << " " << modes[i].blueBits << " "
-			<< modes[i].width << " " << modes[i].height << " " << modes[i].refreshRate << "\n";
-	}*/
-
-	// Icon creation
-#pragma region
-	int width, height;
-	int channels;
-	unsigned char* pixels = stbi_load("textures/icon.png", &width, &height, &channels, 4);
-
-	GLFWimage windowIcon[1]{};
-	windowIcon[0].height = height;
-	windowIcon[0].width = width;
-	windowIcon[0].pixels = pixels;
-
-	glfwSetWindowIcon(window, 1, windowIcon);
-#pragma endregion
-}
-void VulkanAndRTX::initializeNoesisGUI()
-{
-#ifdef NDEBUG
-	Noesis::SetLogHandler(
-		[](const char* file, uint32_t line, uint32_t level, const char* channel, const char* message) {
-			printf("[%s:%u] %s: %s\n", file, line, channel, message);
-		}
-	);
-	Noesis::SetErrorHandler(
-		[](const char* file, uint32_t line, const char* message, bool fatal) {
-			printf("[%s:%u] %s: %s\n", file, line, message, fatal ? "true" : "false");
-		}
-	);
-#endif
-
-	//Noesis::GUI::SetLicense(NS_LICENSE_NAME, NS_LICENSE_KEY);
-	Noesis::GUI::Init();
-
-	std::string currentPath = std::filesystem::current_path().string();
-	std::string xamlRootPath = currentPath + "/xaml";
-	std::string fontsRootPath = currentPath + "/fonts";
-	std::string texturesRootPath = currentPath + "/textures";
-
-	Noesis::Ptr<NoesisApp::LocalXamlProvider> xamlProvider =
-		*new NoesisApp::LocalXamlProvider(xamlRootPath.c_str());
-	Noesis::Ptr<NoesisApp::LocalFontProvider> fontProvider =
-		*new NoesisApp::LocalFontProvider(fontsRootPath.c_str());
-	Noesis::Ptr<NoesisApp::LocalTextureProvider> textureProvider =
-		*new NoesisApp::LocalTextureProvider(texturesRootPath.c_str());
-
-	Noesis::GUI::SetXamlProvider(xamlProvider);
-	Noesis::GUI::SetFontProvider(fontProvider);
-	Noesis::GUI::SetTextureProvider(textureProvider);
-
-	//Noesis::GUI::SetFontProvider(Noesis::MakePtr<NoesisApp::LocalFontProvider>("./fonts"));
-	/*Noesis::GUI::SetXamlProvider(Noesis::MakePtr<NoesisApp::LocalXamlProvider>("."));
-	Noesis::GUI::SetFontProvider(Noesis::MakePtr<NoesisApp::LocalFontProvider>("."));
-	Noesis::GUI::SetTextureProvider(Noesis::MakePtr<NoesisApp::LocalTextureProvider>("."));
-
-	Noesis::GUI::LoadApplicationResources(NoesisApp::Theme::DarkBlue());*/
-
-	//Noesis::GUI::LoadApplicationResources("themes/NoesisTheme.DarkBlue.xaml");
-
-	NoesisApp::VKFactory::InstanceInfo instanceInfo{};
-	instanceInfo.instance = vkInit.instance;
-	instanceInfo.physicalDevice = vkInit.physicalDevice;
-	instanceInfo.device = vkInit.device;
-	instanceInfo.pipelineCache = VK_NULL_HANDLE; // Optional pipeline cache
-	instanceInfo.queueFamilyIndex = vkInit.queueFamilyIndices.presentFamily.value();
-	instanceInfo.vkGetInstanceProcAddr = reinterpret_cast<PFN_vkGetInstanceProcAddr>(
-		vkGetInstanceProcAddr(vkInit.instance, "vkGetInstanceProcAddr")
-	);
-
-    // Initialize NoesisGUI with a Vulkan render device
-	noesisRenderDevice = NoesisApp::VKFactory::CreateDevice(true, instanceInfo);
-	if (!noesisRenderDevice) {
-		throw std::runtime_error("Failed to create Noesis Vulkan render device");
+	if (vkInit.enableValidationLayers) {
+		qVulkanInstance.setLayers(QByteArrayList() << "VK_LAYER_KHRONOS_validation");
+		qVulkanInstance.clearDebugOutputFilters();
 	}
 
-	NoesisApp::VKFactory::SetRenderPass(noesisRenderDevice, objectRenderPass, vkInit.colorSamples);
-
-    // Load your XAML file
-    Noesis::Ptr<Noesis::FrameworkElement> xamlElement = Noesis::GUI::LoadXaml
-		<Noesis::FrameworkElement>(Noesis::Uri("MainMenu.xaml"));
-	if (!xamlElement) {
-		throw std::runtime_error("Failed to load XAML file");
+	if (!qVulkanInstance.create()) {
+		throw std::runtime_error("Failed to create Vulkan instance in Qt.");
 	}
 
-	// Create a renderer for the XAML element
-	noesisView = Noesis::GUI::CreateView(xamlElement);
-	if (!noesisView) {
-		throw std::runtime_error("Failed to create Noesis renderer");
+	VulkanQtWindow* qtWindow = new VulkanQtWindow(&qVulkanInstance, character);
+	qtWindow->resize(windowWidth, windowHeight);
+	qtWindow->setTitle("Vulkan and RTX");
+	qtWindow->show();
+
+	vkInit.surface = qVulkanInstance.surfaceForWindow(qtWindow);
+	if (vkInit.surface == VK_NULL_HANDLE) {
+		throw std::runtime_error("Failed to create Vulkan surface for Qt window.");
 	}
 
-	noesisView->GetRenderer()->Init(noesisRenderDevice);
-	noesisView->SetSize(swapchainExtent.width, swapchainExtent.height);
-    // Attach the render device to the renderer
+	this->qtWindow = qtWindow;
 
-	//setXamlTheme("../themes/NoesisTheme.DarkBlue.xaml");
-}
-void VulkanAndRTX::setXamlTheme(const std::string& themePath)
-{
-	Noesis::Ptr<Noesis::ResourceDictionary> theme =
-		Noesis::GUI::LoadXaml<Noesis::ResourceDictionary>(Noesis::Uri(themePath.c_str()));
-
-	if (!theme) {
-		throw std::runtime_error("Failed to load theme: " + themePath);
-	}
-
-	// Update the merged dictionaries
-	auto mergedDictionaries = noesisView->GetContent()->GetResources()->GetMergedDictionaries();
-	mergedDictionaries->Clear();
-	mergedDictionaries->Add(theme);
-
-	// Force a UI update
-	noesisView->GetRenderer()->UpdateRenderTree();
+	connect(qtWindow, &VulkanQtWindow::framebufferResized, this, &VulkanAndRTX::onFramebufferResized);
 }
 
-void VulkanAndRTX::setupImGui() {
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	io = ImGui::GetIO(); (void)io;
-	io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-	ImGui::StyleColorsDark();
-
-	ImGui_ImplGlfw_InitForVulkan(window, true);
-
-	ImGui_ImplVulkan_InitInfo init_info = {};
-	init_info.Instance = vkInit.instance;
-	init_info.PhysicalDevice = vkInit.physicalDevice;
-	init_info.Device = vkInit.device;
-	init_info.QueueFamily = vkInit.queueFamilyIndices.graphicsFamily.value();
-	init_info.Queue = vkInit.graphicsQueue;
-	init_info.PipelineCache = nullptr;
-	init_info.DescriptorPool = descriptorPool;
-	init_info.RenderPass = objectRenderPass;
-	init_info.Subpass = 0;
-	init_info.MinImageCount = MAX_FRAMES_IN_FLIGHT;
-	init_info.ImageCount = vulkanWindow->ImageCount;
-	init_info.MSAASamples = vkInit.colorSamples;
-	init_info.Allocator = nullptr;
-	init_info.CheckVkResultFn = [](VkResult err) {
-		if (err != VK_SUCCESS) {
-			std::cerr << "Vulkan error: " << err << std::endl;
-		}
-	};
-
-	ImGui_ImplVulkan_Init(&init_info);
-}
-void VulkanAndRTX::setupImguiWindow(ImGui_ImplVulkanH_Window* wd, 
-	VkSurfaceKHR surface, size_t width, size_t height)
-{
-	wd->Surface = surface;
-
-	// Check for WSI support
-	VkBool32 res;
-	vkGetPhysicalDeviceSurfaceSupportKHR(vkInit.physicalDevice, 
-		vkInit.queueFamilyIndices.graphicsFamily.value(), wd->Surface, &res);
-	if (res != VK_TRUE)
-	{
-		fprintf(stderr, "Error no WSI support on physical device 0\n");
-		exit(-1);
-	}
-
-	// Select Surface Format
-	const VkFormat requestSurfaceImageFormat[] = { VK_FORMAT_B8G8R8A8_UNORM, VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_B8G8R8_UNORM, VK_FORMAT_R8G8B8_UNORM };
-	const VkColorSpaceKHR requestSurfaceColorSpace = VK_COLORSPACE_SRGB_NONLINEAR_KHR;
-	wd->SurfaceFormat = ImGui_ImplVulkanH_SelectSurfaceFormat(vkInit.physicalDevice, wd->Surface, 
-		requestSurfaceImageFormat, (size_t)IM_ARRAYSIZE(requestSurfaceImageFormat), 
-		requestSurfaceColorSpace);
-
-	// Select Present Mode
-#ifdef APP_USE_UNLIMITED_FRAME_RATE
-	VkPresentModeKHR present_modes[] = { VK_PRESENT_MODE_MAILBOX_KHR, VK_PRESENT_MODE_IMMEDIATE_KHR, VK_PRESENT_MODE_FIFO_KHR };
-#else
-	VkPresentModeKHR present_modes[] = { VK_PRESENT_MODE_FIFO_KHR };
-#endif
-	wd->PresentMode = ImGui_ImplVulkanH_SelectPresentMode(vkInit.physicalDevice, wd->Surface, &present_modes[0], IM_ARRAYSIZE(present_modes));
-	//printf("[vulkan] Selected PresentMode = %d\n", wd->PresentMode);
-
-	// Create Swapchain, RenderPass, Framebuffer, etc.
-#ifdef NDEBUG
-	IM_ASSERT(g_MinImageCount >= 2);
-#endif // !NDEBUG
-
-	ImGui_ImplVulkanH_CreateOrResizeWindow(vkInit.instance, vkInit.physicalDevice, vkInit.device, wd, 
-		vkInit.queueFamilyIndices.graphicsFamily.value(), nullptr,
-		width, height, MAX_FRAMES_IN_FLIGHT);
-}
-
-// set "framebufferResized" to "true" if window was resized or moved
-void VulkanAndRTX::framebufferResizeCallback(GLFWwindow* window, int width, int height)
-{
-	auto app = reinterpret_cast<VulkanAndRTX*>(glfwGetWindowUserPointer(window));
-	app->framebufferResized = true;
-	character.camera.setViewportSize(width, height);
-	//noesisView->SetSize(width, height);
+void VulkanAndRTX::onFramebufferResized(int width, int height) {
+    framebufferResized = true;
+    character.camera.setViewportSize(width, height);
 }
 
 void VulkanAndRTX::prepareResources()
@@ -327,15 +177,17 @@ void VulkanAndRTX::mainLoop()
 	double accumulator = 0;
 	double fps = 0;
 	bool fpsMenu = false;
-	while (!glfwWindowShouldClose(window)) {
+
+	while (qtWindow->isVisible() && QCoreApplication::instance()->property("quit").toBool() == false) {
 		currentTime = std::chrono::high_resolution_clock::now();
 		deltaTime = std::chrono::duration<double, std::chrono::seconds::period>(currentTime - previousTime).count();
 		previousTime = currentTime;
 		timeSinceLaunch += deltaTime;
 
-		glfwPollEvents();
+		QCoreApplication::processEvents();
+		character.handleKeyInput();
 		if (!character.currentInteractingVolume) {
-			character.handleKeyInput(
+			character.handleCharacterMovement(
 				deltaTime, 
 				gravity, models
 			);
@@ -355,95 +207,10 @@ void VulkanAndRTX::mainLoop()
 			std::cout <<  "fps: " << fps << "\n";
 		}*/
 		
-		// ImGui
-		/*// Start the ImGui frame
-		ImGui_ImplVulkan_NewFrame();
-		ImGui_ImplGlfw_NewFrame();
-		ImGui::NewFrame();
-
-		// fps meter
-		{
-			counter++;
-			accumulator += deltaTime;
-			if (accumulator >= 1.1)
-			{
-				fps = 1 / (accumulator / counter);
-				counter = 0;
-				accumulator = 0;
-			}
-
-			ImGui::Begin("fps", &fpsMenu, ImGuiWindowFlags_NoDecoration |
-				ImGuiWindowFlags_NoBackground);
-			ImGui::SetWindowSize(ImVec2(100, 30));
-			ImGui::SetWindowPos(ImVec2(10, 10));
-			//ImGui::SetWindowFontScale(1.0f);
-			ImGui::PushStyleColor(ImGuiCol_Text, IM_COL32(0, 0, 0, 255));
-			ImGui::Text("%.2f", fps);
-			ImGui::PopStyleColor(); // Pop color style
-			ImGui::End();
-		}
-			
-		// interaction menu
-		{
-			if (character.currentInteractingVolume && character.currentInteractingVolume->isOpen) {
-				glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
-				//glfwGetCursorPos(window, &lastMousePosX, &lastMousePosY);
-
-				bool menuOpen = character.currentInteractingVolume->isOpen;
-				ImGui::Begin((&character.currentInteractingVolume->name)->c_str(), &menuOpen);
-
-				ImGui::Text("Solve the equation");
-
-				if (!puzzleGenerated) {
-					puzzleEquation = createPuzzleEquation(
-						character.currentInteractingVolume->name, puzzleAnswer);
-					std::cout << puzzleAnswer << "\n";
-					puzzleGenerated = true;
-					timeToSolvePuzzle = 6.5f;
-				}
-				//ImGui::Text((char*)&std::to_string(puzzleAnswer));
-				std::string timeStr = std::to_string(timeToSolvePuzzle);
-				ImGui::Text(timeStr.c_str());
-				ImGui::Text((char*)&puzzleEquation);
-				ImGui::InputInt("Enter the answer: ", &puzzleInput);
-
-				if (puzzleInput == puzzleAnswer) {
-					puzzleInput = 0;
-					puzzleGenerated = false;
-				}
-
-				//std::cout << inputNumber << "\n";
-				//menuOpen = false;
-				if (!menuOpen || timeToSolvePuzzle <= 0.0f) {
-					character.currentInteractingVolume->isOpen = menuOpen;
-					character.currentInteractingVolume = nullptr;
-					glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-					puzzleInput = 0;
-					puzzleGenerated = false;
-
-					//glfwSetCursorPos(window, lastMousePosX / 2, lastMousePosY / 2);
-				}
-				timeToSolvePuzzle -= deltaTime;
-
-				ImGui::End();
-			}
-		}
-
-		ImGui::Render();
-		ImDrawData* draw_data = ImGui::GetDrawData();*/
-		
-		drawFrame(timeSinceLaunch, deltaTime/*, draw_data*/);
+		drawFrame(timeSinceLaunch, deltaTime);
 	}
 
 	vkDeviceWaitIdle(vkInit.device);
-}
-
-void VulkanAndRTX::cleanupImGui() {
-	VkResult err = vkDeviceWaitIdle(vkInit.device);
-    check_vk_result(err);
-    ImGui_ImplVulkan_Shutdown();
-    ImGui_ImplGlfw_Shutdown();
-    ImGui::DestroyContext();
 }
 
 void VulkanAndRTX::cleanupModels(std::vector<Model>& models) const
@@ -507,20 +274,6 @@ void VulkanAndRTX::cleanupTexture(Texture& texture) const
 
 void VulkanAndRTX::cleanupMemory()
 {
-	/*if (noesisRenderer) {
-		noesisRenderer->Shutdown();
-		noesisRenderer.Reset();
-	}
-	if (noesisView) {
-		noesisView.Reset();
-	}
-	if (noesisRenderDevice) {
-		noesisRenderDevice.Reset();
-	}
-	Noesis::GUI::Shutdown();
-
-	cleanupImGui();*/
-
 	cleanupModels(models);
 	cleanupModel(sky);
 	cleanupTexture(grassTexture);
@@ -547,19 +300,6 @@ void VulkanAndRTX::cleanupMemory()
 	}
 
 	vkDestroySurfaceKHR(vkInit.instance, vkInit.surface, nullptr);
-	vkDestroyInstance(vkInit.instance, nullptr);
-
-	glfwDestroyWindow(window);
-
-	glfwTerminate();
-}
-void VulkanAndRTX::check_vk_result(VkResult err)
-{
-	if (err == 0)
-		return;
-	fprintf(stderr, "[vulkan] Error: VkResult = %d\n", err);
-	if (err < 0)
-		abort();
 }
 
 void VulkanAndRTX::restrictCharacterMovement(Camera& camera)
@@ -761,12 +501,55 @@ VkShaderModule VulkanAndRTX::createShaderModule(const std::vector<char>& code) c
 	return shaderModule;
 }
 
+static void customQtMessageHandler(QtMsgType type, const QMessageLogContext& context, const QString& msg) {
+	QByteArray localMsg = msg.toLocal8Bit();
+
+	// Reformat Vulkan validation messages
+	if (msg.contains("Validation")) {
+		QByteArray localMsg = msg.toLocal8Bit();
+		const char* logMessage = localMsg.constData();
+
+		// Remove "vkDebug: " if it exists
+		std::string formattedMsg = logMessage;
+		std::string prefix = "vkDebug: ";
+		size_t pos = formattedMsg.find(prefix);
+		if (pos != std::string::npos) {
+			formattedMsg = formattedMsg.substr(pos + prefix.length()); // Remove prefix
+		}
+
+		fprintf(stderr, "\033[33m%s\033[0m\n\n", formattedMsg.c_str()); // Yellow color
+		return;
+	}
+
+	// Forward all other messages to Qt's default handler
+	switch (type) {
+	case QtDebugMsg:
+		QMessageLogger(context.file, context.line, context.function).debug() << msg;
+		break;
+	case QtWarningMsg:
+		QMessageLogger(context.file, context.line, context.function).warning() << msg;
+		break;
+	case QtCriticalMsg:
+		QMessageLogger(context.file, context.line, context.function).critical() << msg;
+		break;
+	case QtFatalMsg:
+		QMessageLogger(context.file, context.line, context.function).fatal("%s", msg.toUtf8().constData());
+		abort();
+	}
+}
+
 static int runVulkanAndRTX() {
+	qInstallMessageHandler(customQtMessageHandler);
+
+	int argc = 0;
+	char** argv = nullptr;
+	QGuiApplication app(argc, argv);
+
 	srand(static_cast<unsigned>(time(0))); // Seed the random number generator once
-	VulkanAndRTX app;
+	VulkanAndRTX vulkanApp;
 
 	try {
-		app.run();
+		vulkanApp.run();
 		return EXIT_SUCCESS;
 	}
 	catch (const std::exception& e) {

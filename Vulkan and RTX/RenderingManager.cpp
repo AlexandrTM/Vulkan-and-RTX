@@ -409,7 +409,7 @@ void VulkanAndRTX::createPipelinesAndSwapchain()
 }
 
 // Creating frames for presentation
-void VulkanAndRTX::drawFrame(double timeSinceLaunch, double deltaTime/*, ImDrawData* draw_data*/)
+void VulkanAndRTX::drawFrame(double timeSinceLaunch, double deltaTime)
 {
 	vkWaitForFences(vkInit.device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
@@ -435,8 +435,7 @@ void VulkanAndRTX::drawFrame(double timeSinceLaunch, double deltaTime/*, ImDrawD
 
 	recordCommandBuffer(
 		commandBuffers[currentFrame], imageIndex, 
-		timeSinceLaunch, deltaTime/*,
-		draw_data*/
+		timeSinceLaunch, deltaTime
 	);
 
 	VkSemaphore waitSemaphores[] = { imageAvailableSemaphores[currentFrame] };
@@ -553,8 +552,7 @@ void VulkanAndRTX::updateShaderBuffers(uint32_t currentImage, double timeSinceLa
 }
 void VulkanAndRTX::recordCommandBuffer(
 	VkCommandBuffer commandBuffer, uint32_t imageIndex, 
-	double timeSinceLaunch, double deltaTime/*,
-	ImDrawData* draw_data*/
+	double timeSinceLaunch, double deltaTime
 )
 {
 	VkCommandBufferBeginInfo beginInfo{};
@@ -583,8 +581,6 @@ void VulkanAndRTX::recordCommandBuffer(
 	recordModelToCommandBuffer(sky, commandBuffer);
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["object"]);
 	recordModelsToCommandBuffer(models, commandBuffer);
-
-	//ImGui_ImplVulkan_RenderDrawData(draw_data, commandBuffers[currentFrame]);
 
 	vkCmdEndRenderPass(commandBuffer);
 

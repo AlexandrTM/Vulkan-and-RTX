@@ -5,7 +5,26 @@
 
 class Camera
 {
+private:
+	glm::vec3 _lookFrom;
+	glm::vec3 _lookAt;
+	glm::vec3 _cameraDirection;
+	glm::vec3 _verticalWorldAxis;
+
+	float _verticalFov;
+
+	uint32_t _viewportWidth;
+	uint32_t _viewportHeight;
+	double _lastViewportX;
+	double _lastViewportY;
+
+	double _yaw;
+	double _pitch;
+	double _roll;
+
 public:
+	bool _firstMouse = true;
+
 	Camera();
 	Camera(
 		glm::vec3 lookFrom,
@@ -19,8 +38,8 @@ public:
 		double roll
 	);
 
-	void rotate(double xpos, double ypos, double sensitivity);
-
+	void rotateAbsolute(double xpos, double ypos, double sensitivity);
+	void rotateRelative(double dx, double dy, double sensitivity);
 	void setViewportSize(uint32_t viewportWidth, uint32_t viewportHeight);
 
 	void setLookFrom(glm::vec3 lookFrom);
@@ -45,25 +64,6 @@ public:
 	double getRoll() const;
 
 	glm::vec3 getVerticalWorldAxis();
-
-private:
-	bool _firstMouse = true;
-
-	glm::vec3 _lookFrom;
-	glm::vec3 _lookAt;
-	glm::vec3 _cameraDirection;
-	glm::vec3 _verticalWorldAxis;
-
-	float _verticalFov;
-
-	uint32_t _viewportWidth;
-	uint32_t _viewportHeight;
-	double _lastViewportX;
-	double _lastViewportY;
-
-	double _yaw;
-	double _pitch;
-	double _roll;
 };
 
 #endif

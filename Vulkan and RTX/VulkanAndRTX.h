@@ -30,7 +30,9 @@ struct ShaderStorageBufferObject
 	alignas(16) std::vector<glm::mat4> boneTransforms = std::vector<glm::mat4>(BONES_NUM, glm::mat4(1.0f));
 };
 
-class VulkanAndRTX {
+class VulkanAndRTX : public QObject {
+	Q_OBJECT
+
 private:
 #pragma region
 
@@ -39,6 +41,15 @@ private:
 
 #pragma endregion
 #pragma region
+
+	float gravity = 9.81f;
+	Character character;
+	VulkanInitializer vkInit;
+
+	QWindow* qtWindow = nullptr;
+	QVulkanInstance qVulkanInstance;
+	// GLFWwindow* glfwWindow;
+	double lastMousePosX, lastMousePosY;
 
 	VkDescriptorPool            descriptorPool;
 	VkDescriptorSetLayout       descriptorSetLayout;
@@ -49,23 +60,11 @@ private:
 
 	std::unique_ptr<TerrainGenerator> terrainGenerator;
 
-	GLFWwindow* window;
-	Noesis::Ptr<Noesis::IView>        noesisView;
-	Noesis::Ptr<Noesis::RenderDevice> noesisRenderDevice;
-
-	ImGui_ImplVulkanH_Window* vulkanWindow;
-	ImGuiIO io;
-	double lastMousePosX, lastMousePosY;
-
 	int32_t puzzleInput = 0;
 	bool puzzleGenerated = false;
 	int32_t puzzleAnswer = 0;
 	std::string puzzleEquation;
 	float timeToSolvePuzzle = 0.0f;
-
-	float gravity = 9.81f;
-	Character character;
-	VulkanInitializer vkInit;
 
 	VkSwapchainKHR			   swapchain;
 	std::vector<VkImage>	   swapchainImages;
@@ -99,6 +98,9 @@ private:
 	Texture        depthTexture;
 	Texture        msaaTexture;
 
+private slots:
+	void onFramebufferResized(int width, int height);
+
 #pragma endregion
 
 public:
@@ -106,14 +108,8 @@ public:
 
 private:
 	void createGLFWWindow();
-	void initializeNoesisGUI();
-	void setXamlTheme(const std::string& themePath);
+	void createQtWindow();
 
-	void setupImguiWindow(ImGui_ImplVulkanH_Window* wd, VkSurfaceKHR surface, 
-		size_t width, size_t height);
-	void setupImGui();
-	void cleanupImGui();
-	void check_vk_result(VkResult err);
 	std::string createPuzzleEquation(std::string name, int32_t& answer);
 
 	void prepareResources();
@@ -132,9 +128,6 @@ private:
 	void cleanupSwapchain();
 	// recreating swap chain in some special cases
 	void recreateSwapchain();
-
-	// set "framebufferResized" to "true" if window was resized or moved
-	void framebufferResizeCallback(GLFWwindow* window, int width, int height);
 
 	void generateCubicLandscape(size_t landscapeWidth, size_t landscapeLenght, float_t cubeSize);
 	void createCube(float x, float y, float z, float cubeSize);
@@ -252,7 +245,7 @@ private:
 	void createSwapchainImageViews();
 	// creating framebuffer from each swap chain image view
 	void createSwapchainFramebuffers();
-	// choosing best present mode to window surface
+	// choosing best present mode for window surface
 	VkPresentModeKHR chooseSwapchainPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
 	// choosing best swap chain extent(resolution of the images)
 	VkExtent2D chooseSwapchainExtent(const VkSurfaceCapabilitiesKHR& capabilities);
