@@ -96,7 +96,8 @@ void VulkanAndRTX::createQtWindow()
 }
 
 void VulkanAndRTX::onFramebufferResized(int width, int height) {
-    framebufferResized = true;
+	//std::cout << "onFramebufferResized: " << width << " " << height << "\n";
+    isFramebufferResized = true;
     character.camera.setViewportSize(width, height);
 }
 
@@ -129,7 +130,7 @@ void VulkanAndRTX::prepareResources()
 		4, 4,     // chunkRows, chunkCols
 		2.0f,     // gridSize
 		0.1f,     // scale
-		1.0f,     // height
+		2.0f,     // height
 	};
 	terrainGenerator = std::make_unique<TerrainGenerator>(1);
 	TerrainGenerator::generateTerrain(
@@ -176,7 +177,7 @@ void VulkanAndRTX::mainLoop()
 	uint32_t counter = 0;
 	double accumulator = 0;
 	double fps = 0;
-	bool fpsMenu = false;
+	bool fpsMenu = 0;
 
 	while (qtWindow->isVisible() && QCoreApplication::instance()->property("quit").toBool() == false) {
 		currentTime = std::chrono::high_resolution_clock::now();
@@ -184,28 +185,32 @@ void VulkanAndRTX::mainLoop()
 		previousTime = currentTime;
 		timeSinceLaunch += deltaTime;
 
+		/*if (deltaTime > 0.0002) {
+			std::cout << "deltaTime: " << deltaTime << "\n";
+		}*/
+
 		QCoreApplication::processEvents();
 		character.handleKeyInput();
-		if (!character.currentInteractingVolume) {
+		if (!character.isInteracting) {
 			character.handleCharacterMovement(
 				deltaTime, 
 				gravity, models
 			);
 		}
+		character.camera.interpolateRotation(0.98);
 		//restrictCharacterMovement(character.camera);
 		
 		// fps meter
-		/*{
+		if (fpsMenu) {
 			counter++;
 			accumulator += deltaTime;
 			if (accumulator >= 1.1) {
 				fps = 1 / (accumulator / counter);
 				counter = 0;
 				accumulator = 0;
+				std::cout <<  "fps: " << fps << "\n";
 			}
-
-			std::cout <<  "fps: " << fps << "\n";
-		}*/
+		}
 		
 		drawFrame(timeSinceLaunch, deltaTime);
 	}

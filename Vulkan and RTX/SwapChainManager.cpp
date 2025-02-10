@@ -8,8 +8,11 @@ void VulkanAndRTX::createSwapchain()
 
 	VkSurfaceFormatKHR surfaceFormat = chooseSwapchainSurfaceFormat(swapchainSupport.formats);
 	VkPresentModeKHR presentMode = chooseSwapchainPresentMode(swapchainSupport.presentModes);
-	std::cout << "current present mode: " << presentMode << "\n";
 	VkExtent2D extent = chooseSwapchainExtent(swapchainSupport.capabilities);
+
+	/*std::cout << 
+		"current present mode: " << presentMode << "\n" << 
+		"extent: " << extent.width << " " << extent.height << "\n";*/
 
 	uint32_t imageCount = swapchainSupport.capabilities.minImageCount + 1;
 
@@ -99,14 +102,6 @@ void VulkanAndRTX::createSwapchainFramebuffers()
 // recreating swap chain in some special cases
 void VulkanAndRTX::recreateSwapchain()
 {
-	int width = 0, height = 0;
-	// glfwGetFramebufferSize(glfwWindow, &width, &height);
-	// stops rendering if glfwWindow out of view
-	while (width == 0 || height == 0) {
-		// glfwGetFramebufferSize(glfwWindow, &width, &height);
-		// glfwWaitEvents();
-	}
-
 	// waiting for previous swap chain to stop rendering
 	vkDeviceWaitIdle(vkInit.device);
 

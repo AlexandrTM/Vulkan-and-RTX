@@ -20,12 +20,12 @@ void Character::handleKeyInput()
 	}
 
 	if (keys[Qt::Key_F]) {
-		if (currentInteractingVolume == nullptr) {
+		if (isInteracting == nullptr) {
 			for (size_t i = 0; i < interactableCuboids.size(); i++) {
 				if (interactableCuboids[i].rayIntersectsCuboid(
 					camera.getLookFrom(), camera.getDirection())) {
-					currentInteractingVolume = &interactableCuboids[i];
-					currentInteractingVolume->isOpen = true;
+					isInteracting = &interactableCuboids[i];
+					isInteracting->isOpen = true;
 				}
 			}
 		}

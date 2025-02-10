@@ -5,17 +5,18 @@ VulkanQtWindow::VulkanQtWindow(QVulkanInstance* instance, Character& character) 
     this->character = &character;
     setSurfaceType(QWindow::VulkanSurface);
     setVulkanInstance(instance);
-
-    setCursor(Qt::BlankCursor);
 }
 
 void VulkanQtWindow::resizeEvent(QResizeEvent* event) {
     emit framebufferResized(event->size().width(), event->size().height());
-    centerPos = { width() / 2, height() / 2 };
+    centerPos = { event->size().width() / 2, event->size().height() / 2 };
+    QCursor::setPos(mapToGlobal(centerPos));
+    character->camera._isFirstMouse = true;
 }
 
 void VulkanQtWindow::keyPressEvent(QKeyEvent* event) {
     character->keys[event->key()] = true;
+    //std::cout << "event->nativeScanCode(): " << event->nativeScanCode() << "\n";
 }
 
 void VulkanQtWindow::keyReleaseEvent(QKeyEvent* event) {
@@ -23,18 +24,21 @@ void VulkanQtWindow::keyReleaseEvent(QKeyEvent* event) {
 }
 
 void VulkanQtWindow::mouseMoveEvent(QMouseEvent* event) {
+    if (!isActive()) {
+        return;
+    }
+
     // On first frame, initialize lastMousePos to prevent jumps
-    if (character->camera._firstMouse) {
-        QCursor::setPos(mapToGlobal(centerPos));  // Warp to center
-        character->camera._firstMouse = false;
+    if (character->camera._isFirstMouse) {
+        QCursor::setPos(mapToGlobal(centerPos));
+        character->camera._isFirstMouse = false;
         return;
     }
 
     double dx = event->position().x() - centerPos.x();
-    double dy = event->position().y() - centerPos.y();
+    double dy = centerPos.y() - event->position().y();
 
-    character->camera.rotateRelative(dx, dy, character->mouseSensitivity);
-    //character->camera.rotateAbsolute(event->position().x(), event->position().y(), character->mouseSensitivity);
+    character->camera.addRotationDelta(dx, dy, character->mouseSensitivity);
 
     // Reset cursor position to center to avoid screen edge issues
     QCursor::setPos(mapToGlobal(centerPos));
@@ -54,4 +58,9 @@ void VulkanQtWindow::wheelEvent(QWheelEvent* event) {
 
 void VulkanQtWindow::focusInEvent(QFocusEvent* event) {
     QCursor::setPos(mapToGlobal(centerPos));
+    setCursor(Qt::BlankCursor);
+}
+
+void VulkanQtWindow::focusOutEvent(QFocusEvent* event) {
+    setCursor(Qt::ArrowCursor);
 }

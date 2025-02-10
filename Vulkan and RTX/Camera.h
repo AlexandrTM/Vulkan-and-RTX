@@ -15,15 +15,14 @@ private:
 
 	uint32_t _viewportWidth;
 	uint32_t _viewportHeight;
-	double _lastViewportX;
-	double _lastViewportY;
+	double _lastXScreenPosition;
+	double _lastYScreenPosition;
 
-	double _yaw;
-	double _pitch;
-	double _roll;
+	double _yaw, _pitch, _roll;
+	double _targetYaw, _targetPitch, _targetRoll;
 
 public:
-	bool _firstMouse = true;
+	bool _isFirstMouse = true;
 
 	Camera();
 	Camera(
@@ -40,30 +39,33 @@ public:
 
 	void rotateAbsolute(double xpos, double ypos, double sensitivity);
 	void rotateRelative(double dx, double dy, double sensitivity);
+	void interpolateRotation(double lerpFactor);
+	void addRotationDelta(double dx, double dy, double sensitivity);
+
 	void setViewportSize(uint32_t viewportWidth, uint32_t viewportHeight);
 
 	void setLookFrom(glm::vec3 lookFrom);
 	void setLookAt(glm::vec3 lookAt);
 	void setDirection(glm::vec3 cameraDirection);
 	void setVerticalFov(float vFov);
-	glm::vec3 getLookFrom() const;
-	glm::vec3 getLookAt() const;
-	glm::vec3 getDirection() const;
-	float getVerticalFov() const;
+	glm::vec3& getLookFrom();
+	glm::vec3& getLookAt();
+	glm::vec3& getDirection();
+	float& getVerticalFov();
 
 	void setLastViewportX(double lastViewportX);
 	void setLastViewportY(double lastViewportY);
-	double getLastViewportX() const;
-	double getLastViewportY() const;
+	double& getLastViewportX();
+	double& getLastViewportY();
 
 	void setYaw(double yaw);
 	void setPitch(double pitch);
 	void setRoll(double roll);
-	double getYaw() const;
-	double getPitch() const;
-	double getRoll() const;
+	double& getYaw();
+	double& getPitch();
+	double& getRoll();
 
-	glm::vec3 getVerticalWorldAxis();
+	glm::vec3& getVerticalWorldAxis();
 };
 
 #endif

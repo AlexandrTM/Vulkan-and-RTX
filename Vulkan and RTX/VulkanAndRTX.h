@@ -87,7 +87,7 @@ private:
 	std::vector<VkFence>     inFlightFences;
 	uint32_t currentFrame = 0;
 
-	bool framebufferResized = false;
+	bool isFramebufferResized = false;
 
 	std::vector<Model> models;
 	Model			   sky;

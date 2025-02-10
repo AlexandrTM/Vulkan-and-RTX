@@ -28,7 +28,7 @@ private:
 public:
 	Camera camera;
 	double mouseSensitivity = 0.125;
-	std::unordered_map<int, bool> keys;
+	std::unordered_map<uint32_t, bool> keys;
 
 	std::vector<InteractableVolume> interactableCuboids = { 
 		InteractableVolume(glm::vec3(20.0, 0.0, -10.0), glm::vec3(21.75, 4.75, -8.25), "easy"),
@@ -36,7 +36,7 @@ public:
 		InteractableVolume(glm::vec3(20.0, 0.0,  10.0), glm::vec3(21.75, 4.75, 11.75), "hard")
 	};
 
-	InteractableVolume* currentInteractingVolume = nullptr;
+	InteractableVolume* isInteracting = nullptr;
 
 	void handleCharacterMovement(
 		float deltaTime,

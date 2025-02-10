@@ -12,12 +12,11 @@ Camera::Camera()
 
 	_viewportWidth = 800;
 	_viewportHeight = 450;
-	_lastViewportX = _viewportWidth / 2;
-	_lastViewportY = _viewportHeight / 2;
+	_lastXScreenPosition = _viewportWidth / 2;
+	_lastYScreenPosition = _viewportHeight / 2;
 
-	_yaw = 0.0;
-	_pitch = 0.0;
-	_roll = 0.0;
+	_yaw, _pitch, _roll = 0.0;
+	_targetYaw, _targetPitch, _targetRoll = 0.0;
 }
 
 Camera::Camera(
@@ -41,8 +40,8 @@ Camera::Camera(
 
 	_viewportWidth = viewportWidth;
 	_viewportHeight = viewportHeight;
-	_lastViewportX = _viewportWidth / 2;
-	_lastViewportY = _viewportHeight / 2;
+	_lastXScreenPosition = _viewportWidth / 2;
+	_lastYScreenPosition = _viewportHeight / 2;
 
 	_yaw = yaw;
 	_pitch = pitch;
@@ -51,31 +50,23 @@ Camera::Camera(
 
 void Camera::rotateAbsolute(double xpos, double ypos, double sensitivity)
 {
-	if (_firstMouse)
+	if (_isFirstMouse)
 	{
-		_lastViewportX = xpos;
-		_lastViewportY = ypos;
-		_firstMouse = false;
+		_lastXScreenPosition = xpos;
+		_lastYScreenPosition = ypos;
+		_isFirstMouse = false;
 	}
 	double roll = _roll;
 
-	double xoffset = xpos - _lastViewportX;
-	double yoffset = _lastViewportY - ypos;
-	_lastViewportX = xpos;
-	_lastViewportY = ypos;
+	double xoffset = xpos - _lastXScreenPosition;
+	double yoffset = _lastYScreenPosition - ypos;
+	_lastXScreenPosition = xpos;
+	_lastYScreenPosition = ypos;
 
 	xoffset *= sensitivity;
 	yoffset *= sensitivity;
 
-	if (_pitch + yoffset > 89.99) {
-		_pitch = 89.99;
-	}
-	else if (_pitch + yoffset < -89.99) {
-		_pitch = -89.99;
-	}
-	else {
-		_pitch = _pitch + yoffset;
-	}
+	_pitch = std::clamp(_pitch + yoffset, -89.99, 89.99);
 
 	_yaw = _yaw + xoffset;
 
@@ -90,15 +81,7 @@ void Camera::rotateRelative(double dx, double dy, double sensitivity)
 	dx *= sensitivity;
 	dy *= -sensitivity;
 
-	if (_pitch + dy > 89.99) {
-		_pitch = 89.99;
-	}
-	else if (_pitch + dy < -89.99) {
-		_pitch = -89.99;
-	}
-	else {
-		_pitch = _pitch + dy;
-	}
+	_pitch = std::clamp(_pitch + dy, -89.99, 89.99);
 
 	_yaw = _yaw + dx;
 
@@ -109,6 +92,22 @@ void Camera::rotateRelative(double dx, double dy, double sensitivity)
 	_cameraDirection = glm::normalize(front);
 }
 
+void Camera::interpolateRotation(double lerpFactor) {
+	_yaw = _yaw + (_targetYaw - _yaw) * lerpFactor;
+	_pitch = std::clamp(_pitch + (_targetPitch - _pitch) * lerpFactor, -89.99, 89.99);
+
+	glm::vec3 front{};
+	front.x = cos(glm::radians(_yaw)) * cos(glm::radians(_pitch));
+	front.y = sin(glm::radians(_pitch));
+	front.z = sin(glm::radians(_yaw)) * cos(glm::radians(_pitch));
+	_cameraDirection = glm::normalize(front);
+}
+
+void Camera::addRotationDelta(double dx, double dy, double sensitivity) {
+	_targetYaw += dx * sensitivity;
+	_targetPitch += dy * sensitivity;
+}
+
 void Camera::setViewportSize(uint32_t viewportWidth, uint32_t viewportHeight) 
 	{ _viewportWidth = viewportWidth, _viewportHeight = viewportHeight; }
 
@@ -116,21 +115,21 @@ void Camera::setLookFrom(glm::vec3 lookFrom) { _lookFrom = lookFrom; }
 void Camera::setLookAt(glm::vec3 lookAt) { _lookAt = lookAt; }
 void Camera::setDirection(glm::vec3 cameraDirection) { _cameraDirection = cameraDirection; }
 void Camera::setVerticalFov(float vFov) { _verticalFov = vFov; }
-glm::vec3 Camera::getLookFrom() const { return _lookFrom; }
-glm::vec3 Camera::getLookAt() const { return _lookAt; }
-glm::vec3 Camera::getDirection() const { return _cameraDirection; }
-float Camera::getVerticalFov() const { return _verticalFov; }
+glm::vec3& Camera::getLookFrom() { return _lookFrom; }
+glm::vec3& Camera::getLookAt() { return _lookAt; }
+glm::vec3& Camera::getDirection() { return _cameraDirection; }
+float& Camera::getVerticalFov() { return _verticalFov; }
 
-void Camera::setLastViewportX(double lastX) { _lastViewportX = lastX; }
-void Camera::setLastViewportY(double lastY) { _lastViewportY = lastY; }
-double Camera::getLastViewportX() const { return _lastViewportX; }
-double Camera::getLastViewportY() const { return _lastViewportY; }
+void Camera::setLastViewportX(double lastX) { _lastXScreenPosition = lastX; }
+void Camera::setLastViewportY(double lastY) { _lastYScreenPosition = lastY; }
+double& Camera::getLastViewportX() { return _lastXScreenPosition; }
+double& Camera::getLastViewportY() { return _lastYScreenPosition; }
 
 void Camera::setYaw(double yaw) { _yaw = yaw; }
 void Camera::setPitch(double pitch) { _pitch = pitch; }
 void Camera::setRoll(double roll) { _roll = roll; }
-double Camera::getYaw() const { return _yaw; }
-double Camera::getPitch() const { return _pitch; }
-double Camera::getRoll() const { return _roll; }
+double& Camera::getYaw() { return _yaw; }
+double& Camera::getPitch() { return _pitch; }
+double& Camera::getRoll() { return _roll; }
 
-glm::vec3 Camera::getVerticalWorldAxis() { return _verticalWorldAxis; }
+glm::vec3& Camera::getVerticalWorldAxis() { return _verticalWorldAxis; }
