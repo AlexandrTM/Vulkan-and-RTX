@@ -40,7 +40,7 @@ public:
 	void rotateAbsolute(double xpos, double ypos, double sensitivity);
 	void rotateRelative(double dx, double dy, double sensitivity);
 	void interpolateRotation(double lerpFactor);
-	void addRotationDelta(double dx, double dy, double sensitivity);
+	void addRotationDelta(double dx, double dy);
 
 	void setViewportSize(uint32_t viewportWidth, uint32_t viewportHeight);
 

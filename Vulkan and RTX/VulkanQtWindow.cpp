@@ -15,12 +15,12 @@ void VulkanQtWindow::resizeEvent(QResizeEvent* event) {
 }
 
 void VulkanQtWindow::keyPressEvent(QKeyEvent* event) {
-    character->keys[event->key()] = true;
+    character->keyboardKeys[event->key()] = true;
     //std::cout << "event->nativeScanCode(): " << event->nativeScanCode() << "\n";
 }
 
 void VulkanQtWindow::keyReleaseEvent(QKeyEvent* event) {
-    character->keys[event->key()] = false;
+    character->keyboardKeys[event->key()] = false;
 }
 
 void VulkanQtWindow::mouseMoveEvent(QMouseEvent* event) {
@@ -35,20 +35,20 @@ void VulkanQtWindow::mouseMoveEvent(QMouseEvent* event) {
         return;
     }
 
-    double dx = event->position().x() - centerPos.x();
-    double dy = centerPos.y() - event->position().y();
+    double dx = (event->position().x() - centerPos.x()) * character->mouseSensitivity;
+    double dy = (centerPos.y() - event->position().y()) * character->mouseSensitivity;
 
-    character->camera.addRotationDelta(dx, dy, character->mouseSensitivity);
+    //std::cout << "dx: " << dx << " " << "dy: " << dy << "\n";
 
-    // Reset cursor position to center to avoid screen edge issues
-    QCursor::setPos(mapToGlobal(centerPos));
+    character->camera.addRotationDelta(dx, dy);
 }
 
 void VulkanQtWindow::mousePressEvent(QMouseEvent* event) {
-    if (event->button() == Qt::RightButton) {
-        character->camera.setVerticalFov(60.0f);
-        character->mouseSensitivity = 0.125;
-    }
+    character->mouseKeys[event->button()] = true;
+}
+
+void VulkanQtWindow::mouseReleaseEvent(QMouseEvent* event) {
+    character->mouseKeys[event->button()] = false;
 }
 
 void VulkanQtWindow::wheelEvent(QWheelEvent* event) {
@@ -57,7 +57,7 @@ void VulkanQtWindow::wheelEvent(QWheelEvent* event) {
 }
 
 void VulkanQtWindow::focusInEvent(QFocusEvent* event) {
-    QCursor::setPos(mapToGlobal(centerPos));
+    character->camera._isFirstMouse = true;
     setCursor(Qt::BlankCursor);
 }
 

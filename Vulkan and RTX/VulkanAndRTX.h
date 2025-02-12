@@ -4,31 +4,10 @@
 #include "Vertex.h"
 #include "Model.h"
 #include "TerrainGenerator.h"
+#include "VulkanQtWindow.h"
 	
 #ifndef VULKAN_AND_RTX_H
 #define VULKAN_AND_RTX_H
-
-typedef enum PipelineType
-{
-	PIPELINE_TYPE_OBJECT = 0,
-	PIPELINE_TYPE_SKY = 1,
-	PIPELINE_TYPE_GUI = 2
-} PipelineType;
-
-struct UniformBufferObject
-{
-	alignas(16) glm::mat4 model;
-	alignas(16) glm::mat4 view;
-	alignas(16) glm::mat4 projection;
-	alignas(16) glm::vec3 sun;
-	alignas(16) glm::vec3 observer;
-	alignas(4)  float visibilityRange = 6000;
-};
-
-struct ShaderStorageBufferObject
-{
-	alignas(16) std::vector<glm::mat4> boneTransforms = std::vector<glm::mat4>(BONES_NUM, glm::mat4(1.0f));
-};
 
 class VulkanAndRTX : public QObject {
 	Q_OBJECT
@@ -46,7 +25,9 @@ private:
 	Character character;
 	VulkanInitializer vkInit;
 
-	QWindow* qtWindow = nullptr;
+	GameState gameState = GameState::IN_GAME;
+
+	VulkanQtWindow* qtWindow = nullptr;
 	QVulkanInstance qVulkanInstance;
 	// GLFWwindow* glfwWindow;
 	double lastMousePosX, lastMousePosY;

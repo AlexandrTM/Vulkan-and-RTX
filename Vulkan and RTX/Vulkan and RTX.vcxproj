@@ -219,6 +219,7 @@
   <ItemGroup>
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Character.h" />
+    <ClInclude Include="rtx_core.h" />
     <ClInclude Include="InteractableVolume.h" />
     <ClInclude Include="IsEntity.h" />
     <ClInclude Include="HasExperienceLevel.h" />

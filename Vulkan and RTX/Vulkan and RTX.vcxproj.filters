@@ -161,6 +161,9 @@
     <ClInclude Include="Item.h">
       <Filter>characteristics</Filter>
     </ClInclude>
+    <ClInclude Include="rtx_core.h">
+      <Filter>headers\precompiled</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Vulkan and RTX.rc">

@@ -144,7 +144,7 @@ void VulkanAndRTX::createGraphicsPipeline(
 
 	VkShaderModule vertShaderModule = createShaderModule(vertShader);
 	VkShaderModule fragShaderModule = createShaderModule(fragShader);
-
+	
 	/* printing bits */
 	/*std::cout << vertShaderCode.size();
 	std::cout << fragShaderCode.size();
@@ -246,13 +246,13 @@ void VulkanAndRTX::createGraphicsPipeline(
 	VkPipelineMultisampleStateCreateInfo multisampling{};
 	multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
 	multisampling.sampleShadingEnable = VK_FALSE;
-	multisampling.rasterizationSamples = pipelineType == PIPELINE_TYPE_GUI ? VK_SAMPLE_COUNT_1_BIT : vkInit.colorSamples;
+	multisampling.rasterizationSamples = pipelineType == PipelineType::GUI ? VK_SAMPLE_COUNT_1_BIT : vkInit.colorSamples;
 	multisampling.minSampleShading = 1.0f; // Optional
 
 	VkPipelineDepthStencilStateCreateInfo depthStencil{};
 	depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-	depthStencil.depthTestEnable = pipelineType == PIPELINE_TYPE_OBJECT ? VK_TRUE : VK_FALSE;
-	depthStencil.depthWriteEnable = pipelineType == PIPELINE_TYPE_OBJECT ? VK_TRUE : VK_FALSE;
+	depthStencil.depthTestEnable = pipelineType == PipelineType::OBJECT ? VK_TRUE : VK_FALSE;
+	depthStencil.depthWriteEnable = pipelineType == PipelineType::OBJECT ? VK_TRUE : VK_FALSE;
 	depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
 	depthStencil.front = depthStencil.back;
 	depthStencil.back.compareOp = VK_COMPARE_OP_ALWAYS;
@@ -271,7 +271,7 @@ void VulkanAndRTX::createGraphicsPipeline(
 	VkPipelineColorBlendAttachmentState colorBlendAttachment{};
 	colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT
 		| VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-	if (pipelineType == PIPELINE_TYPE_GUI) {
+	if (pipelineType == PipelineType::GUI) {
 		colorBlendAttachment.blendEnable = VK_TRUE;
 		colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
 		colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
@@ -392,17 +392,17 @@ void VulkanAndRTX::createPipelinesAndSwapchain()
 	createObjectRenderPass(objectRenderPass);
 	// createGUIRenderPass(noesisRenderPass);
 	createGraphicsPipeline(
-		PIPELINE_TYPE_OBJECT,
+		PipelineType::OBJECT,
 		"object", "shaders/object.vert.spv", "shaders/object.frag.spv",
 		objectRenderPass
 	);
 	createGraphicsPipeline(
-		PIPELINE_TYPE_SKY,
+		PipelineType::SKY,
 		"sky", "shaders/sky.vert.spv", "shaders/sky.frag.spv",
 		objectRenderPass
 	);
 	/*createGraphicsPipeline(
-		PIPELINE_TYPE_GUI,
+		PipelineType::GUI,
 		"noesis", "shaders/noesis.vert.spv", "shaders/noesis.frag.spv",
 		objectRenderPass
 	);*/
@@ -516,8 +516,8 @@ void VulkanAndRTX::updateShaderBuffers(uint32_t currentImage, double timeSinceLa
 	}
 
 	// Update per-mesh shader buffers
-	for (Model& model : models) {
-		for (Mesh& mesh : model.meshes) {
+	for (const Model& model : models) {
+		for (const Mesh& mesh : model.meshes) {
 			// update bones
 			if (mesh.bones.size() > 0) {
 				for (size_t i = 0; i < mesh.bones.size(); i++) {
@@ -526,15 +526,15 @@ void VulkanAndRTX::updateShaderBuffers(uint32_t currentImage, double timeSinceLa
 				}
 
 				vkMapMemory(vkInit.device, mesh.boneSSBOBuffersMemory[currentImage],
-					0, sizeof(glm::mat4)* BONES_NUM, 0, &data);
-				memcpy(data, boneSSBO.boneTransforms.data(), sizeof(glm::mat4)* BONES_NUM);
+					0, sizeof(glm::mat4)* MAX_BONES_NUM, 0, &data);
+				memcpy(data, boneSSBO.boneTransforms.data(), sizeof(glm::mat4)* MAX_BONES_NUM);
 				vkUnmapMemory(vkInit.device, mesh.boneSSBOBuffersMemory[currentImage]);
-			}
 
-			/*glm::mat4* mappedMatrices = reinterpret_cast<glm::mat4*>(data);
-			for (size_t i = 0; i < BONES_NUM; ++i) {
-				std::cout << "Matrix " << i << ": " << glm::to_string(mappedMatrices[i]) << std::endl;
-			}*/
+				/*glm::mat4* mappedMatrices = reinterpret_cast<glm::mat4*>(data);
+				for (size_t i = 0; i < MAX_BONES_NUM; ++i) {
+					std::cout << "Matrix " << i << ": " << glm::to_string(mappedMatrices[i]) << std::endl;
+				}*/
+			}
 
 			//meshUBO.model = mesh.transform;
 			meshUBO.model = glm::mat4(1.0);
@@ -584,32 +584,6 @@ void VulkanAndRTX::recordCommandBuffer(
 
 	vkCmdEndRenderPass(commandBuffer);
 
-	// Render NoesisGUI
-	/*VkRenderPassBeginInfo noesisRenderPassInfo = {};
-	noesisRenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	noesisRenderPassInfo.renderPass = objectRenderPass;
-	noesisRenderPassInfo.framebuffer = swapchainFramebuffers[imageIndex];
-	noesisRenderPassInfo.renderArea.offset = { 0, 0 };
-	noesisRenderPassInfo.renderArea.extent = swapchainExtent;
-	noesisRenderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-	noesisRenderPassInfo.pClearValues = clearValues.data();
-
-	vkCmdBeginRenderPass(commandBuffer, &noesisRenderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-
-	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["object"]);
-	NoesisApp::VKFactory::RecordingInfo recordingInfo{};
-	recordingInfo.commandBuffer = commandBuffers[currentFrame];
-	NoesisApp::VKFactory::SetCommandBuffer(noesisRenderDevice, recordingInfo);
-		
-	noesisView->Update(timeSinceLaunch);
-	//noesisRenderDevice->BeginOnscreenRender();
-	noesisView->GetRenderer()->UpdateRenderTree();
-	noesisView->GetRenderer()->RenderOffscreen();
-	noesisView->GetRenderer()->Render();
-	//noesisRenderDevice->EndOnscreenRender();
-
-	vkCmdEndRenderPass(commandBuffer);*/
-
 	if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
 		throw std::runtime_error("failed to record command buffer!");
 	}
@@ -640,7 +614,7 @@ void VulkanAndRTX::recordModelToCommandBuffer(const Model& model, VkCommandBuffe
 				meshDescriptorSet,
 				mesh.boneSSBOBuffers[currentFrame],
 				VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
-				sizeof(glm::mat4) * BONES_NUM, 1
+				sizeof(glm::mat4) * MAX_BONES_NUM, 1
 			);
 		}
 
@@ -843,7 +817,7 @@ void VulkanAndRTX::createShaderBuffers(Mesh& mesh, size_t swapchainImageCount)
 
 		if (mesh.bones.size() > 0) {
 			createBuffer(
-				sizeof(glm::mat4) * BONES_NUM,
+				sizeof(glm::mat4) * MAX_BONES_NUM,
 				VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
 				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
 				mesh.boneSSBOBuffers[frameIndex],

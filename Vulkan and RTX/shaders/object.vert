@@ -34,7 +34,7 @@ void main() {
 	vec4 transformedPosition = vec4(inPosition, 1.0);
 
     for (int i = 0; i < 4; i++) {
-        if (inBoneWeights[i] > 0.01) {
+        if (inBoneWeights[i] > 0.001) {
             boneTransform += inBoneWeights[i] * boneSSBO.boneTransforms[inBoneIDs[i]];
 			//transformedPosition += boneSSBO.boneTransforms[inBoneIDs[i]] * vec4(inPosition, 1.0);
         }

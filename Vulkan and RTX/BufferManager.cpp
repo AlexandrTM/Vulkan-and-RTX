@@ -118,7 +118,7 @@ void VulkanAndRTX::createVertexBuffer(Mesh& mesh)
 
 		// Validate bone IDs
 		for (uint32_t boneID : vertex.boneIDs) {
-			if (boneID >= BONES_NUM) { // Assuming maxBones is defined elsewhere
+			if (boneID >= MAX_BONES_NUM) { // Assuming maxBones is defined elsewhere
 				std::cerr << "Invalid bone ID " << boneID << " at vertex " << i << "\n";
 			}
 		}

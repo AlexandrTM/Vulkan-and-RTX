@@ -20,6 +20,8 @@
 #include <gtx/hash.hpp>
 #include <gtx/string_cast.hpp>
 
+#include "rtx_core.h"
+
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>

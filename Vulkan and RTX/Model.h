@@ -4,9 +4,6 @@
 #ifndef MODEL
 #define MODEL
 
-static const uint32_t BONES_NUM = 256;
-static const uint32_t MAX_FRAMES_IN_FLIGHT = 2;
-
 // Animation Key Types
 struct PositionKey {
     double                                  time;

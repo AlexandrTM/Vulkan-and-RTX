@@ -1,7 +1,6 @@
 #include "pch.h"
 #include "VulkanAndRTX.h"
 #include "TerrainGenerator.h"
-#include "VulkanQtWindow.h"
 
 void VulkanAndRTX::run()
 {
@@ -94,7 +93,6 @@ void VulkanAndRTX::createQtWindow()
 
 	connect(qtWindow, &VulkanQtWindow::framebufferResized, this, &VulkanAndRTX::onFramebufferResized);
 }
-
 void VulkanAndRTX::onFramebufferResized(int width, int height) {
 	//std::cout << "onFramebufferResized: " << width << " " << height << "\n";
     isFramebufferResized = true;
@@ -190,26 +188,37 @@ void VulkanAndRTX::mainLoop()
 		}*/
 
 		QCoreApplication::processEvents();
-		character.handleKeyInput();
-		if (!character.isInteracting) {
-			character.handleCharacterMovement(
-				deltaTime, 
-				gravity, models
-			);
-		}
-		character.camera.interpolateRotation(0.98);
-		//restrictCharacterMovement(character.camera);
-		
-		// fps meter
-		if (fpsMenu) {
-			counter++;
-			accumulator += deltaTime;
-			if (accumulator >= 1.1) {
-				fps = 1 / (accumulator / counter);
-				counter = 0;
-				accumulator = 0;
-				std::cout <<  "fps: " << fps << "\n";
+
+		switch (gameState) {
+		case GameState::IN_GAME:
+			character.handleKeyInput();
+			if (!character.isInteracting) {
+				character.handleCharacterMovement(
+					deltaTime,
+					gravity, models
+				);
 			}
+			character.camera.interpolateRotation(1.0);
+			//restrictCharacterMovement(character.camera);
+			if (qtWindow->isActive()) {
+				QCursor::setPos(qtWindow->mapToGlobal(qtWindow->centerPos));
+			}
+
+			// fps meter
+			if (fpsMenu) {
+				counter++;
+				accumulator += deltaTime;
+				if (accumulator >= 1.1) {
+					fps = 1 / (accumulator / counter);
+					counter = 0;
+					accumulator = 0;
+					std::cout << "fps: " << fps << "\n";
+				}
+			}
+			break;
+		case GameState::EXIT:
+			QCoreApplication::quit();
+			break;
 		}
 		
 		drawFrame(timeSinceLaunch, deltaTime);

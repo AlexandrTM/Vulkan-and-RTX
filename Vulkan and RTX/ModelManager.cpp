@@ -763,7 +763,8 @@ void VulkanAndRTX::createTextureFromPath(const std::string& texturePath, Texture
 		texture.image,
 		VK_FORMAT_R8G8B8A8_SRGB,
 		VK_IMAGE_ASPECT_COLOR_BIT,
-		texture.mipLevels);
+		texture.mipLevels
+	);
 	createTextureSampler(texture.mipLevels, texture.sampler);
 }
 void VulkanAndRTX::createTextureFromEmbedded(const std::string& embeddedTextureName, Texture& texture, const aiScene* scene) {
@@ -842,7 +843,8 @@ void VulkanAndRTX::createTextureFromEmbedded(const std::string& embeddedTextureN
 		texture.image,
 		VK_FORMAT_R8G8B8A8_SRGB,
 		VK_IMAGE_ASPECT_COLOR_BIT,
-		texture.mipLevels);
+		texture.mipLevels
+	);
 	createTextureSampler(texture.mipLevels, texture.sampler);
 
 	/*std::cout << "Embedded Texture Loaded:\n";
@@ -990,10 +992,10 @@ static void updateBoneHierarchy(
 	}
 }
 static void updateModelBones(Model& model, const glm::mat4& globalInverseTransform) {
-	for (size_t j = 0; j < model.meshes.size(); ++j) {
-		for (size_t i = 0; i < model.meshes[j].bones.size(); ++i) {
-			if (isRootBone(model.meshes[j].bones[i])) {
-				updateBoneHierarchy(model.meshes[j].bones, i, glm::mat4(1.0f), globalInverseTransform);
+	for (Mesh& mesh : model.meshes) {
+		for (size_t i = 0; i < mesh.bones.size(); ++i) {
+			if (isRootBone(mesh.bones[i])) {
+				updateBoneHierarchy(mesh.bones, i, glm::mat4(1.0f), globalInverseTransform);
 			}
 		}
 	}
@@ -1041,7 +1043,7 @@ static void processBones(aiMesh* mesh, const aiScene* scene, Mesh& processedMesh
 			}
 		}
 
-		aiNode* boneNode = findNode(scene->mRootNode, boneName);
+		/*aiNode* boneNode = findNode(scene->mRootNode, boneName);
 		if (boneNode) {
 			for (size_t j = 0; j < boneNode->mNumChildren; ++j) {
 				std::string childName = boneNode->mChildren[j]->mName.C_Str();
@@ -1050,7 +1052,7 @@ static void processBones(aiMesh* mesh, const aiScene* scene, Mesh& processedMesh
 					processedMesh.bones[boneIndex].children.push_back(childIndex);
 				}
 			}
-		}
+		}*/
 	}
 
 	// Normalize weights for vertices
@@ -1108,7 +1110,7 @@ static Mesh processMesh(
 	}
 
 	// bones
-	//processBones(mesh, scene, processedMesh);
+	processBones(mesh, scene, processedMesh);
 
 	perModelVertexOffset += mesh->mNumVertices;
 

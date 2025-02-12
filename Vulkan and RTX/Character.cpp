@@ -4,22 +4,22 @@
 
 void Character::handleKeyInput()
 {
-	if (keys[Qt::Key_Escape]) {
+	if (keyboardKeys[Qt::Key_Escape]) {
 		QCoreApplication::instance()->setProperty("quit", true);
 		QCoreApplication::quit();
 	}
 
 	// altering mouse sensitivity
-	if (keys[Qt::Key_Up])
+	if (keyboardKeys[Qt::Key_Up])
 	{
 		mouseSensitivity = std::clamp(mouseSensitivity * 1.3, 0.001, 10.0);
 	}
-	if (keys[Qt::Key_Down])
+	if (keyboardKeys[Qt::Key_Down])
 	{
 		mouseSensitivity = std::clamp(mouseSensitivity * 0.75, 0.001, 10.0);
 	}
 
-	if (keys[Qt::Key_F]) {
+	if (keyboardKeys[Qt::Key_F]) {
 		if (isInteracting == nullptr) {
 			for (size_t i = 0; i < interactableCuboids.size(); i++) {
 				if (interactableCuboids[i].rayIntersectsCuboid(
@@ -30,9 +30,14 @@ void Character::handleKeyInput()
 			}
 		}
 	}
+
+	if (mouseKeys[Qt::RightButton]) {
+		camera.setVerticalFov(60.0f);
+		mouseSensitivity = 0.125;
+	}
 	
 	// changing mipmap level of detail
-	/*if (keys[Qt::Key_Left)
+	/*if (keyboardKeys[Qt::Key_Left)
 	{
 		if (!(currentMinMipLevels < 0.0f))
 		{
@@ -43,7 +48,7 @@ void Character::handleKeyInput()
 			currentMinMipLevels = 0.0f;
 		}
 	}
-	if (keys[Qt::Key_Right)
+	if (keyboardKeys[Qt::Key_Right)
 	{
 		if (!(currentMinMipLevels > 14.0f))
 		{
@@ -71,42 +76,42 @@ void Character::handleCharacterMovement(
 	glm::vec3 cameraPosition = camera.getLookFrom();
 	glm::vec3 rightVector = glm::normalize(glm::cross(cameraDirection, verticalWorldAxis));
 
-	if (keys[Qt::Key_Control]) {
+	if (keyboardKeys[Qt::Key_Control]) {
 		movementSpeed *= 1.9;
 	}
-	if (keys[Qt::Key_Alt]) {
+	if (keyboardKeys[Qt::Key_Alt]) {
 		movementSpeed *= 0.4;
 	}
-	if (keys[Qt::Key_W]) {
+	if (keyboardKeys[Qt::Key_W]) {
 		horizontalDisplacement += movementSpeed * glm::normalize(
 			glm::vec3(cameraDirection.x, 0.0f, cameraDirection.z));
 	}
-	if (keys[Qt::Key_A]) {
+	if (keyboardKeys[Qt::Key_A]) {
 		horizontalDisplacement -= rightVector * movementSpeed;
 	}
-	if (keys[Qt::Key_S]) {
+	if (keyboardKeys[Qt::Key_S]) {
 		horizontalDisplacement -= movementSpeed * glm::normalize(
 			glm::vec3(cameraDirection.x, 0.0f, cameraDirection.z));
 	}
-	if (keys[Qt::Key_D]) {
+	if (keyboardKeys[Qt::Key_D]) {
 		horizontalDisplacement += rightVector * movementSpeed;
 	}
-	if (keys[Qt::Key_Space]) {
-		if (isOnGround && gamemode == GAMEMODE_SURVIVAL) {
+	if (keyboardKeys[Qt::Key_Space]) {
+		if (isOnGround && gamemode == Gamemode::SURVIVAL) {
 			velocity.y = jumpSpeed;
 			isOnGround = false;
 		}
-		if (gamemode == GAMEMODE_CREATIVE) {
+		if (gamemode == Gamemode::CREATIVE) {
 			verticalDisplacement += verticalWorldAxis * movementSpeed * 0.7f;
 		}
 	}
-	if (keys[Qt::Key_Shift]) {
-		if (gamemode == GAMEMODE_CREATIVE) {
+	if (keyboardKeys[Qt::Key_Shift]) {
+		if (gamemode == Gamemode::CREATIVE) {
 			verticalDisplacement -= verticalWorldAxis * movementSpeed * 0.8f;
 		}
 	}
 
-	if (!isOnGround && gamemode == GAMEMODE_SURVIVAL) {
+	if (!isOnGround && gamemode == Gamemode::SURVIVAL) {
 		velocity.y -= gravity * deltaTime;
 		verticalDisplacement = glm::vec3(0.0f, velocity.y * deltaTime, 0.0f);
 	}

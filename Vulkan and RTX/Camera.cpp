@@ -93,19 +93,30 @@ void Camera::rotateRelative(double dx, double dy, double sensitivity)
 }
 
 void Camera::interpolateRotation(double lerpFactor) {
-	_yaw = _yaw + (_targetYaw - _yaw) * lerpFactor;
-	_pitch = std::clamp(_pitch + (_targetPitch - _pitch) * lerpFactor, -89.99, 89.99);
+	_yaw += (_targetYaw - _yaw) * lerpFactor;
+	_pitch += (_targetPitch - _pitch) * lerpFactor;
+
+	/*_pitch = -45.99;
+	_yaw += 1.0;*/
+
+	_pitch = std::clamp(_pitch, -89.99, 89.99);
 
 	glm::vec3 front{};
 	front.x = cos(glm::radians(_yaw)) * cos(glm::radians(_pitch));
 	front.y = sin(glm::radians(_pitch));
 	front.z = sin(glm::radians(_yaw)) * cos(glm::radians(_pitch));
 	_cameraDirection = glm::normalize(front);
+
+	//double computedYaw = glm::degrees(atan2(front.z, front.x)); // Extract Yaw
+	//double computedPitch = glm::degrees(asin(front.y));         // Extract Pitch
+
+	//std::cout << "before   yaw: " << _yaw << "\n";
+	//std::cout << "computed yaw: " << computedYaw << " | computed pitch: " << computedPitch << "\n";
 }
 
-void Camera::addRotationDelta(double dx, double dy, double sensitivity) {
-	_targetYaw += dx * sensitivity;
-	_targetPitch += dy * sensitivity;
+void Camera::addRotationDelta(double dx, double dy) {
+	_targetYaw += dx;
+	_targetPitch = std::clamp(_targetPitch + dy, -89.99, 89.99);
 }
 
 void Camera::setViewportSize(uint32_t viewportWidth, uint32_t viewportHeight) 

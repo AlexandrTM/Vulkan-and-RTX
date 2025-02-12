@@ -6,11 +6,6 @@
 #ifndef CHARACTER_H
 #define CHARACTER_H
 
-typedef enum Gamemode {
-	GAMEMODE_CREATIVE = 0,
-	GAMEMODE_SURVIVAL = 1
-} Gamemode;
-
 class Character
 {
 private:
@@ -21,14 +16,15 @@ private:
 	glm::vec3 velocity = glm::vec3(0.0f);
 	bool isOnGround = false;
 
-	Gamemode gamemode = GAMEMODE_CREATIVE;
+	Gamemode gamemode = Gamemode::CREATIVE;
 	float moveSpeed = 2.1f;
 	float jumpSpeed = 4.0f;
 
 public:
 	Camera camera;
 	double mouseSensitivity = 0.125;
-	std::unordered_map<uint32_t, bool> keys;
+	std::unordered_map<uint32_t, bool> keyboardKeys;
+	std::unordered_map<uint32_t, bool> mouseKeys;
 
 	std::vector<InteractableVolume> interactableCuboids = { 
 		InteractableVolume(glm::vec3(20.0, 0.0, -10.0), glm::vec3(21.75, 4.75, -8.25), "easy"),
