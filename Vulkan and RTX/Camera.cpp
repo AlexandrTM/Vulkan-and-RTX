@@ -106,12 +106,6 @@ void Camera::interpolateRotation(double lerpFactor) {
 	front.y = sin(glm::radians(_pitch));
 	front.z = sin(glm::radians(_yaw)) * cos(glm::radians(_pitch));
 	_cameraDirection = glm::normalize(front);
-
-	//double computedYaw = glm::degrees(atan2(front.z, front.x)); // Extract Yaw
-	//double computedPitch = glm::degrees(asin(front.y));         // Extract Pitch
-
-	//std::cout << "before   yaw: " << _yaw << "\n";
-	//std::cout << "computed yaw: " << computedYaw << " | computed pitch: " << computedPitch << "\n";
 }
 
 void Camera::addRotationDelta(double dx, double dy) {

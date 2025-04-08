@@ -177,7 +177,7 @@ void VulkanAndRTX::mainLoop()
 	double fps = 0;
 	bool fpsMenu = 0;
 
-	while (qtWindow->isVisible() && QCoreApplication::instance()->property("quit").toBool() == false) {
+	while (qtWindow->isVisible()) {
 		currentTime = std::chrono::high_resolution_clock::now();
 		deltaTime = std::chrono::duration<double, std::chrono::seconds::period>(currentTime - previousTime).count();
 		previousTime = currentTime;
@@ -198,10 +198,15 @@ void VulkanAndRTX::mainLoop()
 					gravity, models
 				);
 			}
+
+			character.camera.addRotationDelta(qtWindow->latestMouseDx, qtWindow->latestMouseDy);
+			qtWindow->latestMouseDx = 0.0;
+			qtWindow->latestMouseDy = 0.0;
+
 			character.camera.interpolateRotation(1.0);
 			//restrictCharacterMovement(character.camera);
 			if (qtWindow->isActive()) {
-				QCursor::setPos(qtWindow->mapToGlobal(qtWindow->centerPos));
+				QCursor::setPos(qtWindow->centerPos);
 			}
 
 			// fps meter
@@ -218,6 +223,8 @@ void VulkanAndRTX::mainLoop()
 			break;
 		case GameState::EXIT:
 			QCoreApplication::quit();
+			break;
+		default:
 			break;
 		}
 		

@@ -12,6 +12,7 @@
 #include <QWidget>
 #include <QWindow>
 #include <QMainWindow>
+#include <QVBoxLayout>
 #include <QVulkanWindow>
 #include <QVulkanInstance>
 #include <QVulkanFunctions>

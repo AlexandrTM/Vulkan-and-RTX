@@ -18,6 +18,8 @@ private:
 public:
     VulkanQtWindow(QVulkanInstance* instance, Character& character);
     QPoint centerPos;
+    double latestMouseDx = 0.0;
+    double latestMouseDy = 0.0;
 
 signals:
     void framebufferResized(int width, int height);

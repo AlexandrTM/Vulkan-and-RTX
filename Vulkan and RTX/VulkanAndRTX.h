@@ -5,6 +5,7 @@
 #include "Model.h"
 #include "TerrainGenerator.h"
 #include "VulkanQtWindow.h"
+#include "MainMenu.h"
 	
 #ifndef VULKAN_AND_RTX_H
 #define VULKAN_AND_RTX_H
@@ -28,8 +29,8 @@ private:
 	GameState gameState = GameState::IN_GAME;
 
 	VulkanQtWindow* qtWindow = nullptr;
+	MainMenu* mainMenu = nullptr;
 	QVulkanInstance qVulkanInstance;
-	// GLFWwindow* glfwWindow;
 	double lastMousePosX, lastMousePosY;
 
 	VkDescriptorPool            descriptorPool;

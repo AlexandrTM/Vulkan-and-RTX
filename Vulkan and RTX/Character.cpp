@@ -4,10 +4,10 @@
 
 void Character::handleKeyInput()
 {
-	if (keyboardKeys[Qt::Key_Escape]) {
+	/*if (keyboardKeys[Qt::Key_Escape]) {
 		QCoreApplication::instance()->setProperty("quit", true);
 		QCoreApplication::quit();
-	}
+	}*/
 
 	// altering mouse sensitivity
 	if (keyboardKeys[Qt::Key_Up])

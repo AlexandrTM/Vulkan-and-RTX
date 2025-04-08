@@ -16,7 +16,7 @@ private:
 	glm::vec3 velocity = glm::vec3(0.0f);
 	bool isOnGround = false;
 
-	Gamemode gamemode = Gamemode::CREATIVE;
+	Gamemode gamemode = Gamemode::SURVIVAL;
 	float moveSpeed = 2.1f;
 	float jumpSpeed = 4.0f;
 

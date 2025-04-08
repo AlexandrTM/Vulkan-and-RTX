@@ -10,7 +10,8 @@ VulkanQtWindow::VulkanQtWindow(QVulkanInstance* instance, Character& character) 
 void VulkanQtWindow::resizeEvent(QResizeEvent* event) {
     emit framebufferResized(event->size().width(), event->size().height());
     centerPos = { event->size().width() / 2, event->size().height() / 2 };
-    QCursor::setPos(mapToGlobal(centerPos));
+    centerPos = mapToGlobal(centerPos);
+    QCursor::setPos(centerPos);
     character->camera._isFirstMouse = true;
 }
 
@@ -28,19 +29,14 @@ void VulkanQtWindow::mouseMoveEvent(QMouseEvent* event) {
         return;
     }
 
-    // On first frame, initialize lastMousePos to prevent jumps
     if (character->camera._isFirstMouse) {
-        QCursor::setPos(mapToGlobal(centerPos));
+        QCursor::setPos(centerPos);
         character->camera._isFirstMouse = false;
         return;
     }
 
-    double dx = (event->position().x() - centerPos.x()) * character->mouseSensitivity;
-    double dy = (centerPos.y() - event->position().y()) * character->mouseSensitivity;
-
-    //std::cout << "dx: " << dx << " " << "dy: " << dy << "\n";
-
-    character->camera.addRotationDelta(dx, dy);
+    latestMouseDx = (event->globalPosition().x() - centerPos.x()) * character->mouseSensitivity;
+    latestMouseDy = (centerPos.y() - event->globalPosition().y()) * character->mouseSensitivity;
 }
 
 void VulkanQtWindow::mousePressEvent(QMouseEvent* event) {
@@ -58,6 +54,7 @@ void VulkanQtWindow::wheelEvent(QWheelEvent* event) {
 
 void VulkanQtWindow::focusInEvent(QFocusEvent* event) {
     character->camera._isFirstMouse = true;
+    QCursor::setPos(centerPos);
     setCursor(Qt::BlankCursor);
 }
 

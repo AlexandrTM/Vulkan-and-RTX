@@ -111,6 +111,9 @@
     <ClCompile Include="VulkanQtWindow.cpp">
       <Filter>source</Filter>
     </ClCompile>
+    <ClCompile Include="MainMenu.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -180,6 +183,9 @@
       <Filter>headers</Filter>
     </QtMoc>
     <QtMoc Include="VulkanAndRTX.h">
+      <Filter>headers</Filter>
+    </QtMoc>
+    <QtMoc Include="MainMenu.h">
       <Filter>headers</Filter>
     </QtMoc>
   </ItemGroup>
