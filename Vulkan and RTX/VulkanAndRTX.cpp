@@ -6,7 +6,8 @@ void VulkanAndRTX::run()
 {
 	// createGLFWWindow();
 	// character.initializeInputHandler();
-	createQtWindow();
+	createInGameWindow();
+	createMainMenuWindow();
 	vkInit.initializeVulkan(&qVulkanInstance);
 	prepareResources();
 	mainLoop();
@@ -64,7 +65,7 @@ void VulkanAndRTX::run()
 //	glfwSetWindowIcon(glfwWindow, 1, windowIcon);
 //#pragma endregion
 //}
-void VulkanAndRTX::createQtWindow()
+void VulkanAndRTX::createInGameWindow()
 {
 	qVulkanInstance.setApiVersion(QVersionNumber(1, 0));
 	/*auto supportedExtensions = qVulkanInstance.extensions();
@@ -79,7 +80,7 @@ void VulkanAndRTX::createQtWindow()
 		throw std::runtime_error("Failed to create Vulkan instance in Qt.");
 	}
 
-	VulkanQtWindow* qtWindow = new VulkanQtWindow(&qVulkanInstance, character);
+	InGameWindow* qtWindow = new InGameWindow(&qVulkanInstance, character, gameContext);
 	qtWindow->resize(windowWidth, windowHeight);
 	qtWindow->setTitle("Vulkan and RTX");
 	qtWindow->show();
@@ -89,9 +90,25 @@ void VulkanAndRTX::createQtWindow()
 		throw std::runtime_error("Failed to create Vulkan surface for Qt window.");
 	}
 
-	this->qtWindow = qtWindow;
+	this->inGameWindow = qtWindow;
 
-	connect(qtWindow, &VulkanQtWindow::framebufferResized, this, &VulkanAndRTX::onFramebufferResized);
+	connect(qtWindow, &InGameWindow::framebufferResized, this, &VulkanAndRTX::onFramebufferResized);
+}
+void VulkanAndRTX::createMainMenuWindow() {
+	mainMenuWindow = new MainMenuWindow();
+
+	connect(mainMenuWindow, &MainMenuWindow::startGame, [this]() {
+		changeState(GameState::IN_GAME);
+		});
+
+	//connect(mainMenuWindow, &MainMenuWindow::openSettings, [this]() {
+	//	// TODO: Add a settings menu if needed
+	//	QMessageBox::information(mainMenuWindow, "Settings", "Settings not implemented yet.");
+	//	});
+
+	connect(mainMenuWindow, &MainMenuWindow::exitGame, [this]() {
+		changeState(GameState::EXIT);
+		});
 }
 void VulkanAndRTX::onFramebufferResized(int width, int height) {
 	//std::cout << "onFramebufferResized: " << width << " " << height << "\n";
@@ -165,6 +182,46 @@ void VulkanAndRTX::prepareResources()
 	createDescriptorSets(models, MAX_FRAMES_IN_FLIGHT);
 }
 
+void VulkanAndRTX::changeState(GameState newState) {
+	if (gameContext.gameState == newState) {
+		std::cout << "new state is same as current state\n";
+		return;
+	}
+
+	// leaving current state
+	switch (gameContext.gameState) {
+	case GameState::IN_GAME:
+		if (inGameWindow) inGameWindow->hide();
+		gameContext.clearInputs();
+		break;
+	case GameState::MAIN_MENU:
+		if (mainMenuWindow) mainMenuWindow->hide();
+		gameContext.clearInputs();
+		break;
+	default:
+		break;
+	}
+
+	// Update state
+	gameContext.gameState = newState;
+
+	// entering new state
+	switch (newState) {
+	case GameState::IN_GAME:
+		if (!inGameWindow) createInGameWindow();
+		inGameWindow->show();
+		break;
+	case GameState::MAIN_MENU:
+		if (!mainMenuWindow) createMainMenuWindow();
+		mainMenuWindow->show();
+		break;
+	case GameState::EXIT:
+		QCoreApplication::quit();
+		break;
+	default:
+		break;
+	}
+}
 void VulkanAndRTX::mainLoop()
 {
 	std::chrono::high_resolution_clock::time_point previousTime = std::chrono::high_resolution_clock::now();
@@ -177,7 +234,7 @@ void VulkanAndRTX::mainLoop()
 	double fps = 0;
 	bool fpsMenu = 0;
 
-	while (qtWindow->isVisible()) {
+	while (gameContext.gameState != GameState::EXIT) {
 		currentTime = std::chrono::high_resolution_clock::now();
 		deltaTime = std::chrono::duration<double, std::chrono::seconds::period>(currentTime - previousTime).count();
 		previousTime = currentTime;
@@ -189,43 +246,27 @@ void VulkanAndRTX::mainLoop()
 
 		QCoreApplication::processEvents();
 
-		switch (gameState) {
-		case GameState::IN_GAME:
-			character.handleKeyInput();
+		if (gameContext.requestedState != GameState::NONE) {
+			changeState(gameContext.requestedState);
+			gameContext.requestedState = GameState::NONE;
+		}
+
+		if (gameContext.gameState == GameState::IN_GAME) {
+			character.handleInGamePlayerInput(gameContext);
 			if (!character.isInteracting) {
-				character.handleCharacterMovement(
-					deltaTime,
-					gravity, models
-				);
+				character.handleCharacterMovement(gameContext, deltaTime, gravity, models);
 			}
 
-			character.camera.addRotationDelta(qtWindow->latestMouseDx, qtWindow->latestMouseDy);
-			qtWindow->latestMouseDx = 0.0;
-			qtWindow->latestMouseDy = 0.0;
+			character.camera.addRotationDelta(inGameWindow->latestMouseDx, inGameWindow->latestMouseDy);
+			inGameWindow->latestMouseDx = 0.0;
+			inGameWindow->latestMouseDy = 0.0;
 
 			character.camera.interpolateRotation(1.0);
-			//restrictCharacterMovement(character.camera);
-			if (qtWindow->isActive()) {
-				QCursor::setPos(qtWindow->centerPos);
+			if (inGameWindow->isActive()) {
+				QCursor::setPos(inGameWindow->centerPos);
 			}
 
-			// fps meter
-			if (fpsMenu) {
-				counter++;
-				accumulator += deltaTime;
-				if (accumulator >= 1.1) {
-					fps = 1 / (accumulator / counter);
-					counter = 0;
-					accumulator = 0;
-					std::cout << "fps: " << fps << "\n";
-				}
-			}
-			break;
-		case GameState::EXIT:
-			QCoreApplication::quit();
-			break;
-		default:
-			break;
+			// Optional FPS meter
 		}
 		
 		drawFrame(timeSinceLaunch, deltaTime);
@@ -564,7 +605,7 @@ static int runVulkanAndRTX() {
 
 	int argc = 0;
 	char** argv = nullptr;
-	QGuiApplication app(argc, argv);
+	QApplication  app(argc, argv);
 
 	srand(static_cast<unsigned>(time(0))); // Seed the random number generator once
 	VulkanAndRTX vulkanApp;

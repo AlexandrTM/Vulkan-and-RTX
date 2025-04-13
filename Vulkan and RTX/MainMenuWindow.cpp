@@ -1,7 +1,7 @@
 #include "pch.h"
-#include "MainMenu.h"
+#include "MainMenuWindow.h"
 
-MainMenu::MainMenu(QWidget* parent) : QMainWindow(parent) {
+MainMenuWindow::MainMenuWindow(QWidget* parent) : QMainWindow(parent) {
     QWidget* central = new QWidget(this);
     QVBoxLayout* layout = new QVBoxLayout(central);
 
@@ -15,7 +15,7 @@ MainMenu::MainMenu(QWidget* parent) : QMainWindow(parent) {
 
     setCentralWidget(central);
 
-    connect(startButton, &QPushButton::clicked, this, &MainMenu::startGame);
-    connect(settingsButton, &QPushButton::clicked, this, &MainMenu::openSettings);
-    connect(exitButton, &QPushButton::clicked, this, &MainMenu::exitGame);
+    connect(startButton, &QPushButton::clicked, this, &MainMenuWindow::startGame);
+    connect(settingsButton, &QPushButton::clicked, this, &MainMenuWindow::openSettings);
+    connect(exitButton, &QPushButton::clicked, this, &MainMenuWindow::exitGame);
 }

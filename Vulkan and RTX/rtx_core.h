@@ -24,6 +24,7 @@ enum class GameState : uint32_t
 	IN_GAME = 2,
 	PAUSED = 3,
 	EXIT = 4,
+	NONE = std::numeric_limits<uint32_t>::max(),
 };
 
 struct UniformBufferObject

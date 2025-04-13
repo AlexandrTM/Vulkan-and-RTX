@@ -4,8 +4,9 @@
 #include "Vertex.h"
 #include "Model.h"
 #include "TerrainGenerator.h"
-#include "VulkanQtWindow.h"
-#include "MainMenu.h"
+#include "InGameWindow.h"
+#include "MainMenuWindow.h"
+#include "GameContext.h"
 	
 #ifndef VULKAN_AND_RTX_H
 #define VULKAN_AND_RTX_H
@@ -22,16 +23,17 @@ private:
 #pragma endregion
 #pragma region
 
-	float gravity = 9.81f;
-	Character character;
 	VulkanInitializer vkInit;
 
-	GameState gameState = GameState::IN_GAME;
+	float gravity = 9.81f;
+	Character character;
+	GameContext gameContext;
 
-	VulkanQtWindow* qtWindow = nullptr;
-	MainMenu* mainMenu = nullptr;
-	QVulkanInstance qVulkanInstance;
+	InGameWindow* inGameWindow = nullptr;
+	MainMenuWindow* mainMenuWindow = nullptr;
 	double lastMousePosX, lastMousePosY;
+
+	QVulkanInstance qVulkanInstance;
 
 	VkDescriptorPool            descriptorPool;
 	VkDescriptorSetLayout       descriptorSetLayout;
@@ -90,7 +92,9 @@ public:
 
 private:
 	void createGLFWWindow();
-	void createQtWindow();
+	void createInGameWindow();
+	void createMainMenuWindow();
+	void changeState(GameState newState);
 
 	std::string createPuzzleEquation(std::string name, int32_t& answer);
 

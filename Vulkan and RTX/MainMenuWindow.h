@@ -2,11 +2,11 @@
 
 #ifndef MAIN_MENU_H
 #define MAIN_MENU_H
-class MainMenu : public QMainWindow
+class MainMenuWindow : public QMainWindow
 {
     Q_OBJECT
 public:
-    explicit MainMenu(QWidget* parent = nullptr);
+    explicit MainMenuWindow(QWidget* parent = nullptr);
 
 signals:
     void startGame();

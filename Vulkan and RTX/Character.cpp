@@ -1,25 +1,23 @@
 #include "pch.h"
 #include "Character.h"
-#include "Camera.h"
 
-void Character::handleKeyInput()
+void Character::handleInGamePlayerInput(GameContext& gameContext)
 {
-	/*if (keyboardKeys[Qt::Key_Escape]) {
-		QCoreApplication::instance()->setProperty("quit", true);
-		QCoreApplication::quit();
-	}*/
-
 	// altering mouse sensitivity
-	if (keyboardKeys[Qt::Key_Up])
+	if (gameContext.keyboardKeys[Qt::Key_Up])
 	{
 		mouseSensitivity = std::clamp(mouseSensitivity * 1.3, 0.001, 10.0);
 	}
-	if (keyboardKeys[Qt::Key_Down])
+	if (gameContext.keyboardKeys[Qt::Key_Down])
 	{
 		mouseSensitivity = std::clamp(mouseSensitivity * 0.75, 0.001, 10.0);
 	}
+	if (gameContext.mouseKeys[Qt::RightButton]) {
+		camera.setVerticalFov(60.0f);
+		mouseSensitivity = 0.125;
+	}
 
-	if (keyboardKeys[Qt::Key_F]) {
+	if (gameContext.keyboardKeys[Qt::Key_F]) {
 		if (isInteracting == nullptr) {
 			for (size_t i = 0; i < interactableCuboids.size(); i++) {
 				if (interactableCuboids[i].rayIntersectsCuboid(
@@ -31,9 +29,8 @@ void Character::handleKeyInput()
 		}
 	}
 
-	if (mouseKeys[Qt::RightButton]) {
-		camera.setVerticalFov(60.0f);
-		mouseSensitivity = 0.125;
+	if (gameContext.keyboardKeys[Qt::Key_Escape]) {
+		gameContext.requestedState = GameState::MAIN_MENU;
 	}
 	
 	// changing mipmap level of detail
@@ -63,6 +60,7 @@ void Character::handleKeyInput()
 
 
 void Character::handleCharacterMovement(
+	GameContext& gameContext,
 	float deltaTime, 
 	float gravity, const std::vector<Model>& models
 )
@@ -76,27 +74,27 @@ void Character::handleCharacterMovement(
 	glm::vec3 cameraPosition = camera.getLookFrom();
 	glm::vec3 rightVector = glm::normalize(glm::cross(cameraDirection, verticalWorldAxis));
 
-	if (keyboardKeys[Qt::Key_Control]) {
+	if (gameContext.keyboardKeys[Qt::Key_Control]) {
 		movementSpeed *= 1.9;
 	}
-	if (keyboardKeys[Qt::Key_Alt]) {
+	if (gameContext.keyboardKeys[Qt::Key_Alt]) {
 		movementSpeed *= 0.4;
 	}
-	if (keyboardKeys[Qt::Key_W]) {
+	if (gameContext.keyboardKeys[Qt::Key_W]) {
 		horizontalDisplacement += movementSpeed * glm::normalize(
 			glm::vec3(cameraDirection.x, 0.0f, cameraDirection.z));
 	}
-	if (keyboardKeys[Qt::Key_A]) {
+	if (gameContext.keyboardKeys[Qt::Key_A]) {
 		horizontalDisplacement -= rightVector * movementSpeed;
 	}
-	if (keyboardKeys[Qt::Key_S]) {
+	if (gameContext.keyboardKeys[Qt::Key_S]) {
 		horizontalDisplacement -= movementSpeed * glm::normalize(
 			glm::vec3(cameraDirection.x, 0.0f, cameraDirection.z));
 	}
-	if (keyboardKeys[Qt::Key_D]) {
+	if (gameContext.keyboardKeys[Qt::Key_D]) {
 		horizontalDisplacement += rightVector * movementSpeed;
 	}
-	if (keyboardKeys[Qt::Key_Space]) {
+	if (gameContext.keyboardKeys[Qt::Key_Space]) {
 		if (isOnGround && gamemode == Gamemode::SURVIVAL) {
 			velocity.y = jumpSpeed;
 			isOnGround = false;
@@ -105,7 +103,7 @@ void Character::handleCharacterMovement(
 			verticalDisplacement += verticalWorldAxis * movementSpeed * 0.7f;
 		}
 	}
-	if (keyboardKeys[Qt::Key_Shift]) {
+	if (gameContext.keyboardKeys[Qt::Key_Shift]) {
 		if (gamemode == Gamemode::CREATIVE) {
 			verticalDisplacement -= verticalWorldAxis * movementSpeed * 0.8f;
 		}
@@ -199,8 +197,8 @@ bool Character::checkCollision(
 ) const
 {
 	if (model.isCollidable) {
-		for (size_t i = 0; i < model.meshes.size(); i++) {
-			if (checkCollision(model.meshes[i], cameraPosition, surfaceNormal)) {
+		for (const Mesh& mesh : model.meshes) {
+			if (checkCollision(mesh, cameraPosition, surfaceNormal)) {
 				return true;
 			}
 		}
@@ -213,8 +211,8 @@ bool Character::checkCollision(
 	glm::vec3& surfaceNormal
 ) const
 {
-	for (size_t i = 0; i < models.size(); i++) {
-		if (checkCollision(models[i], cameraPosition, surfaceNormal)) {
+	for (const Model& model : models) {
+		if (checkCollision(model, cameraPosition, surfaceNormal)) {
 			return true;
 		}
 	}
@@ -231,9 +229,9 @@ bool Character::isAABBOverlap(
 		(min1.z <= max2.z && max1.z >= min2.z);
 }
 
-static const glm::vec3 xAxis = glm::vec3(1.0f, 0.0f, 0.0f);
-static const glm::vec3 yAxis = glm::vec3(0.0f, 1.0f, 0.0f);
-static const glm::vec3 zAxis = glm::vec3(0.0f, 0.0f, 1.0f);
+static constexpr glm::vec3 xAxis = glm::vec3(1.0f, 0.0f, 0.0f);
+static constexpr glm::vec3 yAxis = glm::vec3(0.0f, 1.0f, 0.0f);
+static constexpr glm::vec3 zAxis = glm::vec3(0.0f, 0.0f, 1.0f);
 
 bool Character::triangleBoxIntersection(const glm::vec3& boxMin, const glm::vec3& boxMax,
 	const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2,

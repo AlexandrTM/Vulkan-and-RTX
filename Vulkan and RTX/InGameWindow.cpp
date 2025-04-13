@@ -1,13 +1,17 @@
 #include "pch.h"
-#include "VulkanQtWindow.h"
+#include "InGameWindow.h"
 
-VulkanQtWindow::VulkanQtWindow(QVulkanInstance* instance, Character& character) {
+InGameWindow::InGameWindow(
+    QVulkanInstance* instance, 
+    Character& character, GameContext& gameContext
+) {
     this->character = &character;
+    this->gameContext = &gameContext;
     setSurfaceType(QWindow::VulkanSurface);
     setVulkanInstance(instance);
 }
 
-void VulkanQtWindow::resizeEvent(QResizeEvent* event) {
+void InGameWindow::resizeEvent(QResizeEvent* event) {
     emit framebufferResized(event->size().width(), event->size().height());
     centerPos = { event->size().width() / 2, event->size().height() / 2 };
     centerPos = mapToGlobal(centerPos);
@@ -15,16 +19,15 @@ void VulkanQtWindow::resizeEvent(QResizeEvent* event) {
     character->camera._isFirstMouse = true;
 }
 
-void VulkanQtWindow::keyPressEvent(QKeyEvent* event) {
-    character->keyboardKeys[event->key()] = true;
-    //std::cout << "event->nativeScanCode(): " << event->nativeScanCode() << "\n";
+void InGameWindow::keyPressEvent(QKeyEvent* event) {
+    gameContext->keyboardKeys[event->key()] = true;
 }
 
-void VulkanQtWindow::keyReleaseEvent(QKeyEvent* event) {
-    character->keyboardKeys[event->key()] = false;
+void InGameWindow::keyReleaseEvent(QKeyEvent* event) {
+    gameContext->keyboardKeys[event->key()] = false;
 }
 
-void VulkanQtWindow::mouseMoveEvent(QMouseEvent* event) {
+void InGameWindow::mouseMoveEvent(QMouseEvent* event) {
     if (!isActive()) {
         return;
     }
@@ -39,25 +42,25 @@ void VulkanQtWindow::mouseMoveEvent(QMouseEvent* event) {
     latestMouseDy = (centerPos.y() - event->globalPosition().y()) * character->mouseSensitivity;
 }
 
-void VulkanQtWindow::mousePressEvent(QMouseEvent* event) {
-    character->mouseKeys[event->button()] = true;
+void InGameWindow::mousePressEvent(QMouseEvent* event) {
+    gameContext->mouseKeys[event->button()] = true;
 }
 
-void VulkanQtWindow::mouseReleaseEvent(QMouseEvent* event) {
-    character->mouseKeys[event->button()] = false;
+void InGameWindow::mouseReleaseEvent(QMouseEvent* event) {
+    gameContext->mouseKeys[event->button()] = false;
 }
 
-void VulkanQtWindow::wheelEvent(QWheelEvent* event) {
+void InGameWindow::wheelEvent(QWheelEvent* event) {
     float delta = event->angleDelta().y() / 120.0f; // Typical mouse wheel delta is 120
     character->camera.setVerticalFov(std::clamp(character->camera.getVerticalFov() - delta, 0.1f, 130.0f));
 }
 
-void VulkanQtWindow::focusInEvent(QFocusEvent* event) {
+void InGameWindow::focusInEvent(QFocusEvent* event) {
     character->camera._isFirstMouse = true;
     QCursor::setPos(centerPos);
     setCursor(Qt::BlankCursor);
 }
 
-void VulkanQtWindow::focusOutEvent(QFocusEvent* event) {
+void InGameWindow::focusOutEvent(QFocusEvent* event) {
     setCursor(Qt::ArrowCursor);
 }

@@ -2,6 +2,8 @@
 #include "Camera.h"
 #include "InteractableVolume.h"
 #include "Model.h"
+#include "Camera.h"
+#include "GameContext.h"
 
 #ifndef CHARACTER_H
 #define CHARACTER_H
@@ -23,8 +25,6 @@ private:
 public:
 	Camera camera;
 	double mouseSensitivity = 0.125;
-	std::unordered_map<uint32_t, bool> keyboardKeys;
-	std::unordered_map<uint32_t, bool> mouseKeys;
 
 	std::vector<InteractableVolume> interactableCuboids = { 
 		InteractableVolume(glm::vec3(20.0, 0.0, -10.0), glm::vec3(21.75, 4.75, -8.25), "easy"),
@@ -35,10 +35,11 @@ public:
 	InteractableVolume* isInteracting = nullptr;
 
 	void handleCharacterMovement(
+		GameContext& gameContext,
 		float deltaTime,
 		float gravity, const std::vector<Model>& models
 	);
-	void handleKeyInput();
+	void handleInGamePlayerInput(GameContext& gameContext);
 
 	bool checkCollision(
 		const Mesh& mesh,

@@ -4,19 +4,24 @@
 #include <QWheelEvent>
 #include <QResizeEvent>
 #include "Character.h"
+#include "GameContext.h"
 
 #ifndef VULKAN_QT_WINDOW_H
 #define VULKAN_QT_WINDOW_H
 
-class VulkanQtWindow : public QWindow
+class InGameWindow : public QWindow
 {
     Q_OBJECT
 
 private:
     Character* character;
+    GameContext* gameContext;
 
 public:
-    VulkanQtWindow(QVulkanInstance* instance, Character& character);
+    InGameWindow(
+        QVulkanInstance* instance,
+        Character& character, GameContext& gameContext
+    );
     QPoint centerPos;
     double latestMouseDx = 0.0;
     double latestMouseDy = 0.0;

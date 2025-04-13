@@ -31,6 +31,9 @@
     <Filter Include="headers\precompiled\implementation macros">
       <UniqueIdentifier>{11f1ff4e-c158-4bc5-b19f-0398e6c2a40e}</UniqueIdentifier>
     </Filter>
+    <Filter Include="source\UI">
+      <UniqueIdentifier>{e2285b90-6be4-4805-866d-d525c4a2b86c}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -108,11 +111,14 @@
     <ClCompile Include="Item.cpp">
       <Filter>characteristics</Filter>
     </ClCompile>
-    <ClCompile Include="VulkanQtWindow.cpp">
+    <ClCompile Include="GameContext.cpp">
       <Filter>source</Filter>
     </ClCompile>
-    <ClCompile Include="MainMenu.cpp">
-      <Filter>source</Filter>
+    <ClCompile Include="InGameWindow.cpp">
+      <Filter>source\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="MainMenuWindow.cpp">
+      <Filter>source\UI</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -167,6 +173,9 @@
     <ClInclude Include="rtx_core.h">
       <Filter>headers\precompiled</Filter>
     </ClInclude>
+    <ClInclude Include="GameContext.h">
+      <Filter>headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Vulkan and RTX.rc">
@@ -179,14 +188,14 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <QtMoc Include="VulkanQtWindow.h">
-      <Filter>headers</Filter>
-    </QtMoc>
     <QtMoc Include="VulkanAndRTX.h">
       <Filter>headers</Filter>
     </QtMoc>
-    <QtMoc Include="MainMenu.h">
-      <Filter>headers</Filter>
+    <QtMoc Include="InGameWindow.h">
+      <Filter>source\UI</Filter>
+    </QtMoc>
+    <QtMoc Include="MainMenuWindow.h">
+      <Filter>source\UI</Filter>
     </QtMoc>
   </ItemGroup>
 </Project>

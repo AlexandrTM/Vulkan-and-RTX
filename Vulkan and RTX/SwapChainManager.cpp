@@ -178,7 +178,7 @@ VkExtent2D VulkanAndRTX::chooseSwapchainExtent(const VkSurfaceCapabilitiesKHR& c
 		return capabilities.currentExtent;
 	}
 	else {
-		QSize windowSize = qtWindow->size();
+		QSize windowSize = inGameWindow->size();
 
 		VkExtent2D actualExtent = {
 			static_cast<uint32_t>(windowSize.width()),

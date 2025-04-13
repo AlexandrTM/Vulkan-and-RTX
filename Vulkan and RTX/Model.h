@@ -67,7 +67,7 @@ struct Texture {
 };
 
 struct Material {
-    Texture                                 diffuseTexture;
+    Texture                                 diffuseTexture; // basic color
     Texture                                 normalTexture;
     Texture                                 specularTexture;
     Texture                                 emissiveTexture;
