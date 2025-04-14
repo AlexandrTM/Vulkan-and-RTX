@@ -1,6 +1,5 @@
 #include "pch.h"
 #include "InGameWindow.h"
-
 InGameWindow::InGameWindow(
     QVulkanInstance* instance, 
     Character& character, GameContext& gameContext

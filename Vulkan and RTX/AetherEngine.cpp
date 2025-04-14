@@ -1,20 +1,21 @@
 #include "pch.h"
-#include "VulkanAndRTX.h"
-#include "TerrainGenerator.h"
+#include "AetherEngine.h"
 
-void VulkanAndRTX::run()
+void AetherEngine::run()
 {
 	// createGLFWWindow();
 	// character.initializeInputHandler();
 	createInGameWindow();
-	createMainMenuWindow();
+	createMainMenuWidget();
+	createMainWindow();
+
 	vkInit.initializeVulkan(&qVulkanInstance);
 	prepareResources();
 	mainLoop();
 	cleanupMemory();
 }
 
-//void VulkanAndRTX::createGLFWWindow()
+//void AetherEngine::createGLFWWindow()
 //{
 //	glfwInit();
 //
@@ -65,7 +66,7 @@ void VulkanAndRTX::run()
 //	glfwSetWindowIcon(glfwWindow, 1, windowIcon);
 //#pragma endregion
 //}
-void VulkanAndRTX::createInGameWindow()
+void AetherEngine::createInGameWindow()
 {
 	qVulkanInstance.setApiVersion(QVersionNumber(1, 0));
 	/*auto supportedExtensions = qVulkanInstance.extensions();
@@ -87,7 +88,7 @@ void VulkanAndRTX::createInGameWindow()
 	InGameWindow* qtWindow = new InGameWindow(&qVulkanInstance, character, gameContext);
 	qtWindow->resize(windowWidth, windowHeight);
 	qtWindow->setTitle("Vulkan and RTX");
-	qtWindow->show();
+	qtWindow->create();
 
 	vkInit.surface = qVulkanInstance.surfaceForWindow(qtWindow);
 	if (vkInit.surface == VK_NULL_HANDLE) {
@@ -95,32 +96,44 @@ void VulkanAndRTX::createInGameWindow()
 	}
 
 	this->inGameWindow = qtWindow;
+	inGameWidget = QWidget::createWindowContainer(inGameWindow);
 
-	connect(qtWindow, &InGameWindow::framebufferResized, this, &VulkanAndRTX::onFramebufferResized);
+	connect(qtWindow, &InGameWindow::framebufferResized, this, &AetherEngine::onFramebufferResized);
 }
-void VulkanAndRTX::createMainMenuWindow() {
-	mainMenuWindow = new MainMenuWindow();
-	mainMenuWindow->resize(windowWidth, windowHeight);
+void AetherEngine::createMainMenuWidget() {
+	mainMenuWidget = new MainMenuWidget();
+	mainMenuWidget->resize(windowWidth, windowHeight);
 
-	connect(mainMenuWindow, &MainMenuWindow::startGame, [this]() {
-		gameContext.requestedState = GameState::IN_GAME;
+	connect(mainMenuWidget, &MainMenuWidget::startGame, [this]() {
+		gameContext.requestedGameState = GameState::IN_GAME;
 		});
 
-	connect(mainMenuWindow, &MainMenuWindow::openSettings, [this]() {
-		gameContext.requestedState = GameState::SETTINGS;
+	connect(mainMenuWidget, &MainMenuWidget::openSettings, [this]() {
+		gameContext.requestedGameState = GameState::SETTINGS;
 		});
 
-	connect(mainMenuWindow, &MainMenuWindow::exitGame, [this]() {
-		gameContext.requestedState = GameState::EXIT;
+	connect(mainMenuWidget, &MainMenuWidget::exitGame, [this]() {
+		gameContext.requestedGameState = GameState::EXIT;
 		});
 }
-void VulkanAndRTX::onFramebufferResized(int width, int height) {
+void AetherEngine::createMainWindow()
+{
+	mainWindow = new MainWindow(mainMenuWidget, inGameWidget);
+	mainWindow->resize(windowWidth, windowHeight);
+	mainWindow->show();
+
+	stackedWidget = mainWindow->getStackedWidget();
+
+	gameContext.requestedGameState = GameState::IN_GAME;
+}
+
+void AetherEngine::onFramebufferResized(int width, int height) {
 	//std::cout << "onFramebufferResized: " << width << " " << height << "\n";
     isFramebufferResized = true;
     character.camera.setViewportSize(width, height);
 }
 
-void VulkanAndRTX::prepareResources()
+void AetherEngine::prepareResources()
 {
 	//std::chrono::high_resolution_clock::time_point currentTime;
 	//float deltaTime;
@@ -186,38 +199,23 @@ void VulkanAndRTX::prepareResources()
 	createDescriptorSets(models, MAX_FRAMES_IN_FLIGHT);
 }
 
-void VulkanAndRTX::changeState(GameState newState) {
-	if (gameContext.gameState == newState) {
-		std::cout << "new state is same as current state\n";
+void AetherEngine::changeState(GameState newGameState) {
+	if (gameContext.currentGameState == newGameState) {
+		std::cout << 
+			"new state is same as current state: " << 
+			static_cast<uint32_t>(newGameState) << "\n";
 		return;
 	}
 
-	// leaving current state
-	switch (gameContext.gameState) {
+	gameContext.clearInputs();
+	gameContext.currentGameState = newGameState;
+
+	switch (newGameState) {
 	case GameState::MAIN_MENU:
-		if (mainMenuWindow) mainMenuWindow->hide();
-		gameContext.clearInputs();
+		stackedWidget->setCurrentWidget(mainMenuWidget);
 		break;
 	case GameState::IN_GAME:
-		if (inGameWindow) inGameWindow->hide();
-		gameContext.clearInputs();
-		break;
-	default:
-		break;
-	}
-
-	// Update state
-	gameContext.gameState = newState;
-
-	// entering new state
-	switch (newState) {
-	case GameState::MAIN_MENU:
-		if (!mainMenuWindow) createMainMenuWindow();
-		mainMenuWindow->show();
-		break;
-	case GameState::IN_GAME:
-		if (!inGameWindow) createInGameWindow();
-		inGameWindow->show();
+		stackedWidget->setCurrentWidget(inGameWidget);
 		break;
 	case GameState::EXIT:
 		QCoreApplication::quit();
@@ -226,7 +224,7 @@ void VulkanAndRTX::changeState(GameState newState) {
 		break;
 	}
 }
-void VulkanAndRTX::mainLoop()
+void AetherEngine::mainLoop()
 {
 	std::chrono::high_resolution_clock::time_point previousTime = std::chrono::high_resolution_clock::now();
 	std::chrono::high_resolution_clock::time_point currentTime;
@@ -238,7 +236,7 @@ void VulkanAndRTX::mainLoop()
 	double fps = 0;
 	bool fpsMenu = 0;
 
-	while (gameContext.gameState != GameState::EXIT) {
+	while (gameContext.currentGameState != GameState::EXIT) {
 		currentTime = std::chrono::high_resolution_clock::now();
 		deltaTime = std::chrono::duration<double, std::chrono::seconds::period>(currentTime - previousTime).count();
 		previousTime = currentTime;
@@ -250,12 +248,12 @@ void VulkanAndRTX::mainLoop()
 
 		QCoreApplication::processEvents();
 
-		if (gameContext.requestedState != GameState::NONE) {
-			changeState(gameContext.requestedState);
-			gameContext.requestedState = GameState::NONE;
+		if (gameContext.requestedGameState != GameState::NONE) {
+			changeState(gameContext.requestedGameState);
+			gameContext.requestedGameState = GameState::NONE;
 		}
 
-		if (gameContext.gameState == GameState::IN_GAME) {
+		if (gameContext.currentGameState == GameState::IN_GAME) {
 			character.handleInGamePlayerInput(gameContext);
 			if (!character.isInteracting) {
 				character.handleCharacterMovement(gameContext, deltaTime, gravity, models);
@@ -270,28 +268,38 @@ void VulkanAndRTX::mainLoop()
 				QCursor::setPos(inGameWindow->centerPos);
 			}
 
-			// Optional FPS meter
+			// FPS meter
+			if (fpsMenu) {
+				counter++;
+				accumulator += deltaTime;
+				if (accumulator >= 1.0) {
+					fps = 1 / (accumulator / counter);
+					counter = 0;
+					accumulator = 0;
+					std::cout << "fps: " << fps << "\n";
+				}
+			}
+
+			drawFrame(timeSinceLaunch, deltaTime);
 		}
-		
-		drawFrame(timeSinceLaunch, deltaTime);
 	}
 
 	vkDeviceWaitIdle(vkInit.device);
 }
 
-void VulkanAndRTX::cleanupModels(std::vector<Model>& models) const
+void AetherEngine::cleanupModels(std::vector<Model>& models) const
 {
 	for (Model& model : models) {
 		cleanupModel(model);
 	}
 }
-void VulkanAndRTX::cleanupModel(Model& model) const
+void AetherEngine::cleanupModel(Model& model) const
 {
 	for (Mesh& mesh : model.meshes) {
 		cleanupMesh(mesh);
 	}
 }
-void VulkanAndRTX::cleanupMesh(Mesh& mesh) const
+void AetherEngine::cleanupMesh(Mesh& mesh) const
 {
 	vkDestroyBuffer(vkInit.device, mesh.indexBuffer, nullptr);
 	vkFreeMemory(vkInit.device, mesh.indexBufferMemory, nullptr);
@@ -311,14 +319,14 @@ void VulkanAndRTX::cleanupMesh(Mesh& mesh) const
 
 	// cleanupMaterial(mesh.material);
 }
-void VulkanAndRTX::cleanupMaterial(Material& material) const
+void AetherEngine::cleanupMaterial(Material& material) const
 {
 	cleanupTexture(material.diffuseTexture);
 	cleanupTexture(material.normalTexture);
 	cleanupTexture(material.specularTexture);
 	cleanupTexture(material.emissiveTexture);
 }
-void VulkanAndRTX::cleanupTexture(Texture& texture) const
+void AetherEngine::cleanupTexture(Texture& texture) const
 {
 	if (texture.imageView) {
 		vkDestroyImageView(vkInit.device, texture.imageView, nullptr);
@@ -338,7 +346,7 @@ void VulkanAndRTX::cleanupTexture(Texture& texture) const
 	}
 }
 
-void VulkanAndRTX::cleanupMemory()
+void AetherEngine::cleanupMemory()
 {
 	cleanupModels(models);
 	cleanupModel(sky);
@@ -368,7 +376,7 @@ void VulkanAndRTX::cleanupMemory()
 	vkDestroySurfaceKHR(vkInit.instance, vkInit.surface, nullptr);
 }
 
-void VulkanAndRTX::restrictCharacterMovement(Camera& camera)
+void AetherEngine::restrictCharacterMovement(Camera& camera)
 {
 	glm::vec3 cameraPosition = camera.getLookFrom();
 
@@ -401,7 +409,7 @@ void VulkanAndRTX::restrictCharacterMovement(Camera& camera)
 	}
 }
 
-std::string VulkanAndRTX::createPuzzleEquation(std::string name, int32_t& answer)
+std::string AetherEngine::createPuzzleEquation(std::string name, int32_t& answer)
 {
 	std::stringstream puzzleEquation;
 
@@ -480,7 +488,7 @@ std::string VulkanAndRTX::createPuzzleEquation(std::string name, int32_t& answer
 }
 
 // reading byte code files and returning its bytes
-std::vector<char> VulkanAndRTX::readFile(const std::string& filename)
+std::vector<char> AetherEngine::readFile(const std::string& filename)
 {
 	std::ifstream file(filename, std::ios::ate | std::ios::binary);
 
@@ -499,7 +507,7 @@ std::vector<char> VulkanAndRTX::readFile(const std::string& filename)
 }
 
 // finding most appropriate memory type depending on buffer and application properties
-uint32_t VulkanAndRTX::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const
+uint32_t AetherEngine::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const
 {
 	VkPhysicalDeviceMemoryProperties memProperties;
 	vkGetPhysicalDeviceMemoryProperties(vkInit.physicalDevice, &memProperties);
@@ -514,7 +522,7 @@ uint32_t VulkanAndRTX::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags
 }
 
 // command pool for specific queue family
-void VulkanAndRTX::createCommandPool()
+void AetherEngine::createCommandPool()
 {
 	VkCommandPoolCreateInfo poolInfo{};
 	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -527,7 +535,7 @@ void VulkanAndRTX::createCommandPool()
 }
 
 // Creating fences and semaphores
-void VulkanAndRTX::createSyncObjects()
+void AetherEngine::createSyncObjects()
 {
 	imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
 	renderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
@@ -552,7 +560,7 @@ void VulkanAndRTX::createSyncObjects()
 }
 
 // wrapping shader
-VkShaderModule VulkanAndRTX::createShaderModule(const std::vector<char>& code) const
+VkShaderModule AetherEngine::createShaderModule(const std::vector<char>& code) const
 {
 	VkShaderModuleCreateInfo createInfo{};
 	createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
@@ -565,65 +573,4 @@ VkShaderModule VulkanAndRTX::createShaderModule(const std::vector<char>& code) c
 	}
 
 	return shaderModule;
-}
-
-static void customQtMessageHandler(QtMsgType type, const QMessageLogContext& context, const QString& msg) {
-	QByteArray localMsg = msg.toLocal8Bit();
-
-	// Reformat Vulkan validation messages
-	if (msg.contains("Validation")) {
-		QByteArray localMsg = msg.toLocal8Bit();
-		const char* logMessage = localMsg.constData();
-
-		// Remove "vkDebug: " if it exists
-		std::string formattedMsg = logMessage;
-		std::string prefix = "vkDebug: ";
-		size_t pos = formattedMsg.find(prefix);
-		if (pos != std::string::npos) {
-			formattedMsg = formattedMsg.substr(pos + prefix.length()); // Remove prefix
-		}
-
-		fprintf(stderr, "\033[33m%s\033[0m\n\n", formattedMsg.c_str()); // Yellow color
-		return;
-	}
-
-	// Forward all other messages to Qt's default handler
-	switch (type) {
-	case QtDebugMsg:
-		QMessageLogger(context.file, context.line, context.function).debug() << msg;
-		break;
-	case QtWarningMsg:
-		QMessageLogger(context.file, context.line, context.function).warning() << msg;
-		break;
-	case QtCriticalMsg:
-		QMessageLogger(context.file, context.line, context.function).critical() << msg;
-		break;
-	case QtFatalMsg:
-		QMessageLogger(context.file, context.line, context.function).fatal("%s", msg.toUtf8().constData());
-		abort();
-	}
-}
-
-static int runVulkanAndRTX() {
-	qInstallMessageHandler(customQtMessageHandler);
-
-	int argc = 0;
-	char** argv = nullptr;
-	QApplication  app(argc, argv);
-
-	srand(static_cast<unsigned>(time(0))); // Seed the random number generator once
-	VulkanAndRTX vulkanApp;
-
-	try {
-		vulkanApp.run();
-		return EXIT_SUCCESS;
-	}
-	catch (const std::exception& e) {
-		std::cerr << e.what() << std::endl;
-		return EXIT_FAILURE;
-	}
-}
-
-int main() {
-	return runVulkanAndRTX();
 }

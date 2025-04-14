@@ -1,10 +1,10 @@
 #include "pch.h"
-#include "VulkanAndRTX.h"
+#include "AetherEngine.h"
 #include "StellarCalculations.h"
 
 // information about framebuffer attachments, how many color and depth buffers there will
 // be, how many samples to use for each of them and how their contents should be treated
-void VulkanAndRTX::createObjectRenderPass(VkRenderPass& renderPass) const
+void AetherEngine::createObjectRenderPass(VkRenderPass& renderPass) const
 {
 	VkAttachmentDescription colorAttachment{};
 	colorAttachment.format = swapchainImageFormat;
@@ -83,7 +83,7 @@ void VulkanAndRTX::createObjectRenderPass(VkRenderPass& renderPass) const
 		throw std::runtime_error("failed to create render pass!");
 	}
 }
-void VulkanAndRTX::createGUIRenderPass(VkRenderPass& renderPass) const
+void AetherEngine::createGUIRenderPass(VkRenderPass& renderPass) const
 {
 	VkAttachmentDescription colorAttachment{};
 	colorAttachment.format = swapchainImageFormat;
@@ -116,7 +116,7 @@ void VulkanAndRTX::createGUIRenderPass(VkRenderPass& renderPass) const
 	}
 }
 
-void VulkanAndRTX::createPipelineLayout(
+void AetherEngine::createPipelineLayout(
 	VkDescriptorSetLayout& descriptorSetLayout, 
 	VkPipelineLayout& pipelineLayout
 ) const
@@ -133,7 +133,7 @@ void VulkanAndRTX::createPipelineLayout(
 	}
 }
 
-void VulkanAndRTX::createGraphicsPipeline(
+void AetherEngine::createGraphicsPipeline(
 	const PipelineType pipelineType, const std::string pipelineName, 
 	const std::string& vertexShader, const std::string& fragmentShader,
 	const VkRenderPass& renderPass 
@@ -385,7 +385,7 @@ void VulkanAndRTX::createGraphicsPipeline(
 	vkDestroyShaderModule(vkInit.device, vertShaderModule, nullptr);
 }
 
-void VulkanAndRTX::createPipelinesAndSwapchain()
+void AetherEngine::createPipelinesAndSwapchain()
 {
 	createSwapchain();
 	createSwapchainImageViews();
@@ -409,7 +409,7 @@ void VulkanAndRTX::createPipelinesAndSwapchain()
 }
 
 // Creating frames for presentation
-void VulkanAndRTX::drawFrame(double timeSinceLaunch, double deltaTime)
+void AetherEngine::drawFrame(double timeSinceLaunch, double deltaTime)
 {
 	vkWaitForFences(vkInit.device, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
 
@@ -479,7 +479,7 @@ void VulkanAndRTX::drawFrame(double timeSinceLaunch, double deltaTime)
 	currentFrame = (currentFrame + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
-void VulkanAndRTX::updateShaderBuffers(uint32_t currentImage, double timeSinceLaunch)
+void AetherEngine::updateShaderBuffers(uint32_t currentImage, double timeSinceLaunch)
 {
 	glm::mat4 view = glm::lookAt(
 		character.camera.getLookFrom(),
@@ -550,7 +550,7 @@ void VulkanAndRTX::updateShaderBuffers(uint32_t currentImage, double timeSinceLa
 		}
 	}
 }
-void VulkanAndRTX::recordCommandBuffer(
+void AetherEngine::recordCommandBuffer(
 	VkCommandBuffer commandBuffer, uint32_t imageIndex, 
 	double timeSinceLaunch, double deltaTime
 )
@@ -589,13 +589,13 @@ void VulkanAndRTX::recordCommandBuffer(
 	}
 }
 
-void VulkanAndRTX::recordModelsToCommandBuffer(const std::vector<Model>& models, VkCommandBuffer commandBuffer)
+void AetherEngine::recordModelsToCommandBuffer(const std::vector<Model>& models, VkCommandBuffer commandBuffer)
 {
 	for (const Model& model : models) {
 		recordModelToCommandBuffer(model, commandBuffer);
 	}
 }
-void VulkanAndRTX::recordModelToCommandBuffer(const Model& model, VkCommandBuffer commandBuffer)
+void AetherEngine::recordModelToCommandBuffer(const Model& model, VkCommandBuffer commandBuffer)
 {
 	for (const Mesh& mesh : model.meshes) {
 		const Material& material = mesh.material;
@@ -634,7 +634,7 @@ void VulkanAndRTX::recordModelToCommandBuffer(const Model& model, VkCommandBuffe
 	}
 }
 
-void VulkanAndRTX::createDescriptorPool()
+void AetherEngine::createDescriptorPool()
 {
 	size_t totalMeshes = 0;
 	for (const auto& model : models) {
@@ -668,7 +668,7 @@ void VulkanAndRTX::createDescriptorPool()
 		throw std::runtime_error("failed to create descriptor pool!");
 	}
 }
-void VulkanAndRTX::createDescriptorSetLayout(VkDescriptorSetLayout& descriptorSetLayout) const
+void AetherEngine::createDescriptorSetLayout(VkDescriptorSetLayout& descriptorSetLayout) const
 {
 	VkDescriptorSetLayoutBinding uboLayoutBinding{};
 	uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
@@ -718,7 +718,7 @@ void VulkanAndRTX::createDescriptorSetLayout(VkDescriptorSetLayout& descriptorSe
 		throw std::runtime_error("failed to create descriptor set layout!");
 	}
 }
-void VulkanAndRTX::createDescriptorSet(VkDescriptorSet& descriptorSet)
+void AetherEngine::createDescriptorSet(VkDescriptorSet& descriptorSet)
 {
 	VkDescriptorSetAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -730,7 +730,7 @@ void VulkanAndRTX::createDescriptorSet(VkDescriptorSet& descriptorSet)
 		throw std::runtime_error("Failed to allocate descriptor set!");
 	}
 }
-void VulkanAndRTX::addTextureToDescriptorSet(
+void AetherEngine::addTextureToDescriptorSet(
 	const Texture& texture,
 	VkDescriptorSet descriptorSet, uint32_t dstBinding
 ) const
@@ -751,7 +751,7 @@ void VulkanAndRTX::addTextureToDescriptorSet(
 
 	vkUpdateDescriptorSets(vkInit.device, 1, &descriptorWrite, 0, nullptr);
 }
-void VulkanAndRTX::addTextureIfExistToDescriptorSet(
+void AetherEngine::addTextureIfExistToDescriptorSet(
 	const Texture& texture,
 	VkDescriptorSet descriptorSet, uint32_t dstBinding
 ) const
@@ -769,7 +769,7 @@ void VulkanAndRTX::addTextureIfExistToDescriptorSet(
 		);
 	}
 }
-void VulkanAndRTX::addBufferToDescriptorSet(
+void AetherEngine::addBufferToDescriptorSet(
 	VkDescriptorSet descriptorSet, VkBuffer buffer,
 	VkDescriptorType descriptorType,
 	size_t bufferSize, uint32_t dstBinding
@@ -792,19 +792,19 @@ void VulkanAndRTX::addBufferToDescriptorSet(
 	vkUpdateDescriptorSets(vkInit.device, 1, &descriptorWrite, 0, nullptr);
 }
 
-void VulkanAndRTX::createShaderBuffers(std::vector<Model>& models, size_t swapchainImageCount)
+void AetherEngine::createShaderBuffers(std::vector<Model>& models, size_t swapchainImageCount)
 {
 	for (Model& model : models) {
 		createShaderBuffers(model, swapchainImageCount);
 	}
 }
-void VulkanAndRTX::createShaderBuffers(Model& model, size_t swapchainImageCount)
+void AetherEngine::createShaderBuffers(Model& model, size_t swapchainImageCount)
 {
 	for (Mesh& mesh : model.meshes) {
 		createShaderBuffers(mesh, swapchainImageCount);
 	}
 }
-void VulkanAndRTX::createShaderBuffers(Mesh& mesh, size_t swapchainImageCount)
+void AetherEngine::createShaderBuffers(Mesh& mesh, size_t swapchainImageCount)
 {
 	for (size_t frameIndex = 0; frameIndex < swapchainImageCount; ++frameIndex) {
 		createBuffer(
@@ -827,32 +827,32 @@ void VulkanAndRTX::createShaderBuffers(Mesh& mesh, size_t swapchainImageCount)
 	}
 }
 
-void VulkanAndRTX::createDescriptorSets(std::vector<Model>& models, size_t swapchainImageCount)
+void AetherEngine::createDescriptorSets(std::vector<Model>& models, size_t swapchainImageCount)
 {
 	for (Model& model : models) {
 		createDescriptorSets(model, swapchainImageCount);
 	}
 }
-void VulkanAndRTX::createDescriptorSets(Model& model, size_t swapchainImageCount)
+void AetherEngine::createDescriptorSets(Model& model, size_t swapchainImageCount)
 {
 	for (Mesh& mesh : model.meshes) {
 		createDescriptorSets(mesh, swapchainImageCount);
 	}
 }
-void VulkanAndRTX::createDescriptorSets(Mesh& mesh, size_t swapchainImageCount)
+void AetherEngine::createDescriptorSets(Mesh& mesh, size_t swapchainImageCount)
 {
 	for (size_t frameIndex = 0; frameIndex < swapchainImageCount; ++frameIndex) {
 		createDescriptorSet(mesh.descriptorSets[frameIndex]);
 	}
 }
 
-/*void VulkanAndRTX::bindVertexAndIndexBuffersToCommandBuffer(const Model& model, VkCommandBuffer commandBuffer)
+/*void AetherEngine::bindVertexAndIndexBuffersToCommandBuffer(const Model& model, VkCommandBuffer commandBuffer)
 {
 	for (const Mesh& mesh : model.meshes) {
 		bindVertexAndIndexBuffersToCommandBuffer(mesh, commandBuffer);
 	}
 }*/
-void VulkanAndRTX::bindVertexAndIndexBuffersToCommandBuffer(const Mesh& mesh, VkCommandBuffer commandBuffer)
+void AetherEngine::bindVertexAndIndexBuffersToCommandBuffer(const Mesh& mesh, VkCommandBuffer commandBuffer)
 {
 	VkDeviceSize offsets[] = { 0 };
 

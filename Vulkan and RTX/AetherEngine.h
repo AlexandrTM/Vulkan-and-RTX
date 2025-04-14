@@ -1,17 +1,21 @@
 #include "pch.h"
-#include "VulkanInitializer.h"
-#include "Character.h"
-#include "Vertex.h"
-#include "Model.h"
-#include "TerrainGenerator.h"
-#include "InGameWindow.h"
-#include "MainMenuWindow.h"
-#include "GameContext.h"
 	
 #ifndef VULKAN_AND_RTX_H
 #define VULKAN_AND_RTX_H
 
-class VulkanAndRTX : public QObject {
+#include "VulkanInitializer.h"
+
+#include "Character.h"
+#include "GameContext.h"
+#include "Vertex.h"
+#include "Model.h"
+#include "TerrainGenerator.h"
+
+#include "InGameWindow.h"
+#include "MainMenuWidget.h"
+#include "MainWindow.h"
+
+class AetherEngine : public QObject {
 	Q_OBJECT
 
 private:
@@ -24,9 +28,13 @@ private:
 
 	uint32_t windowWidth = 0;
 	uint32_t windowHeight = 0;
-	InGameWindow* inGameWindow = nullptr;
-	MainMenuWindow* mainMenuWindow = nullptr;
 	double lastMousePosX, lastMousePosY;
+
+	InGameWindow* inGameWindow = nullptr;
+	QWidget* inGameWidget = nullptr;
+	MainMenuWidget* mainMenuWidget = nullptr;
+	MainWindow* mainWindow = nullptr;
+	QStackedWidget* stackedWidget = nullptr;
 
 	QVulkanInstance qVulkanInstance;
 
@@ -88,8 +96,10 @@ public:
 private:
 	void createGLFWWindow();
 	void createInGameWindow();
-	void createMainMenuWindow();
-	void changeState(GameState newState);
+	void createMainMenuWidget();
+	void createMainWindow();
+
+	void changeState(GameState newGameState);
 
 	std::string createPuzzleEquation(std::string name, int32_t& answer);
 
@@ -215,8 +225,8 @@ private:
 	// record commands to the command buffer
 	void recordCommandBuffer(
 		VkCommandBuffer commandBuffer, uint32_t imageIndex,
-		double timeSinceLaunch, double deltaTime/*,
-		ImDrawData* draw_data*/
+		double timeSinceLaunch, double deltaTime
+		/*,ImDrawData* draw_data*/
 	);
 	void recordModelsToCommandBuffer(const std::vector<Model>& models, VkCommandBuffer commandBuffer);
 	void recordModelToCommandBuffer(const Model& model, VkCommandBuffer commandBuffer);

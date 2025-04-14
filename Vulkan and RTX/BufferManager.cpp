@@ -1,8 +1,8 @@
 #include "pch.h"
-#include "VulkanAndRTX.h"
+#include "AetherEngine.h"
 
 // allocating and beginning command buffer helper function
-VkCommandBuffer VulkanAndRTX::beginSingleTimeCommands() const
+VkCommandBuffer AetherEngine::beginSingleTimeCommands() const
 {
 	VkCommandBufferAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -22,7 +22,7 @@ VkCommandBuffer VulkanAndRTX::beginSingleTimeCommands() const
 	return commandBuffer;
 }
 // ending and submitting command buffer helper function
-void VulkanAndRTX::endSingleTimeCommands(VkCommandBuffer commandBuffer) const
+void AetherEngine::endSingleTimeCommands(VkCommandBuffer commandBuffer) const
 {
 	vkEndCommandBuffer(commandBuffer);
 
@@ -37,7 +37,7 @@ void VulkanAndRTX::endSingleTimeCommands(VkCommandBuffer commandBuffer) const
 	vkFreeCommandBuffers(vkInit.device, commandPool, 1, &commandBuffer);
 }
 
-void VulkanAndRTX::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
+void AetherEngine::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
 	VkBuffer& buffer, VkDeviceMemory& bufferMemory)
 {
 	VkBufferCreateInfo bufferInfo{};
@@ -66,7 +66,7 @@ void VulkanAndRTX::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkM
 	vkBindBufferMemory(vkInit.device, buffer, bufferMemory, 0);
 }
 // create multiple command buffers
-void VulkanAndRTX::createCommandBuffers()
+void AetherEngine::createCommandBuffers()
 {
 	commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
 
@@ -82,7 +82,7 @@ void VulkanAndRTX::createCommandBuffers()
 }
 
 // copying contents of one buffer to another
-void VulkanAndRTX::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
+void AetherEngine::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
 {
 	VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
@@ -94,7 +94,7 @@ void VulkanAndRTX::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSi
 
 	endSingleTimeCommands(commandBuffer);
 }
-void VulkanAndRTX::createVertexBuffer(Mesh& mesh)
+void AetherEngine::createVertexBuffer(Mesh& mesh)
 {
 	VkDeviceSize bufferSize = sizeof(Vertex) * mesh.vertices.size();
 
@@ -155,7 +155,7 @@ void VulkanAndRTX::createVertexBuffer(Mesh& mesh)
 	vkDestroyBuffer(vkInit.device, stagingBuffer, nullptr);
 	vkFreeMemory(vkInit.device, stagingBufferMemory, nullptr);
 }
-void VulkanAndRTX::createIndexBuffer(Mesh& mesh)
+void AetherEngine::createIndexBuffer(Mesh& mesh)
 {
 	VkDeviceSize bufferSize = sizeof(mesh.indices[0]) * mesh.indices.size();
 

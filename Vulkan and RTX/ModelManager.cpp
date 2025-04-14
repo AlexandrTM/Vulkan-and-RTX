@@ -1,8 +1,8 @@
 #include "pch.h"
-#include "VulkanAndRTX.h"
+#include "AetherEngine.h"
 #include "Vertex.h"
 
-void VulkanAndRTX::generateCubicLandscape(size_t landscapeWidth, size_t landscapeLenght, float_t cubeSize)
+void AetherEngine::generateCubicLandscape(size_t landscapeWidth, size_t landscapeLenght, float_t cubeSize)
 {
 	for (size_t i = 0; i < landscapeWidth; i++)
 	{
@@ -18,7 +18,7 @@ void VulkanAndRTX::generateCubicLandscape(size_t landscapeWidth, size_t landscap
 		}
 	}
 }
-void VulkanAndRTX::createCube(float x, float y, float z, float cubeSize)
+void AetherEngine::createCube(float x, float y, float z, float cubeSize)
 {
 	std::vector<Vertex> localVertices(24);
 	Model model;
@@ -144,7 +144,7 @@ void VulkanAndRTX::createCube(float x, float y, float z, float cubeSize)
 	model.meshes.push_back(mesh);
 	models.push_back(model);
 }
-void VulkanAndRTX::createCuboid(float x, float y, float z,
+void AetherEngine::createCuboid(float x, float y, float z,
 	float width, float height, float length, glm::vec3 color)
 {
 	std::vector<Vertex> localVertices(24);
@@ -271,7 +271,7 @@ void VulkanAndRTX::createCuboid(float x, float y, float z,
 	model.meshes.push_back(mesh);
 	models.push_back(model);
 }
-void VulkanAndRTX::createSkyModel(Model& model)
+void AetherEngine::createSkyModel(Model& model)
 {
 	std::vector<Vertex> localVertices(24);
 	Mesh mesh;
@@ -396,7 +396,7 @@ void VulkanAndRTX::createSkyModel(Model& model)
 	model.meshes.push_back(mesh);
 }
 
-void VulkanAndRTX::loadObjModel(const std::string& modelPath)
+void AetherEngine::loadObjModel(const std::string& modelPath)
 {
 	Model model;
 
@@ -447,7 +447,7 @@ void VulkanAndRTX::loadObjModel(const std::string& modelPath)
 	}
 	models.push_back(model);
 }
-void VulkanAndRTX::loadGltfModel(const std::string& modelPath) {
+void AetherEngine::loadGltfModel(const std::string& modelPath) {
 	tinygltf::Model GLTFmodel;
 	tinygltf::TinyGLTF loader;
 	std::string error;
@@ -649,7 +649,7 @@ static glm::mat4 setScaleToOne(const glm::mat4& matrix) {
 	return translationMatrix * rotationMatrix * scaleMatrix;
 }
 
-void VulkanAndRTX::createDummyTexture(std::array<uint8_t, 4> color, Texture& texture)
+void AetherEngine::createDummyTexture(std::array<uint8_t, 4> color, Texture& texture)
 {
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;
@@ -663,7 +663,7 @@ void VulkanAndRTX::createDummyTexture(std::array<uint8_t, 4> color, Texture& tex
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 
 		stagingBuffer, stagingBufferMemory
 	);
-
+	
 	void* data;
 	vkMapMemory(vkInit.device, stagingBufferMemory, 0, imageSize, 0, &data);
 	memcpy(data, color.data(), static_cast<size_t>(imageSize));
@@ -685,8 +685,10 @@ void VulkanAndRTX::createDummyTexture(std::array<uint8_t, 4> color, Texture& tex
 		texture.mipLevels
 	);
 
-	copyBufferToImage(stagingBuffer, texture.image,
-		static_cast<uint32_t>(1), static_cast<uint32_t>(1));
+	copyBufferToImage(
+		stagingBuffer, texture.image,
+		static_cast<uint32_t>(1), static_cast<uint32_t>(1)
+	);
 
 	vkDestroyBuffer(vkInit.device, stagingBuffer, nullptr);
 	vkFreeMemory(vkInit.device, stagingBufferMemory, nullptr);
@@ -706,7 +708,7 @@ void VulkanAndRTX::createDummyTexture(std::array<uint8_t, 4> color, Texture& tex
 		texture.mipLevels);
 	createTextureSampler(texture.mipLevels, texture.sampler);
 }
-void VulkanAndRTX::createTextureFromPath(const std::string& texturePath, Texture& texture)
+void AetherEngine::createTextureFromPath(const std::string& texturePath, Texture& texture)
 {
 	VkBuffer stagingBuffer;
 	VkDeviceMemory stagingBufferMemory;
@@ -751,8 +753,10 @@ void VulkanAndRTX::createTextureFromPath(const std::string& texturePath, Texture
 		texture.mipLevels
 	);
 
-	copyBufferToImage(stagingBuffer, texture.image,
-		static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
+	copyBufferToImage(
+		stagingBuffer, texture.image,
+		static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight)
+	);
 
 	vkDestroyBuffer(vkInit.device, stagingBuffer, nullptr);
 	vkFreeMemory(vkInit.device, stagingBufferMemory, nullptr);
@@ -767,7 +771,7 @@ void VulkanAndRTX::createTextureFromPath(const std::string& texturePath, Texture
 	);
 	createTextureSampler(texture.mipLevels, texture.sampler);
 }
-void VulkanAndRTX::createTextureFromEmbedded(const std::string& embeddedTextureName, Texture& texture, const aiScene* scene) {
+void AetherEngine::createTextureFromEmbedded(const std::string& embeddedTextureName, Texture& texture, const aiScene* scene) {
 	const aiTexture* embeddedTexture = scene->GetEmbeddedTexture(embeddedTextureName.c_str());
 
 	if (!embeddedTexture) {
@@ -832,7 +836,10 @@ void VulkanAndRTX::createTextureFromEmbedded(const std::string& embeddedTextureN
 		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 
 		texture.mipLevels
 	);
-	copyBufferToImage(stagingBuffer, texture.image, static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight));
+	copyBufferToImage(
+		stagingBuffer, texture.image, 
+		static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight)
+	);
 
 	vkDestroyBuffer(vkInit.device, stagingBuffer, nullptr);
 	vkFreeMemory(vkInit.device, stagingBufferMemory, nullptr);
@@ -855,7 +862,7 @@ void VulkanAndRTX::createTextureFromEmbedded(const std::string& embeddedTextureN
 	std::cout << " - Mip Levels: " << texture.mipLevels << "\n";
 	std::cout << " - Compression: " << (embeddedTexture->mHeight == 0 ? "Yes" : "No") << "\n";*/
 }
-Texture VulkanAndRTX::loadTexture(const std::string& texturePath, const aiScene* scene) {
+Texture AetherEngine::loadTexture(const std::string& texturePath, const aiScene* scene) {
 	Texture texture{};
 
 	// Embedded texture in .glb file, the path is in the form "*n", where n is the index
@@ -869,7 +876,7 @@ Texture VulkanAndRTX::loadTexture(const std::string& texturePath, const aiScene*
 	return texture;
 }
 
-Material VulkanAndRTX::processMaterial(aiMaterial* aiMat, const aiScene* scene) {
+Material AetherEngine::processMaterial(aiMaterial* aiMat, const aiScene* scene) {
 	Material material{};
 
 	//std::cout << "Material Name: " << aiMat->GetName().C_Str() << "\n";
@@ -1117,7 +1124,7 @@ static Mesh processMesh(
 	return processedMesh;
 }
 
-void VulkanAndRTX::processNode(
+void AetherEngine::processNode(
 	aiNode* node, const aiScene* scene, 
 	std::vector<Model>& models, 
 	Model& parentModel, 
@@ -1165,7 +1172,7 @@ void VulkanAndRTX::processNode(
 		models.push_back(childModel);
 	}
 }
-void VulkanAndRTX::loadModelsFromDirectory(const std::string& directory, std::vector<Model>& models) {
+void AetherEngine::loadModelsFromDirectory(const std::string& directory, std::vector<Model>& models) {
 	auto modelFiles = GetModelFiles(directory);
 	
 	for (const auto& file : modelFiles) {

@@ -1,8 +1,8 @@
 #include "pch.h"
-#include "VulkanAndRTX.h"
+#include "AetherEngine.h"
 
 // creating swap chain with the best properties for current device
-void VulkanAndRTX::createSwapchain()
+void AetherEngine::createSwapchain()
 {
 	SwapchainSupportDetails swapchainSupport = vkInit.querySwapchainSupport(vkInit.physicalDevice);
 
@@ -62,7 +62,7 @@ void VulkanAndRTX::createSwapchain()
 	vkGetSwapchainImagesKHR(vkInit.device, swapchain, &imageCount, swapchainImages.data());
 }
 
-void VulkanAndRTX::createSwapchainImageViews()
+void AetherEngine::createSwapchainImageViews()
 {
 	swapchainImageViews.resize(swapchainImages.size());
 
@@ -73,7 +73,7 @@ void VulkanAndRTX::createSwapchainImageViews()
 }
 
 // creating framebuffer from each swap chain image view
-void VulkanAndRTX::createSwapchainFramebuffers()
+void AetherEngine::createSwapchainFramebuffers()
 {
 	swapchainFramebuffers.resize(swapchainImageViews.size());
 
@@ -100,7 +100,7 @@ void VulkanAndRTX::createSwapchainFramebuffers()
 }
 
 // recreating swap chain in some special cases
-void VulkanAndRTX::recreateSwapchain()
+void AetherEngine::recreateSwapchain()
 {
 	// waiting for previous swap chain to stop rendering
 	vkDeviceWaitIdle(vkInit.device);
@@ -119,7 +119,7 @@ void VulkanAndRTX::recreateSwapchain()
 	createDescriptorSets(models, MAX_FRAMES_IN_FLIGHT);
 }
 
-void VulkanAndRTX::cleanupSwapchain()
+void AetherEngine::cleanupSwapchain()
 {
 	cleanupTexture(depthTexture);
 	cleanupTexture(msaaTexture);
@@ -143,7 +143,7 @@ void VulkanAndRTX::cleanupSwapchain()
 }
 
 // choosing best surface format(color space and number of bits) for the swapchain
-VkSurfaceFormatKHR VulkanAndRTX::chooseSwapchainSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
+VkSurfaceFormatKHR AetherEngine::chooseSwapchainSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
 {
 	for (const auto& availableFormat : availableFormats) {
 		if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB &&
@@ -156,7 +156,7 @@ VkSurfaceFormatKHR VulkanAndRTX::chooseSwapchainSurfaceFormat(const std::vector<
 }
 
 // choosing best present mode to glfwWindow surface
-VkPresentModeKHR VulkanAndRTX::chooseSwapchainPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes)
+VkPresentModeKHR AetherEngine::chooseSwapchainPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes)
 {
 	for (const auto& availablePresentMode : availablePresentModes) {
 		// unlimited framerate VK_PRESENT_MODE_IMMEDIATE_KHR
@@ -172,7 +172,7 @@ VkPresentModeKHR VulkanAndRTX::chooseSwapchainPresentMode(const std::vector<VkPr
 }
 
 // choosing best swap chain extent(resolution of the images)
-VkExtent2D VulkanAndRTX::chooseSwapchainExtent(const VkSurfaceCapabilitiesKHR& capabilities)
+VkExtent2D AetherEngine::chooseSwapchainExtent(const VkSurfaceCapabilitiesKHR& capabilities)
 {
 	if (capabilities.currentExtent.width != UINT32_MAX) {
 		return capabilities.currentExtent;

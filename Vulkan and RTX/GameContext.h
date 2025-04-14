@@ -6,8 +6,8 @@ struct GameContext
 	std::unordered_map<uint32_t, bool> keyboardKeys;
 	std::unordered_map<uint32_t, bool> mouseKeys;
 
-	GameState gameState = GameState::IN_GAME;
-	GameState requestedState = GameState::NONE;
+	GameState currentGameState = GameState::NONE;
+	GameState requestedGameState = GameState::NONE;
 
 	void clearInputs();
 };

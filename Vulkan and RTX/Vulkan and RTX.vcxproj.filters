@@ -72,7 +72,7 @@
     <ClCompile Include="Character.cpp">
       <Filter>source\main class split</Filter>
     </ClCompile>
-    <ClCompile Include="VulkanAndRTX.cpp">
+    <ClCompile Include="AetherEngine.cpp">
       <Filter>source\main class split</Filter>
     </ClCompile>
     <ClCompile Include="ModelManager.cpp">
@@ -117,8 +117,14 @@
     <ClCompile Include="InGameWindow.cpp">
       <Filter>source\UI</Filter>
     </ClCompile>
-    <ClCompile Include="MainMenuWindow.cpp">
+    <ClCompile Include="MainMenuWidget.cpp">
       <Filter>source\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="MainWindow.cpp">
+      <Filter>source\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="Aether.cpp">
+      <Filter>source</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -188,13 +194,16 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <QtMoc Include="VulkanAndRTX.h">
+    <QtMoc Include="AetherEngine.h">
       <Filter>headers</Filter>
     </QtMoc>
     <QtMoc Include="InGameWindow.h">
       <Filter>source\UI</Filter>
     </QtMoc>
-    <QtMoc Include="MainMenuWindow.h">
+    <QtMoc Include="MainMenuWidget.h">
+      <Filter>source\UI</Filter>
+    </QtMoc>
+    <QtMoc Include="MainWindow.h">
       <Filter>source\UI</Filter>
     </QtMoc>
   </ItemGroup>

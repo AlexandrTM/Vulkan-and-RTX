@@ -1,13 +1,14 @@
 #include "pch.h"
+
+#ifndef VULKAN_QT_WINDOW_H
+#define VULKAN_QT_WINDOW_H
+
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include <QWheelEvent>
 #include <QResizeEvent>
 #include "Character.h"
 #include "GameContext.h"
-
-#ifndef VULKAN_QT_WINDOW_H
-#define VULKAN_QT_WINDOW_H
 
 class InGameWindow : public QWindow
 {

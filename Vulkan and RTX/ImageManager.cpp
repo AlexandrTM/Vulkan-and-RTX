@@ -1,8 +1,8 @@
 #include "pch.h"
-#include "VulkanAndRTX.h"
+#include "AetherEngine.h"
 
 // finding most appropriate format for the depth test
-VkFormat VulkanAndRTX::findDepthFormat() const
+VkFormat AetherEngine::findDepthFormat() const
 {
 	return findSupportedFormat(
 		{ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
@@ -12,7 +12,7 @@ VkFormat VulkanAndRTX::findDepthFormat() const
 }
 
 // finding most desirable format of color for a given situation
-VkFormat VulkanAndRTX::findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling,
+VkFormat AetherEngine::findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling,
 	VkFormatFeatureFlags features) const
 {
 	for (VkFormat format : candidates) {
@@ -31,7 +31,7 @@ VkFormat VulkanAndRTX::findSupportedFormat(const std::vector<VkFormat>& candidat
 }
 
 // check if the format has stencil component
-bool VulkanAndRTX::hasStencilComponent(VkFormat format)
+bool AetherEngine::hasStencilComponent(VkFormat format)
 {
 	return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
 }
@@ -40,7 +40,7 @@ bool VulkanAndRTX::hasStencilComponent(VkFormat format)
 
 // how to sample through texels of the 
 // for drawing them on 3D model
-void VulkanAndRTX::createTextureSampler(uint32_t& mipLevels, VkSampler& textureSampler) const
+void AetherEngine::createTextureSampler(uint32_t& mipLevels, VkSampler& textureSampler) const
 {
 	VkPhysicalDeviceProperties properties{};
 	vkGetPhysicalDeviceProperties(vkInit.physicalDevice, &properties);
@@ -72,7 +72,7 @@ void VulkanAndRTX::createTextureSampler(uint32_t& mipLevels, VkSampler& textureS
 		throw std::runtime_error("failed to create texture sampler!");
 	}
 }
-VkImageView VulkanAndRTX::createImageView(VkImage image, VkFormat format,
+VkImageView AetherEngine::createImageView(VkImage image, VkFormat format,
 	VkImageAspectFlags aspectFlags, uint32_t mipLevels) const
 {
 	VkImageViewCreateInfo viewInfo{};
@@ -94,7 +94,7 @@ VkImageView VulkanAndRTX::createImageView(VkImage image, VkFormat format,
 	return imageView;
 }
 
-void VulkanAndRTX::generateMipmaps(VkImage image, VkFormat imageFormat,
+void AetherEngine::generateMipmaps(VkImage image, VkFormat imageFormat,
 	int32_t texWidth, int32_t texHeight, uint32_t mipLevels)
 {
 	// Check if image format supports linear blitting
@@ -188,7 +188,7 @@ void VulkanAndRTX::generateMipmaps(VkImage image, VkFormat imageFormat,
 }
 
 // transitioning image to the right layout
-void VulkanAndRTX::transitionImageLayout(
+void AetherEngine::transitionImageLayout(
 	VkImage image, VkFormat format, VkImageAspectFlags aspectMask,
 	VkImageLayout oldLayout, VkImageLayout newLayout,
 	uint32_t mipLevels
@@ -253,7 +253,7 @@ void VulkanAndRTX::transitionImageLayout(
 	endSingleTimeCommands(commandBuffer);
 }
 
-void VulkanAndRTX::createImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkSampleCountFlagBits numSamples,
+void AetherEngine::createImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkSampleCountFlagBits numSamples,
 	VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties,
 	VkImage& image, VkDeviceMemory& imageMemory)
 {
@@ -291,7 +291,7 @@ void VulkanAndRTX::createImage(uint32_t width, uint32_t height, uint32_t mipLeve
 	vkBindImageMemory(vkInit.device, image, imageMemory, 0);
 }
 
-void VulkanAndRTX::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
+void AetherEngine::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
 {
 	VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
@@ -321,7 +321,7 @@ void VulkanAndRTX::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t wi
 }
 
 // creating image for MSAA sampling
-void VulkanAndRTX::createColorTexture(Texture& texture)
+void AetherEngine::createColorTexture(Texture& texture)
 {
 	VkFormat colorFormat = swapchainImageFormat;
 	uint32_t mipLevels = 1;
@@ -338,7 +338,7 @@ void VulkanAndRTX::createColorTexture(Texture& texture)
 }
 
 // three objects for depth testing
-void VulkanAndRTX::createDepthTexture(Texture& texture)
+void AetherEngine::createDepthTexture(Texture& texture)
 {
 	VkFormat depthFormat = findDepthFormat();
 	uint32_t mipLevels = 1;

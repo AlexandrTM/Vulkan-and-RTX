@@ -30,7 +30,7 @@ void Character::handleInGamePlayerInput(GameContext& gameContext)
 	}
 
 	if (gameContext.keyboardKeys[Qt::Key_Escape]) {
-		gameContext.requestedState = GameState::MAIN_MENU;
+		gameContext.requestedGameState = GameState::MAIN_MENU;
 	}
 	
 	// changing mipmap level of detail
