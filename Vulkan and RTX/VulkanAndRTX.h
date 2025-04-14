@@ -16,19 +16,14 @@ class VulkanAndRTX : public QObject {
 
 private:
 #pragma region
-
-	uint32_t windowWidth = 800;
-	uint32_t windowHeight = 450;
-
-#pragma endregion
-#pragma region
-
 	VulkanInitializer vkInit;
 
 	float gravity = 9.81f;
 	Character character;
 	GameContext gameContext;
 
+	uint32_t windowWidth = 0;
+	uint32_t windowHeight = 0;
 	InGameWindow* inGameWindow = nullptr;
 	MainMenuWindow* mainMenuWindow = nullptr;
 	double lastMousePosX, lastMousePosY;

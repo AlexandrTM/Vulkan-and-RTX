@@ -80,6 +80,10 @@ void VulkanAndRTX::createInGameWindow()
 		throw std::runtime_error("Failed to create Vulkan instance in Qt.");
 	}
 
+	QRect screenGeometry = QApplication::primaryScreen()->availableGeometry();
+	windowWidth = screenGeometry.width() / 1.7;
+	windowHeight = screenGeometry.height() / 1.7;
+
 	InGameWindow* qtWindow = new InGameWindow(&qVulkanInstance, character, gameContext);
 	qtWindow->resize(windowWidth, windowHeight);
 	qtWindow->setTitle("Vulkan and RTX");
@@ -96,18 +100,18 @@ void VulkanAndRTX::createInGameWindow()
 }
 void VulkanAndRTX::createMainMenuWindow() {
 	mainMenuWindow = new MainMenuWindow();
+	mainMenuWindow->resize(windowWidth, windowHeight);
 
 	connect(mainMenuWindow, &MainMenuWindow::startGame, [this]() {
-		changeState(GameState::IN_GAME);
+		gameContext.requestedState = GameState::IN_GAME;
 		});
 
-	//connect(mainMenuWindow, &MainMenuWindow::openSettings, [this]() {
-	//	// TODO: Add a settings menu if needed
-	//	QMessageBox::information(mainMenuWindow, "Settings", "Settings not implemented yet.");
-	//	});
+	connect(mainMenuWindow, &MainMenuWindow::openSettings, [this]() {
+		gameContext.requestedState = GameState::SETTINGS;
+		});
 
 	connect(mainMenuWindow, &MainMenuWindow::exitGame, [this]() {
-		changeState(GameState::EXIT);
+		gameContext.requestedState = GameState::EXIT;
 		});
 }
 void VulkanAndRTX::onFramebufferResized(int width, int height) {
@@ -190,12 +194,12 @@ void VulkanAndRTX::changeState(GameState newState) {
 
 	// leaving current state
 	switch (gameContext.gameState) {
-	case GameState::IN_GAME:
-		if (inGameWindow) inGameWindow->hide();
-		gameContext.clearInputs();
-		break;
 	case GameState::MAIN_MENU:
 		if (mainMenuWindow) mainMenuWindow->hide();
+		gameContext.clearInputs();
+		break;
+	case GameState::IN_GAME:
+		if (inGameWindow) inGameWindow->hide();
 		gameContext.clearInputs();
 		break;
 	default:
@@ -207,13 +211,13 @@ void VulkanAndRTX::changeState(GameState newState) {
 
 	// entering new state
 	switch (newState) {
-	case GameState::IN_GAME:
-		if (!inGameWindow) createInGameWindow();
-		inGameWindow->show();
-		break;
 	case GameState::MAIN_MENU:
 		if (!mainMenuWindow) createMainMenuWindow();
 		mainMenuWindow->show();
+		break;
+	case GameState::IN_GAME:
+		if (!inGameWindow) createInGameWindow();
+		inGameWindow->show();
 		break;
 	case GameState::EXIT:
 		QCoreApplication::quit();
