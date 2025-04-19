@@ -1,16 +1,26 @@
 #include "pch.h"
 #include "MainWindow.h"
 
-MainWindow::MainWindow(QWidget* mainMenuWidget, QWidget* inGameContainer, QWidget* parent)
+MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
 {
     stackedWidget = new QStackedWidget(this);
+    setCentralWidget(stackedWidget);
+}
+
+void MainWindow::addWidgets(QWidget* mainMenuWidget, QWidget* inGameContainer)
+{
     stackedWidget->addWidget(mainMenuWidget);
     stackedWidget->addWidget(inGameContainer);
-    setCentralWidget(stackedWidget);
+    show();
 }
 
 QStackedWidget* MainWindow::getStackedWidget() {
     return stackedWidget;
+}
+
+void MainWindow::closeEvent(QCloseEvent* event) {
+    emit windowClosed();
+    QMainWindow::closeEvent(event);
 }
 

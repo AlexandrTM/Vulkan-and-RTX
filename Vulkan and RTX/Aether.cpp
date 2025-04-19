@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "AetherEngine.h"
 
 static void customQtMessageHandler(QtMsgType type, const QMessageLogContext& context, const QString& msg) {
@@ -43,6 +43,16 @@ static int runAether() {
 
 	int argc = 0;
 	char** argv = nullptr;
+
+	/*
+	Style	 Look			 Performance	Customizable	Good For
+	Basic	 Plain		     ⭐⭐⭐⭐⭐	    ✅✅✅✅✅	Embedded, full control
+	Material Modern (Google) ⭐⭐⭐	        ✅✅✅			Mobile/modern UI
+	Imagine	 Themed (SVG)	 ⭐⭐	        🎨				Unlimited	Games, stylized UIs
+	Fusion	 Neutral	     ⭐⭐⭐⭐	        ✅✅✅✅		Cross-platform consistency
+	*/
+
+	QQuickStyle::setStyle("Material");
 	QApplication app(argc, argv);
 
 	srand(static_cast<unsigned>(time(0))); // Seed the random number generator once

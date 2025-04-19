@@ -98,6 +98,7 @@ private:
 	void createInGameWindow();
 	void createMainMenuWidget();
 	void createMainWindow();
+	void setWindowSize();
 
 	void changeState(GameState newGameState);
 

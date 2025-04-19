@@ -3,10 +3,11 @@ import QtQuick.Controls
 
 Rectangle {
     id: rectangle
-    width: 1360
-    height: 768
+    width: parent ? parent.width : 1360
+    height: parent ? parent.height : 768
 
-    color: "#EAEAEA"
+    color: "#838383"
+    property color buttonColor: "#dbdbdb"
 
     signal startGameClicked()
     signal openSettingsClicked()
@@ -38,7 +39,7 @@ Rectangle {
         font.pointSize: 24
         onClicked: rectangle.startGameClicked()
     }
-
+	
     Button {
         id: button1
         anchors.horizontalCenterOffset: 0

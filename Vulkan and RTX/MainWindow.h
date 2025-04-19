@@ -6,12 +6,21 @@
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
-public:
-    MainWindow(QWidget* mainMenuWidget, QWidget* inGameContainer, QWidget* parent = nullptr);
-    QStackedWidget* getStackedWidget();
 
 private:
     QStackedWidget* stackedWidget;
+
+public:
+    MainWindow(QWidget* parent = nullptr);
+    QStackedWidget* getStackedWidget();
+    void addWidgets(QWidget* mainMenuWidget, QWidget* inGameContainer);
+
+signals:
+    void windowClosed();
+
+protected:
+    void closeEvent(QCloseEvent* event) override;
+
 };
 
 

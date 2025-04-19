@@ -3,11 +3,12 @@
 
 void AetherEngine::run()
 {
-	// createGLFWWindow();
-	// character.initializeInputHandler();
+	setWindowSize();
+	createMainWindow();
 	createInGameWindow();
 	createMainMenuWidget();
-	createMainWindow();
+
+	mainWindow->addWidgets(mainMenuWidget, inGameWidget);
 
 	vkInit.initializeVulkan(&qVulkanInstance);
 	prepareResources();
@@ -66,39 +67,11 @@ void AetherEngine::run()
 //	glfwSetWindowIcon(glfwWindow, 1, windowIcon);
 //#pragma endregion
 //}
-void AetherEngine::createInGameWindow()
+void AetherEngine::setWindowSize()
 {
-	qVulkanInstance.setApiVersion(QVersionNumber(1, 0));
-	/*auto supportedExtensions = qVulkanInstance.extensions();
-	qDebug() << "Supported extensions:" << supportedExtensions;*/
-
-	if (vkInit.enableValidationLayers) {
-		qVulkanInstance.setLayers(QByteArrayList() << "VK_LAYER_KHRONOS_validation");
-		qVulkanInstance.clearDebugOutputFilters();
-	}
-
-	if (!qVulkanInstance.create()) {
-		throw std::runtime_error("Failed to create Vulkan instance in Qt.");
-	}
-
 	QRect screenGeometry = QApplication::primaryScreen()->availableGeometry();
 	windowWidth = screenGeometry.width() / 1.7;
 	windowHeight = screenGeometry.height() / 1.7;
-
-	InGameWindow* qtWindow = new InGameWindow(&qVulkanInstance, character, gameContext);
-	qtWindow->resize(windowWidth, windowHeight);
-	qtWindow->setTitle("Vulkan and RTX");
-	qtWindow->create();
-
-	vkInit.surface = qVulkanInstance.surfaceForWindow(qtWindow);
-	if (vkInit.surface == VK_NULL_HANDLE) {
-		throw std::runtime_error("Failed to create Vulkan surface for Qt window.");
-	}
-
-	this->inGameWindow = qtWindow;
-	inGameWidget = QWidget::createWindowContainer(inGameWindow);
-
-	connect(qtWindow, &InGameWindow::framebufferResized, this, &AetherEngine::onFramebufferResized);
 }
 void AetherEngine::createMainMenuWidget() {
 	mainMenuWidget = new MainMenuWidget();
@@ -118,19 +91,58 @@ void AetherEngine::createMainMenuWidget() {
 }
 void AetherEngine::createMainWindow()
 {
-	mainWindow = new MainWindow(mainMenuWidget, inGameWidget);
+	mainWindow = new MainWindow();
 	mainWindow->resize(windowWidth, windowHeight);
-	mainWindow->show();
 
 	stackedWidget = mainWindow->getStackedWidget();
 
-	gameContext.requestedGameState = GameState::IN_GAME;
+	gameContext.requestedGameState = GameState::MAIN_MENU;
+
+	connect(mainWindow, &MainWindow::windowClosed, [this]() {
+		gameContext.requestedGameState = GameState::EXIT;
+		});
+}
+void AetherEngine::createInGameWindow()
+{
+	qVulkanInstance.setApiVersion(QVersionNumber(1, 0));
+	/*auto supportedExtensions = qVulkanInstance.extensions();
+	qDebug() << "Supported extensions:" << supportedExtensions;*/
+
+	if (vkInit.enableValidationLayers) {
+		qVulkanInstance.setLayers(QByteArrayList() << "VK_LAYER_KHRONOS_validation");
+		qVulkanInstance.clearDebugOutputFilters();
+	}
+
+	if (!qVulkanInstance.create()) {
+		throw std::runtime_error("Failed to create Vulkan instance in Qt.");
+	}
+
+	inGameWindow = new InGameWindow(&qVulkanInstance, character, gameContext);
+	inGameWindow->setParent(mainWindow->windowHandle());
+	inGameWindow->resize(windowWidth, windowHeight);
+	inGameWindow->setTitle("Aether");
+	inGameWindow->create();
+
+	vkInit.surface = qVulkanInstance.surfaceForWindow(inGameWindow);
+	if (vkInit.surface == VK_NULL_HANDLE) {
+		throw std::runtime_error("Failed to create Vulkan surface for Qt window.");
+	}
+
+	inGameWidget = QWidget::createWindowContainer(inGameWindow);
+
+	connect(inGameWindow, &InGameWindow::framebufferResized, this, &AetherEngine::onFramebufferResized);
+
+	connect(inGameWindow, &InGameWindow::windowClosed, [this]() {
+		gameContext.requestedGameState = GameState::EXIT;
+		});
 }
 
 void AetherEngine::onFramebufferResized(int width, int height) {
 	//std::cout << "onFramebufferResized: " << width << " " << height << "\n";
     isFramebufferResized = true;
     character.camera.setViewportSize(width, height);
+	windowWidth = width;
+	windowHeight = height;
 }
 
 void AetherEngine::prepareResources()
@@ -253,12 +265,20 @@ void AetherEngine::mainLoop()
 			gameContext.requestedGameState = GameState::NONE;
 		}
 
-		if (gameContext.currentGameState == GameState::IN_GAME) {
+		if (!mainWindow or !inGameWindow) {
+			break;
+		}
+
+		if (gameContext.currentGameState == GameState::IN_GAME and inGameWindow->isExposed()) {
 			character.handleInGamePlayerInput(gameContext);
 			if (!character.isInteracting) {
 				character.handleCharacterMovement(gameContext, deltaTime, gravity, models);
 			}
 
+			// skipping qt mouse movements on the first frame
+			if (character.camera._isFirstMouse) {
+				character.camera._isFirstMouse = false;
+			}
 			character.camera.addRotationDelta(inGameWindow->latestMouseDx, inGameWindow->latestMouseDy);
 			inGameWindow->latestMouseDx = 0.0;
 			inGameWindow->latestMouseDy = 0.0;
@@ -266,6 +286,7 @@ void AetherEngine::mainLoop()
 			character.camera.interpolateRotation(1.0);
 			if (inGameWindow->isActive()) {
 				QCursor::setPos(inGameWindow->centerPos);
+				//std::cout << "set mouse pos 0: " << inGameWindow->centerPos.x() << " " << inGameWindow->centerPos.y() << "\n";
 			}
 
 			// FPS meter
@@ -373,7 +394,8 @@ void AetherEngine::cleanupMemory()
 		vkInit.DestroyDebugUtilsMessengerEXT(vkInit.instance, vkInit.debugMessenger, nullptr);
 	}
 
-	vkDestroySurfaceKHR(vkInit.instance, vkInit.surface, nullptr);
+	// surface is handled by QVulkanInstance itself and shouldn't be destroyed manually
+	//vkDestroySurfaceKHR(vkInit.instance, vkInit.surface, nullptr);
 }
 
 void AetherEngine::restrictCharacterMovement(Camera& camera)

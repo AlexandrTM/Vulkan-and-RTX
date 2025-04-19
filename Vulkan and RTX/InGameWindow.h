@@ -29,9 +29,11 @@ public:
 
 signals:
     void framebufferResized(int width, int height);
+    void windowClosed();
 
 protected:
     void resizeEvent(QResizeEvent* event) override;
+    void closeEvent(QCloseEvent* event) override;
 
     void keyPressEvent(QKeyEvent* event) override;
     void keyReleaseEvent(QKeyEvent* event) override;
