@@ -15,7 +15,7 @@
 #include "MainMenuWidget.h"
 #include "MainWindow.h"
 #include "SettingsMenuWidget.h"
-#include "PauseMenuWidget.h"
+#include "PauseMenuQuickView.h"
 
 class AetherEngine : public QObject {
 	Q_OBJECT
@@ -32,15 +32,18 @@ private:
 	uint32_t windowHeight = 0;
 	double lastMousePosX, lastMousePosY;
 
+	QWidget* inGameContainerWidget = nullptr;
+	QStackedLayout* inGameStackedLayout = nullptr;
+
+	MainWindow* mainWindow = nullptr;
 	QStackedWidget* stackedWidget = nullptr;
 
 	InGameWindow* inGameWindow = nullptr;
-	MainWindow* mainWindow = nullptr;
-
 	QWidget* inGameWidget = nullptr;
+
 	MainMenuWidget* mainMenuWidget = nullptr;
 	SettingsMenuWidget* settingsMenuWidget = nullptr;
-	PauseMenuWidget* pauseMenuWidget = nullptr;
+	PauseMenuQuickView* pauseMenuWidget = nullptr;
 
 	QVulkanInstance qVulkanInstance;
 
@@ -93,6 +96,7 @@ private:
 
 private slots:
 	void onFramebufferResized(int width, int height);
+	void onWindowMoved(int x, int y);
 
 #pragma endregion
 

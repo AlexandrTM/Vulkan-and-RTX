@@ -22,7 +22,7 @@ public:
         QVulkanInstance* instance,
         Character& character, GameContext& gameContext
     );
-    QPoint centerPos;
+
     double latestMouseDx = 0.0;
     double latestMouseDy = 0.0;
 
@@ -32,6 +32,7 @@ signals:
 
 protected:
     void resizeEvent(QResizeEvent* event) override;
+    void moveEvent(QMoveEvent* event) override;
     void closeEvent(QCloseEvent* event) override;
 
     void keyPressEvent(QKeyEvent* event) override;

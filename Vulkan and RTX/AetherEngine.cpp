@@ -1,4 +1,4 @@
-#include "pch.h"
+﻿#include "pch.h"
 #include "AetherEngine.h"
 
 void AetherEngine::run()
@@ -13,8 +13,8 @@ void AetherEngine::run()
 
 	mainWindow->addWidget(mainMenuWidget);
 	mainWindow->addWidget(inGameWidget);
+	//mainWindow->addWidget(inGameContainerWidget);
 	mainWindow->addWidget(settingsMenuWidget);
-	//mainWindow->addWidget(pauseMenuWidget);
 	mainWindow->show();
 
 	gameContext.requestedGameState = GameState::MAIN_MENU;
@@ -23,6 +23,72 @@ void AetherEngine::run()
 	prepareResources();
 	mainLoop();
 	cleanupMemory();
+}
+
+void AetherEngine::prepareResources()
+{
+	//std::chrono::high_resolution_clock::time_point currentTime;
+	//float deltaTime;
+	//std::chrono::high_resolution_clock::time_point previousTime = std::chrono::high_resolution_clock::now();
+
+	/*currentTime = std::chrono::high_resolution_clock::now();
+	deltaTime = std::chrono::duration<double, std::chrono::seconds::period>(currentTime - previousTime).count();
+	if (deltaTime > 0.00001) {
+		std::cout << "time to create gpp: " << deltaTime << "\n";
+	}*/
+
+	createDescriptorSetLayout(descriptorSetLayout);
+	createPipelinesAndSwapchain();
+	createCommandPool();
+	createColorTexture(msaaTexture);
+	createDepthTexture(depthTexture);
+	createSwapchainFramebuffers();
+	createCommandBuffers();
+	createSyncObjects();
+
+	createTextureFromPath("textures/grass001.png", grassTexture);
+	createDummyTexture({ 0, 0, 0, 255 }, dummyTexture);
+
+	TerrainData terrainData = {
+		100, 100, // chunkWidth, chunkLength
+		4, 4,     // chunkRows, chunkCols
+		2.0f,     // gridSize
+		0.1f,     // scale
+		2.0f,     // height
+	};
+	terrainGenerator = std::make_unique<TerrainGenerator>(1);
+	TerrainGenerator::generateTerrain(
+		-(terrainData.chunkWidth * terrainData.chunkRows / 2 * terrainData.gridSize),
+		0,
+		-(terrainData.chunkLength * terrainData.chunkCols / 2 * terrainData.gridSize),
+		terrainData,
+		models, grassTexture, 8.0f,
+		terrainGenerator.get(), 1
+	);
+
+	loadModelsFromDirectory("models", models);
+
+	createSkyModel(sky);
+
+	for (Mesh& mesh : sky.meshes) {
+		createVertexBuffer(mesh);
+		createIndexBuffer(mesh);
+	}
+
+	for (size_t i = 0; i < models.size(); i++) {
+		for (Mesh& mesh : models[i].meshes) {
+			createVertexBuffer(mesh);
+			createIndexBuffer(mesh);
+			computeAABB(mesh);
+		}
+	}
+
+	createDescriptorPool();
+
+	createShaderBuffers(sky, MAX_FRAMES_IN_FLIGHT);
+	createShaderBuffers(models, MAX_FRAMES_IN_FLIGHT);
+	createDescriptorSets(sky, MAX_FRAMES_IN_FLIGHT);
+	createDescriptorSets(models, MAX_FRAMES_IN_FLIGHT);
 }
 
 //void AetherEngine::createGLFWWindow()
@@ -77,12 +143,20 @@ void AetherEngine::run()
 //#pragma endregion
 //}
 void AetherEngine::onFramebufferResized(int width, int height) {
-	//std::cout << "onFramebufferResized: " << width << " " << height << "\n";
 	isFramebufferResized = true;
-	character.camera.setViewportSize(width, height);
 	windowWidth = width;
 	windowHeight = height;
+
+	//std::cout << "onFramebufferResized: " << width << " " << height << "\n";
+	//std::cout << "center pos: " << gameContext.windowCenterPos.x() << " " << gameContext.windowCenterPos.y() << "\n";
+	character.camera.setViewportSize(windowWidth, windowHeight);
+	pauseMenuWidget->resize(windowWidth, windowHeight);
 }
+void AetherEngine::onWindowMoved(int x, int y) {
+	pauseMenuWidget->setPosition(x, y);
+	//pauseMenuWidget->setPosition(inGameWindow->frameGeometry().topLeft() * -1);
+}
+
 void AetherEngine::setWindowSize()
 {
 	QRect screenGeometry = QApplication::primaryScreen()->availableGeometry();
@@ -114,22 +188,24 @@ void AetherEngine::createSettingsMenuWidget() {
 		});
 }
 void AetherEngine::createPauseMenuWidget() {
-	pauseMenuWidget = new PauseMenuWidget(inGameWidget);
+	//pauseMenuWidget = new PauseMenuQuickView(inGameWindow);
+	pauseMenuWidget = new PauseMenuQuickView(mainWindow->windowHandle());
+	
 	pauseMenuWidget->resize(windowWidth, windowHeight);
 
-	connect(pauseMenuWidget, &PauseMenuWidget::resumeGame, [this]() {
+	connect(pauseMenuWidget, &PauseMenuQuickView::resumeGame, [this]() {
 		gameContext.requestedGameState = GameState::IN_GAME;
 		});
 
-	connect(pauseMenuWidget, &PauseMenuWidget::openSettings, [this]() {
+	connect(pauseMenuWidget, &PauseMenuQuickView::openSettings, [this]() {
 		gameContext.requestedGameState = GameState::SETTINGS_MENU;
 		});
 
-	connect(pauseMenuWidget, &PauseMenuWidget::openMainMenu, [this]() {
+	connect(pauseMenuWidget, &PauseMenuQuickView::openMainMenu, [this]() {
 		gameContext.requestedGameState = GameState::MAIN_MENU;
 		});
 
-	connect(pauseMenuWidget, &PauseMenuWidget::exitGame, [this]() {
+	connect(pauseMenuWidget, &PauseMenuQuickView::exitGame, [this]() {
 		gameContext.requestedGameState = GameState::EXIT;
 		});
 }
@@ -142,6 +218,14 @@ void AetherEngine::createMainWindow()
 	mainWindow->setWindowIcon(QIcon("textures/granite square.png"));
 
 	stackedWidget = mainWindow->getStackedWidget();
+
+	connect(mainWindow, &MainWindow::framebufferResized, this,
+		&AetherEngine::onFramebufferResized
+	);
+
+	connect(mainWindow, &MainWindow::windowMoved, this,
+		&AetherEngine::onWindowMoved
+	);
 
 	connect(mainWindow, &MainWindow::windowClosed, [this]() {
 		gameContext.requestedGameState = GameState::EXIT;
@@ -164,6 +248,7 @@ void AetherEngine::createInGameWindow()
 
 	inGameWindow = new InGameWindow(&qVulkanInstance, character, gameContext);
 	inGameWindow->setParent(mainWindow->windowHandle());
+	inGameWindow->setFlags(Qt::FramelessWindowHint);
 	inGameWindow->resize(windowWidth, windowHeight);
 	inGameWindow->setTitle("Aether");
 	inGameWindow->create();
@@ -173,9 +258,15 @@ void AetherEngine::createInGameWindow()
 		throw std::runtime_error("Failed to create Vulkan surface for Qt window.");
 	}
 
+	//inGameContainerWidget = new QWidget;
+	//inGameContainerWidget->setFixedSize(windowWidth, windowHeight);
+
+	//inGameStackedLayout = new QStackedLayout(inGameContainerWidget);
+	//inGameStackedLayout->setStackingMode(QStackedLayout::StackAll);
+
 	inGameWidget = QWidget::createWindowContainer(inGameWindow);
 
-	connect(inGameWindow, &InGameWindow::framebufferResized, this, &AetherEngine::onFramebufferResized);
+	//inGameStackedLayout->addWidget(inGameWidget);
 
 	connect(inGameWindow, &InGameWindow::windowClosed, [this]() {
 		gameContext.requestedGameState = GameState::EXIT;
@@ -225,6 +316,14 @@ void AetherEngine::changeState(GameState newGameState) {
 		stackedWidget->setCurrentWidget(inGameWidget);
 		break;
 	case GameState::PAUSED:
+		//qDebug() << "pauseMenuWidget screen geometry before move:" << pauseMenuWidget->geometry();
+		//qDebug() << "inGameWindow geometry:" << inGameWindow->geometry();
+		//qDebug() << "inGameWindow frameGeometry:" << inGameWindow->frameGeometry();
+		//qDebug() << "inGameWindow position:" << inGameWindow->position();
+		//qDebug() << "inGameWidget geometry:" << inGameWidget->geometry();
+		//qDebug() << "inGameWidget mapToGlobal(QPoint(0, 0)):" << inGameWidget->mapToGlobal(QPoint(0, 0));
+		//qDebug() << "pauseMenuWidget geometry after set:" << pauseMenuWidget->geometry();
+		//qDebug() << inGameWindow->frameGeometry().topLeft() * -1;
 		pauseMenuWidget->show();
 		pauseMenuWidget->raise();
 		break;
@@ -234,72 +333,6 @@ void AetherEngine::changeState(GameState newGameState) {
 	default:
 		break;
 	}
-}
-
-void AetherEngine::prepareResources()
-{
-	//std::chrono::high_resolution_clock::time_point currentTime;
-	//float deltaTime;
-	//std::chrono::high_resolution_clock::time_point previousTime = std::chrono::high_resolution_clock::now();
-	
-	/*currentTime = std::chrono::high_resolution_clock::now();
-	deltaTime = std::chrono::duration<double, std::chrono::seconds::period>(currentTime - previousTime).count();
-	if (deltaTime > 0.00001) {
-		std::cout << "time to create gpp: " << deltaTime << "\n";
-	}*/
-	
-	createDescriptorSetLayout(descriptorSetLayout);
-	createPipelinesAndSwapchain();
-	createCommandPool();
-	createColorTexture(msaaTexture);
-	createDepthTexture(depthTexture);
-	createSwapchainFramebuffers();
-	createCommandBuffers();
-	createSyncObjects();
-
-	createTextureFromPath("textures/grass001.png", grassTexture);
-	createDummyTexture({ 0, 0, 0, 255 }, dummyTexture);
-	
-	TerrainData terrainData = {
-		100, 100, // chunkWidth, chunkLength
-		4, 4,     // chunkRows, chunkCols
-		2.0f,     // gridSize
-		0.1f,     // scale
-		2.0f,     // height
-	};
-	terrainGenerator = std::make_unique<TerrainGenerator>(1);
-	TerrainGenerator::generateTerrain(
-		-(terrainData.chunkWidth * terrainData.chunkRows / 2 * terrainData.gridSize), 
-		-1, 
-		-(terrainData.chunkLength * terrainData.chunkCols / 2 * terrainData.gridSize),
-		terrainData,
-		models, grassTexture, 8.0f,
-		terrainGenerator.get(), 1
-	);
-
-	loadModelsFromDirectory("models", models);
-
-	createSkyModel(sky);
-
-	for (Mesh& mesh : sky.meshes) {
-		createVertexBuffer(mesh);
-		createIndexBuffer(mesh);
-	}
-
-	for (size_t i = 0; i < models.size(); i++) {
-		for (Mesh& mesh : models[i].meshes) {
-			createVertexBuffer(mesh);
-			createIndexBuffer(mesh);
-			computeAABB(mesh);
-		}
-	}
-
-	createDescriptorPool();
-
-	createShaderBuffers(sky, MAX_FRAMES_IN_FLIGHT);
-	createShaderBuffers(models, MAX_FRAMES_IN_FLIGHT);
-	createDescriptorSets(sky, MAX_FRAMES_IN_FLIGHT);
-	createDescriptorSets(models, MAX_FRAMES_IN_FLIGHT);
 }
 void AetherEngine::mainLoop()
 {
@@ -346,6 +379,10 @@ void AetherEngine::mainLoop()
 			}
 		}
 
+		if (gameContext.currentGameState != GameState::IN_GAME/* && isFramebufferResized*/) {
+			drawFrame(timeSinceLaunch, deltaTime);
+		}
+
 		if (gameContext.currentGameState == GameState::IN_GAME and inGameWindow->isExposed()) {
 			character.handleInGamePlayerInput(gameContext);
 			if (!character.isInteracting) {
@@ -356,8 +393,8 @@ void AetherEngine::mainLoop()
 			character.camera.handleRotation(inGameWindow->latestMouseDx, inGameWindow->latestMouseDy);
 
 			if (inGameWindow->isActive()) {
-				QCursor::setPos(inGameWindow->centerPos);
-				//std::cout << "set mouse pos 0: " << inGameWindow->centerPos.x() << " " << inGameWindow->centerPos.y() << "\n";
+				QCursor::setPos(gameContext.windowCenterPos);
+				//std::cout << "set mouse pos 0: " << inGameWindow->windowCenterPos.x() << " " << inGameWindow->windowCenterPos.y() << "\n";
 			}
 
 			// FPS meter

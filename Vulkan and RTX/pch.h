@@ -10,6 +10,8 @@
 #include <QGuiApplication>
 #include <QPushButton>
 #include <QWidget>
+#include <QtQml/QtQml>
+#include <QtWidgets/QStackedLayout>
 #include <QtQuickWidgets/QQuickWidget>
 #include <QtQuickControls2/QtQuickControls2>
 #include <QStackedWidget>

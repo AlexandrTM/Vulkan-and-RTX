@@ -129,7 +129,7 @@
     <ClCompile Include="SettingsMenuWidget.cpp">
       <Filter>source\UI</Filter>
     </ClCompile>
-    <ClCompile Include="PauseMenuWidget.cpp">
+    <ClCompile Include="PauseMenuQuickView.cpp">
       <Filter>source\UI</Filter>
     </ClCompile>
   </ItemGroup>
@@ -215,7 +215,7 @@
     <QtMoc Include="SettingsMenuWidget.h">
       <Filter>source\UI</Filter>
     </QtMoc>
-    <QtMoc Include="PauseMenuWidget.h">
+    <QtMoc Include="PauseMenuQuickView.h">
       <Filter>source\UI</Filter>
     </QtMoc>
   </ItemGroup>

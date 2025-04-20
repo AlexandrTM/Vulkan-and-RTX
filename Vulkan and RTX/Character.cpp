@@ -81,17 +81,21 @@ void Character::handleCharacterMovement(
 		movementSpeed *= 0.4;
 	}
 	if (gameContext.keyboardKeys[Qt::Key_W]) {
+		//std::cout << "w pressed\n";
 		horizontalDisplacement += movementSpeed * glm::normalize(
 			glm::vec3(cameraDirection.x, 0.0f, cameraDirection.z));
 	}
 	if (gameContext.keyboardKeys[Qt::Key_A]) {
+		//std::cout << "a pressed\n";
 		horizontalDisplacement -= rightVector * movementSpeed;
 	}
 	if (gameContext.keyboardKeys[Qt::Key_S]) {
+		//std::cout << "s pressed\n";
 		horizontalDisplacement -= movementSpeed * glm::normalize(
 			glm::vec3(cameraDirection.x, 0.0f, cameraDirection.z));
 	}
 	if (gameContext.keyboardKeys[Qt::Key_D]) {
+		//std::cout << "d pressed\n";
 		horizontalDisplacement += rightVector * movementSpeed;
 	}
 	if (gameContext.keyboardKeys[Qt::Key_Space]) {

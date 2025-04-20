@@ -6,27 +6,13 @@ Rectangle {
     width: parent ? parent.width : 1360
     height: parent ? parent.height : 768
 
-    color: "#ff000000"
+    color: "#40000000"
     property color buttonColor: "#dbdbdb"
 
     signal resumeGameClicked
     signal openSettingsClicked
     signal openMainMenuClicked
     signal exitGameClicked
-
-    Text {
-        id: label
-        y: parent.height * 0.05
-        width: parent.width * 0.18
-        height: parent.height * 0.1
-        text: qsTr("Paused")
-        font.family: Qt.application.font.family
-        horizontalAlignment: Text.AlignHCenter
-        verticalAlignment: Text.AlignVCenter
-        font.pointSize: Math.max(parent.height * 0.045, 24)
-        anchors.horizontalCenterOffset: 0
-        anchors.horizontalCenter: parent.horizontalCenter
-    }
 
     Button {
         id: resumeButton

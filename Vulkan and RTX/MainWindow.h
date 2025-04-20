@@ -3,6 +3,10 @@
 #ifndef MAIN_WINDOW_H
 #define MAIN_WINDOW_H
 
+#include <QKeyEvent>
+#include <QMouseEvent>
+#include <QWheelEvent>
+#include <QResizeEvent>
 #include "GameContext.h"
 
 class MainWindow : public QMainWindow
@@ -18,9 +22,13 @@ public:
     void addWidget(QWidget* widget);
 
 signals:
+    void framebufferResized(int width, int height);
+    void windowMoved(int x, int y);
     void windowClosed();
 
 protected:
+    void resizeEvent(QResizeEvent* event) override;
+    void moveEvent(QMoveEvent* event) override;
     void closeEvent(QCloseEvent* event) override;
 
     void keyPressEvent(QKeyEvent* event) override;

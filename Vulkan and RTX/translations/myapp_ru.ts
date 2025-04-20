@@ -25,6 +25,29 @@
     </message>
 </context>
 <context>
+    <name>PauseMenu.ui</name>
+    <message>
+        <location filename="../qml/PauseMenu.ui.qml" line="23"/>
+        <source>Resume</source>
+        <translation>Возобновить</translation>
+    </message>
+    <message>
+        <location filename="../qml/PauseMenu.ui.qml" line="34"/>
+        <source>Settings</source>
+        <translation>Настройки</translation>
+    </message>
+    <message>
+        <location filename="../qml/PauseMenu.ui.qml" line="45"/>
+        <source>Main Menu</source>
+        <translation>Главное меню</translation>
+    </message>
+    <message>
+        <location filename="../qml/PauseMenu.ui.qml" line="56"/>
+        <source>Exit</source>
+        <translation>Выйти</translation>
+    </message>
+</context>
+<context>
     <name>SettingsMenu.ui</name>
     <message>
         <location filename="../qml/SettingsMenu.ui.qml" line="20"/>

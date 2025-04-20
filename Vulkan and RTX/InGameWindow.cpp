@@ -28,14 +28,18 @@ void InGameWindow::mouseReleaseEvent(QMouseEvent* event) {
 
 void InGameWindow::resizeEvent(QResizeEvent* event) {
     emit framebufferResized(event->size().width(), event->size().height());
-    centerPos = { event->size().width() / 2, event->size().height() / 2 };
-    centerPos = mapToGlobal(centerPos);
-    //std::cout << "center pos: " << centerPos.x() << " " << centerPos.y() << "\n";
+    gameContext->windowCenterPos = { event->size().width() / 2, event->size().height() / 2 };
+    gameContext->windowCenterPos = mapToGlobal(gameContext->windowCenterPos);
+    //std::cout << "center pos: " << gameContext->windowCenterPos.x() << " " << gameContext->windowCenterPos.y() << "\n";
     if (isActive()) {
-        QCursor::setPos(centerPos);
-        //std::cout << "set mouse pos 1: " << centerPos.x() << " " << centerPos.y() << "\n";
+        QCursor::setPos(gameContext->windowCenterPos);
     }
     character->camera._isFirstMouse = true;
+}
+
+void InGameWindow::moveEvent(QMoveEvent* event) {
+    gameContext->windowCenterPos = { width() / 2, height() / 2 };
+    gameContext->windowCenterPos = mapToGlobal(gameContext->windowCenterPos);
 }
 
 void InGameWindow::closeEvent(QCloseEvent* event) {
@@ -53,14 +57,13 @@ void InGameWindow::mouseMoveEvent(QMouseEvent* event) {
     }
 
     if (character->camera._isFirstMouse) {
-        QCursor::setPos(centerPos);
-        //std::cout << "set mouse pos 2: " << centerPos.x() << " " << centerPos.y() << "\n";
-        //character->camera._isFirstMouse = false;
+        QCursor::setPos(gameContext->windowCenterPos);
+        //std::cout << "set mouse pos 2: " << windowCenterPos.x() << " " << windowCenterPos.y() << "\n";
         return;
     }
 
-    latestMouseDx = (event->globalPosition().x() - centerPos.x()) * character->mouseSensitivity;
-    latestMouseDy = (centerPos.y() - event->globalPosition().y()) * character->mouseSensitivity;
+    latestMouseDx = (event->globalPosition().x() - gameContext->windowCenterPos.x()) * character->mouseSensitivity;
+    latestMouseDy = (gameContext->windowCenterPos.y() - event->globalPosition().y()) * character->mouseSensitivity;
 }
 
 void InGameWindow::wheelEvent(QWheelEvent* event) {
@@ -71,8 +74,7 @@ void InGameWindow::wheelEvent(QWheelEvent* event) {
 void InGameWindow::focusInEvent(QFocusEvent* event) {
     setCursor(Qt::BlankCursor);
     character->camera._isFirstMouse = true;
-    //QCursor::setPos(centerPos);
-    //std::cout << "set mouse pos 3: " << centerPos.x() << " " << centerPos.y() << "\n";
+    //std::cout << "set mouse pos 3: " << windowCenterPos.x() << " " << windowCenterPos.y() << "\n";
 }
 
 void InGameWindow::focusOutEvent(QFocusEvent* event) {

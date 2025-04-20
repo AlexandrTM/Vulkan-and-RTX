@@ -152,7 +152,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;windows_x86_64\NoesisApp.lib;windows_x86_64\Noesis.lib;Qt6Cored.lib;Qt6Guid.lib;Qt6Widgetsd.lib;Qt6QuickWidgetsd.lib;Qt6Quickd.lib;Qt6QuickControls2d.lib;Debug\assimp-vc143-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;windows_x86_64\NoesisApp.lib;windows_x86_64\Noesis.lib;Qt6Cored.lib;Qt6Guid.lib;Qt6Widgetsd.lib;Qt6Qmld.lib;Qt6QuickWidgetsd.lib;Qt6Quickd.lib;Qt6QuickControls2d.lib;Debug\assimp-vc143-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>O:\SDKforeverything\VulkanSDK\Lib;O:\SDKforeverything\glfw-3.3.8\lib-vc2019;O:\SDKforeverything\boost_1_85_0\stage\lib;O:\SDKforeverything\assimp\lib;O:\SDKforeverything\meshoptimizer\Debug;O:\SDKforeverything\NoesisGUI\Lib;O:\SDKforeverything\Qt\6.8.1\msvc2022_64\lib</AdditionalLibraryDirectories>
       <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
     </Link>
@@ -181,7 +181,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>O:\SDKforeverything\VulkanSDK\Lib;O:\SDKforeverything\glfw-3.3.8\lib-vc2019;O:\SDKforeverything\boost_1_85_0\stage\lib;O:\SDKforeverything\assimp\lib;O:\SDKforeverything\meshoptimizer\Debug;O:\SDKforeverything\NoesisGUI\Lib;O:\SDKforeverything\Qt\6.8.1\msvc2022_64\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;windows_x86_64\NoesisApp.lib;windows_x86_64\Noesis.lib;Qt6Core.lib;Qt6Gui.lib;Qt6Widgets.lib;Qt6QuickWidgets.lib;Qt6Quick.lib;Qt6QuickControls2.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;Release\assimp-vc143-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;windows_x86_64\NoesisApp.lib;windows_x86_64\Noesis.lib;Qt6Core.lib;Qt6Gui.lib;Qt6Widgets.lib;Qt6Qml.lib;Qt6QuickWidgets.lib;Qt6Quick.lib;Qt6QuickControls2.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;Release\assimp-vc143-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
     </Link>
   </ItemDefinitionGroup>
@@ -202,7 +202,7 @@
     <ClCompile Include="MainMenuWidget.cpp" />
     <ClCompile Include="MainWindow.cpp" />
     <ClCompile Include="Model.cpp" />
-    <ClCompile Include="PauseMenuWidget.cpp" />
+    <ClCompile Include="PauseMenuQuickView.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
@@ -228,7 +228,7 @@
     <QtMoc Include="MainMenuWidget.h" />
     <ClInclude Include="GameContext.h" />
     <QtMoc Include="MainWindow.h" />
-    <QtMoc Include="PauseMenuWidget.h" />
+    <QtMoc Include="PauseMenuQuickView.h" />
     <ClInclude Include="rtx_core.h" />
     <ClInclude Include="InteractableVolume.h" />
     <ClInclude Include="IsEntity.h" />
