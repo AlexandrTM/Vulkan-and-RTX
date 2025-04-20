@@ -503,7 +503,9 @@ void AetherEngine::cleanupMemory()
 	}
 
 	// surface is handled by QVulkanInstance itself and shouldn't be destroyed manually
-	//vkDestroySurfaceKHR(vkInit.instance, vkInit.surface, nullptr);
+	if (vkInit.surface) {
+		vkDestroySurfaceKHR(vkInit.instance, vkInit.surface, nullptr);
+	}
 }
 
 void AetherEngine::restrictCharacterMovement(Camera& camera)

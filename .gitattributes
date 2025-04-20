@@ -12,6 +12,9 @@
 ###############################################################################
 #*.cs     diff=csharp
 
+# Exclude QML files from GitHub language statistics
+*.qml linguist-vendored
+
 ###############################################################################
 # Set the merge driver for project and solution files
 #
