@@ -6,9 +6,18 @@ void AetherEngine::run()
 	setWindowSize();
 	createMainWindow();
 	createInGameWindow();
-	createMainMenuWidget();
 
-	mainWindow->addWidgets(mainMenuWidget, inGameWidget);
+	createMainMenuWidget();
+	createSettingsMenuWidget();
+	createPauseMenuWidget();
+
+	mainWindow->addWidget(mainMenuWidget);
+	mainWindow->addWidget(inGameWidget);
+	mainWindow->addWidget(settingsMenuWidget);
+	//mainWindow->addWidget(pauseMenuWidget);
+	mainWindow->show();
+
+	gameContext.requestedGameState = GameState::MAIN_MENU;
 
 	vkInit.initializeVulkan(&qVulkanInstance);
 	prepareResources();
@@ -67,11 +76,18 @@ void AetherEngine::run()
 //	glfwSetWindowIcon(glfwWindow, 1, windowIcon);
 //#pragma endregion
 //}
+void AetherEngine::onFramebufferResized(int width, int height) {
+	//std::cout << "onFramebufferResized: " << width << " " << height << "\n";
+	isFramebufferResized = true;
+	character.camera.setViewportSize(width, height);
+	windowWidth = width;
+	windowHeight = height;
+}
 void AetherEngine::setWindowSize()
 {
 	QRect screenGeometry = QApplication::primaryScreen()->availableGeometry();
-	windowWidth = screenGeometry.width() / 1.7;
-	windowHeight = screenGeometry.height() / 1.7;
+	windowWidth = screenGeometry.width() / 1.5;
+	windowHeight = screenGeometry.height() / 1.5;
 }
 void AetherEngine::createMainMenuWidget() {
 	mainMenuWidget = new MainMenuWidget();
@@ -82,21 +98,50 @@ void AetherEngine::createMainMenuWidget() {
 		});
 
 	connect(mainMenuWidget, &MainMenuWidget::openSettings, [this]() {
-		gameContext.requestedGameState = GameState::SETTINGS;
+		gameContext.requestedGameState = GameState::SETTINGS_MENU;
 		});
 
 	connect(mainMenuWidget, &MainMenuWidget::exitGame, [this]() {
 		gameContext.requestedGameState = GameState::EXIT;
 		});
 }
+void AetherEngine::createSettingsMenuWidget() {
+	settingsMenuWidget = new SettingsMenuWidget();
+	settingsMenuWidget->resize(windowWidth, windowHeight);
+
+	connect(settingsMenuWidget, &SettingsMenuWidget::returnToMainMenu, [this]() {
+		gameContext.requestedGameState = GameState::MAIN_MENU;
+		});
+}
+void AetherEngine::createPauseMenuWidget() {
+	pauseMenuWidget = new PauseMenuWidget(inGameWidget);
+	pauseMenuWidget->resize(windowWidth, windowHeight);
+
+	connect(pauseMenuWidget, &PauseMenuWidget::resumeGame, [this]() {
+		gameContext.requestedGameState = GameState::IN_GAME;
+		});
+
+	connect(pauseMenuWidget, &PauseMenuWidget::openSettings, [this]() {
+		gameContext.requestedGameState = GameState::SETTINGS_MENU;
+		});
+
+	connect(pauseMenuWidget, &PauseMenuWidget::openMainMenu, [this]() {
+		gameContext.requestedGameState = GameState::MAIN_MENU;
+		});
+
+	connect(pauseMenuWidget, &PauseMenuWidget::exitGame, [this]() {
+		gameContext.requestedGameState = GameState::EXIT;
+		});
+}
+
 void AetherEngine::createMainWindow()
 {
-	mainWindow = new MainWindow();
+	mainWindow = new MainWindow(gameContext);
 	mainWindow->resize(windowWidth, windowHeight);
+	mainWindow->setWindowTitle("Aether");
+	mainWindow->setWindowIcon(QIcon("textures/granite square.png"));
 
 	stackedWidget = mainWindow->getStackedWidget();
-
-	gameContext.requestedGameState = GameState::MAIN_MENU;
 
 	connect(mainWindow, &MainWindow::windowClosed, [this]() {
 		gameContext.requestedGameState = GameState::EXIT;
@@ -137,12 +182,58 @@ void AetherEngine::createInGameWindow()
 		});
 }
 
-void AetherEngine::onFramebufferResized(int width, int height) {
-	//std::cout << "onFramebufferResized: " << width << " " << height << "\n";
-    isFramebufferResized = true;
-    character.camera.setViewportSize(width, height);
-	windowWidth = width;
-	windowHeight = height;
+void AetherEngine::changeState(GameState newGameState) {
+	if (gameContext.currentGameState == newGameState) {
+		std::cout <<
+			"new state is same as current state: " <<
+			static_cast<uint32_t>(newGameState) << "\n";
+		return;
+	}
+
+	// leaving current state
+	switch (gameContext.currentGameState) {
+	case GameState::MAIN_MENU:
+		break;
+	case GameState::SETTINGS_MENU:
+		break;
+	case GameState::IN_GAME:
+		QApplication::setOverrideCursor(Qt::ArrowCursor);
+		break;
+	case GameState::PAUSED:
+		pauseMenuWidget->hide();
+		break;
+	case GameState::EXIT:
+		break;
+	default:
+		break;
+	}
+
+	gameContext.clearInputs();
+	gameContext.currentGameState = newGameState;
+
+	// entering new state
+	switch (newGameState) {
+	case GameState::MAIN_MENU:
+		stackedWidget->setCurrentWidget(mainMenuWidget);
+		break;
+	case GameState::SETTINGS_MENU:
+		stackedWidget->setCurrentWidget(settingsMenuWidget);
+		break;
+	case GameState::IN_GAME:
+		QApplication::setOverrideCursor(Qt::BlankCursor);
+		character.camera._isFirstMouse = true;
+		stackedWidget->setCurrentWidget(inGameWidget);
+		break;
+	case GameState::PAUSED:
+		pauseMenuWidget->show();
+		pauseMenuWidget->raise();
+		break;
+	case GameState::EXIT:
+		QCoreApplication::quit();
+		break;
+	default:
+		break;
+	}
 }
 
 void AetherEngine::prepareResources()
@@ -210,32 +301,6 @@ void AetherEngine::prepareResources()
 	createDescriptorSets(sky, MAX_FRAMES_IN_FLIGHT);
 	createDescriptorSets(models, MAX_FRAMES_IN_FLIGHT);
 }
-
-void AetherEngine::changeState(GameState newGameState) {
-	if (gameContext.currentGameState == newGameState) {
-		std::cout << 
-			"new state is same as current state: " << 
-			static_cast<uint32_t>(newGameState) << "\n";
-		return;
-	}
-
-	gameContext.clearInputs();
-	gameContext.currentGameState = newGameState;
-
-	switch (newGameState) {
-	case GameState::MAIN_MENU:
-		stackedWidget->setCurrentWidget(mainMenuWidget);
-		break;
-	case GameState::IN_GAME:
-		stackedWidget->setCurrentWidget(inGameWidget);
-		break;
-	case GameState::EXIT:
-		QCoreApplication::quit();
-		break;
-	default:
-		break;
-	}
-}
 void AetherEngine::mainLoop()
 {
 	std::chrono::high_resolution_clock::time_point previousTime = std::chrono::high_resolution_clock::now();
@@ -260,13 +325,25 @@ void AetherEngine::mainLoop()
 
 		QCoreApplication::processEvents();
 
+		if (!mainWindow or !inGameWindow) {
+			break;
+		}
+
 		if (gameContext.requestedGameState != GameState::NONE) {
 			changeState(gameContext.requestedGameState);
 			gameContext.requestedGameState = GameState::NONE;
 		}
 
-		if (!mainWindow or !inGameWindow) {
-			break;
+		if (gameContext.currentGameState == GameState::SETTINGS_MENU) {
+			if (gameContext.keyboardKeys[Qt::Key_Escape]) {
+				gameContext.requestedGameState = GameState::MAIN_MENU;
+			}
+		}
+
+		if (gameContext.currentGameState == GameState::PAUSED) {
+			if (gameContext.keyboardKeys[Qt::Key_Escape]) {
+				gameContext.requestedGameState = GameState::IN_GAME;
+			}
 		}
 
 		if (gameContext.currentGameState == GameState::IN_GAME and inGameWindow->isExposed()) {
@@ -276,14 +353,8 @@ void AetherEngine::mainLoop()
 			}
 
 			// skipping qt mouse movements on the first frame
-			if (character.camera._isFirstMouse) {
-				character.camera._isFirstMouse = false;
-			}
-			character.camera.addRotationDelta(inGameWindow->latestMouseDx, inGameWindow->latestMouseDy);
-			inGameWindow->latestMouseDx = 0.0;
-			inGameWindow->latestMouseDy = 0.0;
+			character.camera.handleRotation(inGameWindow->latestMouseDx, inGameWindow->latestMouseDy);
 
-			character.camera.interpolateRotation(1.0);
 			if (inGameWindow->isActive()) {
 				QCursor::setPos(inGameWindow->centerPos);
 				//std::cout << "set mouse pos 0: " << inGameWindow->centerPos.x() << " " << inGameWindow->centerPos.y() << "\n";

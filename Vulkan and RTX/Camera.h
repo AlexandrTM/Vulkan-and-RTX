@@ -37,6 +37,8 @@ public:
 		double roll
 	);
 
+	void handleRotation(double& latestMouseDx, double& latestMouseDy);
+
 	void rotateAbsolute(double xpos, double ypos, double sensitivity);
 	void rotateRelative(double dx, double dy, double sensitivity);
 	void interpolateRotation(double lerpFactor);

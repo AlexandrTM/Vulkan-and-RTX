@@ -13,7 +13,6 @@
 class InGameWindow : public QWindow
 {
     Q_OBJECT
-
 private:
     Character* character;
     GameContext* gameContext;
@@ -37,10 +36,10 @@ protected:
 
     void keyPressEvent(QKeyEvent* event) override;
     void keyReleaseEvent(QKeyEvent* event) override;
-
-    void mouseMoveEvent(QMouseEvent* event) override;
     void mousePressEvent(QMouseEvent* event) override;
     void mouseReleaseEvent(QMouseEvent* event) override;
+
+    void mouseMoveEvent(QMouseEvent* event) override;
     void wheelEvent(QWheelEvent* event) override;
 
     void focusInEvent(QFocusEvent* event) override;

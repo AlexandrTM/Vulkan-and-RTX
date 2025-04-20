@@ -38,12 +38,37 @@ static void customQtMessageHandler(QtMsgType type, const QMessageLogContext& con
 	}
 }
 
+static void loadTranslation(QApplication& app) {
+	QString locale = QLocale::system().name();
+	QString languageCode = locale.left(2);
+
+	QTranslator* translator = new QTranslator(&app);
+
+	// try full locale
+	if (translator->load("translations/myapp_" + locale)) {
+		std::cout << "Loaded translation: myapp_" + locale.toStdString() << "\n";
+		app.installTranslator(translator);
+		return;
+	}
+
+	// try language code
+	if (translator->load("translations/myapp_" + languageCode)) {
+		std::cout << "Loaded translation: myapp_" + languageCode.toStdString() << "\n";
+		app.installTranslator(translator);
+		return;
+	}
+
+	// default english
+	if (translator->load("translations/myapp_en.qm")) {
+		std::cout << "Loaded translation: myapp_en.qm\n";
+		app.installTranslator(translator);
+	}
+	else {
+		qWarning() << "Failed to load translation file.";
+	}
+}
+
 static int runAether() {
-	qInstallMessageHandler(customQtMessageHandler);
-
-	int argc = 0;
-	char** argv = nullptr;
-
 	/*
 	Style	 Look			 Performance	Customizable	Good For
 	Basic	 Plain		     ⭐⭐⭐⭐⭐	    ✅✅✅✅✅	Embedded, full control
@@ -52,8 +77,15 @@ static int runAether() {
 	Fusion	 Neutral	     ⭐⭐⭐⭐	        ✅✅✅✅		Cross-platform consistency
 	*/
 
+	qInstallMessageHandler(customQtMessageHandler);
+
+	int argc = 0;
+	char** argv = nullptr;
+
 	QQuickStyle::setStyle("Material");
 	QApplication app(argc, argv);
+
+	loadTranslation(app);
 
 	srand(static_cast<unsigned>(time(0))); // Seed the random number generator once
 	AetherEngine aetherEngine;

@@ -10,6 +10,22 @@ InGameWindow::InGameWindow(
     setVulkanInstance(instance);
 }
 
+void InGameWindow::keyPressEvent(QKeyEvent* event) {
+    gameContext->keyboardKeys[event->key()] = true;
+}
+
+void InGameWindow::keyReleaseEvent(QKeyEvent* event) {
+    gameContext->keyboardKeys[event->key()] = false;
+}
+
+void InGameWindow::mousePressEvent(QMouseEvent* event) {
+    gameContext->mouseKeys[event->button()] = true;
+}
+
+void InGameWindow::mouseReleaseEvent(QMouseEvent* event) {
+    gameContext->mouseKeys[event->button()] = false;
+}
+
 void InGameWindow::resizeEvent(QResizeEvent* event) {
     emit framebufferResized(event->size().width(), event->size().height());
     centerPos = { event->size().width() / 2, event->size().height() / 2 };
@@ -27,16 +43,12 @@ void InGameWindow::closeEvent(QCloseEvent* event) {
     QWindow::closeEvent(event);
 }
 
-void InGameWindow::keyPressEvent(QKeyEvent* event) {
-    gameContext->keyboardKeys[event->key()] = true;
-}
-
-void InGameWindow::keyReleaseEvent(QKeyEvent* event) {
-    gameContext->keyboardKeys[event->key()] = false;
-}
-
 void InGameWindow::mouseMoveEvent(QMouseEvent* event) {
     if (!isActive()) {
+        return;
+    }
+
+    if (!(gameContext->currentGameState == GameState::IN_GAME)) {
         return;
     }
 
@@ -49,14 +61,6 @@ void InGameWindow::mouseMoveEvent(QMouseEvent* event) {
 
     latestMouseDx = (event->globalPosition().x() - centerPos.x()) * character->mouseSensitivity;
     latestMouseDy = (centerPos.y() - event->globalPosition().y()) * character->mouseSensitivity;
-}
-
-void InGameWindow::mousePressEvent(QMouseEvent* event) {
-    gameContext->mouseKeys[event->button()] = true;
-}
-
-void InGameWindow::mouseReleaseEvent(QMouseEvent* event) {
-    gameContext->mouseKeys[event->button()] = false;
 }
 
 void InGameWindow::wheelEvent(QWheelEvent* event) {

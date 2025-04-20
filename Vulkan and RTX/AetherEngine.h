@@ -14,6 +14,8 @@
 #include "InGameWindow.h"
 #include "MainMenuWidget.h"
 #include "MainWindow.h"
+#include "SettingsMenuWidget.h"
+#include "PauseMenuWidget.h"
 
 class AetherEngine : public QObject {
 	Q_OBJECT
@@ -30,11 +32,15 @@ private:
 	uint32_t windowHeight = 0;
 	double lastMousePosX, lastMousePosY;
 
+	QStackedWidget* stackedWidget = nullptr;
+
 	InGameWindow* inGameWindow = nullptr;
+	MainWindow* mainWindow = nullptr;
+
 	QWidget* inGameWidget = nullptr;
 	MainMenuWidget* mainMenuWidget = nullptr;
-	MainWindow* mainWindow = nullptr;
-	QStackedWidget* stackedWidget = nullptr;
+	SettingsMenuWidget* settingsMenuWidget = nullptr;
+	PauseMenuWidget* pauseMenuWidget = nullptr;
 
 	QVulkanInstance qVulkanInstance;
 
@@ -94,11 +100,13 @@ public:
 	void run();
 
 private:
-	void createGLFWWindow();
-	void createInGameWindow();
-	void createMainMenuWidget();
-	void createMainWindow();
 	void setWindowSize();
+	void createMainMenuWidget();
+	void createSettingsMenuWidget();
+	void createPauseMenuWidget();
+
+	void createMainWindow();
+	void createInGameWindow();
 
 	void changeState(GameState newGameState);
 

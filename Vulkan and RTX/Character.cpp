@@ -6,11 +6,11 @@ void Character::handleInGamePlayerInput(GameContext& gameContext)
 	// altering mouse sensitivity
 	if (gameContext.keyboardKeys[Qt::Key_Up])
 	{
-		mouseSensitivity = std::clamp(mouseSensitivity * 1.3, 0.001, 10.0);
+		mouseSensitivity = std::clamp(mouseSensitivity * 1.25, 0.001, 10.0);
 	}
 	if (gameContext.keyboardKeys[Qt::Key_Down])
 	{
-		mouseSensitivity = std::clamp(mouseSensitivity * 0.75, 0.001, 10.0);
+		mouseSensitivity = std::clamp(mouseSensitivity * 0.8, 0.001, 10.0);
 	}
 	if (gameContext.mouseKeys[Qt::RightButton]) {
 		camera.setVerticalFov(60.0f);
@@ -30,7 +30,7 @@ void Character::handleInGamePlayerInput(GameContext& gameContext)
 	}
 
 	if (gameContext.keyboardKeys[Qt::Key_Escape]) {
-		gameContext.requestedGameState = GameState::MAIN_MENU;
+		gameContext.requestedGameState = GameState::PAUSED;
 	}
 	
 	// changing mipmap level of detail

@@ -20,7 +20,7 @@ enum class Gamemode : uint32_t
 enum class GameState : uint32_t
 {
 	MAIN_MENU = 0,
-	SETTINGS = 1,
+	SETTINGS_MENU = 1,
 	IN_GAME = 2,
 	PAUSED = 3,
 	EXIT = 4,

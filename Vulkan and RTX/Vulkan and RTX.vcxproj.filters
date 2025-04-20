@@ -126,6 +126,12 @@
     <ClCompile Include="Aether.cpp">
       <Filter>source</Filter>
     </ClCompile>
+    <ClCompile Include="SettingsMenuWidget.cpp">
+      <Filter>source\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="PauseMenuWidget.cpp">
+      <Filter>source\UI</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -204,6 +210,12 @@
       <Filter>source\UI</Filter>
     </QtMoc>
     <QtMoc Include="MainWindow.h">
+      <Filter>source\UI</Filter>
+    </QtMoc>
+    <QtMoc Include="SettingsMenuWidget.h">
+      <Filter>source\UI</Filter>
+    </QtMoc>
+    <QtMoc Include="PauseMenuWidget.h">
       <Filter>source\UI</Filter>
     </QtMoc>
   </ItemGroup>

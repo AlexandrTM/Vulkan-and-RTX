@@ -1,18 +1,17 @@
 #include "pch.h"
 #include "MainWindow.h"
 
-MainWindow::MainWindow(QWidget* parent)
+MainWindow::MainWindow(GameContext& gameContext, QWidget* parent)
     : QMainWindow(parent)
 {
     stackedWidget = new QStackedWidget(this);
+    this->gameContext = &gameContext;
     setCentralWidget(stackedWidget);
 }
 
-void MainWindow::addWidgets(QWidget* mainMenuWidget, QWidget* inGameContainer)
+void MainWindow::addWidget(QWidget* widget)
 {
-    stackedWidget->addWidget(mainMenuWidget);
-    stackedWidget->addWidget(inGameContainer);
-    show();
+    stackedWidget->addWidget(widget);
 }
 
 QStackedWidget* MainWindow::getStackedWidget() {
@@ -22,5 +21,21 @@ QStackedWidget* MainWindow::getStackedWidget() {
 void MainWindow::closeEvent(QCloseEvent* event) {
     emit windowClosed();
     QMainWindow::closeEvent(event);
+}
+
+void MainWindow::keyPressEvent(QKeyEvent* event) {
+    gameContext->keyboardKeys[event->key()] = true;
+}
+
+void MainWindow::keyReleaseEvent(QKeyEvent* event) {
+    gameContext->keyboardKeys[event->key()] = false;
+}
+
+void MainWindow::mousePressEvent(QMouseEvent* event) {
+    gameContext->mouseKeys[event->button()] = true;
+}
+
+void MainWindow::mouseReleaseEvent(QMouseEvent* event) {
+    gameContext->mouseKeys[event->button()] = false;
 }
 

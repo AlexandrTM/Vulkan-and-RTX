@@ -48,6 +48,22 @@ Camera::Camera(
 	_roll = roll;
 }
 
+void Camera::handleRotation(double& latestMouseDx, double& latestMouseDy)
+{
+	if (_isFirstMouse) {
+		_isFirstMouse = false;
+		return;
+	}
+
+	if (!_isFirstMouse) {
+		addRotationDelta(latestMouseDx, latestMouseDy);
+		latestMouseDx = 0.0;
+		latestMouseDy = 0.0;
+	}
+
+	interpolateRotation(1.0);
+}
+
 void Camera::rotateAbsolute(double xpos, double ypos, double sensitivity)
 {
 	if (_isFirstMouse)

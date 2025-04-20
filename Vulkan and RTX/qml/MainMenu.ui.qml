@@ -2,28 +2,27 @@ import QtQuick
 import QtQuick.Controls
 
 Rectangle {
-    id: rectangle
+    id: mainMenu
     width: parent ? parent.width : 1360
     height: parent ? parent.height : 768
 
     color: "#838383"
     property color buttonColor: "#dbdbdb"
 
-    signal startGameClicked()
-    signal openSettingsClicked()
-    signal exitGameClicked()
+    signal startGameClicked
+    signal openSettingsClicked
+    signal exitGameClicked
 
     Text {
         id: label
-        y: 40
-        width: 240
-        height: 64
+        y: parent.height * 0.05
+        width: parent.width * 0.18
+        height: parent.height * 0.1
         text: qsTr("Aether")
         font.family: Qt.application.font.family
-        anchors.topMargin: -376
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
-        font.pointSize: 30
+        font.pointSize: Math.max(parent.height * 0.045, 24)
         anchors.horizontalCenterOffset: 0
         anchors.horizontalCenter: parent.horizontalCenter
     }
@@ -32,35 +31,35 @@ Rectangle {
         id: button
         anchors.horizontalCenterOffset: 0
         anchors.horizontalCenter: parent.horizontalCenter
-        y: 252
-        width: 240
-        height: 64
+        y: parent.height * 0.35
+        width: parent.width * 0.18
+        height: parent.height * 0.1
         text: qsTr("Start Game")
-        font.pointSize: 24
-        onClicked: rectangle.startGameClicked()
+        font.pointSize: Math.max(parent.height * 0.03, 16)
+        onClicked: mainMenu.startGameClicked()
     }
-	
+
     Button {
         id: button1
         anchors.horizontalCenterOffset: 0
         anchors.horizontalCenter: parent.horizontalCenter
-        y: 352
-        width: 240
-        height: 64
+        y: parent.height * 0.50
+        width: parent.width * 0.18
+        height: parent.height * 0.1
         text: qsTr("Settings")
-        font.pointSize: 24
-        onClicked: rectangle.openSettingsClicked()
+        font.pointSize: Math.max(parent.height * 0.03, 16)
+        onClicked: mainMenu.openSettingsClicked()
     }
 
     Button {
         id: button2
         anchors.horizontalCenterOffset: 0
         anchors.horizontalCenter: parent.horizontalCenter
-        y: 452
-        width: 240
-        height: 64
+        y: parent.height * 0.65
+        width: parent.width * 0.18
+        height: parent.height * 0.1
         text: qsTr("Exit")
-        font.pointSize: 24
-        onClicked: rectangle.exitGameClicked()
+        font.pointSize: Math.max(parent.height * 0.03, 16)
+        onClicked: mainMenu.exitGameClicked()
     }
 }
