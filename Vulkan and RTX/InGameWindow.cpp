@@ -30,9 +30,9 @@ void InGameWindow::resizeEvent(QResizeEvent* event) {
     emit framebufferResized(event->size().width(), event->size().height());
     gameContext->windowCenterPos = { event->size().width() / 2, event->size().height() / 2 };
     gameContext->windowCenterPos = mapToGlobal(gameContext->windowCenterPos);
-    //std::cout << "center pos: " << gameContext->windowCenterPos.x() << " " << gameContext->windowCenterPos.y() << "\n";
-    if (isActive()) {
+    if (isActive() and (gameContext->currentGameState == GameState::IN_GAME_TESTING)) {
         QCursor::setPos(gameContext->windowCenterPos);
+        //std::cout << "center pos: " << gameContext->windowCenterPos.x() << " " << gameContext->windowCenterPos.y() << "\n";
     }
     character->camera._isFirstMouse = true;
 }
@@ -48,11 +48,7 @@ void InGameWindow::closeEvent(QCloseEvent* event) {
 }
 
 void InGameWindow::mouseMoveEvent(QMouseEvent* event) {
-    if (!isActive()) {
-        return;
-    }
-
-    if (!(gameContext->currentGameState == GameState::IN_GAME)) {
+    if (!(isActive() and (gameContext->currentGameState == GameState::IN_GAME_TESTING))) {
         return;
     }
 
@@ -72,7 +68,9 @@ void InGameWindow::wheelEvent(QWheelEvent* event) {
 }
 
 void InGameWindow::focusInEvent(QFocusEvent* event) {
-    setCursor(Qt::BlankCursor);
+    if (gameContext->currentGameState == GameState::IN_GAME_TESTING) {
+        setCursor(Qt::BlankCursor);
+    }
     character->camera._isFirstMouse = true;
     //std::cout << "set mouse pos 3: " << windowCenterPos.x() << " " << windowCenterPos.y() << "\n";
 }

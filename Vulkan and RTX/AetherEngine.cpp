@@ -47,14 +47,14 @@ void AetherEngine::prepareResources()
 	createSyncObjects();
 
 	createTextureFromPath("textures/grass001.png", grassTexture);
-	createDummyTexture({ 0, 0, 0, 255 }, dummyTexture);
+	createDummyTexture({ 0, 0, 0, 0 }, transparentTexture);
 
 	TerrainData terrainData = {
 		100, 100, // chunkWidth, chunkLength
 		4, 4,     // chunkRows, chunkCols
 		2.0f,     // gridSize
 		0.1f,     // scale
-		2.0f,     // height
+		0.2f,     // height
 	};
 	terrainGenerator = std::make_unique<TerrainGenerator>(1);
 	TerrainGenerator::generateTerrain(
@@ -69,6 +69,11 @@ void AetherEngine::prepareResources()
 	loadModelsFromDirectory("models", models);
 
 	createSkyModel(sky);
+	createCuboid(
+		0, 0, 0, 
+		10, 10, 10,
+		glm::vec3(0.5)
+	);
 
 	for (Mesh& mesh : sky.meshes) {
 		createVertexBuffer(mesh);
@@ -168,7 +173,8 @@ void AetherEngine::createMainMenuWidget() {
 	mainMenuWidget->resize(windowWidth, windowHeight);
 
 	connect(mainMenuWidget, &MainMenuWidget::startGame, [this]() {
-		gameContext.requestedGameState = GameState::IN_GAME;
+		gameContext.requestedGameState = GameState::IN_DUNGEON;
+		//gameContext.requestedGameState = GameState::IN_GAME_TESTING;
 		});
 
 	connect(mainMenuWidget, &MainMenuWidget::openSettings, [this]() {
@@ -194,7 +200,7 @@ void AetherEngine::createPauseMenuWidget() {
 	pauseMenuWidget->resize(windowWidth, windowHeight);
 
 	connect(pauseMenuWidget, &PauseMenuQuickView::resumeGame, [this]() {
-		gameContext.requestedGameState = GameState::IN_GAME;
+		gameContext.requestedGameState = GameState::IN_DUNGEON;
 		});
 
 	connect(pauseMenuWidget, &PauseMenuQuickView::openSettings, [this]() {
@@ -287,7 +293,7 @@ void AetherEngine::changeState(GameState newGameState) {
 		break;
 	case GameState::SETTINGS_MENU:
 		break;
-	case GameState::IN_GAME:
+	case GameState::IN_GAME_TESTING:
 		QApplication::setOverrideCursor(Qt::ArrowCursor);
 		break;
 	case GameState::PAUSED:
@@ -310,9 +316,12 @@ void AetherEngine::changeState(GameState newGameState) {
 	case GameState::SETTINGS_MENU:
 		stackedWidget->setCurrentWidget(settingsMenuWidget);
 		break;
-	case GameState::IN_GAME:
+	case GameState::IN_GAME_TESTING:
 		QApplication::setOverrideCursor(Qt::BlankCursor);
 		character.camera._isFirstMouse = true;
+		stackedWidget->setCurrentWidget(inGameWidget);
+		break;
+	case GameState::IN_DUNGEON:
 		stackedWidget->setCurrentWidget(inGameWidget);
 		break;
 	case GameState::PAUSED:
@@ -334,16 +343,59 @@ void AetherEngine::changeState(GameState newGameState) {
 		break;
 	}
 }
+void AetherEngine::handleInDungeonState(double deltaTime, double timeSinceLaunch)
+{
+	if (gameContext.keyboardKeys[Qt::Key_Escape]) {
+		gameContext.requestedGameState = GameState::PAUSED;
+	}
+
+	if (!character.isInteracting) {
+		character.handleCharacterMovement(gameContext, deltaTime, gravity, models);
+	}
+
+	drawFrame(timeSinceLaunch, deltaTime);
+}
+void AetherEngine::handleInGameTestingState(double deltaTime, double timeSinceLaunch, bool fpsMenu)
+{
+	character.handleInGamePlayerInput(gameContext);
+	if (!character.isInteracting) {
+		character.handleCharacterMovement(gameContext, deltaTime, gravity, models);
+	}
+
+	// skipping qt mouse movements on the first frame
+	character.camera.handleRotation(inGameWindow->latestMouseDx, inGameWindow->latestMouseDy);
+
+	if (inGameWindow->isActive()) {
+		QCursor::setPos(gameContext.windowCenterPos);
+		//std::cout << "set mouse pos 0: " << gameContext.windowCenterPos.x() << " " << gameContext.windowCenterPos.y() << "\n";
+	}
+
+	// FPS meter
+	static uint32_t counter = 0;
+	static double accumulator = 0.0;
+	static double fps = 0.0;
+	
+	if (fpsMenu) {
+		counter++;
+		accumulator += deltaTime;
+		if (accumulator >= 1.0) {
+			fps = 1 / (accumulator / counter);
+			counter = 0;
+			accumulator = 0;
+			std::cout << "fps: " << fps << "\n";
+		}
+	}
+
+	drawFrame(timeSinceLaunch, deltaTime);
+}
+
 void AetherEngine::mainLoop()
 {
 	std::chrono::high_resolution_clock::time_point previousTime = std::chrono::high_resolution_clock::now();
 	std::chrono::high_resolution_clock::time_point currentTime;
 	double deltaTime;
 	double timeSinceLaunch = 0.0f;
-	
-	uint32_t counter = 0;
-	double accumulator = 0;
-	double fps = 0;
+
 	bool fpsMenu = 0;
 
 	while (gameContext.currentGameState != GameState::EXIT) {
@@ -375,44 +427,23 @@ void AetherEngine::mainLoop()
 
 		if (gameContext.currentGameState == GameState::PAUSED) {
 			if (gameContext.keyboardKeys[Qt::Key_Escape]) {
-				gameContext.requestedGameState = GameState::IN_GAME;
+				gameContext.requestedGameState = GameState::IN_DUNGEON;
 			}
 		}
 
-		// drawing 2 frames after windwo resize, for removing black borders after resize
-		if (gameContext.currentGameState != GameState::IN_GAME && isFramebufferResized) {
+		// drawing 2 frames after window resize, for removing black borders after resize
+		if (gameContext.currentGameState != GameState::IN_GAME_TESTING && isFramebufferResized) {
 			for (size_t i = 0; i < 2; i++) {
 				drawFrame(timeSinceLaunch, deltaTime);
 			}
 		}
+
+		if (gameContext.currentGameState == GameState::IN_DUNGEON and inGameWindow->isExposed()) {
+			handleInDungeonState(deltaTime, timeSinceLaunch);
+		}
 		
-		if (gameContext.currentGameState == GameState::IN_GAME and inGameWindow->isExposed()) {
-			character.handleInGamePlayerInput(gameContext);
-			if (!character.isInteracting) {
-				character.handleCharacterMovement(gameContext, deltaTime, gravity, models);
-			}
-
-			// skipping qt mouse movements on the first frame
-			character.camera.handleRotation(inGameWindow->latestMouseDx, inGameWindow->latestMouseDy);
-
-			if (inGameWindow->isActive()) {
-				QCursor::setPos(gameContext.windowCenterPos);
-				//std::cout << "set mouse pos 0: " << inGameWindow->windowCenterPos.x() << " " << inGameWindow->windowCenterPos.y() << "\n";
-			}
-
-			// FPS meter
-			if (fpsMenu) {
-				counter++;
-				accumulator += deltaTime;
-				if (accumulator >= 1.0) {
-					fps = 1 / (accumulator / counter);
-					counter = 0;
-					accumulator = 0;
-					std::cout << "fps: " << fps << "\n";
-				}
-			}
-
-			drawFrame(timeSinceLaunch, deltaTime);
+		if (gameContext.currentGameState == GameState::IN_GAME_TESTING and inGameWindow->isExposed()) {
+			handleInGameTestingState(deltaTime, timeSinceLaunch, fpsMenu);
 		}
 	}
 
@@ -483,7 +514,7 @@ void AetherEngine::cleanupMemory()
 	cleanupModels(models);
 	cleanupModel(sky);
 	cleanupTexture(grassTexture);
-	cleanupTexture(dummyTexture);
+	cleanupTexture(transparentTexture);
 
 	cleanupSwapchain();
 

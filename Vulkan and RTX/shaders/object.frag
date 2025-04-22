@@ -19,7 +19,7 @@ layout(location = 2) in vec2 inTexCoord0;
 layout(location = 0) out vec4 outColor;
 
 void main() {
-    float gamma = 1.0;
+    float gamma = 0.77;
     //float contrast = 0.1;
 
     float distanceToFragment = distance(ubo.observer, inPosition);
@@ -31,13 +31,34 @@ void main() {
 
     vec4 diffuseColor = texture(diffuseSampler, inTexCoord0);
     vec4 emissiveColor = texture(emissiveSampler, inTexCoord0);
-    vec4 texColor = diffuseColor + emissiveColor;
+    
+    vec4 texColor = vec4(0.0);
+
+    // blend textures using premultiplied alpha
+    if (diffuseColor.a > 0.0) {
+        texColor.rgb += diffuseColor.rgb * diffuseColor.a;
+        texColor.a += diffuseColor.a;
+    }
+
+    if (emissiveColor.a > 0.0) {
+        texColor.rgb += emissiveColor.rgb * emissiveColor.a;
+        texColor.a += emissiveColor.a;
+    }
+
+    if (texColor.a > 0.0) {
+        texColor.rgb /= texColor.a;
+    } else {
+        texColor = vec4(inColor, 1.0);
+    }
+
+    
     texColor.rgb = pow(texColor.rgb, vec3(1.0 / gamma));
     //texColor.rgb = (texColor.rgb - 0.5) * contrast + 0.5;
 
     float fogFactor = exp(-distanceToFragment * 0.00004);
 
-    //outColor = mix(vec4(1.0, 1.0, 1.0, 1.0), texColor, fogFactor);
-    outColor = mix(vec4(1.0, 1.0, 1.0, 1.0), texColor * vec4(inColor, 1.0), fogFactor);
+    // adding fog factor
+    //outColor = mix(vec4(1.0), texColor, fogFactor);
+    outColor = mix(vec4(1.0), texColor, fogFactor);
 	//outColor = texColor * vec4(inColor, 1.0);
 }

@@ -18,7 +18,7 @@ private:
 	glm::vec3 velocity = glm::vec3(0.0f);
 	bool isOnGround = false;
 
-	Gamemode gamemode = Gamemode::SURVIVAL;
+	Gamemode gamemode = Gamemode::CREATIVE;
 	float moveSpeed = 2.1f;
 	float jumpSpeed = 4.0f;
 
@@ -26,6 +26,7 @@ public:
 	Camera camera;
 	double mouseSensitivity = 0.125;
 
+	// ========== not used currently ==========
 	std::vector<InteractableVolume> interactableCuboids = { 
 		InteractableVolume(glm::vec3(20.0, 0.0, -10.0), glm::vec3(21.75, 4.75, -8.25), "easy"),
 		InteractableVolume(glm::vec3(20.0, 0.0,   0.0), glm::vec3(21.75, 4.75,  1.75), "medium"),
@@ -33,6 +34,7 @@ public:
 	};
 
 	InteractableVolume* isInteracting = nullptr;
+	// ========================================
 
 	void handleCharacterMovement(
 		GameContext& gameContext,

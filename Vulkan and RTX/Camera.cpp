@@ -3,9 +3,9 @@
 
 Camera::Camera() 
 {
-	_lookFrom = glm::vec3(5.0f, 3.0f, 0.0f);
-	_lookAt = _lookFrom + glm::vec3(1.0f, 0.0f, 0.0f);
-	_cameraDirection = glm::normalize(_lookAt - _lookFrom);
+	_lookFrom = glm::vec3(0.0f, 10.0f, 0.0f);
+	//_lookAt = _lookFrom + glm::vec3(1.0f, 0.0f, 0.0f);
+	//_cameraDirection = glm::normalize(_lookAt - _lookFrom);
 	_verticalWorldAxis = glm::vec3(0.0f, 1.0f, 0.0f);
 
 	_verticalFov = 60.0f;
@@ -15,8 +15,20 @@ Camera::Camera()
 	_lastXScreenPosition = _viewportWidth / 2;
 	_lastYScreenPosition = _viewportHeight / 2;
 
-	_yaw, _pitch, _roll = 0.0;
-	_targetYaw, _targetPitch, _targetRoll = 0.0;
+	_yaw = 0.0;
+	_pitch = -45.0;
+	_roll = 0.0;
+
+	_targetYaw = 0.0;
+	_targetPitch = -45.0;
+	_targetRoll = 0.0;
+
+	glm::vec3 front{};
+	front.x = cos(glm::radians(_yaw)) * cos(glm::radians(_pitch));
+	front.y = sin(glm::radians(_pitch));
+	front.z = sin(glm::radians(_yaw)) * cos(glm::radians(_pitch));
+	_lookAt = _lookFrom + glm::normalize(front);
+	_cameraDirection = glm::normalize(front);
 }
 
 Camera::Camera(
@@ -90,6 +102,7 @@ void Camera::rotateAbsolute(double xpos, double ypos, double sensitivity)
 	front.x = cos(glm::radians(_yaw)) * cos(glm::radians(_pitch));
 	front.y = sin(glm::radians(_pitch));
 	front.z = sin(glm::radians(_yaw)) * cos(glm::radians(_pitch));
+	_lookAt = _lookFrom + glm::normalize(front);
 	_cameraDirection = glm::normalize(front);
 }
 void Camera::rotateRelative(double dx, double dy, double sensitivity)
@@ -105,6 +118,7 @@ void Camera::rotateRelative(double dx, double dy, double sensitivity)
 	front.x = cos(glm::radians(_yaw)) * cos(glm::radians(_pitch));
 	front.y = sin(glm::radians(_pitch));
 	front.z = sin(glm::radians(_yaw)) * cos(glm::radians(_pitch));
+	_lookAt = _lookFrom + glm::normalize(front);
 	_cameraDirection = glm::normalize(front);
 }
 
@@ -121,6 +135,7 @@ void Camera::interpolateRotation(double lerpFactor) {
 	front.x = cos(glm::radians(_yaw)) * cos(glm::radians(_pitch));
 	front.y = sin(glm::radians(_pitch));
 	front.z = sin(glm::radians(_yaw)) * cos(glm::radians(_pitch));
+	_lookAt = _lookFrom + glm::normalize(front);
 	_cameraDirection = glm::normalize(front);
 }
 

@@ -15,7 +15,7 @@ extern "C" {
 
 namespace StellarCalculations
 {
-	constexpr double secondsInDay = 1440;
+	constexpr double secondsInDay = 2400;
 	constexpr double axialTilt = 23.44 * glm::pi<double>() / 180.0;
 	constexpr double daysInYear = 365.2524;
 

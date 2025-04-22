@@ -89,7 +89,7 @@ private:
 	Model			   sky;
 
 	Texture        grassTexture;
-	Texture		   dummyTexture;
+	Texture		   transparentTexture;
 
 	Texture        depthTexture;
 	Texture        msaaTexture;
@@ -113,6 +113,8 @@ private:
 	void createInGameWindow();
 
 	void changeState(GameState newGameState);
+	void handleInDungeonState(double deltaTime, double timeSinceLaunch);
+	void handleInGameTestingState(double deltaTime, double timeSinceLaunch, bool fpsMenu);
 
 	std::string createPuzzleEquation(std::string name, int32_t& answer);
 
@@ -135,8 +137,11 @@ private:
 
 	void generateCubicLandscape(size_t landscapeWidth, size_t landscapeLenght, float_t cubeSize);
 	void createCube(float x, float y, float z, float cubeSize);
-	void createCuboid(float x, float y, float z,
-		float width, float height, float length, glm::vec3 color);
+	void createCuboid(
+		float x, float y, float z,
+		float width, float height, float length, 
+		glm::vec3 color
+	);
 	void createSkyModel(Model& model);
 
 	void loadObjModel(const std::string& filePath);
