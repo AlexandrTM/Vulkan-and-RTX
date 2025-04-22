@@ -22,8 +22,11 @@ enum class GameState : uint32_t
 	MAIN_MENU = 0,
 	SETTINGS_MENU = 1,
 	IN_GAME = 2,
-	PAUSED = 3,
-	EXIT = 4,
+	IN_DUNGEON = 3,
+	COMBAT = 4,
+	SHOP = 5,
+	PAUSED = 6,
+	EXIT = 7,
 	NONE = std::numeric_limits<uint32_t>::max(),
 };
 

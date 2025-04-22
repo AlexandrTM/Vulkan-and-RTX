@@ -495,6 +495,7 @@ void AetherEngine::updateShaderBuffers(uint32_t currentImage, double timeSinceLa
 	projection[1][1] *= -1;
 
 	glm::vec3 sun = StellarCalculations::calculateSunPosition(timeSinceLaunch);
+	//glm::vec3 sun = StellarCalculations::calculateSPASunPosition();
 	/*glm::vec3 sun = StellarCalculations::calculateSunPosition(
 		std::chrono::high_resolution_clock::now().time_since_epoch().count() / 1e9
 	);*/

@@ -379,10 +379,13 @@ void AetherEngine::mainLoop()
 			}
 		}
 
-		if (gameContext.currentGameState != GameState::IN_GAME/* && isFramebufferResized*/) {
-			drawFrame(timeSinceLaunch, deltaTime);
+		// drawing 2 frames after windwo resize, for removing black borders after resize
+		if (gameContext.currentGameState != GameState::IN_GAME && isFramebufferResized) {
+			for (size_t i = 0; i < 2; i++) {
+				drawFrame(timeSinceLaunch, deltaTime);
+			}
 		}
-
+		
 		if (gameContext.currentGameState == GameState::IN_GAME and inGameWindow->isExposed()) {
 			character.handleInGamePlayerInput(gameContext);
 			if (!character.isInteracting) {
