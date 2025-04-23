@@ -6,7 +6,7 @@
 class Camera
 {
 private:
-	glm::vec3 _lookFrom;
+	glm::vec3 _position;
 	glm::vec3 _lookAt;
 	glm::vec3 _cameraDirection;
 	glm::vec3 _verticalWorldAxis;
@@ -26,7 +26,7 @@ public:
 
 	Camera();
 	Camera(
-		glm::vec3 lookFrom,
+		glm::vec3 position,
 		glm::vec3 lookAt,
 		glm::vec3 verticalWorldAxis,
 		float verticalFov,
@@ -46,11 +46,11 @@ public:
 
 	void setViewportSize(uint32_t viewportWidth, uint32_t viewportHeight);
 
-	void setLookFrom(glm::vec3 lookFrom);
+	void setPosition(glm::vec3 position);
 	void setLookAt(glm::vec3 lookAt);
 	void setDirection(glm::vec3 cameraDirection);
 	void setVerticalFov(float vFov);
-	glm::vec3& getLookFrom();
+	glm::vec3& getPosition();
 	glm::vec3& getLookAt();
 	glm::vec3& getDirection();
 	float& getVerticalFov();

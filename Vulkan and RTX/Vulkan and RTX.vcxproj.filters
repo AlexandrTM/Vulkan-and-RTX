@@ -34,6 +34,9 @@
     <Filter Include="source\UI">
       <UniqueIdentifier>{e2285b90-6be4-4805-866d-d525c4a2b86c}</UniqueIdentifier>
     </Filter>
+    <Filter Include="headers\main class split">
+      <UniqueIdentifier>{de084a3b-a4e2-4278-a55a-aee89a6477f3}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -135,6 +138,9 @@
     <ClCompile Include="spa.c">
       <Filter>source</Filter>
     </ClCompile>
+    <ClCompile Include="Dungeon.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -167,9 +173,6 @@
     <ClInclude Include="Character.h">
       <Filter>headers</Filter>
     </ClInclude>
-    <ClInclude Include="VulkanInitializer.h">
-      <Filter>headers</Filter>
-    </ClInclude>
     <ClInclude Include="Model.h">
       <Filter>headers</Filter>
     </ClInclude>
@@ -191,6 +194,24 @@
     <ClInclude Include="GameContext.h">
       <Filter>headers</Filter>
     </ClInclude>
+    <ClInclude Include="Dungeon.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="BufferManager.h">
+      <Filter>headers\main class split</Filter>
+    </ClInclude>
+    <ClInclude Include="ImageManager.h">
+      <Filter>headers\main class split</Filter>
+    </ClInclude>
+    <ClInclude Include="ModelManager.h">
+      <Filter>headers\main class split</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanInitializer.h">
+      <Filter>headers\main class split</Filter>
+    </ClInclude>
+    <ClInclude Include="SwapchainManager.h">
+      <Filter>headers\main class split</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Vulkan and RTX.rc">
@@ -203,9 +224,6 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <QtMoc Include="AetherEngine.h">
-      <Filter>headers</Filter>
-    </QtMoc>
     <QtMoc Include="InGameWindow.h">
       <Filter>source\UI</Filter>
     </QtMoc>
@@ -220,6 +238,9 @@
     </QtMoc>
     <QtMoc Include="PauseMenuQuickView.h">
       <Filter>source\UI</Filter>
+    </QtMoc>
+    <QtMoc Include="AetherEngine.h">
+      <Filter>headers\main class split</Filter>
     </QtMoc>
   </ItemGroup>
 </Project>

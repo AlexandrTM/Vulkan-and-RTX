@@ -28,6 +28,7 @@ layout(location = 6) in vec4 inBoneWeights;
 layout(location = 0) out vec3 outPosition;
 layout(location = 1) out vec3 outColor;
 layout(location = 2) out vec2 outTexCoord0; 
+layout(location = 3) out float lightingFactor;
 
 void main() {		
 	mat4 boneTransform = mat4(0.0);
@@ -78,9 +79,11 @@ void main() {
 	{
 		specular = pow(max(dot(inNormal, reflected), 0.0), 5.0);
 	}
+
+	lightingFactor = specular + directionalLight;
 		
 	outPosition = vec3(ubo.model * transformedPosition);
-	outColor = inColor * (specular + directionalLight);
+	outColor = inColor * lightingFactor;
     outTexCoord0 = inTexCoord0;
     gl_Position = ubo.proj * ubo.view * ubo.model * transformedPosition;
 }

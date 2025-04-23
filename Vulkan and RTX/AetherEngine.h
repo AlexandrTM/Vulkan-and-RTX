@@ -5,17 +5,18 @@
 
 #include "VulkanInitializer.h"
 
-#include "Character.h"
-#include "GameContext.h"
-#include "Vertex.h"
-#include "Model.h"
-#include "TerrainGenerator.h"
-
 #include "InGameWindow.h"
 #include "MainMenuWidget.h"
 #include "MainWindow.h"
 #include "SettingsMenuWidget.h"
 #include "PauseMenuQuickView.h"
+
+#include "Character.h"
+#include "GameContext.h"
+#include "Vertex.h"
+#include "Model.h"
+#include "TerrainGenerator.h"
+#include "Dungeon.h"
 
 class AetherEngine : public QObject {
 	Q_OBJECT
@@ -23,6 +24,7 @@ class AetherEngine : public QObject {
 private:
 #pragma region
 	VulkanInitializer vkInit;
+	VmaAllocator vmaAllocator;
 
 	float gravity = 9.81f;
 	Character character;
@@ -43,7 +45,7 @@ private:
 
 	MainMenuWidget* mainMenuWidget = nullptr;
 	SettingsMenuWidget* settingsMenuWidget = nullptr;
-	PauseMenuQuickView* pauseMenuWidget = nullptr;
+	PauseMenuQuickView* pauseMenuView = nullptr;
 
 	QVulkanInstance qVulkanInstance;
 
@@ -88,11 +90,19 @@ private:
 	std::vector<Model> models;
 	Model			   sky;
 
-	Texture        grassTexture;
-	Texture		   transparentTexture;
+	Texture stone_wall_floor_1_texture;
+	Texture stone_wall_floor_2_texture;
+	Texture stone_wall_floor_3_texture;
+	Texture stone_floor_floor_1_texture;
+	Texture stone_floor_floor_2_texture;
+	Texture stone_floor_floor_3_texture;
+	Texture floor_background_floor_2_texture;
 
-	Texture        depthTexture;
-	Texture        msaaTexture;
+	Texture grassTexture;
+	Texture	transparentTexture;
+
+	Texture depthTexture;
+	Texture msaaTexture;
 
 private slots:
 	void onFramebufferResized(int width, int height);
@@ -103,7 +113,35 @@ private slots:
 public:
 	void run();
 
+	static void generateCubicLandscape(
+		size_t landscapeWidth, size_t landscapeLenght,
+		float_t cubeSize,
+		glm::vec3 color,
+		Texture& texture,
+		std::vector<Model>& models
+	);
+	static void createCube(
+		float x, float y, float z, float cubeSize,
+		glm::vec3 color,
+		Texture& texture,
+		std::vector<Model>& models
+	);
+	static void createCuboid(
+		float x, float y, float z,
+		float width, float height, float length,
+		glm::vec3 color,
+		Texture& texture,
+		std::vector<Model>& models
+	);
+
 private:
+	void createDungeon();
+	std::string createPuzzleEquation(std::string name, int32_t& answer);
+
+	void changeState(GameState newGameState);
+	void handleInDungeonState(double deltaTime, double timeSinceLaunch);
+	void handleInGameTestingState(double deltaTime, double timeSinceLaunch, bool fpsMenu);
+
 	void setWindowSize();
 	void createMainMenuWidget();
 	void createSettingsMenuWidget();
@@ -111,12 +149,6 @@ private:
 
 	void createMainWindow();
 	void createInGameWindow();
-
-	void changeState(GameState newGameState);
-	void handleInDungeonState(double deltaTime, double timeSinceLaunch);
-	void handleInGameTestingState(double deltaTime, double timeSinceLaunch, bool fpsMenu);
-
-	std::string createPuzzleEquation(std::string name, int32_t& answer);
 
 	void prepareResources();
 
@@ -134,14 +166,6 @@ private:
 	void cleanupSwapchain();
 	// recreating swap chain in some special cases
 	void recreateSwapchain();
-
-	void generateCubicLandscape(size_t landscapeWidth, size_t landscapeLenght, float_t cubeSize);
-	void createCube(float x, float y, float z, float cubeSize);
-	void createCuboid(
-		float x, float y, float z,
-		float width, float height, float length, 
-		glm::vec3 color
-	);
 	void createSkyModel(Model& model);
 
 	void loadObjModel(const std::string& filePath);
@@ -200,8 +224,10 @@ private:
 	// copying contents of one buffer to another
 	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
-	void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
-		VkBuffer& buffer, VkDeviceMemory& bufferMemory);
+	void createBuffer(
+		VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
+		VkBuffer& buffer, VkDeviceMemory& bufferMemory
+	);
 
 	void createVertexBuffer(Mesh& mesh);
 	void createIndexBuffer(Mesh& mesh);
@@ -237,6 +263,8 @@ private:
 	void updateShaderBuffers(uint32_t currentImage, double timeSinceLaunch);
 	// Creating frames for presentation
 	void drawFrame(double timeSinceLaunch, double deltaTime/*, ImDrawData* draw_data*/);
+
+	void initVMA();
 
 	// create multiple command buffers
 	void createCommandBuffers();

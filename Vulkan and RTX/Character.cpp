@@ -21,7 +21,7 @@ void Character::handleInGamePlayerInput(GameContext& gameContext)
 		if (isInteracting == nullptr) {
 			for (size_t i = 0; i < interactableCuboids.size(); i++) {
 				if (interactableCuboids[i].rayIntersectsCuboid(
-					camera.getLookFrom(), camera.getDirection())) {
+					camera.getPosition(), camera.getDirection())) {
 					isInteracting = &interactableCuboids[i];
 					isInteracting->isOpen = true;
 				}
@@ -71,7 +71,7 @@ void Character::handleCharacterMovement(
 	
 	glm::vec3 verticalWorldAxis = camera.getVerticalWorldAxis();
 	glm::vec3 cameraDirection = camera.getDirection();
-	glm::vec3 cameraPosition = camera.getLookFrom();
+	glm::vec3 cameraPosition = camera.getPosition();
 	glm::vec3 rightVector = glm::normalize(glm::cross(cameraDirection, verticalWorldAxis));
 
 	if (gameContext.keyboardKeys[Qt::Key_Control]) {
@@ -155,7 +155,7 @@ void Character::handleCharacterMovement(
 	cameraPosition += verticalDisplacement;
 	cameraPosition += horizontalDisplacement;
 
-	camera.setLookFrom(cameraPosition);
+	camera.setPosition(cameraPosition);
 }
 
 glm::vec3 characterBoxMin{};

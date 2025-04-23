@@ -205,8 +205,8 @@ void AetherEngine::createGraphicsPipeline(
 	VkViewport viewport{};
 	viewport.x = 0.0f;
 	viewport.y = 0.0f;
-	viewport.width = (float)swapchainExtent.width;
 	viewport.height = (float)swapchainExtent.height;
+	viewport.width = (float)swapchainExtent.width;
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 
@@ -483,11 +483,14 @@ void AetherEngine::drawFrame(double timeSinceLaunch, double deltaTime)
 void AetherEngine::updateShaderBuffers(uint32_t currentImage, double timeSinceLaunch)
 {
 	glm::mat4 view = glm::lookAt(
-		character.camera.getLookFrom(),
-		character.camera.getLookFrom() + character.camera.getDirection(),
+		character.camera.getPosition(),
+		character.camera.getPosition() + character.camera.getDirection(),
 		character.camera.getVerticalWorldAxis()
 	);
 
+	//std::cout << "aspect ratio: " << swapchainExtent.width / (float)swapchainExtent.height << "\n";
+	//std::cout << "swapchain size: " << swapchainExtent.width << " " << swapchainExtent.height << "\n";
+	
 	glm::mat4 projection = glm::perspective(
 		glm::radians(character.camera.getVerticalFov()),
 		swapchainExtent.width / (float)swapchainExtent.height, 
@@ -507,7 +510,7 @@ void AetherEngine::updateShaderBuffers(uint32_t currentImage, double timeSinceLa
 	skyUBO.view = view;
 	skyUBO.projection = projection;
 	skyUBO.sun = sun;
-	skyUBO.observer = character.camera.getLookFrom();
+	skyUBO.observer = character.camera.getPosition();
 
 	void* data;
 	for (Mesh& mesh : sky.meshes) {
@@ -543,7 +546,7 @@ void AetherEngine::updateShaderBuffers(uint32_t currentImage, double timeSinceLa
 			meshUBO.view = view;
 			meshUBO.projection = projection;
 			meshUBO.sun = sun;
-			meshUBO.observer = character.camera.getLookFrom();
+			meshUBO.observer = character.camera.getPosition();
 
 			vkMapMemory(vkInit.device, mesh.UBOBuffersMemory[currentImage],
 				0, sizeof(UniformBufferObject), 0, &data);

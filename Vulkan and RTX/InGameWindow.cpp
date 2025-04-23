@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "InGameWindow.h"
+
 InGameWindow::InGameWindow(
     QVulkanInstance* instance, 
     Character& character, GameContext& gameContext
@@ -28,6 +29,7 @@ void InGameWindow::mouseReleaseEvent(QMouseEvent* event) {
 
 void InGameWindow::resizeEvent(QResizeEvent* event) {
     emit framebufferResized(event->size().width(), event->size().height());
+    //std::cout << "in game window resized: " << event->size().width() << " " <<  event->size().height() << "\n";
     gameContext->windowCenterPos = { event->size().width() / 2, event->size().height() / 2 };
     gameContext->windowCenterPos = mapToGlobal(gameContext->windowCenterPos);
     if (isActive() and (gameContext->currentGameState == GameState::IN_GAME_TESTING)) {

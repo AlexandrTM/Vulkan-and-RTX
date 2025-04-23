@@ -39,7 +39,10 @@ void TerrainGenerator::generateTerrain(
     std::vector<Model>& models, Texture& terrainTexture, float metricTextureSize,
     TerrainGenerator* terrainGenerator, size_t seed
 ) {
-    Model model;
+    Model model{};
+
+    Material material{};
+    material.diffuseTexture = terrainTexture;
 
     for (size_t chunkX = 0; chunkX < terrainData.chunkCols; ++chunkX) {
         for (size_t chunkZ = 0; chunkZ < terrainData.chunkRows; ++chunkZ) {
@@ -65,8 +68,6 @@ void TerrainGenerator::generateTerrain(
                 heightmap, terrainData.gridSize, mesh, metricTextureSize
             );
 
-            Material material{};
-            material.diffuseTexture = terrainTexture;
             mesh.material = material;
 
             model.meshes.push_back(mesh);

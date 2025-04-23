@@ -1,6 +1,9 @@
 ﻿#include "pch.h"
 #include "AetherEngine.h"
 
+#define VMA_IMPLEMENTATION
+#include "vk_mem_alloc.h"
+
 void AetherEngine::run()
 {
 	setWindowSize();
@@ -17,9 +20,10 @@ void AetherEngine::run()
 	mainWindow->addWidget(settingsMenuWidget);
 	mainWindow->show();
 
-	gameContext.requestedGameState = GameState::MAIN_MENU;
+	gameContext.requestedGameState = GameState::IN_GAME_TESTING;
 
 	vkInit.initializeVulkan(&qVulkanInstance);
+	initVMA();
 	prepareResources();
 	mainLoop();
 	cleanupMemory();
@@ -47,33 +51,33 @@ void AetherEngine::prepareResources()
 	createSyncObjects();
 
 	createTextureFromPath("textures/grass001.png", grassTexture);
+	createTextureFromPath("textures/stone_wall_floor_2.png", stone_wall_floor_2_texture);
+	createTextureFromPath("textures/stone_floor_floor_2.png", stone_floor_floor_2_texture);
+	createTextureFromPath("textures/floor_background_floor_2.png", floor_background_floor_2_texture);
 	createDummyTexture({ 0, 0, 0, 0 }, transparentTexture);
 
-	TerrainData terrainData = {
-		100, 100, // chunkWidth, chunkLength
-		4, 4,     // chunkRows, chunkCols
-		2.0f,     // gridSize
-		0.1f,     // scale
-		0.2f,     // height
-	};
-	terrainGenerator = std::make_unique<TerrainGenerator>(1);
-	TerrainGenerator::generateTerrain(
-		-(terrainData.chunkWidth * terrainData.chunkRows / 2 * terrainData.gridSize),
-		0,
-		-(terrainData.chunkLength * terrainData.chunkCols / 2 * terrainData.gridSize),
-		terrainData,
-		models, grassTexture, 8.0f,
-		terrainGenerator.get(), 1
-	);
+	//loadModelsFromDirectory("models", models);
 
-	loadModelsFromDirectory("models", models);
+	//TerrainData terrainData = {
+	//	100, 100, // chunkWidth, chunkLength
+	//	4, 4,     // chunkRows, chunkCols
+	//	2.0f,     // gridSize
+	//	0.1f,     // scale
+	//	0.2f,     // height
+	//};
+	//terrainGenerator = std::make_unique<TerrainGenerator>(1);
+	//TerrainGenerator::generateTerrain(
+	//	-(terrainData.chunkWidth * terrainData.chunkRows / 2 * terrainData.gridSize),
+	//	0,
+	//	-(terrainData.chunkLength * terrainData.chunkCols / 2 * terrainData.gridSize),
+	//	terrainData,
+	//	models, grassTexture, 8.0f,
+	//	terrainGenerator.get(), 1
+	//);
+
+	createDungeon();
 
 	createSkyModel(sky);
-	createCuboid(
-		0, 0, 0, 
-		10, 10, 10,
-		glm::vec3(0.5)
-	);
 
 	for (Mesh& mesh : sky.meshes) {
 		createVertexBuffer(mesh);
@@ -88,12 +92,93 @@ void AetherEngine::prepareResources()
 		}
 	}
 
+
 	createDescriptorPool();
 
 	createShaderBuffers(sky, MAX_FRAMES_IN_FLIGHT);
 	createShaderBuffers(models, MAX_FRAMES_IN_FLIGHT);
 	createDescriptorSets(sky, MAX_FRAMES_IN_FLIGHT);
 	createDescriptorSets(models, MAX_FRAMES_IN_FLIGHT);
+}
+
+void AetherEngine::createDungeon() {
+	std::unordered_map<glm::ivec2, RoomConnectionMask> roomGrid;
+	std::queue<glm::ivec2> frontier;
+	DungeonFloor dungeonFloor;
+
+	size_t minRoomCount = 25;
+	size_t maxRoomCount = 25;
+	float cellSize = 1.0f;
+	size_t maxRoomDimension = 9; // max of width or height
+	float roomSpacing = (maxRoomDimension * cellSize) + cellSize * 0;
+
+	while (roomGrid.size() < minRoomCount) {
+
+		// clean generation if failed
+		frontier.push({ 0, 0 });
+		roomGrid.clear();
+		roomGrid[{0, 0}] = RoomConnectionMask::NONE;
+		std::vector<std::pair<RoomConnectionMask, glm::ivec2>> shuffledOffsets(
+			directionOffsets.begin(),
+			directionOffsets.end()
+		);
+		std::shuffle(shuffledOffsets.begin(), shuffledOffsets.end(), std::default_random_engine(1));
+		size_t neighborChance = 75;
+
+		// try generate dungeon floor layout
+		while (!frontier.empty()) {
+			glm::ivec2 current = frontier.front(); frontier.pop();
+			RoomConnectionMask mask = RoomConnectionMask::NONE;
+
+			neighborChance = glm::clamp(
+				50 - roomGrid.size() * 2, 
+				static_cast<size_t>(5), static_cast<size_t>(40)
+			);
+
+			for (auto& [dir, offset] : directionOffsets) {
+				glm::ivec2 neighbor = current + offset;
+
+				// Randomly decide to add neighbor room
+				if (roomGrid.size() < maxRoomCount && 
+					roomGrid.find(neighbor) == roomGrid.end() && 
+					(rand() % 100 < neighborChance)) {
+					roomGrid[neighbor] = oppositeDirection(dir);
+					mask = static_cast<RoomConnectionMask>(mask | dir);
+					frontier.push(neighbor);
+				}
+				// Already placed neighbor, ensure bi-directional connection
+				else if (roomGrid.find(neighbor) != roomGrid.end()) {
+					roomGrid[neighbor] =
+						static_cast<RoomConnectionMask>(roomGrid[neighbor] | oppositeDirection(dir));
+					mask = static_cast<RoomConnectionMask>(mask | dir);
+				}
+			}
+
+			roomGrid[current] = static_cast<RoomConnectionMask>(roomGrid[current] | mask);
+			//std::cout << "room count: " << roomGrid.size() << "\n";
+		}
+	}
+
+	for (auto& [gridPos, connMask] : roomGrid) {
+		glm::vec3 worldPos = glm::vec3(gridPos.x * roomSpacing, 0.5f, gridPos.y * roomSpacing);
+		//size_t roomWidth = (rand() % 3) * 2 + 7; // 7,9,11
+		//size_t roomHeight = (rand() % 3) * 2 + 7;
+
+		size_t roomWidth = 9;
+		size_t roomLength = 9;
+
+		std::vector<std::string> layout = DungeonRoom::createRoomLayoutFromMask(connMask, roomWidth, roomLength);
+
+		dungeonFloor.addDungeonRoom(DungeonRoom(
+			worldPos,
+			layout,
+			cellSize,
+			stone_floor_floor_2_texture,
+			stone_wall_floor_2_texture
+		));
+	}
+
+	dungeonFloor.createDungeonFloor(models);
 }
 
 //void AetherEngine::createGLFWWindow()
@@ -155,11 +240,11 @@ void AetherEngine::onFramebufferResized(int width, int height) {
 	//std::cout << "onFramebufferResized: " << width << " " << height << "\n";
 	//std::cout << "center pos: " << gameContext.windowCenterPos.x() << " " << gameContext.windowCenterPos.y() << "\n";
 	character.camera.setViewportSize(windowWidth, windowHeight);
-	pauseMenuWidget->resize(windowWidth, windowHeight);
+	pauseMenuView->resize(windowWidth, windowHeight);
 }
 void AetherEngine::onWindowMoved(int x, int y) {
-	pauseMenuWidget->setPosition(x, y);
-	//pauseMenuWidget->setPosition(inGameWindow->frameGeometry().topLeft() * -1);
+	pauseMenuView->setPosition(x, y);
+	//pauseMenuView->setPosition(inGameWindow->frameGeometry().topLeft() * -1);
 }
 
 void AetherEngine::setWindowSize()
@@ -194,24 +279,24 @@ void AetherEngine::createSettingsMenuWidget() {
 		});
 }
 void AetherEngine::createPauseMenuWidget() {
-	//pauseMenuWidget = new PauseMenuQuickView(inGameWindow);
-	pauseMenuWidget = new PauseMenuQuickView(mainWindow->windowHandle());
+	//pauseMenuView = new PauseMenuQuickView(inGameWindow);
+	pauseMenuView = new PauseMenuQuickView(mainWindow->windowHandle());
 	
-	pauseMenuWidget->resize(windowWidth, windowHeight);
+	pauseMenuView->resize(windowWidth, windowHeight);
 
-	connect(pauseMenuWidget, &PauseMenuQuickView::resumeGame, [this]() {
+	connect(pauseMenuView, &PauseMenuQuickView::resumeGame, [this]() {
 		gameContext.requestedGameState = GameState::IN_DUNGEON;
 		});
 
-	connect(pauseMenuWidget, &PauseMenuQuickView::openSettings, [this]() {
+	connect(pauseMenuView, &PauseMenuQuickView::openSettings, [this]() {
 		gameContext.requestedGameState = GameState::SETTINGS_MENU;
 		});
 
-	connect(pauseMenuWidget, &PauseMenuQuickView::openMainMenu, [this]() {
+	connect(pauseMenuView, &PauseMenuQuickView::openMainMenu, [this]() {
 		gameContext.requestedGameState = GameState::MAIN_MENU;
 		});
 
-	connect(pauseMenuWidget, &PauseMenuQuickView::exitGame, [this]() {
+	connect(pauseMenuView, &PauseMenuQuickView::exitGame, [this]() {
 		gameContext.requestedGameState = GameState::EXIT;
 		});
 }
@@ -271,6 +356,7 @@ void AetherEngine::createInGameWindow()
 	//inGameStackedLayout->setStackingMode(QStackedLayout::StackAll);
 
 	inGameWidget = QWidget::createWindowContainer(inGameWindow);
+	inGameWidget->resize(inGameWindow->size());
 
 	//inGameStackedLayout->addWidget(inGameWidget);
 
@@ -297,7 +383,7 @@ void AetherEngine::changeState(GameState newGameState) {
 		QApplication::setOverrideCursor(Qt::ArrowCursor);
 		break;
 	case GameState::PAUSED:
-		pauseMenuWidget->hide();
+		pauseMenuView->hide();
 		break;
 	case GameState::EXIT:
 		break;
@@ -325,16 +411,8 @@ void AetherEngine::changeState(GameState newGameState) {
 		stackedWidget->setCurrentWidget(inGameWidget);
 		break;
 	case GameState::PAUSED:
-		//qDebug() << "pauseMenuWidget screen geometry before move:" << pauseMenuWidget->geometry();
-		//qDebug() << "inGameWindow geometry:" << inGameWindow->geometry();
-		//qDebug() << "inGameWindow frameGeometry:" << inGameWindow->frameGeometry();
-		//qDebug() << "inGameWindow position:" << inGameWindow->position();
-		//qDebug() << "inGameWidget geometry:" << inGameWidget->geometry();
-		//qDebug() << "inGameWidget mapToGlobal(QPoint(0, 0)):" << inGameWidget->mapToGlobal(QPoint(0, 0));
-		//qDebug() << "pauseMenuWidget geometry after set:" << pauseMenuWidget->geometry();
-		//qDebug() << inGameWindow->frameGeometry().topLeft() * -1;
-		pauseMenuWidget->show();
-		pauseMenuWidget->raise();
+		pauseMenuView->show();
+		pauseMenuView->raise();
 		break;
 	case GameState::EXIT:
 		QCoreApplication::quit();
@@ -409,6 +487,8 @@ void AetherEngine::mainLoop()
 		}*/
 
 		QCoreApplication::processEvents();
+
+		//std::cout << "window size: " << inGameWindow->size().width() << " " << inGameWindow->size().height() << "\n";
 
 		if (!mainWindow or !inGameWindow) {
 			break;
@@ -513,6 +593,14 @@ void AetherEngine::cleanupMemory()
 {
 	cleanupModels(models);
 	cleanupModel(sky);
+
+	cleanupTexture(stone_wall_floor_1_texture);
+	cleanupTexture(stone_wall_floor_2_texture);
+	cleanupTexture(stone_wall_floor_3_texture);
+	cleanupTexture(stone_floor_floor_1_texture);
+	cleanupTexture(stone_floor_floor_2_texture);
+	cleanupTexture(stone_floor_floor_3_texture);
+
 	cleanupTexture(grassTexture);
 	cleanupTexture(transparentTexture);
 
@@ -528,6 +616,7 @@ void AetherEngine::cleanupMemory()
 		vkDestroyFence(vkInit.device, inFlightFences[i], nullptr);
 	}
 
+	vmaDestroyAllocator(vmaAllocator);
 	vkDestroyCommandPool(vkInit.device, commandPool, nullptr);
 
 	vkDestroyDevice(vkInit.device, nullptr);
@@ -537,41 +626,42 @@ void AetherEngine::cleanupMemory()
 	}
 
 	// surface is handled by QVulkanInstance itself and shouldn't be destroyed manually
-	if (vkInit.surface) {
+	/*if (vkInit.surface != VK_NULL_HANDLE) {
 		vkDestroySurfaceKHR(vkInit.instance, vkInit.surface, nullptr);
-	}
+		vkInit.surface = VK_NULL_HANDLE;
+	}*/
 }
 
 void AetherEngine::restrictCharacterMovement(Camera& camera)
 {
-	glm::vec3 cameraPosition = camera.getLookFrom();
+	glm::vec3 cameraPosition = camera.getPosition();
 
 	glm::vec3 retrictPoint0 = glm::vec3(35.0, 30.0, 35.0);
 	glm::vec3 retrictPoint1 = glm::vec3(-35.0, 3.0, -35.0);
 
 	if (cameraPosition.x > retrictPoint0.x) {
-		camera.setLookFrom(glm::vec3(retrictPoint0.x, cameraPosition.y, cameraPosition.z));
-		cameraPosition = camera.getLookFrom();
+		camera.setPosition(glm::vec3(retrictPoint0.x, cameraPosition.y, cameraPosition.z));
+		cameraPosition = camera.getPosition();
 	}
 	if (cameraPosition.x < retrictPoint1.x) {
-		camera.setLookFrom(glm::vec3(retrictPoint1.x, cameraPosition.y, cameraPosition.z));
-		cameraPosition = camera.getLookFrom();
+		camera.setPosition(glm::vec3(retrictPoint1.x, cameraPosition.y, cameraPosition.z));
+		cameraPosition = camera.getPosition();
 	}
 	if (cameraPosition.y > retrictPoint0.y) {
-		camera.setLookFrom(glm::vec3(cameraPosition.x, retrictPoint0.y, cameraPosition.z));
-		cameraPosition = camera.getLookFrom();
+		camera.setPosition(glm::vec3(cameraPosition.x, retrictPoint0.y, cameraPosition.z));
+		cameraPosition = camera.getPosition();
 	}
 	if (cameraPosition.y < retrictPoint1.y) {
-		camera.setLookFrom(glm::vec3(cameraPosition.x, retrictPoint1.y, cameraPosition.z));
-		cameraPosition = camera.getLookFrom();
+		camera.setPosition(glm::vec3(cameraPosition.x, retrictPoint1.y, cameraPosition.z));
+		cameraPosition = camera.getPosition();
 	}
 	if (cameraPosition.z > retrictPoint0.z) {
-		camera.setLookFrom(glm::vec3(cameraPosition.x, cameraPosition.y, retrictPoint0.z));
-		cameraPosition = camera.getLookFrom();
+		camera.setPosition(glm::vec3(cameraPosition.x, cameraPosition.y, retrictPoint0.z));
+		cameraPosition = camera.getPosition();
 	}
 	if (cameraPosition.z < retrictPoint1.z) {
-		camera.setLookFrom(glm::vec3(cameraPosition.x, cameraPosition.y, retrictPoint1.z));
-		cameraPosition = camera.getLookFrom();
+		camera.setPosition(glm::vec3(cameraPosition.x, cameraPosition.y, retrictPoint1.z));
+		cameraPosition = camera.getPosition();
 	}
 }
 

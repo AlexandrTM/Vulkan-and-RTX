@@ -137,7 +137,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>GeneratedFiles\$(ConfigurationName);GeneratedFiles;O:\SDKforeverything\tinyobjloader-master;O:\SDKforeverything\stb-master;O:\SDKforeverything\VulkanSDK\Include;O:\SDKforeverything\glm-master\glm;O:\SDKforeverything\glfw-3.3.8\include;O:\SDKforeverything\tinygltf-2.8.18;O:\SDKforeverything\boost_1_85_0;O:\SDKforeverything\assimp\include;O:\SDKforeverything\meshoptimizer\src;O:\SDKforeverything\NoesisGUI\Include;O:\SDKforeverything\Qt\6.8.1\msvc2022_64\include;O:\SDKforeverything\solap position algorithm</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>GeneratedFiles\$(ConfigurationName);GeneratedFiles;O:\SDKforeverything\tinyobjloader-master;O:\SDKforeverything\stb-master;O:\SDKforeverything\VulkanSDK\Include;O:\SDKforeverything\glm-master\glm;O:\SDKforeverything\glfw-3.3.8\include;O:\SDKforeverything\tinygltf-2.8.18;O:\SDKforeverything\boost_1_85_0;O:\SDKforeverything\assimp\include;O:\SDKforeverything\meshoptimizer\src;O:\SDKforeverything\NoesisGUI\Include;O:\SDKforeverything\Qt\6.8.1\msvc2022_64\include;O:\SDKforeverything\solap position algorithm;O:\SDKforeverything\VulkanMemoryAllocator\include</AdditionalIncludeDirectories>
       <Optimization>MaxSpeed</Optimization>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -165,7 +165,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>GeneratedFiles\$(ConfigurationName);GeneratedFiles;O:\SDKforeverything\tinyobjloader-master;O:\SDKforeverything\stb-master;O:\SDKforeverything\VulkanSDK\Include;O:\SDKforeverything\glm-master\glm;O:\SDKforeverything\glfw-3.3.8\include;O:\SDKforeverything\tinygltf-2.8.18;O:\SDKforeverything\boost_1_85_0;O:\SDKforeverything\assimp\include;O:\SDKforeverything\meshoptimizer\src;O:\SDKforeverything\NoesisGUI\Include;O:\SDKforeverything\Qt\6.8.1\msvc2022_64\include;O:\SDKforeverything\solap position algorithm</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>GeneratedFiles\$(ConfigurationName);GeneratedFiles;O:\SDKforeverything\tinyobjloader-master;O:\SDKforeverything\stb-master;O:\SDKforeverything\VulkanSDK\Include;O:\SDKforeverything\glm-master\glm;O:\SDKforeverything\glfw-3.3.8\include;O:\SDKforeverything\tinygltf-2.8.18;O:\SDKforeverything\boost_1_85_0;O:\SDKforeverything\assimp\include;O:\SDKforeverything\meshoptimizer\src;O:\SDKforeverything\NoesisGUI\Include;O:\SDKforeverything\Qt\6.8.1\msvc2022_64\include;O:\SDKforeverything\solap position algorithm;O:\SDKforeverything\VulkanMemoryAllocator\include</AdditionalIncludeDirectories>
       <Optimization>MaxSpeed</Optimization>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <LanguageStandard>stdcpp20</LanguageStandard>
@@ -189,6 +189,7 @@
     <ClCompile Include="Aether.cpp" />
     <ClCompile Include="BufferManager.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="Dungeon.cpp" />
     <ClCompile Include="ImageManager.cpp" />
     <ClCompile Include="Character.cpp" />
     <ClCompile Include="GameContext.cpp" />
@@ -229,12 +230,16 @@
     <ClCompile Include="InGameWindow.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="BufferManager.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Character.h" />
     <QtMoc Include="MainMenuWidget.h" />
+    <ClInclude Include="Dungeon.h" />
     <ClInclude Include="GameContext.h" />
     <QtMoc Include="MainWindow.h" />
     <QtMoc Include="PauseMenuQuickView.h" />
+    <ClInclude Include="ImageManager.h" />
+    <ClInclude Include="ModelManager.h" />
     <ClInclude Include="rtx_core.h" />
     <ClInclude Include="InteractableVolume.h" />
     <ClInclude Include="IsEntity.h" />
@@ -248,6 +253,7 @@
     <ClInclude Include="resource.h" />
     <QtMoc Include="SettingsMenuWidget.h" />
     <ClInclude Include="StellarCalculations.h" />
+    <ClInclude Include="SwapchainManager.h" />
     <ClInclude Include="TerrainGenerator.h" />
     <ClInclude Include="Vertex.h" />
     <QtMoc Include="AetherEngine.h" />

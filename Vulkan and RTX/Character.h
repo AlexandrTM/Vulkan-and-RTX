@@ -1,12 +1,13 @@
 #include "pch.h"
+
+#ifndef CHARACTER_H
+#define CHARACTER_H
+
 #include "Camera.h"
 #include "InteractableVolume.h"
 #include "Model.h"
 #include "Camera.h"
 #include "GameContext.h"
-
-#ifndef CHARACTER_H
-#define CHARACTER_H
 
 class Character
 {

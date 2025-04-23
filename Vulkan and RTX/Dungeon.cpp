@@ -1,0 +1,110 @@
+#include "pch.h"
+#include "Dungeon.h"
+#include "AetherEngine.h"
+
+DungeonRoom::DungeonRoom(
+        glm::vec3 position, 
+        std::vector<std::string> roomLayout, 
+        float cellSize,
+        Texture& floorTexture, 
+        Texture& wallTexture
+    )
+    : 
+    position(position), 
+    roomLayout(roomLayout), 
+    cellSize(cellSize),
+    floorTexture(floorTexture), 
+    wallTexture(wallTexture)
+{
+    metricWidth = roomLayout[0].length() * cellSize;
+    metricLength = roomLayout.size() * cellSize;
+
+    centerPosition = position + glm::vec3(metricWidth / 2.0f, 0.0f, metricLength / 2.0f);
+
+    cameraPosition = position + centerPosition + glm::vec3(-8.5, 7.5, 0.0);
+}
+
+void DungeonRoom::createRoom(std::vector<Model>& models) {
+    // Generate walls based on the room layout
+    for (size_t x = 0; x < roomLayout.size(); ++x) {
+        for (size_t y = 0; y < roomLayout[x].length(); ++y) {
+            if (roomLayout[x][y] == 'w') {
+                // Place wall cubes
+                AetherEngine::createCube(
+                    position.x + x * cellSize,
+                    position.y,
+                    position.z + y * cellSize,
+                    cellSize,
+                    glm::vec3(0.5f),
+                    wallTexture,
+                    models
+                );
+            }
+            else if (roomLayout[x][y] == 'a') {
+                // Empty space (air), skip rendering
+                continue;
+            }
+        }
+    }
+
+    // Create the floor of the room
+    AetherEngine::createCuboid(
+        position.x,
+        position.y - 0.1f,
+        position.z,
+        metricLength,
+        0.1f,
+        metricWidth,
+        glm::vec3(1.0f),
+        floorTexture,
+        models
+    );
+}
+
+std::vector<std::string> DungeonRoom::createRoomLayoutFromMask(
+    RoomConnectionMask mask, 
+    size_t width, size_t length
+)
+{
+    std::vector<std::string> layout(length, std::string(width, 'a'));
+
+    // Place walls on borders
+    for (size_t x = 0; x < length; ++x) {
+        for (size_t y = 0; y < width; ++y) {
+            if (x == 0 || x == length - 1 || y == 0 || y == width - 1) {
+                layout[x][y] = 'w';
+            }
+        }
+    }
+
+    size_t midX = length / 2;
+    size_t midY = width / 2;
+
+    // Open passages based on mask
+    if (hasConnection(mask, RoomConnectionMask::NORTH)) {
+        layout[0][midY] = 'a';
+    }
+    if (hasConnection(mask, RoomConnectionMask::SOUTH)) {
+        layout[length - 1][midY] = 'a';
+    }
+    if (hasConnection(mask, RoomConnectionMask::WEST)) {
+        layout[midX][0] = 'a';
+    }
+    if (hasConnection(mask, RoomConnectionMask::EAST)) {
+        layout[midX][width - 1] = 'a';
+    }
+
+    return layout;
+}
+
+// Method to generate all rooms on the floor
+void DungeonFloor::createDungeonFloor(std::vector<Model>& models) {
+    // Generate each room in the dungeon
+    for (auto& room : dungeonRooms) {
+        room.createRoom(models);
+    }
+}
+
+void DungeonFloor::addDungeonRoom(DungeonRoom dungeonRoom) {
+    dungeonRooms.push_back(dungeonRoom);
+}

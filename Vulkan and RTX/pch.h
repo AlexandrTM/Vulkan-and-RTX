@@ -43,6 +43,8 @@
 #include <tiny_gltf.h>
 #include <tiny_obj_loader.h>
 
+#include "vk_mem_alloc.h"
+
 #include <chrono>
 #include <iostream>
 #include <stdexcept>
@@ -61,5 +63,6 @@
 #include <numeric>
 #include <sstream>
 #include <filesystem>
+#include <queue>
 
 #endif

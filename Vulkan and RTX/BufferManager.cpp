@@ -1,6 +1,39 @@
 #include "pch.h"
 #include "AetherEngine.h"
 
+void AetherEngine::initVMA() {
+	VmaVulkanFunctions vulkanFunctions = {};
+	vulkanFunctions.vkGetInstanceProcAddr = vkGetInstanceProcAddr;
+	vulkanFunctions.vkGetDeviceProcAddr = vkGetDeviceProcAddr;
+	vulkanFunctions.vkGetPhysicalDeviceProperties = vkGetPhysicalDeviceProperties;
+	vulkanFunctions.vkGetPhysicalDeviceMemoryProperties = vkGetPhysicalDeviceMemoryProperties;
+	vulkanFunctions.vkAllocateMemory = vkAllocateMemory;
+	vulkanFunctions.vkFreeMemory = vkFreeMemory;
+	vulkanFunctions.vkMapMemory = vkMapMemory;
+	vulkanFunctions.vkUnmapMemory = vkUnmapMemory;
+	vulkanFunctions.vkFlushMappedMemoryRanges = vkFlushMappedMemoryRanges;
+	vulkanFunctions.vkInvalidateMappedMemoryRanges = vkInvalidateMappedMemoryRanges;
+	vulkanFunctions.vkBindBufferMemory = vkBindBufferMemory;
+	vulkanFunctions.vkBindImageMemory = vkBindImageMemory;
+	vulkanFunctions.vkGetBufferMemoryRequirements = vkGetBufferMemoryRequirements;
+	vulkanFunctions.vkGetImageMemoryRequirements = vkGetImageMemoryRequirements;
+	vulkanFunctions.vkCreateBuffer = vkCreateBuffer;
+	vulkanFunctions.vkDestroyBuffer = vkDestroyBuffer;
+	vulkanFunctions.vkCreateImage = vkCreateImage;
+	vulkanFunctions.vkDestroyImage = vkDestroyImage;
+	vulkanFunctions.vkCmdCopyBuffer = vkCmdCopyBuffer;
+
+	VmaAllocatorCreateInfo allocatorInfo{};
+	allocatorInfo.physicalDevice = vkInit.physicalDevice;
+	allocatorInfo.device = vkInit.device;
+	allocatorInfo.instance = vkInit.instance;
+	allocatorInfo.pVulkanFunctions = &vulkanFunctions;
+
+	if (vmaCreateAllocator(&allocatorInfo, &vmaAllocator) != VK_SUCCESS) {
+		throw std::runtime_error("failed to create VMA allocator!");
+	}
+}
+
 // allocating and beginning command buffer helper function
 VkCommandBuffer AetherEngine::beginSingleTimeCommands() const
 {
@@ -37,8 +70,14 @@ void AetherEngine::endSingleTimeCommands(VkCommandBuffer commandBuffer) const
 	vkFreeCommandBuffers(vkInit.device, commandPool, 1, &commandBuffer);
 }
 
-void AetherEngine::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
-	VkBuffer& buffer, VkDeviceMemory& bufferMemory)
+//size_t totalSize = 0;
+//size_t totalAllocationSize = 0;
+//size_t totalBuffers = 0;
+std::map<size_t, size_t> bufferSizeCounts;
+void AetherEngine::createBuffer(
+	VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
+	VkBuffer& buffer, VkDeviceMemory& bufferMemory
+)
 {
 	VkBufferCreateInfo bufferInfo{};
 	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -50,6 +89,8 @@ void AetherEngine::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkM
 		throw std::runtime_error("failed to create buffer!");
 	}
 
+	bufferSizeCounts[size]++;
+
 	VkMemoryRequirements memRequirements;
 	vkGetBufferMemoryRequirements(vkInit.device, buffer, &memRequirements);
 
@@ -58,7 +99,16 @@ void AetherEngine::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkM
 	allocInfo.allocationSize = memRequirements.size;
 	allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
 
+	/*totalSize += size;
+	totalAllocationSize += memRequirements.size;
+	totalBuffers += 1;*/
+
 	if (vkAllocateMemory(vkInit.device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS) {
+		//std::cout << "total size: " << totalSize << " " << totalAllocationSize << " " << totalBuffers << "\n";
+		std::cout << "=== Unique Buffer Size Stats ===\n";
+		for (const auto& [size, count] : bufferSizeCounts) {
+			std::cout << "Size: " << size << " bytes - Count: " << count << "\n";
+		}
 		throw std::runtime_error("failed to allocate buffer memory!");
 	}
 
