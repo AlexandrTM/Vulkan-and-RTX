@@ -142,7 +142,8 @@ public:
 	);
 
 private:
-	void createDungeon();
+	void createDungeon(DungeonFloor& dungeonFloor);
+	void enterDungeon(DungeonFloor& dungeonFloor, GameContext& gameContext, Character& character);
 	std::string createPuzzleEquation(std::string name, int32_t& answer);
 
 	void changeState(GameState newGameState);

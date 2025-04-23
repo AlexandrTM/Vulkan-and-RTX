@@ -23,7 +23,7 @@ enum class GameState : uint32_t
 	SETTINGS_MENU = 1,
 	IN_GAME_TESTING = 2, // for testing purposes only
 	IN_DUNGEON = 3,
-	COMBAT = 4,
+	IN_COMBAT = 4,
 	SHOP = 5,
 	PAUSED = 6,
 	HALL_OF_FAME = 7,

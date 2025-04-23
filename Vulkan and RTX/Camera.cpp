@@ -3,12 +3,12 @@
 
 Camera::Camera() 
 {
-	_position = glm::vec3(0.0f, 10.0f, 0.0f);
+	_position = glm::vec3(0.0f, 0.0f, 0.0f);
 	//_lookAt = _position + glm::vec3(1.0f, 0.0f, 0.0f);
 	//_cameraDirection = glm::normalize(_lookAt - _position);
 	_verticalWorldAxis = glm::vec3(0.0f, 1.0f, 0.0f);
 
-	_verticalFov = 60.0f;
+	_verticalFov = 63.0f;
 
 	_viewportWidth = 800;
 	_viewportHeight = 450;

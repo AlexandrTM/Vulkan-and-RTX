@@ -8,6 +8,7 @@
 #include "Model.h"
 #include "Camera.h"
 #include "GameContext.h"
+#include "Dungeon.h"
 
 class Character
 {
@@ -43,6 +44,8 @@ public:
 		float gravity, const std::vector<Model>& models
 	);
 	void handleInGamePlayerInput(GameContext& gameContext);
+	void handleInDungeonPlayerInput(GameContext& gameContext);
+	void handleDungeonRoomMovement(GameContext& gameContext);
 
 	bool checkCollision(
 		const Mesh& mesh,

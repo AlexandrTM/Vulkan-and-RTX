@@ -3,7 +3,10 @@
 
 void Character::handleInGamePlayerInput(GameContext& gameContext)
 {
-	// altering mouse sensitivity
+	if (gameContext.keyboardKeys[Qt::Key_Escape]) {
+		gameContext.requestedGameState = GameState::PAUSED;
+	}
+
 	if (gameContext.keyboardKeys[Qt::Key_Up])
 	{
 		mouseSensitivity = std::clamp(mouseSensitivity * 1.25, 0.001, 10.0);
@@ -27,10 +30,6 @@ void Character::handleInGamePlayerInput(GameContext& gameContext)
 				}
 			}
 		}
-	}
-
-	if (gameContext.keyboardKeys[Qt::Key_Escape]) {
-		gameContext.requestedGameState = GameState::PAUSED;
 	}
 	
 	// changing mipmap level of detail
@@ -56,6 +55,66 @@ void Character::handleInGamePlayerInput(GameContext& gameContext)
 			currentMinMipLevels = 14.0f;
 		}
 	}*/
+}
+void Character::handleInDungeonPlayerInput(GameContext& gameContext)
+{
+	if (gameContext.keyboardKeys[Qt::Key_Escape]) {
+		gameContext.requestedGameState = GameState::PAUSED;
+	}
+
+	handleDungeonRoomMovement(gameContext);
+}
+
+void Character::handleDungeonRoomMovement(GameContext& gameContext) 
+{
+	if (!gameContext.keyboardKeys[Qt::Key_W] &&
+		!gameContext.keyboardKeys[Qt::Key_A] &&
+		!gameContext.keyboardKeys[Qt::Key_S] &&
+		!gameContext.keyboardKeys[Qt::Key_D]) {
+		gameContext.roomMovementHandled = false;
+	}
+
+	if (gameContext.roomMovementHandled) {
+		return;
+	}
+
+	glm::ivec2 moveDirectionVector = glm::ivec2(0, 0);
+	RoomConnectionMask moveDirection = RoomConnectionMask::NONE;
+	if (gameContext.keyboardKeys[Qt::Key_W]) {
+		moveDirection = RoomConnectionMask::SOUTH; // inverted
+		moveDirectionVector = directionOffsets.at(RoomConnectionMask::SOUTH);
+	}
+	if (gameContext.keyboardKeys[Qt::Key_A]) {
+		moveDirection = RoomConnectionMask::WEST;
+		moveDirectionVector = directionOffsets.at(RoomConnectionMask::WEST);
+	}
+	if (gameContext.keyboardKeys[Qt::Key_S]) {
+		moveDirection = RoomConnectionMask::NORTH;
+		moveDirectionVector = directionOffsets.at(RoomConnectionMask::NORTH);
+	}
+	if (gameContext.keyboardKeys[Qt::Key_D]) {
+		moveDirection = RoomConnectionMask::EAST;
+		moveDirectionVector = directionOffsets.at(RoomConnectionMask::EAST);
+	}
+
+	if (moveDirectionVector != glm::ivec2(0, 0) and gameContext.currentRoom != nullptr) {
+		if (hasConnection(gameContext.currentRoom->connectionMask, moveDirection)) {
+			/*std::cout << "move data: " <<
+				static_cast<uint32_t>(gameContext.currentRoom->connectionMask) << " " <<
+				glm::to_string(moveDirectionVector) << "\n";*/
+			glm::ivec2 targetGrid = gameContext.currentRoom->gridPosition + moveDirectionVector;
+
+			// Search for target room in dungeon
+			for (DungeonRoom& room : gameContext.dungeonFloor.dungeonRooms) {
+				if (room.gridPosition == targetGrid) {
+					gameContext.currentRoom = &room;
+					camera.setPosition(room.cameraPosition);
+					gameContext.roomMovementHandled = true;
+					break;
+				}
+			}
+		}
+	}
 }
 
 
@@ -175,6 +234,11 @@ bool Character::checkCollision(
 
 	meshBoxMin = mesh.aabb.min;
 	meshBoxMax = mesh.aabb.max;
+
+	/*std::cout << 
+		"character box: " << 
+		glm::to_string(cameraPosition + aabb.min) << " " << 
+		glm::to_string(cameraPosition + aabb.max) << "\n";*/
 
 	// Cuboid characterAABB = { mesh.aabb.min, mesh.aabb.max };
 	// Cuboid meshAABB = { cameraPosition + aabb.min, cameraPosition + aabb.max };

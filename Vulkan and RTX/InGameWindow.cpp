@@ -65,6 +65,10 @@ void InGameWindow::mouseMoveEvent(QMouseEvent* event) {
 }
 
 void InGameWindow::wheelEvent(QWheelEvent* event) {
+    if (!(gameContext->currentGameState == GameState::IN_GAME_TESTING)) {
+        return;
+    }
+
     float delta = event->angleDelta().y() / 120.0f; // Typical mouse wheel delta is 120
     character->camera.setVerticalFov(std::clamp(character->camera.getVerticalFov() - delta, 0.1f, 130.0f));
 }

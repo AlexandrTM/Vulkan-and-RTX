@@ -179,6 +179,7 @@ void AetherEngine::createCuboid(
 	mesh.material = material;
 
 	model.meshes.push_back(mesh);
+	//model.isCollidable = true;
 	models.push_back(model);
 }
 void AetherEngine::createSkyModel(Model& model)

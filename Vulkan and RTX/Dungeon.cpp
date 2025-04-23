@@ -4,14 +4,18 @@
 
 DungeonRoom::DungeonRoom(
         glm::vec3 position, 
-        std::vector<std::string> roomLayout, 
+        glm::ivec2 gridPosition,
+        std::vector<std::string> roomLayout,
+    RoomConnectionMask connectionMask,
         float cellSize,
         Texture& floorTexture, 
         Texture& wallTexture
     )
     : 
     position(position), 
-    roomLayout(roomLayout), 
+    gridPosition(gridPosition),
+    roomLayout(roomLayout),
+    connectionMask(connectionMask),
     cellSize(cellSize),
     floorTexture(floorTexture), 
     wallTexture(wallTexture)
@@ -20,8 +24,9 @@ DungeonRoom::DungeonRoom(
     metricLength = roomLayout.size() * cellSize;
 
     centerPosition = position + glm::vec3(metricWidth / 2.0f, 0.0f, metricLength / 2.0f);
+    //std::cout << "center position: " << glm::to_string(centerPosition) << "\n";
 
-    cameraPosition = position + centerPosition + glm::vec3(-8.5, 7.5, 0.0);
+    cameraPosition = centerPosition + glm::vec3(-8.3, 7.5, 0.0);
 }
 
 void DungeonRoom::createRoom(std::vector<Model>& models) {
@@ -102,6 +107,10 @@ void DungeonFloor::createDungeonFloor(std::vector<Model>& models) {
     // Generate each room in the dungeon
     for (auto& room : dungeonRooms) {
         room.createRoom(models);
+    }
+
+    if (!dungeonRooms.empty()) {
+        entrance = &dungeonRooms.front();
     }
 }
 

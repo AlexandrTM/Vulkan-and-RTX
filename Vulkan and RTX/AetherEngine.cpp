@@ -21,6 +21,7 @@ void AetherEngine::run()
 	mainWindow->show();
 
 	gameContext.requestedGameState = GameState::IN_GAME_TESTING;
+	gameContext.requestedGameState = GameState::IN_DUNGEON;
 
 	vkInit.initializeVulkan(&qVulkanInstance);
 	initVMA();
@@ -75,7 +76,8 @@ void AetherEngine::prepareResources()
 	//	terrainGenerator.get(), 1
 	//);
 
-	createDungeon();
+	createDungeon(gameContext.dungeonFloor);
+	enterDungeon(gameContext.dungeonFloor, gameContext, character);
 
 	createSkyModel(sky);
 
@@ -92,7 +94,6 @@ void AetherEngine::prepareResources()
 		}
 	}
 
-
 	createDescriptorPool();
 
 	createShaderBuffers(sky, MAX_FRAMES_IN_FLIGHT);
@@ -101,14 +102,19 @@ void AetherEngine::prepareResources()
 	createDescriptorSets(models, MAX_FRAMES_IN_FLIGHT);
 }
 
-void AetherEngine::createDungeon() {
+void AetherEngine::enterDungeon(DungeonFloor& dungeonFloor, GameContext& gameContext, Character& character)
+{
+	gameContext.currentRoom = gameContext.dungeonFloor.entrance;
+	character.camera.setPosition(dungeonFloor.entrance->cameraPosition);
+}
+
+void AetherEngine::createDungeon(DungeonFloor& dungeonFloor) {
 	std::unordered_map<glm::ivec2, RoomConnectionMask> roomGrid;
 	std::queue<glm::ivec2> frontier;
-	DungeonFloor dungeonFloor;
 
-	size_t minRoomCount = 25;
-	size_t maxRoomCount = 25;
-	float cellSize = 1.0f;
+	size_t minRoomCount = 45;
+	size_t maxRoomCount = 45;
+	float cellSize = 2.0f;
 	size_t maxRoomDimension = 9; // max of width or height
 	float roomSpacing = (maxRoomDimension * cellSize) + cellSize * 0;
 
@@ -123,7 +129,7 @@ void AetherEngine::createDungeon() {
 			directionOffsets.end()
 		);
 		std::shuffle(shuffledOffsets.begin(), shuffledOffsets.end(), std::default_random_engine(1));
-		size_t neighborChance = 75;
+		size_t neighborChance = 15;
 
 		// try generate dungeon floor layout
 		while (!frontier.empty()) {
@@ -147,11 +153,11 @@ void AetherEngine::createDungeon() {
 					frontier.push(neighbor);
 				}
 				// Already placed neighbor, ensure bi-directional connection
-				else if (roomGrid.find(neighbor) != roomGrid.end()) {
+				/*else if (roomGrid.find(neighbor) != roomGrid.end()) {
 					roomGrid[neighbor] =
 						static_cast<RoomConnectionMask>(roomGrid[neighbor] | oppositeDirection(dir));
 					mask = static_cast<RoomConnectionMask>(mask | dir);
-				}
+				}*/
 			}
 
 			roomGrid[current] = static_cast<RoomConnectionMask>(roomGrid[current] | mask);
@@ -159,19 +165,21 @@ void AetherEngine::createDungeon() {
 		}
 	}
 
-	for (auto& [gridPos, connMask] : roomGrid) {
-		glm::vec3 worldPos = glm::vec3(gridPos.x * roomSpacing, 0.5f, gridPos.y * roomSpacing);
+	for (auto& [gridPosition, connectionMask] : roomGrid) {
+		glm::vec3 worldPosition = glm::vec3(gridPosition.x * roomSpacing, 0.0f, gridPosition.y * roomSpacing);
 		//size_t roomWidth = (rand() % 3) * 2 + 7; // 7,9,11
 		//size_t roomHeight = (rand() % 3) * 2 + 7;
 
 		size_t roomWidth = 9;
 		size_t roomLength = 9;
 
-		std::vector<std::string> layout = DungeonRoom::createRoomLayoutFromMask(connMask, roomWidth, roomLength);
+		std::vector<std::string> layout = DungeonRoom::createRoomLayoutFromMask(connectionMask, roomWidth, roomLength);
 
 		dungeonFloor.addDungeonRoom(DungeonRoom(
-			worldPos,
+			worldPosition,
+			gridPosition,
 			layout,
+			connectionMask,
 			cellSize,
 			stone_floor_floor_2_texture,
 			stone_wall_floor_2_texture
@@ -423,12 +431,9 @@ void AetherEngine::changeState(GameState newGameState) {
 }
 void AetherEngine::handleInDungeonState(double deltaTime, double timeSinceLaunch)
 {
-	if (gameContext.keyboardKeys[Qt::Key_Escape]) {
-		gameContext.requestedGameState = GameState::PAUSED;
-	}
-
+	character.handleInDungeonPlayerInput(gameContext);
 	if (!character.isInteracting) {
-		character.handleCharacterMovement(gameContext, deltaTime, gravity, models);
+		//character.handleCharacterMovement(gameContext, deltaTime, gravity, models);
 	}
 
 	drawFrame(timeSinceLaunch, deltaTime);
@@ -474,7 +479,7 @@ void AetherEngine::mainLoop()
 	double deltaTime;
 	double timeSinceLaunch = 0.0f;
 
-	bool fpsMenu = 1;
+	bool fpsMenu = 0;
 
 	while (gameContext.currentGameState != GameState::EXIT) {
 		currentTime = std::chrono::high_resolution_clock::now();

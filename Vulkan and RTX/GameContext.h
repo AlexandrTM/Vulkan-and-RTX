@@ -1,5 +1,7 @@
-#ifndef INPUT_HANDLER
-#define INPUT_HANDLER
+#ifndef GAME_CONTEXT
+#define GAME_CONTEXT
+
+#include "Dungeon.h"
 
 struct GameContext
 {
@@ -12,6 +14,10 @@ struct GameContext
 	GameState requestedGameState = GameState::NONE;
 
 	void clearInputs();
+
+	DungeonFloor dungeonFloor;
+	DungeonRoom* currentRoom = nullptr;
+	bool roomMovementHandled = false;
 };
 
 #endif

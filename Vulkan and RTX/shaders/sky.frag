@@ -133,5 +133,10 @@ void main() {
 
     vec3 finalColor = sunColor + cloudColor;
 
+    float fogFactor = exp(-ubo.visibilityRange * 0.0001);
+    vec4 fogColor = vec4(0.0, 0.0, 0.0, 1.0);
+
+    sunColor = mix(fogColor.rgb, sunColor, fogFactor);
+
     outColor = vec4(pow(sunColor, vec3(1.0 / gamma)), 1.0);
 }

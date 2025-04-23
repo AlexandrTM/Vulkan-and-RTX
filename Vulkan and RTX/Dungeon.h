@@ -25,10 +25,10 @@ inline bool hasConnection(RoomConnectionMask mask, RoomConnectionMask direction)
 }
 
 const std::unordered_map<RoomConnectionMask, glm::ivec2> directionOffsets = {
-    { RoomConnectionMask::NORTH, { -1,  0} },
-    { RoomConnectionMask::SOUTH, {  1,  0} },
-    { RoomConnectionMask::EAST,  {  0,  1} },
-    { RoomConnectionMask::WEST,  {  0, -1} },
+    { RoomConnectionMask::NORTH, { -1,  0 } },
+    { RoomConnectionMask::SOUTH, {  1,  0 } },
+    { RoomConnectionMask::EAST,  {  0,  1 } },
+    { RoomConnectionMask::WEST,  {  0, -1 } },
 };
 
 inline RoomConnectionMask oppositeDirection(RoomConnectionMask dir) {
@@ -44,19 +44,25 @@ inline RoomConnectionMask oppositeDirection(RoomConnectionMask dir) {
 struct DungeonRoom
 {
     glm::vec3 position;
+    glm::ivec2 gridPosition;
+
+    float cellSize;
     float metricWidth;
     float metricLength;
     glm::vec3 centerPosition;
     glm::vec3 cameraPosition;
 
     std::vector<std::string> roomLayout;
-    float cellSize;
+    RoomConnectionMask connectionMask;
+
     Texture floorTexture;
     Texture wallTexture;
 
     DungeonRoom(
         glm::vec3 position, 
-        std::vector<std::string> roomLayout, 
+        glm::ivec2 gridPosition,
+        std::vector<std::string> roomLayout,
+        RoomConnectionMask connectionMask,
         float cellSize,
         Texture& floorTexture, 
         Texture& wallTexture
@@ -72,6 +78,7 @@ struct DungeonRoom
 struct DungeonFloor
 {
     std::vector<DungeonRoom> dungeonRooms;
+    DungeonRoom* entrance = nullptr;
 
     void createDungeonFloor(std::vector<Model>& models);
 
