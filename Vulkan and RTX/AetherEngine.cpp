@@ -474,7 +474,7 @@ void AetherEngine::mainLoop()
 	double deltaTime;
 	double timeSinceLaunch = 0.0f;
 
-	bool fpsMenu = 0;
+	bool fpsMenu = 1;
 
 	while (gameContext.currentGameState != GameState::EXIT) {
 		currentTime = std::chrono::high_resolution_clock::now();
@@ -544,23 +544,53 @@ void AetherEngine::cleanupModel(Model& model) const
 }
 void AetherEngine::cleanupMesh(Mesh& mesh) const
 {
-	vkDestroyBuffer(vkInit.device, mesh.indexBuffer, nullptr);
-	vkFreeMemory(vkInit.device, mesh.indexBufferMemory, nullptr);
-
-	vkDestroyBuffer(vkInit.device, mesh.vertexBuffer, nullptr);
-	vkFreeMemory(vkInit.device, mesh.vertexBufferMemory, nullptr);
-
-	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-		vkDestroyBuffer(vkInit.device, mesh.UBOBuffers[i], nullptr);
-		vkFreeMemory(vkInit.device, mesh.UBOBuffersMemory[i], nullptr);
-
-		if (mesh.bones.size() > 0) {
-			vkDestroyBuffer(vkInit.device, mesh.boneSSBOBuffers[i], nullptr);
-			vkFreeMemory(vkInit.device, mesh.boneSSBOBuffersMemory[i], nullptr);
-		}
+	if (mesh.vertexBuffer != VK_NULL_HANDLE) {
+		vmaDestroyBuffer(vmaAllocator, mesh.vertexBuffer, mesh.vertexBufferAllocation);
+		mesh.vertexBuffer = VK_NULL_HANDLE;
+		mesh.vertexBufferAllocation = VK_NULL_HANDLE;
+		destroyedVmaAllocations += 1;
 	}
 
-	// cleanupMaterial(mesh.material);
+	if (mesh.indexBuffer != VK_NULL_HANDLE) {
+		vmaDestroyBuffer(vmaAllocator, mesh.indexBuffer, mesh.indexBufferAllocation);
+		mesh.indexBuffer = VK_NULL_HANDLE;
+		mesh.indexBufferAllocation = VK_NULL_HANDLE;
+		destroyedVmaAllocations += 1;
+	}
+
+	cleanupShaderBuffers(mesh);
+
+	cleanupMaterial(mesh.material);
+}
+void AetherEngine::cleanupShaderBuffers(std::vector<Model>& models) const
+{
+	for (Model& model : models) {
+		cleanupShaderBuffers(model);
+	}
+}
+void AetherEngine::cleanupShaderBuffers(Model& model) const
+{
+	for (Mesh& mesh : model.meshes) {
+		cleanupShaderBuffers(mesh);
+	}
+}
+void AetherEngine::cleanupShaderBuffers(Mesh& mesh) const
+{
+	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+		if (mesh.UBOBuffers[i] != VK_NULL_HANDLE) {
+			vmaDestroyBuffer(vmaAllocator, mesh.UBOBuffers[i], mesh.UBOAllocations[i]);
+			mesh.UBOBuffers[i] = VK_NULL_HANDLE;
+			mesh.UBOAllocations[i] = VK_NULL_HANDLE;
+			destroyedVmaAllocations += 1;
+		}
+
+		if (!mesh.bones.empty() && mesh.boneSSBOBuffers[i] != VK_NULL_HANDLE) {
+			vmaDestroyBuffer(vmaAllocator, mesh.boneSSBOBuffers[i], mesh.boneSSBOAllocations[i]);
+			mesh.boneSSBOBuffers[i] = VK_NULL_HANDLE;
+			mesh.boneSSBOAllocations[i] = VK_NULL_HANDLE;
+			destroyedVmaAllocations += 1;
+		}
+	}
 }
 void AetherEngine::cleanupMaterial(Material& material) const
 {
@@ -571,19 +601,18 @@ void AetherEngine::cleanupMaterial(Material& material) const
 }
 void AetherEngine::cleanupTexture(Texture& texture) const
 {
-	if (texture.imageView) {
+	if (texture.imageView && cleanedImageViews.insert(texture.imageView).second) {
 		vkDestroyImageView(vkInit.device, texture.imageView, nullptr);
 		texture.imageView = VK_NULL_HANDLE;
 	}
-	if (texture.image) {
-		vkDestroyImage(vkInit.device, texture.image, nullptr);
+	if (texture.image && texture.vmaAllocation && cleanedImages.insert(texture.image).second) {
+		//std::cout << "Destroying image: " << texture.image << std::endl;
+		vmaDestroyImage(vmaAllocator, texture.image, texture.vmaAllocation);
 		texture.image = VK_NULL_HANDLE;
+		texture.vmaAllocation = VK_NULL_HANDLE;
+		destroyedVmaAllocations += 1;
 	}
-	if (texture.imageMemory) {
-		vkFreeMemory(vkInit.device, texture.imageMemory, nullptr);
-		texture.imageMemory = VK_NULL_HANDLE;
-	}
-	if (texture.sampler) {
+	if (texture.sampler && cleanedImageSamplers.insert(texture.sampler).second) {
 		vkDestroySampler(vkInit.device, texture.sampler, nullptr);
 		texture.sampler = VK_NULL_HANDLE;
 	}
@@ -600,11 +629,19 @@ void AetherEngine::cleanupMemory()
 	cleanupTexture(stone_floor_floor_1_texture);
 	cleanupTexture(stone_floor_floor_2_texture);
 	cleanupTexture(stone_floor_floor_3_texture);
+	cleanupTexture(floor_background_floor_2_texture);
 
 	cleanupTexture(grassTexture);
 	cleanupTexture(transparentTexture);
 
 	cleanupSwapchain();
+
+	cleanedImages.clear();
+	cleanedImageViews.clear();
+	cleanedImageSamplers.clear();
+
+	//std::cout << "createdBuffers: " << createdBuffers << "\n";
+	//std::cout << "destroyedVmaAllocations: " << destroyedVmaAllocations << "\n";
 
 	// will free all allocated descriptor sets from this pool
 	vkDestroyDescriptorPool(vkInit.device, descriptorPool, nullptr);

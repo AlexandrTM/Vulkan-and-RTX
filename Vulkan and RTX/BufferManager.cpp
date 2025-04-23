@@ -72,48 +72,42 @@ void AetherEngine::endSingleTimeCommands(VkCommandBuffer commandBuffer) const
 
 //size_t totalSize = 0;
 //size_t totalAllocationSize = 0;
-//size_t totalBuffers = 0;
 std::map<size_t, size_t> bufferSizeCounts;
 void AetherEngine::createBuffer(
-	VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
-	VkBuffer& buffer, VkDeviceMemory& bufferMemory
+	VkDeviceSize size, VkBufferUsageFlags usage, 
+	VkMemoryPropertyFlags properties, bool isMappingRequired,
+	VkBuffer& buffer, VmaAllocation& vmaAllocation
 )
 {
+	bufferSizeCounts[size]++;
+	//totalSize += size;
+
 	VkBufferCreateInfo bufferInfo{};
 	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 	bufferInfo.size = size;
 	bufferInfo.usage = usage;
 	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-	if (vkCreateBuffer(vkInit.device, &bufferInfo, nullptr, &buffer) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create buffer!");
+	VmaAllocationCreateInfo allocCreateInfo{};
+	allocCreateInfo.usage = VMA_MEMORY_USAGE_AUTO;
+	allocCreateInfo.flags = properties;
+
+	if (isMappingRequired) {
+		allocCreateInfo.flags = 
+			VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT |
+			VMA_ALLOCATION_CREATE_MAPPED_BIT;
 	}
 
-	bufferSizeCounts[size]++;
-
-	VkMemoryRequirements memRequirements;
-	vkGetBufferMemoryRequirements(vkInit.device, buffer, &memRequirements);
-
-	VkMemoryAllocateInfo allocInfo{};
-	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	allocInfo.allocationSize = memRequirements.size;
-	allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
-
-	/*totalSize += size;
-	totalAllocationSize += memRequirements.size;
-	totalBuffers += 1;*/
-
-	if (vkAllocateMemory(vkInit.device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS) {
-		//std::cout << "total size: " << totalSize << " " << totalAllocationSize << " " << totalBuffers << "\n";
+	if (vmaCreateBuffer(vmaAllocator, &bufferInfo, &allocCreateInfo, &buffer, &vmaAllocation, nullptr) != VK_SUCCESS) {
 		std::cout << "=== Unique Buffer Size Stats ===\n";
-		for (const auto& [size, count] : bufferSizeCounts) {
-			std::cout << "Size: " << size << " bytes - Count: " << count << "\n";
+		for (const auto& [sz, count] : bufferSizeCounts) {
+			std::cout << "Size: " << sz << " bytes - Count: " << count << "\n";
 		}
-		throw std::runtime_error("failed to allocate buffer memory!");
+		throw std::runtime_error("failed to allocate small buffer memory with VMA!");
 	}
-
-	// connecting buffer memory and the buffer itself
-	vkBindBufferMemory(vkInit.device, buffer, bufferMemory, 0);
+	else {
+		createdBuffers += 1;
+	}
 }
 // create multiple command buffers
 void AetherEngine::createCommandBuffers()
@@ -149,16 +143,17 @@ void AetherEngine::createVertexBuffer(Mesh& mesh)
 	VkDeviceSize bufferSize = sizeof(Vertex) * mesh.vertices.size();
 
 	VkBuffer stagingBuffer;
-	VkDeviceMemory stagingBufferMemory;
+	VmaAllocation stagingAllocation;
+
 	createBuffer(
 		bufferSize, 
 		VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 
-		stagingBuffer, stagingBufferMemory
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, true,
+		stagingBuffer, stagingAllocation
 	);
-
+	
 	void* data;
-	vkMapMemory(vkInit.device, stagingBufferMemory, 0, bufferSize, 0, &data);
+	vmaMapMemory(vmaAllocator, stagingAllocation, &data);
 	memcpy(data, mesh.vertices.data(), (size_t)bufferSize);
 
 	// Validation Step: Check bone data
@@ -190,48 +185,49 @@ void AetherEngine::createVertexBuffer(Mesh& mesh)
 		}*/
 	}
 
-	vkUnmapMemory(vkInit.device, stagingBufferMemory);
+	vmaUnmapMemory(vmaAllocator, stagingAllocation);
 
 	// giving perfomance boost by using device local memory
 	createBuffer(
 		bufferSize, 
 		VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
-		mesh.vertexBuffer, mesh.vertexBufferMemory
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, true,
+		mesh.vertexBuffer, mesh.vertexBufferAllocation
 	);
 
 	copyBuffer(stagingBuffer, mesh.vertexBuffer, bufferSize);
 
-	vkDestroyBuffer(vkInit.device, stagingBuffer, nullptr);
-	vkFreeMemory(vkInit.device, stagingBufferMemory, nullptr);
+	vmaDestroyBuffer(vmaAllocator, stagingBuffer, stagingAllocation);
+	destroyedVmaAllocations += 1;
 }
 void AetherEngine::createIndexBuffer(Mesh& mesh)
 {
 	VkDeviceSize bufferSize = sizeof(mesh.indices[0]) * mesh.indices.size();
 
 	VkBuffer stagingBuffer;
-	VkDeviceMemory stagingBufferMemory;
+	VmaAllocation stagingAllocation;
+
 	createBuffer(
 		bufferSize, 
 		VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, 
-		stagingBuffer, stagingBufferMemory
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, true,
+		stagingBuffer, stagingAllocation
 	);
 
 	void* data;
-	vkMapMemory(vkInit.device, stagingBufferMemory, 0, bufferSize, 0, &data);
+	vmaMapMemory(vmaAllocator, stagingAllocation, &data);
 	memcpy(data, mesh.indices.data(), (size_t)bufferSize);
-	vkUnmapMemory(vkInit.device, stagingBufferMemory);
+	vmaUnmapMemory(vmaAllocator, stagingAllocation);
 
 	createBuffer(
 		bufferSize, 
 		VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
-		mesh.indexBuffer, mesh.indexBufferMemory
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, true,
+		mesh.indexBuffer, mesh.indexBufferAllocation
 	);
 
 	copyBuffer(stagingBuffer, mesh.indexBuffer, bufferSize);
 
-	vkDestroyBuffer(vkInit.device, stagingBuffer, nullptr);
-	vkFreeMemory(vkInit.device, stagingBufferMemory, nullptr);
+	vmaDestroyBuffer(vmaAllocator, stagingBuffer, stagingAllocation);
+	destroyedVmaAllocations += 1;
 }

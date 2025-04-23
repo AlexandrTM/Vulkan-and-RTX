@@ -514,10 +514,9 @@ void AetherEngine::updateShaderBuffers(uint32_t currentImage, double timeSinceLa
 
 	void* data;
 	for (Mesh& mesh : sky.meshes) {
-		vkMapMemory(vkInit.device, mesh.UBOBuffersMemory[currentImage],
-			0, sizeof(UniformBufferObject), 0, &data);
+		vmaMapMemory(vmaAllocator, mesh.UBOAllocations[currentImage], &data);
 		memcpy(data, &skyUBO, sizeof(UniformBufferObject));
-		vkUnmapMemory(vkInit.device, mesh.UBOBuffersMemory[currentImage]);
+		vmaUnmapMemory(vmaAllocator, mesh.UBOAllocations[currentImage]);
 	}
 
 	// Update per-mesh shader buffers
@@ -530,10 +529,9 @@ void AetherEngine::updateShaderBuffers(uint32_t currentImage, double timeSinceLa
 					//std::cout << glm::to_string(boneUBO.boneTransforms[i]) << "\n";
 				}
 
-				vkMapMemory(vkInit.device, mesh.boneSSBOBuffersMemory[currentImage],
-					0, sizeof(glm::mat4)* MAX_BONES_NUM, 0, &data);
+				vmaMapMemory(vmaAllocator, mesh.boneSSBOAllocations[currentImage], &data);
 				memcpy(data, boneSSBO.boneTransforms.data(), sizeof(glm::mat4)* MAX_BONES_NUM);
-				vkUnmapMemory(vkInit.device, mesh.boneSSBOBuffersMemory[currentImage]);
+				vmaUnmapMemory(vmaAllocator, mesh.boneSSBOAllocations[currentImage]);
 
 				/*glm::mat4* mappedMatrices = reinterpret_cast<glm::mat4*>(data);
 				for (size_t i = 0; i < MAX_BONES_NUM; ++i) {
@@ -548,10 +546,9 @@ void AetherEngine::updateShaderBuffers(uint32_t currentImage, double timeSinceLa
 			meshUBO.sun = sun;
 			meshUBO.observer = character.camera.getPosition();
 
-			vkMapMemory(vkInit.device, mesh.UBOBuffersMemory[currentImage],
-				0, sizeof(UniformBufferObject), 0, &data);
+			vmaMapMemory(vmaAllocator, mesh.UBOAllocations[currentImage], &data);
 			memcpy(data, &meshUBO, sizeof(UniformBufferObject));
-			vkUnmapMemory(vkInit.device, mesh.UBOBuffersMemory[currentImage]);
+			vmaUnmapMemory(vmaAllocator, mesh.UBOAllocations[currentImage]);
 		}
 	}
 }
@@ -815,18 +812,18 @@ void AetherEngine::createShaderBuffers(Mesh& mesh, size_t swapchainImageCount)
 		createBuffer(
 			sizeof(UniformBufferObject),
 			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, true,
 			mesh.UBOBuffers[frameIndex],
-			mesh.UBOBuffersMemory[frameIndex]
+			mesh.UBOAllocations[frameIndex]
 		);
 
 		if (mesh.bones.size() > 0) {
 			createBuffer(
 				sizeof(glm::mat4) * MAX_BONES_NUM,
 				VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, true,
 				mesh.boneSSBOBuffers[frameIndex],
-				mesh.boneSSBOBuffersMemory[frameIndex]
+				mesh.UBOAllocations[frameIndex]
 			);
 		}
 	}

@@ -49,12 +49,12 @@ private:
 
 	QVulkanInstance qVulkanInstance;
 
-	VkDescriptorPool            descriptorPool;
-	VkDescriptorSetLayout       descriptorSetLayout;
+	VkDescriptorPool          descriptorPool;
+	VkDescriptorSetLayout     descriptorSetLayout;
 
-	UniformBufferObject			skyUBO;
-	UniformBufferObject			meshUBO;
-	ShaderStorageBufferObject	boneSSBO;
+	UniformBufferObject		  skyUBO;
+	UniformBufferObject		  meshUBO;
+	ShaderStorageBufferObject boneSSBO;
 
 	std::unique_ptr<TerrainGenerator> terrainGenerator;
 
@@ -103,6 +103,13 @@ private:
 
 	Texture depthTexture;
 	Texture msaaTexture;
+
+	mutable std::unordered_set<VkImage>     cleanedImages;
+	mutable std::unordered_set<VkImageView> cleanedImageViews;
+	mutable std::unordered_set<VkSampler>   cleanedImageSamplers;
+
+	size_t createdBuffers = 0;
+	mutable size_t destroyedVmaAllocations = 0;
 
 private slots:
 	void onFramebufferResized(int width, int height);
@@ -158,12 +165,16 @@ private:
 
 	void cleanupModels(std::vector<Model>& models) const;
 	void cleanupModel(Model& model) const;
-	void cleanupMesh(Mesh& mesh) const;
+	void cleanupMesh(Mesh& mesh) const; 
+	void cleanupShaderBuffers(std::vector<Model>& models) const;
+	void cleanupShaderBuffers(Model& model) const;
+	void cleanupShaderBuffers(Mesh& mesh) const;
 	void cleanupTexture(Texture& texture) const;
 	void cleanupMaterial(Material& material) const;
+	void cleanupSwapchain();
+
 	void cleanupMemory();
 
-	void cleanupSwapchain();
 	// recreating swap chain in some special cases
 	void recreateSwapchain();
 	void createSkyModel(Model& model);
@@ -171,7 +182,10 @@ private:
 	void loadObjModel(const std::string& filePath);
 	void loadGltfModel(const std::string& filePath);
 
-	void loadModelsFromDirectory(const std::string& directory, std::vector<Model>& models);
+	void loadModelsFromDirectory(
+		const std::string& directory,
+		std::vector<Model>& models
+	);
 	Texture loadTexture(const std::string& texturePath, const aiScene* scene);
 	Material processMaterial(aiMaterial* aiMat, const aiScene* scene);
 	void processNode(
@@ -185,10 +199,15 @@ private:
 
 	void createDummyTexture(std::array<uint8_t, 4> color, Texture& texture);
 	void createTextureFromPath(const std::string& texturePath, Texture& texture);
-	void createTextureFromEmbedded(const std::string& embeddedTextureName, Texture& texture, const aiScene* scene);
-	void createImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkSampleCountFlagBits numSamples,
+	void createTextureFromEmbedded(
+		const std::string& embeddedTextureName, 
+		const aiScene* scene, Texture& texture
+	);
+	void createImage(
+		uint32_t width, uint32_t height, uint32_t mipLevels, VkSampleCountFlagBits numSamples,
 		VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties,
-		VkImage& image, VkDeviceMemory& imageMemory);
+		VkImage& image, VmaAllocation& vmaAllocation
+	);
 	void generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels);
 
 	// how to sample through texels of the texture for drawing them on 3D model
@@ -225,8 +244,9 @@ private:
 	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
 
 	void createBuffer(
-		VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
-		VkBuffer& buffer, VkDeviceMemory& bufferMemory
+		VkDeviceSize size, VkBufferUsageFlags usage, 
+		VkMemoryPropertyFlags properties, bool isMappingRequired,
+		VkBuffer& buffer, VmaAllocation& vmaAllocation
 	);
 
 	void createVertexBuffer(Mesh& mesh);

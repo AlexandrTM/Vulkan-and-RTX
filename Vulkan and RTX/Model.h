@@ -50,19 +50,19 @@ struct Bone {
 };
 
 struct Texture {
-    VkImage                                 image       = VK_NULL_HANDLE;
-    VkDeviceMemory                          imageMemory = VK_NULL_HANDLE;
-    VkImageView                             imageView   = VK_NULL_HANDLE;
-    VkSampler                               sampler     = VK_NULL_HANDLE;
-    uint32_t                                mipLevels = 0;
+    VkImage                                 image         = VK_NULL_HANDLE;
+    VmaAllocation                           vmaAllocation = VK_NULL_HANDLE;
+    VkImageView                             imageView     = VK_NULL_HANDLE;
+    VkSampler                               sampler       = VK_NULL_HANDLE;
+    uint32_t                                mipLevels     = 0;
 
 	explicit operator bool() const {
 		return 
-            image       != VK_NULL_HANDLE &&
-			imageMemory != VK_NULL_HANDLE &&
-			imageView   != VK_NULL_HANDLE &&
-			sampler     != VK_NULL_HANDLE &&
-            mipLevels   != 0;
+            image         != VK_NULL_HANDLE &&
+            vmaAllocation != VK_NULL_HANDLE &&
+			imageView     != VK_NULL_HANDLE &&
+			sampler       != VK_NULL_HANDLE &&
+            mipLevels     != 0;
 	}
 };
 
@@ -90,17 +90,17 @@ struct Mesh
     std::vector<Bone>                       bones;
     std::unordered_map<std::string, size_t> boneMap;
 
-    VkBuffer                                vertexBuffer          = VK_NULL_HANDLE;
-    VkDeviceMemory                          vertexBufferMemory    = VK_NULL_HANDLE;
-    VkBuffer                                indexBuffer           = VK_NULL_HANDLE;
-    VkDeviceMemory                          indexBufferMemory     = VK_NULL_HANDLE;
+    VkBuffer                                vertexBuffer           = VK_NULL_HANDLE;
+    VmaAllocation                           vertexBufferAllocation = VK_NULL_HANDLE;
+    VkBuffer                                indexBuffer            = VK_NULL_HANDLE;
+    VmaAllocation                           indexBufferAllocation  = VK_NULL_HANDLE;
 
-    std::vector<VkDescriptorSet>            descriptorSets        = std::vector<VkDescriptorSet>(MAX_FRAMES_IN_FLIGHT, VK_NULL_HANDLE);
+    std::vector<VkDescriptorSet>            descriptorSets         = std::vector<VkDescriptorSet>(MAX_FRAMES_IN_FLIGHT, VK_NULL_HANDLE);
 
-    std::vector<VkBuffer>                   UBOBuffers            = std::vector<VkBuffer>       (MAX_FRAMES_IN_FLIGHT, VK_NULL_HANDLE);
-    std::vector<VkDeviceMemory>             UBOBuffersMemory      = std::vector<VkDeviceMemory> (MAX_FRAMES_IN_FLIGHT, VK_NULL_HANDLE);
-    std::vector<VkBuffer>		            boneSSBOBuffers       = std::vector<VkBuffer>       (MAX_FRAMES_IN_FLIGHT, VK_NULL_HANDLE);
-    std::vector<VkDeviceMemory>             boneSSBOBuffersMemory = std::vector<VkDeviceMemory> (MAX_FRAMES_IN_FLIGHT, VK_NULL_HANDLE);
+    std::vector<VkBuffer>                   UBOBuffers             = std::vector<VkBuffer>       (MAX_FRAMES_IN_FLIGHT, VK_NULL_HANDLE);
+    std::vector<VmaAllocation>              UBOAllocations         = std::vector<VmaAllocation>  (MAX_FRAMES_IN_FLIGHT, VK_NULL_HANDLE);
+    std::vector<VkBuffer>		            boneSSBOBuffers        = std::vector<VkBuffer>       (MAX_FRAMES_IN_FLIGHT, VK_NULL_HANDLE);
+    std::vector<VmaAllocation>              boneSSBOAllocations    = std::vector<VmaAllocation>  (MAX_FRAMES_IN_FLIGHT, VK_NULL_HANDLE);
 };
 
 struct Model {

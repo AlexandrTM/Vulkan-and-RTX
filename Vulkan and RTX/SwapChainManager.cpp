@@ -106,6 +106,8 @@ void AetherEngine::recreateSwapchain()
 	vkDeviceWaitIdle(vkInit.device);
 
 	cleanupSwapchain();
+	cleanupShaderBuffers(sky);
+	cleanupShaderBuffers(models);
 
 	createPipelinesAndSwapchain();
 	createColorTexture(msaaTexture);

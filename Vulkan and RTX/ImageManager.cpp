@@ -255,7 +255,7 @@ void AetherEngine::transitionImageLayout(
 
 void AetherEngine::createImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkSampleCountFlagBits numSamples,
 	VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties,
-	VkImage& image, VkDeviceMemory& imageMemory)
+	VkImage& image, VmaAllocation& vmaAllocation)
 {
 	VkImageCreateInfo imageInfo{};
 	imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -272,23 +272,13 @@ void AetherEngine::createImage(uint32_t width, uint32_t height, uint32_t mipLeve
 	imageInfo.samples = numSamples;
 	imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-	if (vkCreateImage(vkInit.device, &imageInfo, nullptr, &image) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create image!");
+	VmaAllocationCreateInfo allocCreateInfo{};
+	allocCreateInfo.usage = VMA_MEMORY_USAGE_AUTO; // or AUTO_PREFER_DEVICE / AUTO_PREFER_HOST
+	allocCreateInfo.requiredFlags = properties;
+
+	if (vmaCreateImage(vmaAllocator, &imageInfo, &allocCreateInfo, &image, &vmaAllocation, nullptr) != VK_SUCCESS) {
+		throw std::runtime_error("failed to create image with VMA!");
 	}
-
-	VkMemoryRequirements memRequirements;
-	vkGetImageMemoryRequirements(vkInit.device, image, &memRequirements);
-
-	VkMemoryAllocateInfo allocInfo{};
-	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-	allocInfo.allocationSize = memRequirements.size;
-	allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
-
-	if (vkAllocateMemory(vkInit.device, &allocInfo, nullptr, &imageMemory) != VK_SUCCESS) {
-		throw std::runtime_error("failed to allocate image memory!");
-	}
-
-	vkBindImageMemory(vkInit.device, image, imageMemory, 0);
 }
 
 void AetherEngine::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
@@ -331,7 +321,7 @@ void AetherEngine::createColorTexture(Texture& texture)
 		VK_IMAGE_TILING_OPTIMAL, 
 		VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
-		texture.image, texture.imageMemory
+		texture.image, texture.vmaAllocation
 	);
 
 	texture.imageView = createImageView(texture.image, colorFormat, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels);
@@ -348,7 +338,7 @@ void AetherEngine::createDepthTexture(Texture& texture)
 		VK_IMAGE_TILING_OPTIMAL, 
 		VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
-		texture.image, texture.imageMemory
+		texture.image, texture.vmaAllocation
 	);
 
 	texture.imageView = createImageView(texture.image, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, mipLevels);
