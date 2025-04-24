@@ -22,9 +22,9 @@ public:
     void addWidget(QWidget* widget);
 
 signals:
-    void framebufferResized(int width, int height);
-    void windowMoved(int x, int y);
-    void windowClosed();
+    void resized(int width, int height);
+    void moved(int x, int y);
+    void closed();
 
 protected:
     void resizeEvent(QResizeEvent* event) override;

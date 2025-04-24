@@ -112,8 +112,10 @@ private:
 	mutable size_t destroyedVmaAllocations = 0;
 
 private slots:
-	void onFramebufferResized(int width, int height);
-	void onWindowMoved(int x, int y);
+	void onMainWindowResized(int width, int height);
+	void onMainWindowMoved(int x, int y);
+	void onInGameWindowMoved(int x, int y);
+	void onInGameWindowLostFocus();
 
 #pragma endregion
 
@@ -153,7 +155,7 @@ private:
 	void setWindowSize();
 	void createMainMenuWidget();
 	void createSettingsMenuWidget();
-	void createPauseMenuWidget();
+	void createPauseMenuView();
 
 	void createMainWindow();
 	void createInGameWindow();

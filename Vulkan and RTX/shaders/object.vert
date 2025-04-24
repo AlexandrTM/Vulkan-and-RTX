@@ -36,8 +36,8 @@ void main() {
 
     for (int i = 0; i < 4; i++) {
         if (inBoneWeights[i] > 0.001) {
-            boneTransform += inBoneWeights[i] * boneSSBO.boneTransforms[inBoneIDs[i]];
-			//transformedPosition += boneSSBO.boneTransforms[inBoneIDs[i]] * vec4(inPosition, 1.0);
+            boneTransform += boneSSBO.boneTransforms[inBoneIDs[i]] * inBoneWeights[i];
+			//transformedPosition += inBoneWeights[i] * boneSSBO.boneTransforms[inBoneIDs[i]] * vec4(inPosition, 1.0);
         }
     }
 	// boneTransform = boneSSBO.boneTransforms[inBoneIDs[0]] * inBoneWeights[0];
@@ -45,10 +45,10 @@ void main() {
     // boneTransform += boneSSBO.boneTransforms[inBoneIDs[2]] * inBoneWeights[2];
     // boneTransform += boneSSBO.boneTransforms[inBoneIDs[3]] * inBoneWeights[3];
 
-	if (boneTransform == mat4(0.0)) {
-    	boneTransform = mat4(1.0);
-	}
-	transformedPosition = boneTransform * vec4(inPosition, 1.0);
+	// if (boneTransform == mat4(0.0)) {
+    // 	boneTransform = mat4(1.0);
+	// }
+	transformedPosition = /*boneTransform **/ vec4(inPosition, 1.0);
 
 	// for (int i = 0; i < 256; i++) {
 	// 	if (boneSSBO.boneTransforms[i] == mat4(0.0f)) {
@@ -84,6 +84,7 @@ void main() {
 		
 	outPosition = vec3(ubo.model * transformedPosition);
 	outColor = inColor * lightingFactor;
+	//outColor = vec3(inBoneIDs[0] / 255.0, inBoneWeights[0], 0.0);
     outTexCoord0 = inTexCoord0;
     gl_Position = ubo.proj * ubo.view * ubo.model * transformedPosition;
 }

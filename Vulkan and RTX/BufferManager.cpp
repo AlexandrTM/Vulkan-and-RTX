@@ -103,7 +103,7 @@ void AetherEngine::createBuffer(
 		for (const auto& [sz, count] : bufferSizeCounts) {
 			std::cout << "Size: " << sz << " bytes - Count: " << count << "\n";
 		}
-		throw std::runtime_error("failed to allocate small buffer memory with VMA!");
+		throw std::runtime_error("failed to allocate buffer memory with VMA!");
 	}
 	else {
 		createdBuffers += 1;
@@ -140,6 +140,11 @@ void AetherEngine::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSi
 }
 void AetherEngine::createVertexBuffer(Mesh& mesh)
 {
+	if (mesh.vertexBuffer != VK_NULL_HANDLE) {
+		std::cout << "mesh already have vertex buffer\n";
+		return;
+	}
+
 	VkDeviceSize bufferSize = sizeof(Vertex) * mesh.vertices.size();
 
 	VkBuffer stagingBuffer;
@@ -202,6 +207,11 @@ void AetherEngine::createVertexBuffer(Mesh& mesh)
 }
 void AetherEngine::createIndexBuffer(Mesh& mesh)
 {
+	if (mesh.indexBuffer != VK_NULL_HANDLE) {
+		std::cout << "mesh already have index buffer\n";
+		return;
+	}
+
 	VkDeviceSize bufferSize = sizeof(mesh.indices[0]) * mesh.indices.size();
 
 	VkBuffer stagingBuffer;

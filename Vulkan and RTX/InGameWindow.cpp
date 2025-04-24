@@ -28,7 +28,7 @@ void InGameWindow::mouseReleaseEvent(QMouseEvent* event) {
 }
 
 void InGameWindow::resizeEvent(QResizeEvent* event) {
-    emit framebufferResized(event->size().width(), event->size().height());
+    emit resized(event->size().width(), event->size().height());
     //std::cout << "in game window resized: " << event->size().width() << " " <<  event->size().height() << "\n";
     gameContext->windowCenterPos = { event->size().width() / 2, event->size().height() / 2 };
     gameContext->windowCenterPos = mapToGlobal(gameContext->windowCenterPos);
@@ -40,12 +40,13 @@ void InGameWindow::resizeEvent(QResizeEvent* event) {
 }
 
 void InGameWindow::moveEvent(QMoveEvent* event) {
+    emit moved(event->pos().x(), event->pos().y());
     gameContext->windowCenterPos = { width() / 2, height() / 2 };
     gameContext->windowCenterPos = mapToGlobal(gameContext->windowCenterPos);
 }
 
 void InGameWindow::closeEvent(QCloseEvent* event) {
-    emit windowClosed();
+    emit closed();
     QWindow::closeEvent(event);
 }
 
@@ -82,5 +83,6 @@ void InGameWindow::focusInEvent(QFocusEvent* event) {
 }
 
 void InGameWindow::focusOutEvent(QFocusEvent* event) {
+    emit lostFocus();
     setCursor(Qt::ArrowCursor);
 }

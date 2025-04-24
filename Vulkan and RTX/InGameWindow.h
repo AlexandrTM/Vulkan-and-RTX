@@ -27,8 +27,10 @@ public:
     double latestMouseDy = 0.0;
 
 signals:
-    void framebufferResized(int width, int height);
-    void windowClosed();
+    void resized(int width, int height);
+    void moved(int x, int y);
+    void closed();
+    void lostFocus();
 
 protected:
     void resizeEvent(QResizeEvent* event) override;

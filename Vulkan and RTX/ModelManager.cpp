@@ -1091,7 +1091,9 @@ void AetherEngine::processNode(
 			globalInverseTransform, perModelVertexOffset, 
 			level + 1
 		);
-		models.push_back(childModel);
+		//if (childModel.meshes.size() > 0) {
+			models.push_back(childModel);
+		//}
 	}
 }
 void AetherEngine::loadModelsFromDirectory(

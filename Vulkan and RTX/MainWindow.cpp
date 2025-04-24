@@ -10,13 +10,13 @@ MainWindow::MainWindow(GameContext& gameContext, QWidget* parent)
 }
 
 void MainWindow::resizeEvent(QResizeEvent* event) {
-    emit framebufferResized(event->size().width(), event->size().height());
+    emit resized(event->size().width(), event->size().height());
     gameContext->windowCenterPos = { event->size().width() / 2, event->size().height() / 2 };
     gameContext->windowCenterPos = mapToGlobal(gameContext->windowCenterPos);
 }
 
 void MainWindow::moveEvent(QMoveEvent* event) {
-    emit windowMoved(event->pos().x(), event->pos().y());
+    emit moved(event->pos().x(), event->pos().y());
     gameContext->windowCenterPos = { width() / 2, height() / 2 };
     gameContext->windowCenterPos = mapToGlobal(gameContext->windowCenterPos);
     //std::cout << "windowMoved: " << event->pos().x() << " " << event->pos().y() << "\n";
@@ -32,7 +32,7 @@ QStackedWidget* MainWindow::getStackedWidget() {
 }
 
 void MainWindow::closeEvent(QCloseEvent* event) {
-    emit windowClosed();
+    emit closed();
     QMainWindow::closeEvent(event);
 }
 

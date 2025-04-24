@@ -12,7 +12,7 @@ void AetherEngine::run()
 
 	createMainMenuWidget();
 	createSettingsMenuWidget();
-	createPauseMenuWidget();
+	createPauseMenuView();
 
 	mainWindow->addWidget(mainMenuWidget);
 	mainWindow->addWidget(inGameWidget);
@@ -20,8 +20,9 @@ void AetherEngine::run()
 	mainWindow->addWidget(settingsMenuWidget);
 	mainWindow->show();
 
-	gameContext.requestedGameState = GameState::IN_GAME_TESTING;
 	gameContext.requestedGameState = GameState::IN_DUNGEON;
+	gameContext.requestedGameState = GameState::IN_GAME_TESTING;
+	gameContext.requestedGameState = GameState::MAIN_MENU;
 
 	vkInit.initializeVulkan(&qVulkanInstance);
 	initVMA();
@@ -58,7 +59,7 @@ void AetherEngine::prepareResources()
 	createDummyTexture({ 0, 0, 0, 0 }, transparentTexture);
 
 	//loadModelsFromDirectory("models", models);
-
+	
 	//TerrainData terrainData = {
 	//	100, 100, // chunkWidth, chunkLength
 	//	4, 4,     // chunkRows, chunkCols
@@ -105,7 +106,12 @@ void AetherEngine::prepareResources()
 void AetherEngine::enterDungeon(DungeonFloor& dungeonFloor, GameContext& gameContext, Character& character)
 {
 	gameContext.currentRoom = gameContext.dungeonFloor.entrance;
-	character.camera.setPosition(dungeonFloor.entrance->cameraPosition);
+	if (gameContext.currentRoom != nullptr) {
+		character.camera.setPosition(dungeonFloor.entrance->cameraPosition);
+	}
+	else {
+		std::cout << "there is no dungeon entrance room\n";
+	}
 }
 
 void AetherEngine::createDungeon(DungeonFloor& dungeonFloor) {
@@ -240,7 +246,7 @@ void AetherEngine::createDungeon(DungeonFloor& dungeonFloor) {
 //	glfwSetWindowIcon(glfwWindow, 1, windowIcon);
 //#pragma endregion
 //}
-void AetherEngine::onFramebufferResized(int width, int height) {
+void AetherEngine::onMainWindowResized(int width, int height) {
 	isFramebufferResized = true;
 	windowWidth = width;
 	windowHeight = height;
@@ -250,9 +256,16 @@ void AetherEngine::onFramebufferResized(int width, int height) {
 	character.camera.setViewportSize(windowWidth, windowHeight);
 	pauseMenuView->resize(windowWidth, windowHeight);
 }
-void AetherEngine::onWindowMoved(int x, int y) {
+void AetherEngine::onMainWindowMoved(int x, int y) {
 	pauseMenuView->setPosition(x, y);
 	//pauseMenuView->setPosition(inGameWindow->frameGeometry().topLeft() * -1);
+}
+void AetherEngine::onInGameWindowMoved(int x, int y) {
+	//pauseMenuView->setPosition(x, y);
+}
+void AetherEngine::onInGameWindowLostFocus() {
+	//std::cout << "lost focus\n";
+	//pauseMenuView->show();
 }
 
 void AetherEngine::setWindowSize()
@@ -286,10 +299,11 @@ void AetherEngine::createSettingsMenuWidget() {
 		gameContext.requestedGameState = GameState::MAIN_MENU;
 		});
 }
-void AetherEngine::createPauseMenuWidget() {
+void AetherEngine::createPauseMenuView() {
 	//pauseMenuView = new PauseMenuQuickView(inGameWindow);
 	pauseMenuView = new PauseMenuQuickView(mainWindow->windowHandle());
-	
+	//pauseMenuView = new PauseMenuQuickView();
+
 	pauseMenuView->resize(windowWidth, windowHeight);
 
 	connect(pauseMenuView, &PauseMenuQuickView::resumeGame, [this]() {
@@ -310,23 +324,22 @@ void AetherEngine::createPauseMenuWidget() {
 }
 
 void AetherEngine::createMainWindow()
-{
-	mainWindow = new MainWindow(gameContext);
+{mainWindow = new MainWindow(gameContext);
 	mainWindow->resize(windowWidth, windowHeight);
 	mainWindow->setWindowTitle("Aether");
-	mainWindow->setWindowIcon(QIcon("textures/granite square.png"));
+	mainWindow->setWindowIcon(QIcon("textures/granite_square.png"));
 
 	stackedWidget = mainWindow->getStackedWidget();
 
-	connect(mainWindow, &MainWindow::framebufferResized, this,
-		&AetherEngine::onFramebufferResized
+	connect(mainWindow, &MainWindow::resized, this,
+		&AetherEngine::onMainWindowResized
 	);
 
-	connect(mainWindow, &MainWindow::windowMoved, this,
-		&AetherEngine::onWindowMoved
+	connect(mainWindow, &MainWindow::moved, this,
+		&AetherEngine::onMainWindowMoved
 	);
 
-	connect(mainWindow, &MainWindow::windowClosed, [this]() {
+	connect(mainWindow, &MainWindow::closed, [this]() {
 		gameContext.requestedGameState = GameState::EXIT;
 		});
 }
@@ -349,7 +362,7 @@ void AetherEngine::createInGameWindow()
 	inGameWindow->setParent(mainWindow->windowHandle());
 	inGameWindow->setFlags(Qt::FramelessWindowHint);
 	inGameWindow->resize(windowWidth, windowHeight);
-	inGameWindow->setTitle("Aether");
+	inGameWindow->setTitle("Aether in game");
 	inGameWindow->create();
 
 	vkInit.surface = qVulkanInstance.surfaceForWindow(inGameWindow);
@@ -368,7 +381,15 @@ void AetherEngine::createInGameWindow()
 
 	//inGameStackedLayout->addWidget(inGameWidget);
 
-	connect(inGameWindow, &InGameWindow::windowClosed, [this]() {
+	connect(inGameWindow, &InGameWindow::moved, this,
+		&AetherEngine::onInGameWindowMoved
+	);
+
+	connect(inGameWindow, &InGameWindow::lostFocus, this,
+		&AetherEngine::onInGameWindowLostFocus
+	);
+
+	connect(inGameWindow, &InGameWindow::closed, [this]() {
 		gameContext.requestedGameState = GameState::EXIT;
 		});
 }
@@ -492,6 +513,7 @@ void AetherEngine::mainLoop()
 		}*/
 
 		QCoreApplication::processEvents();
+		//pauseMenuView->requestUpdate();
 
 		//std::cout << "window size: " << inGameWindow->size().width() << " " << inGameWindow->size().height() << "\n";
 

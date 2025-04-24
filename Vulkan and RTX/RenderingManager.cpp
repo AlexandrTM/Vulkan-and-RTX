@@ -500,9 +500,6 @@ void AetherEngine::updateShaderBuffers(uint32_t currentImage, double timeSinceLa
 
 	glm::vec3 sun = StellarCalculations::calculateSunPosition(timeSinceLaunch);
 	//glm::vec3 sun = StellarCalculations::calculateSPASunPosition();
-	/*glm::vec3 sun = StellarCalculations::calculateSunPosition(
-		std::chrono::high_resolution_clock::now().time_since_epoch().count() / 1e9
-	);*/
 
 	// add transpose(inverse(ubo.model)) if doing non uniform scaling
 
@@ -524,6 +521,7 @@ void AetherEngine::updateShaderBuffers(uint32_t currentImage, double timeSinceLa
 		for (const Mesh& mesh : model.meshes) {
 			// update bones
 			if (mesh.bones.size() > 0) {
+				//std::cout << "mesh.bones.size(): " << mesh.bones.size() << "\n";
 				for (size_t i = 0; i < mesh.bones.size(); i++) {
 					boneSSBO.boneTransforms[i] = mesh.bones[i].finalTransform;
 					//std::cout << glm::to_string(boneUBO.boneTransforms[i]) << "\n";
@@ -823,7 +821,7 @@ void AetherEngine::createShaderBuffers(Mesh& mesh, size_t swapchainImageCount)
 				VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
 				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, true,
 				mesh.boneSSBOBuffers[frameIndex],
-				mesh.UBOAllocations[frameIndex]
+				mesh.boneSSBOAllocations[frameIndex]
 			);
 		}
 	}
