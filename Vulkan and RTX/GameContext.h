@@ -1,7 +1,7 @@
 #ifndef GAME_CONTEXT
 #define GAME_CONTEXT
 
-#include "Dungeon.h"
+#include "DungeonComponents.h"
 
 struct GameContext
 {

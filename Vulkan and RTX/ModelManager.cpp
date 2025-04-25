@@ -1,8 +1,9 @@
 #include "pch.h"
+#include "ModelManager.h"
 #include "AetherEngine.h"
 #include "Vertex.h"
 
-void AetherEngine::generateCubicLandscape(
+void ModelManager::generateCubicLandscape(
 		size_t landscapeWidth, size_t landscapeLenght, 
 		float_t cubeSize,
 		glm::vec3 color,
@@ -27,7 +28,7 @@ void AetherEngine::generateCubicLandscape(
 			}
 		}
 	}
-void AetherEngine::createCube(
+void ModelManager::createCube(
 	float x, float y, float z, 
 	float cubeSize,
 	glm::vec3 color,
@@ -43,7 +44,7 @@ void AetherEngine::createCube(
 		models
 	);
 }
-void AetherEngine::createCuboid(
+void ModelManager::createCuboid(
 	float x, float y, float z,
 	float width, float height, float length, 
 	glm::vec3 color,
@@ -182,7 +183,7 @@ void AetherEngine::createCuboid(
 	//model.isCollidable = true;
 	models.push_back(model);
 }
-void AetherEngine::createSkyModel(Model& model)
+void ModelManager::createSkyModel(Model& model)
 {
 	std::vector<Vertex> localVertices(24);
 	Mesh mesh;
@@ -277,7 +278,7 @@ void AetherEngine::createSkyModel(Model& model)
 	localVertices[22].texCoord0 = { glm::vec2(1.0f, 1.0f) };
 	localVertices[23].texCoord0 = { glm::vec2(0.0f, 1.0f) };
 #pragma endregion // texCoord
-
+	
 	std::vector<uint32_t> localIndices = {
 		1, 3, 0,
 		2, 3, 1,
@@ -307,7 +308,7 @@ void AetherEngine::createSkyModel(Model& model)
 	model.meshes.push_back(mesh);
 }
 
-void AetherEngine::loadObjModel(const std::string& modelPath)
+void ModelManager::loadObjModel(const std::string& modelPath, std::vector<Model>& models)
 {
 	Model model;
 
@@ -358,7 +359,7 @@ void AetherEngine::loadObjModel(const std::string& modelPath)
 	}
 	models.push_back(model);
 }
-void AetherEngine::loadGltfModel(const std::string& modelPath) {
+void ModelManager::loadGltfModel(const std::string& modelPath, std::vector<Model>& models) {
 	tinygltf::Model GLTFmodel;
 	tinygltf::TinyGLTF loader;
 	std::string error;

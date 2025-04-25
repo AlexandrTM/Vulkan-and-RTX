@@ -81,18 +81,22 @@ void Character::handleDungeonRoomMovement(GameContext& gameContext)
 	glm::ivec2 moveDirectionVector = glm::ivec2(0, 0);
 	RoomConnectionMask moveDirection = RoomConnectionMask::NONE;
 	if (gameContext.keyboardKeys[Qt::Key_W]) {
+		//std::cout << "w pressed\n";
 		moveDirection = RoomConnectionMask::SOUTH; // inverted
 		moveDirectionVector = directionOffsets.at(RoomConnectionMask::SOUTH);
 	}
 	if (gameContext.keyboardKeys[Qt::Key_A]) {
+		//std::cout << "a pressed\n";
 		moveDirection = RoomConnectionMask::WEST;
 		moveDirectionVector = directionOffsets.at(RoomConnectionMask::WEST);
 	}
 	if (gameContext.keyboardKeys[Qt::Key_S]) {
+		//std::cout << "s pressed\n";
 		moveDirection = RoomConnectionMask::NORTH;
 		moveDirectionVector = directionOffsets.at(RoomConnectionMask::NORTH);
 	}
 	if (gameContext.keyboardKeys[Qt::Key_D]) {
+		//std::cout << "d pressed\n";
 		moveDirection = RoomConnectionMask::EAST;
 		moveDirectionVector = directionOffsets.at(RoomConnectionMask::EAST);
 	}

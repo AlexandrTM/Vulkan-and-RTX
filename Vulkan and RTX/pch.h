@@ -21,12 +21,14 @@
 #include <QVulkanWindow>
 #include <QVulkanInstance>
 #include <QVulkanFunctions>
+#include <QtOpenGL/QtOpenGL>
 
 #define GLM_ENABLE_EXPERIMENTAL
 #include <gtx/hash.hpp>
 #include <gtx/string_cast.hpp>
 
-#include "rtx_core.h"
+#include "aether_core.h"
+#include "dungeon_core.h"
 
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>

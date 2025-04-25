@@ -37,6 +37,9 @@
     <Filter Include="headers\main class split">
       <UniqueIdentifier>{de084a3b-a4e2-4278-a55a-aee89a6477f3}</UniqueIdentifier>
     </Filter>
+    <Filter Include="source\Procedural">
+      <UniqueIdentifier>{6988ee90-9663-4551-90be-79c49d0c8de4}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -123,9 +126,6 @@
     <ClCompile Include="MainWindow.cpp">
       <Filter>source\UI</Filter>
     </ClCompile>
-    <ClCompile Include="Aether.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
     <ClCompile Include="SettingsMenuWidget.cpp">
       <Filter>source\UI</Filter>
     </ClCompile>
@@ -138,8 +138,14 @@
     <ClCompile Include="spa.c">
       <Filter>source</Filter>
     </ClCompile>
-    <ClCompile Include="Dungeon.cpp">
-      <Filter>source</Filter>
+    <ClCompile Include="PauseMenuRenderer.cpp">
+      <Filter>source\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="Aether.cpp">
+      <Filter>source\main class split</Filter>
+    </ClCompile>
+    <ClCompile Include="DungeonComponents.cpp">
+      <Filter>source\Procedural</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -188,28 +194,22 @@
     <ClInclude Include="Item.h">
       <Filter>characteristics</Filter>
     </ClInclude>
-    <ClInclude Include="rtx_core.h">
+    <ClInclude Include="aether_core.h">
       <Filter>headers\precompiled</Filter>
     </ClInclude>
     <ClInclude Include="GameContext.h">
       <Filter>headers</Filter>
     </ClInclude>
-    <ClInclude Include="Dungeon.h">
-      <Filter>headers</Filter>
-    </ClInclude>
-    <ClInclude Include="BufferManager.h">
-      <Filter>headers\main class split</Filter>
-    </ClInclude>
-    <ClInclude Include="ImageManager.h">
-      <Filter>headers\main class split</Filter>
-    </ClInclude>
-    <ClInclude Include="ModelManager.h">
-      <Filter>headers\main class split</Filter>
-    </ClInclude>
     <ClInclude Include="VulkanInitializer.h">
       <Filter>headers\main class split</Filter>
     </ClInclude>
-    <ClInclude Include="SwapchainManager.h">
+    <ClInclude Include="dungeon_core.h">
+      <Filter>source\Procedural</Filter>
+    </ClInclude>
+    <ClInclude Include="DungeonComponents.h">
+      <Filter>source\Procedural</Filter>
+    </ClInclude>
+    <ClInclude Include="ModelManager.h">
       <Filter>headers\main class split</Filter>
     </ClInclude>
   </ItemGroup>
@@ -241,6 +241,9 @@
     </QtMoc>
     <QtMoc Include="AetherEngine.h">
       <Filter>headers\main class split</Filter>
+    </QtMoc>
+    <QtMoc Include="PauseMenuRenderer.h">
+      <Filter>source\UI</Filter>
     </QtMoc>
   </ItemGroup>
 </Project>

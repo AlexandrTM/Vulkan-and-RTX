@@ -1,23 +1,22 @@
 #include "pch.h"
-#include "Dungeon.h"
-#include "AetherEngine.h"
+#include "DungeonComponents.h"
 
 DungeonRoom::DungeonRoom(
-        glm::vec3 position, 
-        glm::ivec2 gridPosition,
-        std::vector<std::string> roomLayout,
+    glm::vec3 position,
+    glm::ivec2 gridPosition,
+    std::vector<std::string> roomLayout,
     RoomConnectionMask connectionMask,
-        float cellSize,
-        Texture& floorTexture, 
-        Texture& wallTexture
-    )
-    : 
-    position(position), 
+    float cellSize,
+    Texture& floorTexture,
+    Texture& wallTexture
+)
+    :
+    position(position),
     gridPosition(gridPosition),
     roomLayout(roomLayout),
     connectionMask(connectionMask),
     cellSize(cellSize),
-    floorTexture(floorTexture), 
+    floorTexture(floorTexture),
     wallTexture(wallTexture)
 {
     metricWidth = roomLayout[0].length() * cellSize;
@@ -35,7 +34,7 @@ void DungeonRoom::createRoom(std::vector<Model>& models) {
         for (size_t y = 0; y < roomLayout[x].length(); ++y) {
             if (roomLayout[x][y] == 'w') {
                 // Place wall cubes
-                AetherEngine::createCube(
+                ModelManager::createCube(
                     position.x + x * cellSize,
                     position.y,
                     position.z + y * cellSize,
@@ -53,7 +52,7 @@ void DungeonRoom::createRoom(std::vector<Model>& models) {
     }
 
     // Create the floor of the room
-    AetherEngine::createCuboid(
+    ModelManager::createCuboid(
         position.x,
         position.y - 0.1f,
         position.z,
@@ -67,7 +66,7 @@ void DungeonRoom::createRoom(std::vector<Model>& models) {
 }
 
 std::vector<std::string> DungeonRoom::createRoomLayoutFromMask(
-    RoomConnectionMask mask, 
+    RoomConnectionMask mask,
     size_t width, size_t length
 )
 {

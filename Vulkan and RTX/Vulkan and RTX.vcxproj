@@ -152,7 +152,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;windows_x86_64\NoesisApp.lib;windows_x86_64\Noesis.lib;Qt6Cored.lib;Qt6Guid.lib;Qt6Widgetsd.lib;Qt6Qmld.lib;Qt6QuickWidgetsd.lib;Qt6Quickd.lib;Qt6QuickControls2d.lib;Debug\assimp-vc143-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;windows_x86_64\NoesisApp.lib;windows_x86_64\Noesis.lib;Qt6Cored.lib;Qt6Guid.lib;Qt6Widgetsd.lib;Qt6Qmld.lib;Qt6QuickWidgetsd.lib;Qt6Quickd.lib;Qt6QuickControls2d.lib;Qt6OpenGLd.lib;opengl32.lib;Debug\assimp-vc143-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>O:\SDKforeverything\VulkanSDK\Lib;O:\SDKforeverything\glfw-3.3.8\lib-vc2019;O:\SDKforeverything\boost_1_85_0\stage\lib;O:\SDKforeverything\assimp\lib;O:\SDKforeverything\meshoptimizer\Debug;O:\SDKforeverything\NoesisGUI\Lib;O:\SDKforeverything\Qt\6.8.1\msvc2022_64\lib</AdditionalLibraryDirectories>
       <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
     </Link>
@@ -181,7 +181,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>O:\SDKforeverything\VulkanSDK\Lib;O:\SDKforeverything\glfw-3.3.8\lib-vc2019;O:\SDKforeverything\boost_1_85_0\stage\lib;O:\SDKforeverything\assimp\lib;O:\SDKforeverything\meshoptimizer\Debug;O:\SDKforeverything\NoesisGUI\Lib;O:\SDKforeverything\Qt\6.8.1\msvc2022_64\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;windows_x86_64\NoesisApp.lib;windows_x86_64\Noesis.lib;Qt6Core.lib;Qt6Gui.lib;Qt6Widgets.lib;Qt6Qml.lib;Qt6QuickWidgets.lib;Qt6Quick.lib;Qt6QuickControls2.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;Release\assimp-vc143-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;windows_x86_64\NoesisApp.lib;windows_x86_64\Noesis.lib;Qt6Core.lib;Qt6Gui.lib;Qt6Widgets.lib;Qt6Qml.lib;Qt6QuickWidgets.lib;Qt6Quick.lib;Qt6QuickControls2.lib;Qt6OpenGL.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;opengl32.lib;Release\assimp-vc143-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
     </Link>
   </ItemDefinitionGroup>
@@ -189,7 +189,7 @@
     <ClCompile Include="Aether.cpp" />
     <ClCompile Include="BufferManager.cpp" />
     <ClCompile Include="Camera.cpp" />
-    <ClCompile Include="Dungeon.cpp" />
+    <ClCompile Include="DungeonComponents.cpp" />
     <ClCompile Include="ImageManager.cpp" />
     <ClCompile Include="Character.cpp" />
     <ClCompile Include="GameContext.cpp" />
@@ -204,6 +204,7 @@
     <ClCompile Include="MainWindow.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="PauseMenuQuickView.cpp" />
+    <ClCompile Include="PauseMenuRenderer.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
@@ -230,17 +231,16 @@
     <ClCompile Include="InGameWindow.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="BufferManager.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Character.h" />
     <QtMoc Include="MainMenuWidget.h" />
-    <ClInclude Include="Dungeon.h" />
+    <ClInclude Include="DungeonComponents.h" />
+    <ClInclude Include="dungeon_core.h" />
     <ClInclude Include="GameContext.h" />
     <QtMoc Include="MainWindow.h" />
     <QtMoc Include="PauseMenuQuickView.h" />
-    <ClInclude Include="ImageManager.h" />
-    <ClInclude Include="ModelManager.h" />
-    <ClInclude Include="rtx_core.h" />
+    <QtMoc Include="PauseMenuRenderer.h" />
+    <ClInclude Include="aether_core.h" />
     <ClInclude Include="InteractableVolume.h" />
     <ClInclude Include="IsEntity.h" />
     <ClInclude Include="HasExperienceLevel.h" />
@@ -248,12 +248,12 @@
     <ClInclude Include="IsMovable.h" />
     <ClInclude Include="Item.h" />
     <ClInclude Include="Model.h" />
+    <ClInclude Include="ModelManager.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="IsCreature.h" />
     <ClInclude Include="resource.h" />
     <QtMoc Include="SettingsMenuWidget.h" />
     <ClInclude Include="StellarCalculations.h" />
-    <ClInclude Include="SwapchainManager.h" />
     <ClInclude Include="TerrainGenerator.h" />
     <ClInclude Include="Vertex.h" />
     <QtMoc Include="AetherEngine.h" />

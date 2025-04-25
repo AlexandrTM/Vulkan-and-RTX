@@ -10,13 +10,15 @@
 #include "MainWindow.h"
 #include "SettingsMenuWidget.h"
 #include "PauseMenuQuickView.h"
+#include "PauseMenuRenderer.h"
 
 #include "Character.h"
 #include "GameContext.h"
 #include "Vertex.h"
 #include "Model.h"
 #include "TerrainGenerator.h"
-#include "Dungeon.h"
+#include "DungeonComponents.h"
+#include "ModelManager.h"
 
 class AetherEngine : public QObject {
 	Q_OBJECT
@@ -46,6 +48,7 @@ private:
 	MainMenuWidget* mainMenuWidget = nullptr;
 	SettingsMenuWidget* settingsMenuWidget = nullptr;
 	PauseMenuQuickView* pauseMenuView = nullptr;
+	//PauseMenuRenderer* pauseMenuView = nullptr;
 
 	QVulkanInstance qVulkanInstance;
 
@@ -122,30 +125,15 @@ private slots:
 public:
 	void run();
 
-	static void generateCubicLandscape(
-		size_t landscapeWidth, size_t landscapeLenght,
-		float_t cubeSize,
-		glm::vec3 color,
-		Texture& texture,
-		std::vector<Model>& models
+private:
+	void createDungeon(
+		DungeonFloor& dungeonFloor, std::vector<Model>& models,
+		Texture& floorTexture, Texture& wallTexture
 	);
-	static void createCube(
-		float x, float y, float z, float cubeSize,
-		glm::vec3 color,
-		Texture& texture,
-		std::vector<Model>& models
-	);
-	static void createCuboid(
-		float x, float y, float z,
-		float width, float height, float length,
-		glm::vec3 color,
-		Texture& texture,
-		std::vector<Model>& models
+	void enterDungeon(
+		DungeonFloor& dungeonFloor, GameContext& gameContext, Character& character
 	);
 
-private:
-	void createDungeon(DungeonFloor& dungeonFloor);
-	void enterDungeon(DungeonFloor& dungeonFloor, GameContext& gameContext, Character& character);
 	std::string createPuzzleEquation(std::string name, int32_t& answer);
 
 	void changeState(GameState newGameState);
@@ -180,10 +168,6 @@ private:
 
 	// recreating swap chain in some special cases
 	void recreateSwapchain();
-	void createSkyModel(Model& model);
-
-	void loadObjModel(const std::string& filePath);
-	void loadGltfModel(const std::string& filePath);
 
 	void loadModelsFromDirectory(
 		const std::string& directory,

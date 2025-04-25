@@ -6,9 +6,8 @@
 #include "Camera.h"
 #include "InteractableVolume.h"
 #include "Model.h"
-#include "Camera.h"
 #include "GameContext.h"
-#include "Dungeon.h"
+#include "DungeonComponents.h"
 
 class Character
 {

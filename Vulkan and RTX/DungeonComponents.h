@@ -1,0 +1,51 @@
+#include "pch.h"
+
+#pragma once
+
+#include "Model.h"
+#include "ModelManager.h"
+
+struct DungeonRoom
+{
+    glm::vec3 position;
+    glm::ivec2 gridPosition;
+
+    float cellSize;
+    float metricWidth;
+    float metricLength;
+    glm::vec3 centerPosition;
+    glm::vec3 cameraPosition;
+
+    std::vector<std::string> roomLayout;
+    RoomConnectionMask connectionMask;
+
+    Texture floorTexture;
+    Texture wallTexture;
+
+    DungeonRoom(
+        glm::vec3 position,
+        glm::ivec2 gridPosition,
+        std::vector<std::string> roomLayout,
+        RoomConnectionMask connectionMask,
+        float cellSize,
+        Texture& floorTexture,
+        Texture& wallTexture
+    );
+
+    void createRoom(std::vector<Model>& models);
+    static std::vector<std::string> createRoomLayoutFromMask(
+        RoomConnectionMask mask,
+        size_t width, size_t length
+    );
+};
+
+struct DungeonFloor
+{
+    std::vector<DungeonRoom> dungeonRooms;
+    DungeonRoom* entrance = nullptr;
+
+    void createDungeonFloor(std::vector<Model>& models);
+
+    void addDungeonRoom(DungeonRoom dungeonRoom);
+};
+

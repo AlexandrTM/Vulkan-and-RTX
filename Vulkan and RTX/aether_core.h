@@ -1,5 +1,5 @@
-#ifndef RTX_CORE_H
-#define RTX_CORE_H
+#ifndef AETHER_H
+#define AETHER_H
 
 constexpr uint32_t MAX_BONES_NUM = 256;
 constexpr uint32_t MAX_FRAMES_IN_FLIGHT = 2;
