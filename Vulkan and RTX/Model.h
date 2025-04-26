@@ -81,6 +81,11 @@ struct Cuboid
 {
     glm::vec3 min;
     glm::vec3 max;
+
+    Cuboid operator+(const glm::vec3& offset) const
+    {
+        return Cuboid{ min + offset, max + offset };
+    }
 };
 
 struct Mesh

@@ -4,6 +4,7 @@
 #define CHARACTER_H
 
 #include "Camera.h"
+#include "CollisionManager.h"
 #include "InteractableVolume.h"
 #include "Model.h"
 #include "GameContext.h"
@@ -12,30 +13,35 @@
 class Character
 {
 private:
-
-	Cuboid aabb = { glm::vec3(-0.3, -1.45, -0.3), glm::vec3(0.3, 0.25, 0.3) };
+	Gamemode gamemode = Gamemode::CREATIVE;
+	//float moveSpeed = 2.1f;
+	float moveSpeed = 4.0f;
+	float jumpSpeed = 4.0f;
 	float maxSlopeAngle = 50.0f;
 
 	glm::vec3 velocity = glm::vec3(0.0f);
 	bool isOnGround = false;
 
-	Gamemode gamemode = Gamemode::CREATIVE;
-	float moveSpeed = 2.1f;
-	float jumpSpeed = 4.0f;
+	Cuboid aabb = { glm::vec3(-0.3, -1.45, -0.3), glm::vec3(0.3, 0.25, 0.3) };
 
 public:
 	Camera camera;
 	double mouseSensitivity = 0.125;
 
-	// ========== not used currently ==========
-	std::vector<InteractableVolume> interactableCuboids = { 
-		InteractableVolume(glm::vec3(20.0, 0.0, -10.0), glm::vec3(21.75, 4.75, -8.25), "easy"),
-		InteractableVolume(glm::vec3(20.0, 0.0,   0.0), glm::vec3(21.75, 4.75,  1.75), "medium"),
-		InteractableVolume(glm::vec3(20.0, 0.0,  10.0), glm::vec3(21.75, 4.75, 11.75), "hard")
-	};
+	int32_t health = 30;
+	int32_t maxHealth = 30;
+	int32_t attackPower = 5;
+	int32_t defense = 0;
+	int32_t experience = 0;
 
-	InteractableVolume* isInteracting = nullptr;
-	// ========================================
+	bool isAlive() const {
+		return health > 0;
+	}
+
+	void takeDamage(int32_t damage) {
+		int32_t damageTaken = std::max(damage - defense, static_cast<int32_t>(1));
+		health = std::max(health - damageTaken, 0);
+	}
 
 	void handleCharacterMovement(
 		GameContext& gameContext,
@@ -46,35 +52,15 @@ public:
 	void handleInDungeonPlayerInput(GameContext& gameContext);
 	void handleDungeonRoomMovement(GameContext& gameContext);
 
-	bool checkCollision(
-		const Mesh& mesh,
-		const glm::vec3& cameraPosition,
-		glm::vec3& surfaceNormal
-	) const;
-	bool checkCollision(
-		const Model& model,
-		const glm::vec3& cameraPosition,
-		glm::vec3& surfaceNormal
-	) const;
-	bool checkCollision(
-		const std::vector<Model>& models,
-		const glm::vec3& cameraPosition,
-		glm::vec3& surfaceNormal
-	) const;
+	// ========== not used currently ==========
+	std::vector<InteractableVolume> interactableCuboids = {
+		InteractableVolume(glm::vec3(20.0, 0.0, -10.0), glm::vec3(21.75, 4.75, -8.25), "easy"),
+		InteractableVolume(glm::vec3(20.0, 0.0,   0.0), glm::vec3(21.75, 4.75,  1.75), "medium"),
+		InteractableVolume(glm::vec3(20.0, 0.0,  10.0), glm::vec3(21.75, 4.75, 11.75), "hard")
+	};
 
-	static bool isAABBOverlap(
-		const glm::vec3& min1, const glm::vec3& max1,
-		const glm::vec3& min2, const glm::vec3& max2
-	);
-	static bool triangleBoxIntersection(
-		const glm::vec3& boxMin, const glm::vec3& boxMax,
-		const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2,
-		const glm::vec3& triangleNormal
-	);
-	static bool isOverlapOnAxis(
-		const glm::vec3& axis, const glm::vec3& boxHalfSize,
-		const glm::vec3& v0, const glm::vec3& v1, const glm::vec3& v2
-	);
+	InteractableVolume* isInteracting = nullptr;
+	// ========================================
 };
 
 #endif // !CHARACTER_H

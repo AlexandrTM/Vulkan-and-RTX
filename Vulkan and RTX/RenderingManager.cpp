@@ -610,10 +610,10 @@ void AetherEngine::recordCommandBuffer(
 		recordModelsToCommandBuffer(models, commandBuffer);
 
 		if (gameContext.currentGameState == GameState::PAUSED) {
-			renderQmlToTexture(pauseMenuTexture);
+			renderQmlToTexture(pauseMenuRenderer, pauseMenuTexture);
 
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["ui"]);
-			recordModelsToCommandBuffer(uiModels, commandBuffer);
+			recordModelsToCommandBuffer(pauseMenuModel, commandBuffer);
 		}
 	}
 
@@ -624,10 +624,10 @@ void AetherEngine::recordCommandBuffer(
 	}
 }
 
-void AetherEngine::renderQmlToTexture(Texture& texture)
+void AetherEngine::renderQmlToTexture(UserInterfaceRenderer* renderer, Texture& texture)
 {
-	pauseMenuView->render();
-	QImage image = pauseMenuView->getFbo()->toImage();
+	renderer->render();
+	QImage image = renderer->getFbo()->toImage();
 
 	/*static bool hasSavedPauseMenuImage = false;
 

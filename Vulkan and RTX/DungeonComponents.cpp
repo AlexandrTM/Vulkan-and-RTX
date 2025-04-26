@@ -28,7 +28,7 @@ DungeonRoom::DungeonRoom(
     cameraPosition = centerPosition + glm::vec3(-8.3 * 3, 7.5 * 3, 0.0);
 }
 
-void DungeonRoom::createRoom(std::vector<Model>& models) {
+void DungeonRoom::createRoomModels(std::vector<Model>& models) {
     // Generate walls based on the room layout
     for (size_t x = 0; x < roomLayout.size(); ++x) {
         for (size_t y = 0; y < roomLayout[x].length(); ++y) {
@@ -103,13 +103,28 @@ std::vector<std::string> DungeonRoom::createRoomLayoutFromMask(
 
 // Method to generate all rooms on the floor
 void DungeonFloor::createDungeonFloor(std::vector<Model>& models) {
-    // Generate each room in the dungeon
-    for (auto& room : dungeonRooms) {
-        room.createRoom(models);
-    }
 
     if (!dungeonRooms.empty()) {
         entrance = &dungeonRooms.front();
+    }
+    else {
+        std::cout << "dungeon floor has no rooms\n";
+    }
+
+    // Generate each room in the dungeon
+    for (auto& room : dungeonRooms) {
+        room.createRoomModels(models);
+
+        if (&room != entrance) {
+            room.mobs.push_back(Mob(
+                room.centerPosition,
+                "mob",
+                15,
+                15,
+                5,
+                0,
+                5));
+        }
     }
 }
 

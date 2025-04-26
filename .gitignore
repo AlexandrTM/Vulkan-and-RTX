@@ -362,3 +362,7 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /not used
+/Vulkan and RTX/textures/PavingStones047_2K-PNG
+/Vulkan and RTX/textures/Rocks003_4K-PNG
+/Vulkan and RTX/textures/Tiles045_2K-PNG
+/Vulkan and RTX/textures/Tiles098_2K-PNG

@@ -138,7 +138,7 @@
     <ClCompile Include="spa.c">
       <Filter>source</Filter>
     </ClCompile>
-    <ClCompile Include="PauseMenuRenderer.cpp">
+    <ClCompile Include="UserInterfaceRenderer.cpp">
       <Filter>source\UI</Filter>
     </ClCompile>
     <ClCompile Include="Aether.cpp">
@@ -149,6 +149,12 @@
     </ClCompile>
     <ClCompile Include="Dungeon.cpp">
       <Filter>source\Procedural</Filter>
+    </ClCompile>
+    <ClCompile Include="Mob.cpp">
+      <Filter>source</Filter>
+    </ClCompile>
+    <ClCompile Include="CollisionManager.cpp">
+      <Filter>source</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -218,6 +224,12 @@
     <ClInclude Include="Dungeon.h">
       <Filter>source\Procedural</Filter>
     </ClInclude>
+    <ClInclude Include="Mob.h">
+      <Filter>headers</Filter>
+    </ClInclude>
+    <ClInclude Include="CollisionManager.h">
+      <Filter>headers</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Vulkan and RTX.rc">
@@ -248,7 +260,10 @@
     <QtMoc Include="AetherEngine.h">
       <Filter>headers\main class split</Filter>
     </QtMoc>
-    <QtMoc Include="PauseMenuRenderer.h">
+    <QtMoc Include="UserInterfaceRenderer.h">
+      <Filter>source\UI</Filter>
+    </QtMoc>
+    <QtMoc Include="PauseMenuSlotHandler.h">
       <Filter>source\UI</Filter>
     </QtMoc>
   </ItemGroup>

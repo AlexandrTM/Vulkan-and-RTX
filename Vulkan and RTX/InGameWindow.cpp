@@ -21,8 +21,8 @@ bool InGameWindow::eventFilter(QObject* obj, QEvent* event) {
 }
 
 bool InGameWindow::sendEventToUI(QEvent* event) {
-    if (pauseMenuView && gameContext->currentGameState == GameState::PAUSED) {
-        return pauseMenuView->handleEvent(event);
+    if (pauseMenuRenderer && gameContext->currentGameState == GameState::PAUSED) {
+        return pauseMenuRenderer->handleEvent(event);
     }
     return false;
 }

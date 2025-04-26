@@ -9,22 +9,22 @@
 #include <QResizeEvent>
 #include "Character.h"
 #include "GameContext.h"
-#include "PauseMenuRenderer.h"
+#include "UserInterfaceRenderer.h"
 
 class InGameWindow : public QWindow
 {
     Q_OBJECT
 private:
-    Character* character;
-    GameContext* gameContext;
-    PauseMenuRenderer* pauseMenuView = nullptr;
+    Character* character = nullptr;
+    GameContext* gameContext = nullptr;
+    UserInterfaceRenderer* pauseMenuRenderer = nullptr;
 
 public:
     InGameWindow(
         QVulkanInstance* instance,
         Character& character, GameContext& gameContext
     );
-    void setPauseMenuView(PauseMenuRenderer* view) { pauseMenuView = view; }
+    void setPauseMenuRenderer(UserInterfaceRenderer* renderer) { pauseMenuRenderer = renderer; }
 
     double latestMouseDx = 0.0;
     double latestMouseDy = 0.0;

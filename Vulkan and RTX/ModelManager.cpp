@@ -183,14 +183,13 @@ void ModelManager::createCuboid(
 	//model.isCollidable = true;
 	models.push_back(model);
 }
-void ModelManager::createQuad(
+Model ModelManager::createQuad(
 	glm::vec3 origin,
 	glm::vec2 size,
 	glm::vec3 normal,
 	glm::vec3 tangent,
 	glm::vec3 color,
-	Texture& texture,
-	std::vector<Model>& models
+	Texture& texture
 )
 {
 	glm::vec3 bitangent = glm::cross(normal, tangent);
@@ -234,7 +233,7 @@ void ModelManager::createQuad(
 	mesh.material = material;
 
 	model.meshes.push_back(std::move(mesh));
-	models.push_back(std::move(model));
+	return model;
 }
 void ModelManager::createSkyModel(Model& model)
 {

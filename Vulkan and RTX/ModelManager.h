@@ -24,14 +24,13 @@ namespace ModelManager
 		Texture& texture,
 		std::vector<Model>& models
 	);
-	void createQuad(
+	Model createQuad(
 		glm::vec3 origin,
 		glm::vec2 size,
 		glm::vec3 normal,
 		glm::vec3 tangent,
 		glm::vec3 color,
-		Texture& texture,
-		std::vector<Model>& models
+		Texture& texture
 	);
 
 	void createSkyModel(Model& model);

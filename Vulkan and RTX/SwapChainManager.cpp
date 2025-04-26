@@ -111,7 +111,7 @@ void AetherEngine::recreateSwapchain()
 	cleanupSwapchain();
 	cleanupShaderBuffers(sky);
 	cleanupShaderBuffers(models);
-	cleanupModels(uiModels);
+	cleanupModels(pauseMenuModel);
 	cleanupTexture(depthTexture);
 	cleanupTexture(msaaTexture);
 
@@ -122,17 +122,17 @@ void AetherEngine::recreateSwapchain()
 	createCommandBuffers();
 	
 	createSolidColorTexture({ 0, 0, 0, 0 }, windowWidth, windowHeight, pauseMenuTexture);
-	ModelManager::createQuad(
+	pauseMenuModel.push_back(ModelManager::createQuad(
 		{ -1.0f, -1.0f, 0.0f }, { 2.0f, 2.0f },
 		{ 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f },
 		glm::vec3(0.5f),
-		pauseMenuTexture, uiModels
-	);
+		pauseMenuTexture
+	));
 
 	//createDescriptorPool(models, uiModels);
 
-	computeAABB_createVertexIndexBuffers(uiModels);
-	createDescriptorSets(uiModels, MAX_FRAMES_IN_FLIGHT);
+	computeAABB_createVertexIndexBuffers(pauseMenuModel);
+	createDescriptorSets(pauseMenuModel, MAX_FRAMES_IN_FLIGHT);
 
 	createShaderBuffers(sky, MAX_FRAMES_IN_FLIGHT);
 	createShaderBuffers(models, MAX_FRAMES_IN_FLIGHT);

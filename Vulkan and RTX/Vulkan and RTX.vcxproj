@@ -189,6 +189,7 @@
     <ClCompile Include="Aether.cpp" />
     <ClCompile Include="BufferManager.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="CollisionManager.cpp" />
     <ClCompile Include="Dungeon.cpp" />
     <ClCompile Include="DungeonComponents.cpp" />
     <ClCompile Include="ImageManager.cpp" />
@@ -203,9 +204,10 @@
     <ClCompile Include="Item.cpp" />
     <ClCompile Include="MainMenuWidget.cpp" />
     <ClCompile Include="MainWindow.cpp" />
+    <ClCompile Include="Mob.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="PauseMenuQuickView.cpp" />
-    <ClCompile Include="PauseMenuRenderer.cpp" />
+    <ClCompile Include="UserInterfaceRenderer.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
@@ -235,13 +237,14 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Character.h" />
     <QtMoc Include="MainMenuWidget.h" />
+    <ClInclude Include="CollisionManager.h" />
     <ClInclude Include="Dungeon.h" />
     <ClInclude Include="DungeonComponents.h" />
     <ClInclude Include="dungeon_core.h" />
     <ClInclude Include="GameContext.h" />
     <QtMoc Include="MainWindow.h" />
     <QtMoc Include="PauseMenuQuickView.h" />
-    <QtMoc Include="PauseMenuRenderer.h" />
+    <QtMoc Include="UserInterfaceRenderer.h" />
     <ClInclude Include="aether_core.h" />
     <ClInclude Include="InteractableVolume.h" />
     <ClInclude Include="IsEntity.h" />
@@ -249,8 +252,10 @@
     <ClInclude Include="HasInventory.h" />
     <ClInclude Include="IsMovable.h" />
     <ClInclude Include="Item.h" />
+    <ClInclude Include="Mob.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="ModelManager.h" />
+    <QtMoc Include="PauseMenuSlotHandler.h" />
     <ClInclude Include="pch.h" />
     <ClInclude Include="IsCreature.h" />
     <ClInclude Include="resource.h" />

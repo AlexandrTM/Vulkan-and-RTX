@@ -10,7 +10,8 @@
 #include "MainWindow.h"
 #include "SettingsMenuWidget.h"
 #include "PauseMenuQuickView.h"
-#include "PauseMenuRenderer.h"
+#include "UserInterfaceRenderer.h"
+#include "PauseMenuSlotHandler.h"
 
 #include "ModelManager.h"
 #include "GameContext.h"
@@ -48,8 +49,13 @@ private:
 
 	MainMenuWidget* mainMenuWidget = nullptr;
 	SettingsMenuWidget* settingsMenuWidget = nullptr;
-	//PauseMenuQuickView* pauseMenuView = nullptr;
-	PauseMenuRenderer* pauseMenuView = nullptr;
+
+	UserInterfaceRenderer* pauseMenuRenderer = nullptr;
+	UserInterfaceRenderer* inGameOverlayRenderer = nullptr;
+	Texture pauseMenuTexture;
+	Texture inGameOverlayTexture;
+
+	std::vector<Model> pauseMenuModel;
 
 	QVulkanInstance qVulkanInstance;
 
@@ -92,7 +98,6 @@ private:
 	bool isFramebufferResized = false;
 
 	std::vector<Model> models;
-	std::vector<Model> uiModels;
 	Model			   sky;
 
 	Texture stone_wall_floor_1_texture;
@@ -105,7 +110,6 @@ private:
 
 	Texture grassTexture;
 	Texture	transparentTexture;
-	Texture pauseMenuTexture;
 
 	Texture depthTexture;
 	Texture msaaTexture;
@@ -132,20 +136,21 @@ private:
 	void changeState(GameState newGameState);
 	void handleInDungeonState(double deltaTime, double timeSinceLaunch);
 	void handleInGameTestingState(double deltaTime, double timeSinceLaunch, bool fpsMenu);
+	void updateInGameOverlay();
 
 	std::string createPuzzleEquation(std::string name, int32_t& answer);
 
 	void setWindowSize();
 	void createMainMenuWidget();
 	void createSettingsMenuWidget();
-	void createPauseMenuView();
+	void createPauseMenuRenderer();
 
 	void createMainWindow();
 	void createInGameWindow();
 
 	void prepareResources();
 	void prepareUI();
-	void renderQmlToTexture(Texture& texture);
+	void renderQmlToTexture(UserInterfaceRenderer* userInterfaceRenderer, Texture& texture);
 
 	void mainLoop();
 

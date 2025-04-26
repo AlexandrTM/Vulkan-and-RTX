@@ -4,6 +4,7 @@
 
 #include "Model.h"
 #include "ModelManager.h"
+#include "Mob.h"
 
 struct DungeonRoom
 {
@@ -22,6 +23,8 @@ struct DungeonRoom
     Texture floorTexture;
     Texture wallTexture;
 
+    std::vector<Mob> mobs;
+
     DungeonRoom(
         glm::vec3 position,
         glm::ivec2 gridPosition,
@@ -32,7 +35,7 @@ struct DungeonRoom
         Texture& wallTexture
     );
 
-    void createRoom(std::vector<Model>& models);
+    void createRoomModels(std::vector<Model>& models);
     static std::vector<std::string> createRoomLayoutFromMask(
         RoomConnectionMask mask,
         size_t width, size_t length

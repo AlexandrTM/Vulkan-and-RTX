@@ -22,7 +22,7 @@ void AetherEngine::prepareUI()
 
 	createMainMenuWidget();
 	createSettingsMenuWidget();
-	createPauseMenuView();
+	createPauseMenuRenderer();
 
 	mainWindow->addWidget(mainMenuWidget);
 	mainWindow->addWidget(inGameWidget);
@@ -30,9 +30,9 @@ void AetherEngine::prepareUI()
 	mainWindow->addWidget(settingsMenuWidget);
 	mainWindow->show();
 
-	gameContext.requestedGameState = GameState::IN_GAME_TESTING;
-	gameContext.requestedGameState = GameState::IN_DUNGEON;
 	gameContext.requestedGameState = GameState::MAIN_MENU;
+	gameContext.requestedGameState = GameState::IN_GAME_TESTING;
+	gameContext.requestedGameState = GameState::DUNGEON_EXPLORATION;
 	gameContext.clearInputs();
 }
 
@@ -60,7 +60,7 @@ void AetherEngine::prepareResources()
 	createSyncObjects();
 
 	createTextureFromPath("textures/grass001.png", grassTexture);
-	createTextureFromPath("textures/stone_wall_floor_2.png", stone_wall_floor_2_texture);
+	createTextureFromPath("textures/stone_wall_floor_3.png", stone_wall_floor_2_texture);
 	createTextureFromPath("textures/stone_floor_floor_2.png", stone_floor_floor_2_texture);
 	createTextureFromPath("textures/floor_background_floor_2.png", floor_background_floor_2_texture);
 	createSolidColorTexture({ 0, 0, 0, 0 }, 1, 1, transparentTexture);
@@ -89,22 +89,22 @@ void AetherEngine::prepareResources()
 		gameContext.dungeonFloor, models, 
 		stone_floor_floor_2_texture, stone_wall_floor_2_texture
 	);
-	Dungeon::enterDungeon(gameContext.dungeonFloor, gameContext, character);
+	Dungeon::enterDungeonFloor(gameContext.dungeonFloor, gameContext, character);
 
-	ModelManager::createQuad(
+	pauseMenuModel.push_back(ModelManager::createQuad(
 		{ -1.0f, -1.0f, 0.0f }, { 2.0f, 2.0f }, 
 		{ 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f }, 
 		glm::vec3(0.5f), 
-		pauseMenuTexture, uiModels
-	);
+		pauseMenuTexture
+	));
 
 	ModelManager::createSkyModel(sky);
 
-	createDescriptorPool(models, uiModels);
+	createDescriptorPool(models, pauseMenuModel);
 
 	computeAABB_createVertexIndexBuffers(sky);
 	computeAABB_createVertexIndexBuffers(models);
-	computeAABB_createVertexIndexBuffers(uiModels);
+	computeAABB_createVertexIndexBuffers(pauseMenuModel);
 
 	createShaderBuffers(sky, MAX_FRAMES_IN_FLIGHT);
 	createShaderBuffers(models, MAX_FRAMES_IN_FLIGHT);
@@ -112,7 +112,7 @@ void AetherEngine::prepareResources()
 
 	createDescriptorSets(sky, MAX_FRAMES_IN_FLIGHT);
 	createDescriptorSets(models, MAX_FRAMES_IN_FLIGHT);
-	createDescriptorSets(uiModels, MAX_FRAMES_IN_FLIGHT);
+	createDescriptorSets(pauseMenuModel, MAX_FRAMES_IN_FLIGHT);
 }
 
 //void AetherEngine::createGLFWWindow()
@@ -174,7 +174,7 @@ void AetherEngine::onMainWindowResized(int width, int height) {
 	//std::cout << "onFramebufferResized: " << width << " " << height << "\n";
 	//std::cout << "center pos: " << gameContext.windowCenterPos.x() << " " << gameContext.windowCenterPos.y() << "\n";
 	character.camera.setViewportSize(windowWidth, windowHeight);
-	pauseMenuView->resize(QSize(windowWidth, windowHeight));
+	pauseMenuRenderer->resize(QSize(windowWidth, windowHeight));
 }
 void AetherEngine::onMainWindowMoved(int x, int y) {
 	//pauseMenuView->getQuickWindow()->setPosition(x, y);
@@ -199,7 +199,7 @@ void AetherEngine::createMainMenuWidget() {
 	mainMenuWidget->resize(windowWidth, windowHeight);
 
 	connect(mainMenuWidget, &MainMenuWidget::startGame, [this]() {
-		gameContext.requestedGameState = GameState::IN_DUNGEON;
+		gameContext.requestedGameState = GameState::DUNGEON_EXPLORATION;
 		//gameContext.requestedGameState = GameState::IN_GAME_TESTING;
 		});
 
@@ -219,31 +219,43 @@ void AetherEngine::createSettingsMenuWidget() {
 		gameContext.requestedGameState = GameState::MAIN_MENU;
 		});
 }
-void AetherEngine::createPauseMenuView() {
-	//pauseMenuView = new PauseMenuQuickView(inGameWindow);
-	//pauseMenuView = new PauseMenuQuickView(mainWindow->windowHandle());
-	pauseMenuView = new PauseMenuRenderer();
-	//pauseMenuView = new PauseMenuQuickView();
+void AetherEngine::createPauseMenuRenderer() {
+	pauseMenuRenderer = new UserInterfaceRenderer();
 
-	pauseMenuView->initialize(QSize(windowWidth, windowHeight));
-	pauseMenuView->setParent(mainWindow);
-	inGameWindow->setPauseMenuView(pauseMenuView);
+	pauseMenuRenderer->initialize(QSize(windowWidth, windowHeight), "qml/PauseMenu.ui.qml");
+	pauseMenuRenderer->setParent(mainWindow);
+	inGameWindow->setPauseMenuRenderer(pauseMenuRenderer);
+	PauseMenuSlotHandler* pauseMenuSlotHandler = new PauseMenuSlotHandler(gameContext, this);
 
-	connect(pauseMenuView, &PauseMenuRenderer::resumeGame, [this]() {
-		gameContext.requestedGameState = GameState::IN_DUNGEON;
-		});
+	auto rootItem = pauseMenuRenderer->getRootItem();
 
-	connect(pauseMenuView, &PauseMenuRenderer::openSettings, [this]() {
-		gameContext.requestedGameState = GameState::SETTINGS_MENU;
-		});
+	connect(rootItem, SIGNAL(resumeGameClicked()), pauseMenuSlotHandler, SLOT(onResumeGameClicked()));
+	connect(rootItem, SIGNAL(openSettingsClicked()), pauseMenuSlotHandler, SLOT(onOpenSettingsClicked()));
+	connect(rootItem, SIGNAL(openMainMenuClicked()), pauseMenuSlotHandler, SLOT(onOpenMainMenuClicked()));
+	connect(rootItem, SIGNAL(exitGameClicked()), pauseMenuSlotHandler, SLOT(onExitGameClicked()));
+}
+void AetherEngine::updateInGameOverlay() {
+	if (!inGameOverlayRenderer) return;
 
-	connect(pauseMenuView, &PauseMenuRenderer::openMainMenu, [this]() {
-		gameContext.requestedGameState = GameState::MAIN_MENU;
-		});
+	auto rootItem = inGameOverlayRenderer->getRootItem();
+	if (!rootItem) return;
 
-	connect(pauseMenuView, &PauseMenuRenderer::exitGame, [this]() {
-		gameContext.requestedGameState = GameState::EXIT;
-		});
+	// Update player health
+	QObject* playerHealth = rootItem->findChild<QObject*>("playerHealth");
+	if (playerHealth)
+		playerHealth->setProperty("text", tr("Health: %1").arg(character.health));
+
+	// Update mob health
+	QObject* mobHealth = rootItem->findChild<QObject*>("mobHealth");
+	if (mobHealth) {
+		if (!gameContext.currentRoom->mobs.empty()) {
+			mobHealth->setProperty("text", tr("Mob health: %1").arg(gameContext.currentRoom->mobs[0].health));
+			mobHealth->setProperty("visible", true);
+		}
+		else {
+			mobHealth->setProperty("visible", false);
+		}
+	}
 }
 
 void AetherEngine::createMainWindow()
@@ -294,16 +306,8 @@ void AetherEngine::createInGameWindow()
 		throw std::runtime_error("Failed to create Vulkan surface for Qt window.");
 	}
 
-	//inGameContainerWidget = new QWidget;
-	//inGameContainerWidget->setFixedSize(windowWidth, windowHeight);
-
-	//inGameStackedLayout = new QStackedLayout(inGameContainerWidget);
-	//inGameStackedLayout->setStackingMode(QStackedLayout::StackAll);
-
 	inGameWidget = QWidget::createWindowContainer(inGameWindow);
 	inGameWidget->resize(inGameWindow->size());
-
-	//inGameStackedLayout->addWidget(inGameWidget);
 
 	connect(inGameWindow, &InGameWindow::moved, this,
 		&AetherEngine::onInGameWindowMoved
@@ -336,7 +340,6 @@ void AetherEngine::changeState(GameState newGameState) {
 		QApplication::setOverrideCursor(Qt::ArrowCursor);
 		break;
 	case GameState::PAUSED:
-		//pauseMenuView->hide();
 		break;
 	case GameState::EXIT:
 		break;
@@ -344,6 +347,9 @@ void AetherEngine::changeState(GameState newGameState) {
 		break;
 	}
 
+	/*std::cout << 
+		"currentGameState: " << static_cast<uint32_t>(gameContext.currentGameState) << 
+		" newGameState: "    << static_cast<uint32_t>(newGameState) << "\n";*/
 	gameContext.clearInputs();
 	gameContext.currentGameState = newGameState;
 
@@ -360,12 +366,13 @@ void AetherEngine::changeState(GameState newGameState) {
 		character.camera._isFirstMouse = true;
 		stackedWidget->setCurrentWidget(inGameWidget);
 		break;
-	case GameState::IN_DUNGEON:
+	case GameState::DUNGEON_EXPLORATION:
+		stackedWidget->setCurrentWidget(inGameWidget);
+		break;
+	case GameState::COMBAT_PLAYER_TURN:
 		stackedWidget->setCurrentWidget(inGameWidget);
 		break;
 	case GameState::PAUSED:
-		//pauseMenuView->show();
-		//pauseMenuView->raise();
 		break;
 	case GameState::EXIT:
 		QCoreApplication::quit();
@@ -444,7 +451,7 @@ void AetherEngine::mainLoop()
 
 		if (gameContext.currentGameState == GameState::PAUSED) {
 			if (gameContext.keyboardKeys[Qt::Key_Escape]) {
-				gameContext.requestedGameState = GameState::IN_DUNGEON;
+				gameContext.requestedGameState = GameState::DUNGEON_EXPLORATION;
 			}
 		}
 
@@ -455,7 +462,7 @@ void AetherEngine::mainLoop()
 			}
 		}
 
-		if (gameContext.currentGameState == GameState::IN_DUNGEON and inGameWindow->isExposed()) {
+		if (gameContext.currentGameState == GameState::DUNGEON_EXPLORATION and inGameWindow->isExposed()) {
 			handleInDungeonState(deltaTime, timeSinceLaunch);
 		}
 		
@@ -463,8 +470,9 @@ void AetherEngine::mainLoop()
 			handleInGameTestingState(deltaTime, timeSinceLaunch, fpsMenu);
 		}
 
-		if (gameContext.currentGameState == GameState::IN_DUNGEON ||
+		if (gameContext.currentGameState == GameState::DUNGEON_EXPLORATION      ||
 			gameContext.currentGameState == GameState::IN_GAME_TESTING ||
+			gameContext.currentGameState == GameState::COMBAT_PLAYER_TURN       ||
 			gameContext.currentGameState == GameState::PAUSED) {
 
 			drawFrame(timeSinceLaunch, deltaTime);
@@ -472,6 +480,63 @@ void AetherEngine::mainLoop()
 	}
 
 	vkDeviceWaitIdle(vkInit.device);
+}
+
+void AetherEngine::cleanupMemory()
+{
+	cleanupModel(sky);
+	cleanupModels(models);
+	cleanupModels(pauseMenuModel);
+
+	cleanupTexture(stone_wall_floor_1_texture);
+	cleanupTexture(stone_wall_floor_2_texture);
+	cleanupTexture(stone_wall_floor_3_texture);
+	cleanupTexture(stone_floor_floor_1_texture);
+	cleanupTexture(stone_floor_floor_2_texture);
+	cleanupTexture(stone_floor_floor_3_texture);
+	cleanupTexture(floor_background_floor_2_texture);
+
+	cleanupTexture(grassTexture);
+	cleanupTexture(transparentTexture);
+	cleanupTexture(pauseMenuTexture);
+	cleanupTexture(depthTexture);
+	cleanupTexture(msaaTexture);
+
+	cleanupSwapchain();
+
+	cleanedImages.clear();
+	cleanedImageViews.clear();
+	cleanedImageSamplers.clear();
+
+	if (vkInit.enableValidationLayers) {
+		std::cout << "createdBuffers: " << createdBuffers << "\n";
+		std::cout << "destroyedVmaAllocations: " << destroyedVmaAllocations << "\n";
+	}
+
+	// will free all allocated descriptor sets from this pool
+	vkDestroyDescriptorPool(vkInit.device, descriptorPool, nullptr);
+	vkDestroyDescriptorSetLayout(vkInit.device, descriptorSetLayout, nullptr);
+
+	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+		vkDestroySemaphore(vkInit.device, renderFinishedSemaphores[i], nullptr);
+		vkDestroySemaphore(vkInit.device, imageAvailableSemaphores[i], nullptr);
+		vkDestroyFence(vkInit.device, inFlightFences[i], nullptr);
+	}
+
+	vmaDestroyAllocator(vmaAllocator);
+	vkDestroyCommandPool(vkInit.device, commandPool, nullptr);
+
+	vkDestroyDevice(vkInit.device, nullptr);
+
+	if (vkInit.enableValidationLayers) {
+		vkInit.DestroyDebugUtilsMessengerEXT(vkInit.instance, vkInit.debugMessenger, nullptr);
+	}
+
+	// surface is handled by QVulkanInstance itself and shouldn't be destroyed manually
+	/*if (vkInit.surface != VK_NULL_HANDLE) {
+		vkDestroySurfaceKHR(vkInit.instance, vkInit.surface, nullptr);
+		vkInit.surface = VK_NULL_HANDLE;
+	}*/
 }
 
 void AetherEngine::cleanupModels(std::vector<Model>& models) const
@@ -581,63 +646,6 @@ void AetherEngine::cleanupShaderBuffers(Mesh& mesh) const
 			destroyedVmaAllocations += 1;
 		}
 	}
-}
-
-void AetherEngine::cleanupMemory()
-{
-	cleanupModel(sky);
-	cleanupModels(models);
-	cleanupModels(uiModels);
-
-	cleanupTexture(stone_wall_floor_1_texture);
-	cleanupTexture(stone_wall_floor_2_texture);
-	cleanupTexture(stone_wall_floor_3_texture);
-	cleanupTexture(stone_floor_floor_1_texture);
-	cleanupTexture(stone_floor_floor_2_texture);
-	cleanupTexture(stone_floor_floor_3_texture);
-	cleanupTexture(floor_background_floor_2_texture);
-
-	cleanupTexture(grassTexture);
-	cleanupTexture(transparentTexture);
-	cleanupTexture(pauseMenuTexture);
-	cleanupTexture(depthTexture);
-	cleanupTexture(msaaTexture);
-
-	cleanupSwapchain();
-
-	cleanedImages.clear();
-	cleanedImageViews.clear();
-	cleanedImageSamplers.clear();
-
-	if (vkInit.enableValidationLayers) {
-		std::cout << "createdBuffers: " << createdBuffers << "\n";
-		std::cout << "destroyedVmaAllocations: " << destroyedVmaAllocations << "\n";
-	}
-
-	// will free all allocated descriptor sets from this pool
-	vkDestroyDescriptorPool(vkInit.device, descriptorPool, nullptr);
-	vkDestroyDescriptorSetLayout(vkInit.device, descriptorSetLayout, nullptr);
-
-	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-		vkDestroySemaphore(vkInit.device, renderFinishedSemaphores[i], nullptr);
-		vkDestroySemaphore(vkInit.device, imageAvailableSemaphores[i], nullptr);
-		vkDestroyFence(vkInit.device, inFlightFences[i], nullptr);
-	}
-
-	vmaDestroyAllocator(vmaAllocator);
-	vkDestroyCommandPool(vkInit.device, commandPool, nullptr);
-
-	vkDestroyDevice(vkInit.device, nullptr);
-
-	if (vkInit.enableValidationLayers) {
-		vkInit.DestroyDebugUtilsMessengerEXT(vkInit.instance, vkInit.debugMessenger, nullptr);
-	}
-
-	// surface is handled by QVulkanInstance itself and shouldn't be destroyed manually
-	/*if (vkInit.surface != VK_NULL_HANDLE) {
-		vkDestroySurfaceKHR(vkInit.instance, vkInit.surface, nullptr);
-		vkInit.surface = VK_NULL_HANDLE;
-	}*/
 }
 
 void AetherEngine::restrictCharacterMovement(Camera& camera)

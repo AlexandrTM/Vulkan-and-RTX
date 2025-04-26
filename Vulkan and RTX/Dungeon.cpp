@@ -6,7 +6,6 @@ void Dungeon::createDungeonFloor(
 	Texture& floorTexture, Texture& wallTexture
 ) {
 	std::unordered_map<glm::ivec2, RoomConnectionMask> roomGrid;
-	std::queue<glm::ivec2> frontier;
 
 	size_t minRoomCount = 15;
 	size_t maxRoomCount = 15;
@@ -14,8 +13,38 @@ void Dungeon::createDungeonFloor(
 	size_t maxRoomDimension = 9; // max of width or height
 	float roomSpacing = (maxRoomDimension * cellSize) + cellSize * 0;
 
-	while (roomGrid.size() < minRoomCount) {
+	generateDungeonFloorGrid(minRoomCount, maxRoomCount, roomGrid);
 
+	createDungeonRoomsFromGrid(
+		dungeonFloor, roomGrid, 
+		cellSize, roomSpacing, 
+		floorTexture, wallTexture
+	);
+
+	dungeonFloor.createDungeonFloor(models);
+}
+void Dungeon::enterDungeonFloor(
+	DungeonFloor& dungeonFloor, GameContext& gameContext, Character& character
+)
+{
+	gameContext.currentRoom = dungeonFloor.entrance;
+	if (gameContext.currentRoom != nullptr) {
+		character.camera.setPosition(dungeonFloor.entrance->cameraPosition);
+	}
+	else {
+		std::cout << "there is no entrance room for this dungeon floor\n";
+	}
+}
+
+void Dungeon::generateDungeonFloorGrid(
+	size_t& minRoomCount, 
+	size_t& maxRoomCount, 
+	std::unordered_map<glm::ivec2, RoomConnectionMask>& roomGrid
+)
+{
+	std::queue<glm::ivec2> frontier;
+
+	while (roomGrid.size() < minRoomCount) {
 		// clean generation if failed
 		frontier.push({ 0, 0 });
 		roomGrid.clear();
@@ -33,7 +62,7 @@ void Dungeon::createDungeonFloor(
 			RoomConnectionMask mask = RoomConnectionMask::NONE;
 
 			neighborChance = glm::clamp(
-				50 - roomGrid.size() * 2,
+				10 + roomGrid.size() * 2,
 				static_cast<size_t>(5), static_cast<size_t>(40)
 			);
 
@@ -60,7 +89,15 @@ void Dungeon::createDungeonFloor(
 			//std::cout << "room count: " << roomGrid.size() << "\n";
 		}
 	}
+}
 
+void Dungeon::createDungeonRoomsFromGrid(
+	DungeonFloor& dungeonFloor, 
+	std::unordered_map<glm::ivec2, RoomConnectionMask>& roomGrid,
+	float& cellSize, float& roomSpacing,
+	Texture& floorTexture, Texture& wallTexture
+)
+{
 	for (auto& [gridPosition, connectionMask] : roomGrid) {
 		glm::vec3 worldPosition = glm::vec3(gridPosition.x * roomSpacing, 0.0f, gridPosition.y * roomSpacing);
 		//size_t roomWidth = (rand() % 3) * 2 + 7; // 7,9,11
@@ -80,19 +117,5 @@ void Dungeon::createDungeonFloor(
 			floorTexture,
 			wallTexture
 		));
-	}
-
-	dungeonFloor.createDungeonFloor(models);
-}
-void Dungeon::enterDungeon(
-	DungeonFloor& dungeonFloor, GameContext& gameContext, Character& character
-)
-{
-	gameContext.currentRoom = dungeonFloor.entrance;
-	if (gameContext.currentRoom != nullptr) {
-		character.camera.setPosition(dungeonFloor.entrance->cameraPosition);
-	}
-	else {
-		std::cout << "there is no entrance room for this dungeon\n";
 	}
 }
