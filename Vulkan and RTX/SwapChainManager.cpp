@@ -102,30 +102,45 @@ void AetherEngine::createSwapchainFramebuffers()
 // recreating swap chain in some special cases
 void AetherEngine::recreateSwapchain()
 {
-	// waiting for previous swap chain to stop rendering
 	vkDeviceWaitIdle(vkInit.device);
+
+	/*if (vkResetDescriptorPool(vkInit.device, descriptorPool, 0) != VK_SUCCESS) {
+		throw std::runtime_error("Failed to reset descriptor pool!");
+	}*/
 
 	cleanupSwapchain();
 	cleanupShaderBuffers(sky);
 	cleanupShaderBuffers(models);
+	cleanupModels(uiModels);
 
 	createPipelinesAndSwapchain();
 	createColorTexture(msaaTexture);
 	createDepthTexture(depthTexture);
 	createSwapchainFramebuffers();
 	createCommandBuffers();
-	createDescriptorPool();
+	
+	createSolidColorTexture({ 0, 0, 0, 0 }, windowWidth, windowHeight, pauseMenuTexture);
+	ModelManager::createQuad(
+		{ -1.0f, -1.0f, 0.0f }, { 2.0f, 2.0f },
+		{ 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f },
+		glm::vec3(0.5f),
+		pauseMenuTexture, uiModels
+	);
+
+	//createDescriptorPool(models, uiModels);
+
+	computeAABB_createVertexIndexBuffers(uiModels);
+	createDescriptorSets(uiModels, MAX_FRAMES_IN_FLIGHT);
+
 	createShaderBuffers(sky, MAX_FRAMES_IN_FLIGHT);
 	createShaderBuffers(models, MAX_FRAMES_IN_FLIGHT);
-	createDescriptorSets(sky, MAX_FRAMES_IN_FLIGHT);
-	createDescriptorSets(models, MAX_FRAMES_IN_FLIGHT);
+	//createShaderBuffers(uiModels, MAX_FRAMES_IN_FLIGHT);
+	//createDescriptorSets(sky, MAX_FRAMES_IN_FLIGHT);
+	//createDescriptorSets(models, MAX_FRAMES_IN_FLIGHT);
 }
 
 void AetherEngine::cleanupSwapchain()
 {
-	cleanupTexture(depthTexture);
-	cleanupTexture(msaaTexture);
-
 	for (size_t i = 0; i < swapchainFramebuffers.size(); i++) {
 		vkDestroyFramebuffer(vkInit.device, swapchainFramebuffers[i], nullptr);
 	}
@@ -136,6 +151,7 @@ void AetherEngine::cleanupSwapchain()
 	vkDestroyPipelineLayout(vkInit.device, pipelineLayout, nullptr);
 
 	vkDestroyRenderPass(vkInit.device, objectRenderPass, nullptr);
+	vkDestroyRenderPass(vkInit.device, uiRenderPass, nullptr);
 
 	for (size_t i = 0; i < swapchainImageViews.size(); i++) {
 		vkDestroyImageView(vkInit.device, swapchainImageViews[i], nullptr);

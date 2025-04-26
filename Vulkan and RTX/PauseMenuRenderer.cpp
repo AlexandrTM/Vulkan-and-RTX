@@ -16,6 +16,7 @@ PauseMenuRenderer::PauseMenuRenderer() {
     offscreenSurface->create();
 
     context->makeCurrent(offscreenSurface);
+    quickWindow->setGraphicsDevice(QQuickGraphicsDevice::fromOpenGLContext(context));
     renderControl->initialize();
 
     engine = new QQmlEngine;
@@ -47,6 +48,13 @@ PauseMenuRenderer::~PauseMenuRenderer() {
     }
 }
 
+void PauseMenuRenderer::forwardMouseEvent(QMouseEvent* event) {
+    QCoreApplication::sendEvent(quickWindow, event);
+}
+
+void PauseMenuRenderer::forwardHoverEvent(QHoverEvent* event) {
+    QCoreApplication::sendEvent(quickWindow, event);
+}
 
 void PauseMenuRenderer::initialize(const QSize& size) {
     component = new QQmlComponent(engine, QUrl::fromLocalFile("qml/PauseMenu.ui.qml"));
@@ -65,19 +73,7 @@ void PauseMenuRenderer::initialize(const QSize& size) {
 
     surfaceSize = size;
 
-    context->makeCurrent(offscreenSurface);
-
-    QOpenGLFramebufferObjectFormat fmt;
-    fmt.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
-    fmt.setTextureTarget(GL_TEXTURE_2D);
-    fmt.setInternalTextureFormat(GL_RGBA8);
-    fbo = new QOpenGLFramebufferObject(size, fmt);
-
-    QQuickRenderTarget renderTarget = QQuickRenderTarget::fromOpenGLTexture(
-        fbo->texture(),
-        surfaceSize
-    );
-    quickWindow->setRenderTarget(renderTarget);
+    createFbo(size);
 }
 
 void PauseMenuRenderer::setupConnections() {
@@ -89,32 +85,65 @@ void PauseMenuRenderer::setupConnections() {
 
 void PauseMenuRenderer::resize(const QSize& size) {
     if (!rootItem) return;
+
     rootItem->setSize(size);
     quickWindow->resize(size);
+    surfaceSize = size;
+
+    if (fbo) {
+        delete fbo;
+        fbo = nullptr;
+    }
+
+    createFbo(size);
+}
+
+void PauseMenuRenderer::createFbo(const QSize& size) {
+    context->makeCurrent(offscreenSurface);
+
+    QOpenGLFramebufferObjectFormat format;
+    format.setAttachment(QOpenGLFramebufferObject::CombinedDepthStencil);
+    format.setTextureTarget(GL_TEXTURE_2D);
+    format.setInternalTextureFormat(GL_RGBA8);
+    fbo = new QOpenGLFramebufferObject(size, format);
+
+    QQuickRenderTarget renderTarget = QQuickRenderTarget::fromOpenGLTexture(
+        fbo->texture(),
+        surfaceSize
+    );
+    quickWindow->setRenderTarget(renderTarget);
 }
 
 void PauseMenuRenderer::render() {
-    if (!rootItem || !quickWindow || !fbo || !context->makeCurrent(offscreenSurface)) return;
+    if (!rootItem || !quickWindow || !fbo) return;
 
+    /*qDebug() << "Current context before:" << QOpenGLContext::currentContext();
+    qDebug() << "Expected context before:" << context;*/
+
+    if (!context->makeCurrent(offscreenSurface)) {
+        qWarning() << "Failed to make OpenGL context current!";
+        return;
+    }
+    
     QOpenGLFunctions* f = context->functions();
     f->glViewport(0, 0, surfaceSize.width(), surfaceSize.height());
     f->glClearColor(0, 0, 0, 0); // transparent clear
     f->glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    
+
     renderControl->beginFrame();
     renderControl->polishItems();
     renderControl->sync();
     renderControl->render();
     renderControl->endFrame();
 
-    fbo->bind();
-
-    fbo->release();
     f->glFlush();
 }
 
 
 QImage PauseMenuRenderer::grabImage() {
     context->makeCurrent(offscreenSurface);
-    return quickWindow->grabWindow();
+    QImage image = fbo->toImage();
+    //image.save("pause_menu_debug.png");
+    //return quickWindow->grabWindow();
+    return image;
 }

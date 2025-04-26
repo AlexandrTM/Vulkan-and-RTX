@@ -162,7 +162,7 @@ void AetherEngine::createVertexBuffer(Mesh& mesh)
 	memcpy(data, mesh.vertices.data(), (size_t)bufferSize);
 
 	// Validation Step: Check bone data
-	Vertex* vertices = static_cast<Vertex*>(data);
+	/*Vertex* vertices = static_cast<Vertex*>(data);
 	for (size_t i = 0; i < mesh.vertices.size(); ++i) {
 		const Vertex& vertex = vertices[i];
 
@@ -185,10 +185,10 @@ void AetherEngine::createVertexBuffer(Mesh& mesh)
 		if (std::abs(weightSum - 1.0f) > 0.01f) { // Allow small precision error
 			//std::cerr << "Bone weights do not sum to 1.0 for vertex " << i << ". Sum: " << weightSum << "\n";
 		}
-		/*for (size_t j = 0; j < 4; j++) {
+		for (size_t j = 0; j < 4; j++) {
 			std::cout << vertex.boneWeights[j] << " " << vertex.boneIDs[j] << "\n";
-		}*/
-	}
+		}
+	}*/
 
 	vmaUnmapMemory(vmaAllocator, stagingAllocation);
 
@@ -240,4 +240,58 @@ void AetherEngine::createIndexBuffer(Mesh& mesh)
 
 	vmaDestroyBuffer(vmaAllocator, stagingBuffer, stagingAllocation);
 	destroyedVmaAllocations += 1;
+}
+
+void AetherEngine::computeAABB_createVertexIndexBuffers(std::vector<Model>& models) 
+{
+	for (Model& model : models) {
+		computeAABB_createVertexIndexBuffers(model);
+	}
+}
+void AetherEngine::computeAABB_createVertexIndexBuffers(Model& model) 
+{
+	for (Mesh& mesh : model.meshes) {
+		computeAABB_createVertexIndexBuffers(mesh);
+	}
+}
+void AetherEngine::computeAABB_createVertexIndexBuffers(Mesh& mesh) 
+{
+	createVertexBuffer(mesh);
+	createIndexBuffer(mesh);
+	computeAABB(mesh);
+}
+
+void AetherEngine::createShaderBuffers(std::vector<Model>& models, size_t swapchainImageCount)
+{
+	for (Model& model : models) {
+		createShaderBuffers(model, swapchainImageCount);
+	}
+}
+void AetherEngine::createShaderBuffers(Model& model, size_t swapchainImageCount)
+{
+	for (Mesh& mesh : model.meshes) {
+		createShaderBuffers(mesh, swapchainImageCount);
+	}
+}
+void AetherEngine::createShaderBuffers(Mesh& mesh, size_t swapchainImageCount)
+{
+	for (size_t frameIndex = 0; frameIndex < swapchainImageCount; ++frameIndex) {
+		createBuffer(
+			sizeof(UniformBufferObject),
+			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, true,
+			mesh.UBOBuffers[frameIndex],
+			mesh.UBOAllocations[frameIndex]
+		);
+
+		if (mesh.bones.size() > 0) {
+			createBuffer(
+				sizeof(glm::mat4) * MAX_BONES_NUM,
+				VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, true,
+				mesh.boneSSBOBuffers[frameIndex],
+				mesh.boneSSBOAllocations[frameIndex]
+			);
+		}
+	}
 }

@@ -9,6 +9,30 @@ InGameWindow::InGameWindow(
     this->gameContext = &gameContext;
     setSurfaceType(QWindow::VulkanSurface);
     setVulkanInstance(instance);
+    this->installEventFilter(this);
+}
+
+bool InGameWindow::eventFilter(QObject* obj, QEvent* event) {
+    if (pauseMenuView/* && pauseMenuView->isVisible()*/) {
+        switch (event->type()) {
+        case QEvent::MouseButtonPress:
+        case QEvent::MouseButtonRelease:
+        case QEvent::MouseMove: {
+            QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
+            pauseMenuView->forwardMouseEvent(mouseEvent);
+            return true;
+        }
+        case QEvent::HoverMove: {
+            QHoverEvent* hoverEvent = static_cast<QHoverEvent*>(event);
+            pauseMenuView->forwardHoverEvent(hoverEvent);
+            return true;
+        }
+        default:
+            break;
+        }
+    }
+    // For all other cases, let normal event processing happen
+    return QWindow::eventFilter(obj, event);
 }
 
 void InGameWindow::keyPressEvent(QKeyEvent* event) {

@@ -12,13 +12,14 @@
 #include "PauseMenuQuickView.h"
 #include "PauseMenuRenderer.h"
 
-#include "Character.h"
+#include "ModelManager.h"
 #include "GameContext.h"
-#include "Vertex.h"
 #include "Model.h"
 #include "TerrainGenerator.h"
+#include "Character.h"
+#include "Vertex.h"
 #include "DungeonComponents.h"
-#include "ModelManager.h"
+#include "Dungeon.h"
 
 class AetherEngine : public QObject {
 	Q_OBJECT
@@ -36,7 +37,6 @@ private:
 	uint32_t windowHeight = 0;
 	double lastMousePosX, lastMousePosY;
 
-	QWidget* inGameContainerWidget = nullptr;
 	QStackedLayout* inGameStackedLayout = nullptr;
 
 	MainWindow* mainWindow = nullptr;
@@ -44,11 +44,12 @@ private:
 
 	InGameWindow* inGameWindow = nullptr;
 	QWidget* inGameWidget = nullptr;
+	//QWidget* inGameContainerWidget = nullptr;
 
 	MainMenuWidget* mainMenuWidget = nullptr;
 	SettingsMenuWidget* settingsMenuWidget = nullptr;
-	PauseMenuQuickView* pauseMenuView = nullptr;
-	//PauseMenuRenderer* pauseMenuView = nullptr;
+	//PauseMenuQuickView* pauseMenuView = nullptr;
+	PauseMenuRenderer* pauseMenuView = nullptr;
 
 	QVulkanInstance qVulkanInstance;
 
@@ -75,7 +76,7 @@ private:
 	std::vector<VkFramebuffer> swapchainFramebuffers;
 
 	VkRenderPass objectRenderPass;
-	VkRenderPass noesisRenderPass;
+	VkRenderPass uiRenderPass;
 	VkPipelineLayout pipelineLayout;
 
 	std::unordered_map<std::string, VkPipeline> pipelines;
@@ -91,6 +92,7 @@ private:
 	bool isFramebufferResized = false;
 
 	std::vector<Model> models;
+	std::vector<Model> uiModels;
 	Model			   sky;
 
 	Texture stone_wall_floor_1_texture;
@@ -103,6 +105,7 @@ private:
 
 	Texture grassTexture;
 	Texture	transparentTexture;
+	Texture pauseMenuTexture;
 
 	Texture depthTexture;
 	Texture msaaTexture;
@@ -126,19 +129,11 @@ public:
 	void run();
 
 private:
-	void createDungeon(
-		DungeonFloor& dungeonFloor, std::vector<Model>& models,
-		Texture& floorTexture, Texture& wallTexture
-	);
-	void enterDungeon(
-		DungeonFloor& dungeonFloor, GameContext& gameContext, Character& character
-	);
-
-	std::string createPuzzleEquation(std::string name, int32_t& answer);
-
 	void changeState(GameState newGameState);
 	void handleInDungeonState(double deltaTime, double timeSinceLaunch);
 	void handleInGameTestingState(double deltaTime, double timeSinceLaunch, bool fpsMenu);
+
+	std::string createPuzzleEquation(std::string name, int32_t& answer);
 
 	void setWindowSize();
 	void createMainMenuWidget();
@@ -149,6 +144,8 @@ private:
 	void createInGameWindow();
 
 	void prepareResources();
+	void prepareUI();
+	void renderQmlToTexture(Texture& texture);
 
 	void mainLoop();
 
@@ -184,7 +181,10 @@ private:
 		int level
 	);
 
-	void createDummyTexture(std::array<uint8_t, 4> color, Texture& texture);
+	void uploadRawDataToTexture(void* rawImage, uint32_t width, uint32_t height, Texture& texture);
+	void createSolidColorTexture(
+		std::array<uint8_t, 4> color, uint32_t width, uint32_t height, Texture& texture
+	);
 	void createTextureFromPath(const std::string& texturePath, Texture& texture);
 	void createTextureFromEmbedded(
 		const std::string& embeddedTextureName, 
@@ -239,6 +239,10 @@ private:
 	void createVertexBuffer(Mesh& mesh);
 	void createIndexBuffer(Mesh& mesh);
 
+	void computeAABB_createVertexIndexBuffers(std::vector<Model>& models);
+	void computeAABB_createVertexIndexBuffers(Model& model);
+	void computeAABB_createVertexIndexBuffers(Mesh& mesh);
+
 	void createShaderBuffers(std::vector<Model>& models, size_t swapchainImageCount);
 	void createShaderBuffers(Model& model, size_t swapchainImageCount);
 	void createShaderBuffers(Mesh& mesh, size_t swapchainImageCount);
@@ -247,7 +251,10 @@ private:
 	void createDescriptorSets(Model& model, size_t swapchainImageCount);
 	void createDescriptorSets(Mesh& mesh, size_t swapchainImageCount);
 
-	void createDescriptorPool();
+	void createDescriptorPool(
+		const std::vector<Model>& models,
+		const std::vector<Model>& uiModels
+	);
 	void createDescriptorSetLayout(VkDescriptorSetLayout& descriptorSetLayout) const;
 	void createDescriptorSet(VkDescriptorSet& descriptorSet);
 	void addTextureToDescriptorSet(
@@ -299,7 +306,7 @@ private:
 	// information about framebuffer attachments, how many color and depth buffers there will
 	// be, how many samples to use for each of them and how their contents should be treated
 	void createObjectRenderPass(VkRenderPass& renderPass) const;
-	void createGUIRenderPass(VkRenderPass& renderPass) const;
+	void createUiRenderPass(VkRenderPass& renderPass) const;
 
 	void createPipelineLayout(
 		VkDescriptorSetLayout& descriptorSetLayout, 

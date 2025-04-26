@@ -62,12 +62,16 @@ void AetherEngine::createObjectRenderPass(VkRenderPass& renderPass) const
 	VkSubpassDependency dependency{};
 	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
 	dependency.dstSubpass = 0;
-	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
-		| VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+	dependency.srcStageMask = 
+		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | 
+		VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
 	dependency.srcAccessMask = 0;
-	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
-		| VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
-	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+	dependency.dstStageMask = 
+		VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | 
+		VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+	dependency.dstAccessMask = 
+		VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | 
+		VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
 
 	std::array<VkAttachmentDescription, 3> attachments = { colorAttachment, depthAttachment, colorAttachmentResolve };
 	VkRenderPassCreateInfo renderPassInfo{};
@@ -83,7 +87,7 @@ void AetherEngine::createObjectRenderPass(VkRenderPass& renderPass) const
 		throw std::runtime_error("failed to create render pass!");
 	}
 }
-void AetherEngine::createGUIRenderPass(VkRenderPass& renderPass) const
+void AetherEngine::createUiRenderPass(VkRenderPass& renderPass) const
 {
 	VkAttachmentDescription colorAttachment{};
 	colorAttachment.format = swapchainImageFormat;
@@ -183,7 +187,11 @@ void AetherEngine::createGraphicsPipeline(
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 
 	auto bindingDescription = Vertex::getBindingDescription();
-	auto attributeDescriptions = Vertex::getAttributeDescriptions();
+	auto attributeDescriptions = Vertex::getAttributeDescriptions(
+		pipelineType == PipelineType::OBJECT ? 
+		VertexLayoutType::WHOLE : pipelineType == PipelineType::GUI ?
+		VertexLayoutType::POSITION_TEXCOORDS : VertexLayoutType::POSITION_ONLY
+	);
 
 	vertexInputInfo.vertexBindingDescriptionCount = 1;
 	vertexInputInfo.pVertexBindingDescriptions = &bindingDescription; // Optional
@@ -246,7 +254,9 @@ void AetherEngine::createGraphicsPipeline(
 	VkPipelineMultisampleStateCreateInfo multisampling{};
 	multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
 	multisampling.sampleShadingEnable = VK_FALSE;
-	multisampling.rasterizationSamples = pipelineType == PipelineType::GUI ? VK_SAMPLE_COUNT_1_BIT : vkInit.colorSamples;
+	multisampling.rasterizationSamples = 
+		/*pipelineType == PipelineType::GUI ? VK_SAMPLE_COUNT_1_BIT : */
+		vkInit.colorSamples;
 	multisampling.minSampleShading = 1.0f; // Optional
 
 	VkPipelineDepthStencilStateCreateInfo depthStencil{};
@@ -273,13 +283,20 @@ void AetherEngine::createGraphicsPipeline(
 		  VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT
 		| VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 	if (pipelineType == PipelineType::GUI) {
-		colorBlendAttachment.blendEnable = VK_FALSE;
+		colorBlendAttachment.blendEnable = VK_TRUE;
+		colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+		colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+		colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
+		colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+		colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+		colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+		/*colorBlendAttachment.blendEnable = VK_FALSE;
 		colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_ONE;
 		colorBlendAttachment.dstColorBlendFactor = VK_BLEND_FACTOR_ZERO;
 		colorBlendAttachment.colorBlendOp = VK_BLEND_OP_ADD;
 		colorBlendAttachment.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
 		colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
-		colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
+		colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;*/
 	}
 	else {
 		colorBlendAttachment.blendEnable = VK_TRUE;
@@ -290,7 +307,7 @@ void AetherEngine::createGraphicsPipeline(
 		colorBlendAttachment.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
 		colorBlendAttachment.alphaBlendOp = VK_BLEND_OP_ADD;
 	}
-
+	
 	/* alternative case */
 	/*
 	colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
@@ -313,7 +330,7 @@ void AetherEngine::createGraphicsPipeline(
 
 	finalColor = finalColor & colorWriteMask;
 	*/
-
+	
 	/* alternative case pseudo code */
 	/*
 	finalColor.rgb = newAlpha * newColor + (1 - newAlpha) * oldColor;
@@ -391,7 +408,7 @@ void AetherEngine::createPipelinesAndSwapchain()
 	createSwapchain();
 	createSwapchainImageViews();
 	createObjectRenderPass(objectRenderPass);
-	// createGUIRenderPass(noesisRenderPass);
+	createUiRenderPass(uiRenderPass);
 	createGraphicsPipeline(
 		PipelineType::OBJECT,
 		"object", "shaders/object.vert.spv", "shaders/object.frag.spv",
@@ -402,11 +419,11 @@ void AetherEngine::createPipelinesAndSwapchain()
 		"sky", "shaders/sky.vert.spv", "shaders/sky.frag.spv",
 		objectRenderPass
 	);
-	/*createGraphicsPipeline(
+	createGraphicsPipeline(
 		PipelineType::GUI,
-		"noesis", "shaders/noesis.vert.spv", "shaders/noesis.frag.spv",
+		"ui", "shaders/ui.vert.spv", "shaders/ui.frag.spv",
 		objectRenderPass
-	);*/
+	);
 }
 
 // Creating frames for presentation
@@ -566,27 +583,67 @@ void AetherEngine::recordCommandBuffer(
 	clearValues[0].color = { {0.0f, 0.0f, 0.0f, 1.0f} };
 	clearValues[1].depthStencil = { 1.0f, 0 };
 
-	VkRenderPassBeginInfo renderPassInfo{};
-	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	renderPassInfo.renderPass = objectRenderPass;
-	renderPassInfo.framebuffer = swapchainFramebuffers[imageIndex];
-	renderPassInfo.renderArea.offset = { 0, 0 };
-	renderPassInfo.renderArea.extent = swapchainExtent;
-	renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
-	renderPassInfo.pClearValues = clearValues.data();
+	VkRenderPassBeginInfo objectRenderPassInfo{};
+	objectRenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	objectRenderPassInfo.renderPass = objectRenderPass;
+	objectRenderPassInfo.framebuffer = swapchainFramebuffers[imageIndex];
+	objectRenderPassInfo.renderArea.offset = { 0, 0 };
+	objectRenderPassInfo.renderArea.extent = swapchainExtent;
+	objectRenderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+	objectRenderPassInfo.pClearValues = clearValues.data();
 
-	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+	VkRenderPassBeginInfo uiRenderPassInfo{};
+	uiRenderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	uiRenderPassInfo.renderPass = uiRenderPass;
+	uiRenderPassInfo.framebuffer = swapchainFramebuffers[imageIndex];
+	uiRenderPassInfo.renderArea.offset = { 0, 0 };
+	uiRenderPassInfo.renderArea.extent = swapchainExtent;
+	uiRenderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+	uiRenderPassInfo.pClearValues = clearValues.data();
 
-	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["sky"]);
-	recordModelToCommandBuffer(sky, commandBuffer);
-	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["object"]);
-	recordModelsToCommandBuffer(models, commandBuffer);
+	vkCmdBeginRenderPass(commandBuffer, &objectRenderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+
+	if (!isFramebufferResized) {
+		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["sky"]);
+		recordModelToCommandBuffer(sky, commandBuffer);
+		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["object"]);
+		recordModelsToCommandBuffer(models, commandBuffer);
+
+		if (gameContext.currentGameState == GameState::PAUSED) {
+			renderQmlToTexture(pauseMenuTexture);
+
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["ui"]);
+			recordModelsToCommandBuffer(uiModels, commandBuffer);
+		}
+	}
 
 	vkCmdEndRenderPass(commandBuffer);
 
 	if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
 		throw std::runtime_error("failed to record command buffer!");
 	}
+}
+
+void AetherEngine::renderQmlToTexture(Texture& texture)
+{
+	pauseMenuView->render();
+	QImage image = pauseMenuView->getFbo()->toImage();
+
+	/*static bool hasSavedPauseMenuImage = false;
+
+	if (!hasSavedPauseMenuImage && !image.isNull()) {
+		image.save("pause_menu_debug.png");
+		hasSavedPauseMenuImage = true;
+	}*/
+
+	if (texture.width != static_cast<uint32_t>(image.width()) ||
+		texture.height != static_cast<uint32_t>(image.height())) {
+		cleanupTexture(texture);
+
+		createSolidColorTexture({ 0, 0, 0, 0 }, image.width(), image.height(), texture);
+	}
+
+	uploadRawDataToTexture(image.bits(), image.width(), image.height(), texture);
 }
 
 void AetherEngine::recordModelsToCommandBuffer(const std::vector<Model>& models, VkCommandBuffer commandBuffer)
@@ -601,12 +658,14 @@ void AetherEngine::recordModelToCommandBuffer(const Model& model, VkCommandBuffe
 		const Material& material = mesh.material;
 		const VkDescriptorSet& meshDescriptorSet = mesh.descriptorSets[currentFrame];
 
-		addBufferToDescriptorSet(
-			meshDescriptorSet,
-			mesh.UBOBuffers[currentFrame],
-			VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
-			sizeof(UniformBufferObject), 0
-		);
+		if (mesh.UBOBuffers[currentFrame] != VK_NULL_HANDLE) {
+			addBufferToDescriptorSet(
+				meshDescriptorSet,
+				mesh.UBOBuffers[currentFrame],
+				VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER,
+				sizeof(UniformBufferObject), 0
+			);
+		}
 
 		if (mesh.bones.size() > 0) {
 			// adding bone data
@@ -634,20 +693,26 @@ void AetherEngine::recordModelToCommandBuffer(const Model& model, VkCommandBuffe
 	}
 }
 
-void AetherEngine::createDescriptorPool()
+void AetherEngine::createDescriptorPool(
+	const std::vector<Model>& objectModels, 
+	const std::vector<Model>& uiModels
+)
 {
 	size_t totalMeshes = 0;
-	for (const auto& model : models) {
+	for (const Model& model : objectModels) {
+		totalMeshes += model.meshes.size();
+	}
+	for (const Model& model : uiModels) {
 		totalMeshes += model.meshes.size();
 	}
 
 	std::array<VkDescriptorPoolSize, 3> poolSizes{};
 
 	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	poolSizes[0].descriptorCount = (totalMeshes * 5 + models.size() * 6)
+	poolSizes[0].descriptorCount = (totalMeshes * 5 + objectModels.size() * 6)
 		* static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT) + 5;
 	poolSizes[1].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-	poolSizes[1].descriptorCount = (models.size() * 4)
+	poolSizes[1].descriptorCount = (objectModels.size() * 4)
 		* static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 	poolSizes[2].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	poolSizes[2].descriptorCount = (totalMeshes + 2)
@@ -657,8 +722,9 @@ void AetherEngine::createDescriptorPool()
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
 	poolInfo.pPoolSizes = poolSizes.data();
-	poolInfo.maxSets = (totalMeshes + models.size() * 2 + 2)
+	poolInfo.maxSets = (totalMeshes + (objectModels.size() + uiModels.size()) * 2 + 2)
 		* static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
+	poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 
 	//std::cout << "totalMeshDescriptors: " << totalMeshDescriptors << "\n";
 	//std::cout << "poolSizes[0].descriptorCount: " << poolSizes[0].descriptorCount << "\n";
@@ -716,18 +782,6 @@ void AetherEngine::createDescriptorSetLayout(VkDescriptorSetLayout& descriptorSe
 
 	if (vkCreateDescriptorSetLayout(vkInit.device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create descriptor set layout!");
-	}
-}
-void AetherEngine::createDescriptorSet(VkDescriptorSet& descriptorSet)
-{
-	VkDescriptorSetAllocateInfo allocInfo{};
-	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	allocInfo.descriptorPool = descriptorPool;  // Make sure you have a valid descriptor pool
-	allocInfo.descriptorSetCount = 1;
-	allocInfo.pSetLayouts = &descriptorSetLayout;  // Ensure the layout matches shader buffer binding requirements
-
-	if (vkAllocateDescriptorSets(vkInit.device, &allocInfo, &descriptorSet) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to allocate descriptor set!");
 	}
 }
 void AetherEngine::addTextureToDescriptorSet(
@@ -792,41 +846,6 @@ void AetherEngine::addBufferToDescriptorSet(
 	vkUpdateDescriptorSets(vkInit.device, 1, &descriptorWrite, 0, nullptr);
 }
 
-void AetherEngine::createShaderBuffers(std::vector<Model>& models, size_t swapchainImageCount)
-{
-	for (Model& model : models) {
-		createShaderBuffers(model, swapchainImageCount);
-	}
-}
-void AetherEngine::createShaderBuffers(Model& model, size_t swapchainImageCount)
-{
-	for (Mesh& mesh : model.meshes) {
-		createShaderBuffers(mesh, swapchainImageCount);
-	}
-}
-void AetherEngine::createShaderBuffers(Mesh& mesh, size_t swapchainImageCount)
-{
-	for (size_t frameIndex = 0; frameIndex < swapchainImageCount; ++frameIndex) {
-		createBuffer(
-			sizeof(UniformBufferObject),
-			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, true,
-			mesh.UBOBuffers[frameIndex],
-			mesh.UBOAllocations[frameIndex]
-		);
-
-		if (mesh.bones.size() > 0) {
-			createBuffer(
-				sizeof(glm::mat4) * MAX_BONES_NUM,
-				VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
-				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, true,
-				mesh.boneSSBOBuffers[frameIndex],
-				mesh.boneSSBOAllocations[frameIndex]
-			);
-		}
-	}
-}
-
 void AetherEngine::createDescriptorSets(std::vector<Model>& models, size_t swapchainImageCount)
 {
 	for (Model& model : models) {
@@ -845,6 +864,18 @@ void AetherEngine::createDescriptorSets(Mesh& mesh, size_t swapchainImageCount)
 		createDescriptorSet(mesh.descriptorSets[frameIndex]);
 	}
 }
+void AetherEngine::createDescriptorSet(VkDescriptorSet& descriptorSet)
+{
+	VkDescriptorSetAllocateInfo allocInfo{};
+	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	allocInfo.descriptorPool = descriptorPool;  // Make sure you have a valid descriptor pool
+	allocInfo.descriptorSetCount = 1;
+	allocInfo.pSetLayouts = &descriptorSetLayout;  // Ensure the layout matches shader buffer binding requirements
+
+	if (vkAllocateDescriptorSets(vkInit.device, &allocInfo, &descriptorSet) != VK_SUCCESS) {
+		throw std::runtime_error("Failed to allocate descriptor set!");
+	}
+}
 
 /*void AetherEngine::bindVertexAndIndexBuffersToCommandBuffer(const Model& model, VkCommandBuffer commandBuffer)
 {
@@ -855,7 +886,9 @@ void AetherEngine::createDescriptorSets(Mesh& mesh, size_t swapchainImageCount)
 void AetherEngine::bindVertexAndIndexBuffersToCommandBuffer(const Mesh& mesh, VkCommandBuffer commandBuffer)
 {
 	VkDeviceSize offsets[] = { 0 };
-
+	if (mesh.indices.size() == 6) {
+		true;
+	}
 	vkCmdBindVertexBuffers(commandBuffer, 0, 1, &mesh.vertexBuffer, offsets);
 	vkCmdBindIndexBuffer(commandBuffer, mesh.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 	vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(mesh.indices.size()), 1, 0, 0, 0);

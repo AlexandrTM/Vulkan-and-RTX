@@ -11,6 +11,13 @@ enum class PipelineType : uint32_t
 	GUI = 2,
 };
 
+enum class VertexLayoutType : uint32_t
+{
+	WHOLE = 0,
+	POSITION_ONLY = 1,
+	POSITION_TEXCOORDS = 2,
+};
+
 enum class Gamemode : uint32_t
 {
 	CREATIVE = 0,

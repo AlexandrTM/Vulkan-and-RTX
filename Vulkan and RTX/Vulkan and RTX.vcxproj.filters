@@ -147,6 +147,9 @@
     <ClCompile Include="DungeonComponents.cpp">
       <Filter>source\Procedural</Filter>
     </ClCompile>
+    <ClCompile Include="Dungeon.cpp">
+      <Filter>source\Procedural</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -211,6 +214,9 @@
     </ClInclude>
     <ClInclude Include="ModelManager.h">
       <Filter>headers\main class split</Filter>
+    </ClInclude>
+    <ClInclude Include="Dungeon.h">
+      <Filter>source\Procedural</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

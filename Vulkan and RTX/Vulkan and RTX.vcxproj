@@ -189,6 +189,7 @@
     <ClCompile Include="Aether.cpp" />
     <ClCompile Include="BufferManager.cpp" />
     <ClCompile Include="Camera.cpp" />
+    <ClCompile Include="Dungeon.cpp" />
     <ClCompile Include="DungeonComponents.cpp" />
     <ClCompile Include="ImageManager.cpp" />
     <ClCompile Include="Character.cpp" />
@@ -234,6 +235,7 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Character.h" />
     <QtMoc Include="MainMenuWidget.h" />
+    <ClInclude Include="Dungeon.h" />
     <ClInclude Include="DungeonComponents.h" />
     <ClInclude Include="dungeon_core.h" />
     <ClInclude Include="GameContext.h" />

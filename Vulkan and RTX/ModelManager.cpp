@@ -183,6 +183,59 @@ void ModelManager::createCuboid(
 	//model.isCollidable = true;
 	models.push_back(model);
 }
+void ModelManager::createQuad(
+	glm::vec3 origin,
+	glm::vec2 size,
+	glm::vec3 normal,
+	glm::vec3 tangent,
+	glm::vec3 color,
+	Texture& texture,
+	std::vector<Model>& models
+)
+{
+	glm::vec3 bitangent = glm::cross(normal, tangent);
+
+	std::vector<Vertex> vertices(4);
+	Model model{};
+	Mesh mesh{};
+	Material material{};
+	material.diffuseTexture = texture;
+
+	// Quad corners in tangent space
+	/*vertices[0].position = origin;
+	vertices[1].position = origin + tangent * size.x;
+	vertices[2].position = origin + tangent * size.x + bitangent * size.y;
+	vertices[3].position = origin + bitangent * size.y;*/
+
+	vertices[0].position = origin;
+	vertices[1].position = origin + glm::vec3(size.x, 0.0f, 0.0f);
+	vertices[2].position = origin + glm::vec3(size.x, size.y, 0.0f);
+	vertices[3].position = origin + glm::vec3(0.0f, size.y, 0.0f);
+
+	// Set attributes
+	for (size_t i = 0; i < 4; ++i) {
+		vertices[i].normal = normal;
+		vertices[i].color = color;
+	}
+
+	// Texcoords (standard winding)
+	vertices[0].texCoord0 = { 0.0f, 0.0f };
+	vertices[1].texCoord0 = { 1.0f, 0.0f };
+	vertices[2].texCoord0 = { 1.0f, 1.0f };
+	vertices[3].texCoord0 = { 0.0f, 1.0f };
+
+	std::vector<uint32_t> indices = {
+		0, 3, 1,
+		1, 3, 2
+	};
+
+	mesh.vertices = std::move(vertices);
+	mesh.indices = std::move(indices);
+	mesh.material = material;
+
+	model.meshes.push_back(std::move(mesh));
+	models.push_back(std::move(model));
+}
 void ModelManager::createSkyModel(Model& model)
 {
 	std::vector<Vertex> localVertices(24);
@@ -561,13 +614,56 @@ static glm::mat4 setScaleToOne(const glm::mat4& matrix) {
 	return translationMatrix * rotationMatrix * scaleMatrix;
 }
 
-void AetherEngine::createDummyTexture(std::array<uint8_t, 4> color, Texture& texture)
+void AetherEngine::uploadRawDataToTexture(void* rawImage, uint32_t width, uint32_t height, Texture& texture)
+{
+	VkBuffer stagingBuffer;
+	VmaAllocation stagingAllocation;
+	VkDeviceSize imageSize = sizeof(uint8_t) * 4 * width * height;
+
+	createBuffer(
+		imageSize,
+		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, true,
+		stagingBuffer, stagingAllocation
+	);
+
+	void* data;
+	vmaMapMemory(vmaAllocator, stagingAllocation, &data);
+	memcpy(data, rawImage, static_cast<size_t>(imageSize));
+	vmaUnmapMemory(vmaAllocator, stagingAllocation);
+
+	transitionImageLayout(
+		texture.image, VK_FORMAT_R8G8B8A8_SRGB,
+		VK_IMAGE_ASPECT_COLOR_BIT,
+		VK_IMAGE_LAYOUT_UNDEFINED,
+		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		texture.mipLevels
+	);
+
+	copyBufferToImage(stagingBuffer, texture.image, width, height);
+
+	transitionImageLayout(
+		pauseMenuTexture.image, VK_FORMAT_R8G8B8A8_SRGB,
+		VK_IMAGE_ASPECT_COLOR_BIT,
+		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+		VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+		pauseMenuTexture.mipLevels
+	);
+
+	vmaDestroyBuffer(vmaAllocator, stagingBuffer, stagingAllocation);
+	destroyedVmaAllocations += 1;
+}
+void AetherEngine::createSolidColorTexture(
+	std::array<uint8_t, 4> color, uint32_t width, uint32_t height, Texture& texture
+)
 {
 	VkBuffer stagingBuffer;
 	VmaAllocation stagingAllocation;
 
-	VkDeviceSize imageSize = sizeof(uint8_t) * 4;
+	VkDeviceSize imageSize = sizeof(uint8_t) * 4 * width * height;
 	texture.mipLevels = 1;
+	texture.width = width;
+	texture.height = height;
 
 	createBuffer(
 		imageSize, 
@@ -576,13 +672,19 @@ void AetherEngine::createDummyTexture(std::array<uint8_t, 4> color, Texture& tex
 		stagingBuffer, stagingAllocation
 	);
 	
+	// filing whole buffer with the same color
+	std::vector<uint8_t> pixelData(imageSize);
+	for (size_t i = 0; i < static_cast<size_t>(width * height); ++i) {
+		std::memcpy(&pixelData[i * 4], color.data(), 4);
+	}
+
 	void* data;
 	vmaMapMemory(vmaAllocator, stagingAllocation, &data);
-	memcpy(data, color.data(), static_cast<size_t>(imageSize));
+	memcpy(data, pixelData.data(), static_cast<size_t>(imageSize));
 	vmaUnmapMemory(vmaAllocator, stagingAllocation);
 
 	createImage(
-		1, 1, texture.mipLevels, VK_SAMPLE_COUNT_1_BIT,
+		width, height, texture.mipLevels, VK_SAMPLE_COUNT_1_BIT,
 		VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL,
 		VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
@@ -599,7 +701,7 @@ void AetherEngine::createDummyTexture(std::array<uint8_t, 4> color, Texture& tex
 
 	copyBufferToImage(
 		stagingBuffer, texture.image,
-		static_cast<uint32_t>(1), static_cast<uint32_t>(1)
+		width, height
 	);
 
 	vmaDestroyBuffer(vmaAllocator, stagingBuffer, stagingAllocation);
@@ -635,6 +737,8 @@ void AetherEngine::createTextureFromPath(const std::string& texturePath, Texture
 
 	VkDeviceSize imageSize = texWidth * texHeight * 4;
 	texture.mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
+	texture.width = texWidth;
+	texture.height = texHeight;
 
 	createBuffer(
 		imageSize, 
@@ -720,6 +824,8 @@ void AetherEngine::createTextureFromEmbedded(
 
 	VkDeviceSize imageSize = texWidth * texHeight * 4; // 4 bytes per pixel for RGBA
 	texture.mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
+	texture.width = texWidth;
+	texture.height = texHeight;
 
 	createBuffer(
 		imageSize, 
@@ -772,7 +878,7 @@ void AetherEngine::createTextureFromEmbedded(
 
 	/*std::cout << "Embedded Texture Loaded:\n";
 	std::cout << " - Name: " << embeddedTextureName << "\n";
-	std::cout << " - Dimensions: " << texWidth << "x" << texHeight << "\n";
+	std::cout << " - Dimensions: " << width << "x" << height << "\n";
 	std::cout << " - Channels: " << texChannels << "\n";
 	std::cout << " - Image Size: " << imageSize / (1024.0f * 1024.0f) << " MB\n";
 	std::cout << " - Mip Levels: " << texture.mipLevels << "\n";

@@ -6,6 +6,16 @@
 
 void AetherEngine::run()
 {
+	prepareUI();
+	vkInit.initializeVulkan(&qVulkanInstance);
+	initVMA();
+	prepareResources();
+	mainLoop();
+	cleanupMemory();
+}
+
+void AetherEngine::prepareUI() 
+{
 	setWindowSize();
 	createMainWindow();
 	createInGameWindow();
@@ -21,14 +31,9 @@ void AetherEngine::run()
 	mainWindow->show();
 
 	gameContext.requestedGameState = GameState::IN_GAME_TESTING;
-	gameContext.requestedGameState = GameState::MAIN_MENU;
 	gameContext.requestedGameState = GameState::IN_DUNGEON;
-
-	vkInit.initializeVulkan(&qVulkanInstance);
-	initVMA();
-	prepareResources();
-	mainLoop();
-	cleanupMemory();
+	gameContext.requestedGameState = GameState::MAIN_MENU;
+	gameContext.clearInputs();
 }
 
 void AetherEngine::prepareResources()
@@ -44,7 +49,9 @@ void AetherEngine::prepareResources()
 	}*/
 
 	createDescriptorSetLayout(descriptorSetLayout);
+
 	createPipelinesAndSwapchain();
+
 	createCommandPool();
 	createColorTexture(msaaTexture);
 	createDepthTexture(depthTexture);
@@ -56,7 +63,8 @@ void AetherEngine::prepareResources()
 	createTextureFromPath("textures/stone_wall_floor_2.png", stone_wall_floor_2_texture);
 	createTextureFromPath("textures/stone_floor_floor_2.png", stone_floor_floor_2_texture);
 	createTextureFromPath("textures/floor_background_floor_2.png", floor_background_floor_2_texture);
-	createDummyTexture({ 0, 0, 0, 0 }, transparentTexture);
+	createSolidColorTexture({ 0, 0, 0, 0 }, 1, 1, transparentTexture);
+	createSolidColorTexture({ 0, 0, 0, 0 }, windowWidth, windowHeight, pauseMenuTexture);
 
 	//loadModelsFromDirectory("models", models);
 	
@@ -77,33 +85,34 @@ void AetherEngine::prepareResources()
 	//	terrainGenerator.get(), 1
 	//);
 
-	createDungeon(
+	Dungeon::createDungeonFloor(
 		gameContext.dungeonFloor, models, 
 		stone_floor_floor_2_texture, stone_wall_floor_2_texture
 	);
-	enterDungeon(gameContext.dungeonFloor, gameContext, character);
+	Dungeon::enterDungeon(gameContext.dungeonFloor, gameContext, character);
+
+	ModelManager::createQuad(
+		{ -1.0f, -1.0f, 0.0f }, { 2.0f, 2.0f }, 
+		{ 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f }, 
+		glm::vec3(0.5f), 
+		pauseMenuTexture, uiModels
+	);
 
 	ModelManager::createSkyModel(sky);
 
-	for (Mesh& mesh : sky.meshes) {
-		createVertexBuffer(mesh);
-		createIndexBuffer(mesh);
-	}
+	createDescriptorPool(models, uiModels);
 
-	for (size_t i = 0; i < models.size(); i++) {
-		for (Mesh& mesh : models[i].meshes) {
-			createVertexBuffer(mesh);
-			createIndexBuffer(mesh);
-			computeAABB(mesh);
-		}
-	}
-
-	createDescriptorPool();
+	computeAABB_createVertexIndexBuffers(sky);
+	computeAABB_createVertexIndexBuffers(models);
+	computeAABB_createVertexIndexBuffers(uiModels);
 
 	createShaderBuffers(sky, MAX_FRAMES_IN_FLIGHT);
 	createShaderBuffers(models, MAX_FRAMES_IN_FLIGHT);
+	//createShaderBuffers(uiModels, MAX_FRAMES_IN_FLIGHT);
+
 	createDescriptorSets(sky, MAX_FRAMES_IN_FLIGHT);
 	createDescriptorSets(models, MAX_FRAMES_IN_FLIGHT);
+	createDescriptorSets(uiModels, MAX_FRAMES_IN_FLIGHT);
 }
 
 //void AetherEngine::createGLFWWindow()
@@ -168,7 +177,7 @@ void AetherEngine::onMainWindowResized(int width, int height) {
 	pauseMenuView->resize(QSize(windowWidth, windowHeight));
 }
 void AetherEngine::onMainWindowMoved(int x, int y) {
-	pauseMenuView->setPosition(x, y);
+	//pauseMenuView->getQuickWindow()->setPosition(x, y);
 	//pauseMenuView->setPosition(inGameWindow->frameGeometry().topLeft() * -1);
 }
 void AetherEngine::onInGameWindowMoved(int x, int y) {
@@ -212,26 +221,27 @@ void AetherEngine::createSettingsMenuWidget() {
 }
 void AetherEngine::createPauseMenuView() {
 	//pauseMenuView = new PauseMenuQuickView(inGameWindow);
-	pauseMenuView = new PauseMenuQuickView(mainWindow->windowHandle());
-	//pauseMenuView = new PauseMenuRenderer();
+	//pauseMenuView = new PauseMenuQuickView(mainWindow->windowHandle());
+	pauseMenuView = new PauseMenuRenderer();
 	//pauseMenuView = new PauseMenuQuickView();
 
-	//pauseMenuView->initialize(QSize(windowWidth, windowHeight));
-	//pauseMenuView->setParent(mainWindow);
+	pauseMenuView->initialize(QSize(windowWidth, windowHeight));
+	pauseMenuView->setParent(mainWindow);
+	inGameWindow->setPauseMenuView(pauseMenuView);
 
-	connect(pauseMenuView, &PauseMenuQuickView::resumeGame, [this]() {
+	connect(pauseMenuView, &PauseMenuRenderer::resumeGame, [this]() {
 		gameContext.requestedGameState = GameState::IN_DUNGEON;
 		});
 
-	connect(pauseMenuView, &PauseMenuQuickView::openSettings, [this]() {
+	connect(pauseMenuView, &PauseMenuRenderer::openSettings, [this]() {
 		gameContext.requestedGameState = GameState::SETTINGS_MENU;
 		});
 
-	connect(pauseMenuView, &PauseMenuQuickView::openMainMenu, [this]() {
+	connect(pauseMenuView, &PauseMenuRenderer::openMainMenu, [this]() {
 		gameContext.requestedGameState = GameState::MAIN_MENU;
 		});
 
-	connect(pauseMenuView, &PauseMenuQuickView::exitGame, [this]() {
+	connect(pauseMenuView, &PauseMenuRenderer::exitGame, [this]() {
 		gameContext.requestedGameState = GameState::EXIT;
 		});
 }
@@ -308,102 +318,6 @@ void AetherEngine::createInGameWindow()
 		});
 }
 
-void AetherEngine::createDungeon(
-	DungeonFloor& dungeonFloor, std::vector<Model>& models,
-	Texture& floorTexture, Texture& wallTexture
-) {
-	std::unordered_map<glm::ivec2, RoomConnectionMask> roomGrid;
-	std::queue<glm::ivec2> frontier;
-
-	size_t minRoomCount = 45;
-	size_t maxRoomCount = 45;
-	float cellSize = 2.0f;
-	size_t maxRoomDimension = 9; // max of width or height
-	float roomSpacing = (maxRoomDimension * cellSize) + cellSize * 0;
-
-	while (roomGrid.size() < minRoomCount) {
-
-		// clean generation if failed
-		frontier.push({ 0, 0 });
-		roomGrid.clear();
-		roomGrid[{0, 0}] = RoomConnectionMask::NONE;
-		std::vector<std::pair<RoomConnectionMask, glm::ivec2>> shuffledOffsets(
-			directionOffsets.begin(),
-			directionOffsets.end()
-		);
-		std::shuffle(shuffledOffsets.begin(), shuffledOffsets.end(), std::default_random_engine(1));
-		size_t neighborChance = 15;
-
-		// try generate dungeon floor layout
-		while (!frontier.empty()) {
-			glm::ivec2 current = frontier.front(); frontier.pop();
-			RoomConnectionMask mask = RoomConnectionMask::NONE;
-
-			neighborChance = glm::clamp(
-				50 - roomGrid.size() * 2,
-				static_cast<size_t>(5), static_cast<size_t>(40)
-			);
-
-			for (auto& [dir, offset] : directionOffsets) {
-				glm::ivec2 neighbor = current + offset;
-
-				// Randomly decide to add neighbor room
-				if (roomGrid.size() < maxRoomCount &&
-					roomGrid.find(neighbor) == roomGrid.end() &&
-					(rand() % 100 < neighborChance)) {
-					roomGrid[neighbor] = oppositeDirection(dir);
-					mask = static_cast<RoomConnectionMask>(mask | dir);
-					frontier.push(neighbor);
-				}
-				// Already placed neighbor, ensure bi-directional connection
-				/*else if (roomGrid.find(neighbor) != roomGrid.end()) {
-					roomGrid[neighbor] =
-						static_cast<RoomConnectionMask>(roomGrid[neighbor] | oppositeDirection(dir));
-					mask = static_cast<RoomConnectionMask>(mask | dir);
-				}*/
-			}
-
-			roomGrid[current] = static_cast<RoomConnectionMask>(roomGrid[current] | mask);
-			//std::cout << "room count: " << roomGrid.size() << "\n";
-		}
-	}
-
-	for (auto& [gridPosition, connectionMask] : roomGrid) {
-		glm::vec3 worldPosition = glm::vec3(gridPosition.x * roomSpacing, 0.0f, gridPosition.y * roomSpacing);
-		//size_t roomWidth = (rand() % 3) * 2 + 7; // 7,9,11
-		//size_t roomHeight = (rand() % 3) * 2 + 7;
-
-		size_t roomWidth = 9;
-		size_t roomLength = 9;
-
-		std::vector<std::string> layout = DungeonRoom::createRoomLayoutFromMask(connectionMask, roomWidth, roomLength);
-
-		dungeonFloor.addDungeonRoom(DungeonRoom(
-			worldPosition,
-			gridPosition,
-			layout,
-			connectionMask,
-			cellSize,
-			floorTexture,
-			wallTexture
-		));
-	}
-
-	dungeonFloor.createDungeonFloor(models);
-}
-void AetherEngine::enterDungeon(
-	DungeonFloor& dungeonFloor, GameContext& gameContext, Character& character
-)
-{
-	gameContext.currentRoom = dungeonFloor.entrance;
-	if (gameContext.currentRoom != nullptr) {
-		character.camera.setPosition(dungeonFloor.entrance->cameraPosition);
-	}
-	else {
-		std::cout << "there is no entrance room for this dungeon\n";
-	}
-}
-
 void AetherEngine::changeState(GameState newGameState) {
 	if (gameContext.currentGameState == newGameState) {
 		std::cout <<
@@ -422,7 +336,7 @@ void AetherEngine::changeState(GameState newGameState) {
 		QApplication::setOverrideCursor(Qt::ArrowCursor);
 		break;
 	case GameState::PAUSED:
-		pauseMenuView->hide();
+		//pauseMenuView->hide();
 		break;
 	case GameState::EXIT:
 		break;
@@ -450,8 +364,8 @@ void AetherEngine::changeState(GameState newGameState) {
 		stackedWidget->setCurrentWidget(inGameWidget);
 		break;
 	case GameState::PAUSED:
-		pauseMenuView->show();
-		pauseMenuView->raise();
+		//pauseMenuView->show();
+		//pauseMenuView->raise();
 		break;
 	case GameState::EXIT:
 		QCoreApplication::quit();
@@ -463,11 +377,6 @@ void AetherEngine::changeState(GameState newGameState) {
 void AetherEngine::handleInDungeonState(double deltaTime, double timeSinceLaunch)
 {
 	character.handleInDungeonPlayerInput(gameContext);
-	if (!character.isInteracting) {
-		//character.handleCharacterMovement(gameContext, deltaTime, gravity, models);
-	}
-
-	drawFrame(timeSinceLaunch, deltaTime);
 }
 void AetherEngine::handleInGameTestingState(double deltaTime, double timeSinceLaunch, bool fpsMenu)
 {
@@ -499,8 +408,6 @@ void AetherEngine::handleInGameTestingState(double deltaTime, double timeSinceLa
 			std::cout << "fps: " << fps << "\n";
 		}
 	}
-
-	drawFrame(timeSinceLaunch, deltaTime);
 }
 
 void AetherEngine::mainLoop()
@@ -519,9 +426,6 @@ void AetherEngine::mainLoop()
 		timeSinceLaunch += deltaTime;
 
 		QCoreApplication::processEvents();
-
-		//pauseMenuView->render();
-		//pauseMenuView->requestUpdate();
 
 		if (!mainWindow or !inGameWindow) {
 			break;
@@ -544,9 +448,9 @@ void AetherEngine::mainLoop()
 			}
 		}
 
-		// drawing 2 frames after window resize, for removing black borders after resize
-		if (gameContext.currentGameState != GameState::IN_GAME_TESTING && isFramebufferResized) {
-			for (size_t i = 0; i < 2; i++) {
+		// drawing frames after window resize, for removing black borders after resize
+		if (gameContext.currentGameState != GameState::MAIN_MENU && isFramebufferResized) {
+			for (size_t i = 0; i < 1; i++) {
 				drawFrame(timeSinceLaunch, deltaTime);
 			}
 		}
@@ -558,6 +462,13 @@ void AetherEngine::mainLoop()
 		if (gameContext.currentGameState == GameState::IN_GAME_TESTING and inGameWindow->isExposed()) {
 			handleInGameTestingState(deltaTime, timeSinceLaunch, fpsMenu);
 		}
+
+		if (gameContext.currentGameState == GameState::IN_DUNGEON ||
+			gameContext.currentGameState == GameState::IN_GAME_TESTING ||
+			gameContext.currentGameState == GameState::PAUSED) {
+
+			drawFrame(timeSinceLaunch, deltaTime);
+		}
 	}
 
 	vkDeviceWaitIdle(vkInit.device);
@@ -568,23 +479,41 @@ void AetherEngine::cleanupModels(std::vector<Model>& models) const
 	for (Model& model : models) {
 		cleanupModel(model);
 	}
+	models.clear();
 }
 void AetherEngine::cleanupModel(Model& model) const
 {
 	for (Mesh& mesh : model.meshes) {
 		cleanupMesh(mesh);
 	}
+	model.meshes.clear();
 }
 void AetherEngine::cleanupMesh(Mesh& mesh) const
 {
-	if (mesh.vertexBuffer != VK_NULL_HANDLE) {
+	mesh.vertices.clear();
+	mesh.indices.clear();
+	mesh.transform = glm::mat4(1.0f);
+	mesh.aabb = {};
+
+	mesh.bones.clear();
+	mesh.boneMap.clear();
+
+	if (mesh.descriptorSets != std::vector<VkDescriptorSet>(MAX_FRAMES_IN_FLIGHT, VK_NULL_HANDLE)) {
+		vkFreeDescriptorSets(
+			vkInit.device, descriptorPool, 
+			static_cast<uint32_t>(mesh.descriptorSets.size()), 
+			mesh.descriptorSets.data()
+		);
+		mesh.descriptorSets = std::vector<VkDescriptorSet>(MAX_FRAMES_IN_FLIGHT, VK_NULL_HANDLE);
+	}
+	if (mesh.vertexBufferAllocation != VK_NULL_HANDLE) {
 		vmaDestroyBuffer(vmaAllocator, mesh.vertexBuffer, mesh.vertexBufferAllocation);
 		mesh.vertexBuffer = VK_NULL_HANDLE;
 		mesh.vertexBufferAllocation = VK_NULL_HANDLE;
 		destroyedVmaAllocations += 1;
 	}
 
-	if (mesh.indexBuffer != VK_NULL_HANDLE) {
+	if (mesh.indexBufferAllocation != VK_NULL_HANDLE) {
 		vmaDestroyBuffer(vmaAllocator, mesh.indexBuffer, mesh.indexBufferAllocation);
 		mesh.indexBuffer = VK_NULL_HANDLE;
 		mesh.indexBufferAllocation = VK_NULL_HANDLE;
@@ -594,6 +523,34 @@ void AetherEngine::cleanupMesh(Mesh& mesh) const
 	cleanupShaderBuffers(mesh);
 
 	cleanupMaterial(mesh.material);
+}
+void AetherEngine::cleanupMaterial(Material& material) const
+{
+	cleanupTexture(material.diffuseTexture);
+	cleanupTexture(material.normalTexture);
+	cleanupTexture(material.specularTexture);
+	cleanupTexture(material.emissiveTexture);
+}
+void AetherEngine::cleanupTexture(Texture& texture) const
+{
+	if (texture.imageView && cleanedImageViews.insert(texture.imageView).second) {
+		vkDestroyImageView(vkInit.device, texture.imageView, nullptr);
+		texture.imageView = VK_NULL_HANDLE;
+	}
+	if (texture.sampler && cleanedImageSamplers.insert(texture.sampler).second) {
+		vkDestroySampler(vkInit.device, texture.sampler, nullptr);
+		texture.sampler = VK_NULL_HANDLE;
+	}
+	if (texture.image && texture.vmaAllocation && cleanedImages.insert(texture.image).second) {
+		vmaDestroyImage(vmaAllocator, texture.image, texture.vmaAllocation);
+		texture.image = VK_NULL_HANDLE;
+		texture.vmaAllocation = VK_NULL_HANDLE;
+		destroyedVmaAllocations += 1;
+	}
+
+	texture.width = 0;
+	texture.height = 0;
+	texture.mipLevels = 0;
 }
 void AetherEngine::cleanupShaderBuffers(std::vector<Model>& models) const
 {
@@ -610,14 +567,14 @@ void AetherEngine::cleanupShaderBuffers(Model& model) const
 void AetherEngine::cleanupShaderBuffers(Mesh& mesh) const
 {
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-		if (mesh.UBOBuffers[i] != VK_NULL_HANDLE) {
+		if (mesh.UBOAllocations[i] != VK_NULL_HANDLE) {
 			vmaDestroyBuffer(vmaAllocator, mesh.UBOBuffers[i], mesh.UBOAllocations[i]);
 			mesh.UBOBuffers[i] = VK_NULL_HANDLE;
 			mesh.UBOAllocations[i] = VK_NULL_HANDLE;
 			destroyedVmaAllocations += 1;
 		}
 
-		if (!mesh.bones.empty() && mesh.boneSSBOBuffers[i] != VK_NULL_HANDLE) {
+		if (mesh.boneSSBOAllocations[i] != VK_NULL_HANDLE) {
 			vmaDestroyBuffer(vmaAllocator, mesh.boneSSBOBuffers[i], mesh.boneSSBOAllocations[i]);
 			mesh.boneSSBOBuffers[i] = VK_NULL_HANDLE;
 			mesh.boneSSBOAllocations[i] = VK_NULL_HANDLE;
@@ -625,36 +582,12 @@ void AetherEngine::cleanupShaderBuffers(Mesh& mesh) const
 		}
 	}
 }
-void AetherEngine::cleanupMaterial(Material& material) const
-{
-	cleanupTexture(material.diffuseTexture);
-	cleanupTexture(material.normalTexture);
-	cleanupTexture(material.specularTexture);
-	cleanupTexture(material.emissiveTexture);
-}
-void AetherEngine::cleanupTexture(Texture& texture) const
-{
-	if (texture.imageView && cleanedImageViews.insert(texture.imageView).second) {
-		vkDestroyImageView(vkInit.device, texture.imageView, nullptr);
-		texture.imageView = VK_NULL_HANDLE;
-	}
-	if (texture.image && texture.vmaAllocation && cleanedImages.insert(texture.image).second) {
-		//std::cout << "Destroying image: " << texture.image << std::endl;
-		vmaDestroyImage(vmaAllocator, texture.image, texture.vmaAllocation);
-		texture.image = VK_NULL_HANDLE;
-		texture.vmaAllocation = VK_NULL_HANDLE;
-		destroyedVmaAllocations += 1;
-	}
-	if (texture.sampler && cleanedImageSamplers.insert(texture.sampler).second) {
-		vkDestroySampler(vkInit.device, texture.sampler, nullptr);
-		texture.sampler = VK_NULL_HANDLE;
-	}
-}
 
 void AetherEngine::cleanupMemory()
 {
-	cleanupModels(models);
 	cleanupModel(sky);
+	cleanupModels(models);
+	cleanupModels(uiModels);
 
 	cleanupTexture(stone_wall_floor_1_texture);
 	cleanupTexture(stone_wall_floor_2_texture);
@@ -666,6 +599,9 @@ void AetherEngine::cleanupMemory()
 
 	cleanupTexture(grassTexture);
 	cleanupTexture(transparentTexture);
+	cleanupTexture(pauseMenuTexture);
+	cleanupTexture(depthTexture);
+	cleanupTexture(msaaTexture);
 
 	cleanupSwapchain();
 
@@ -673,8 +609,10 @@ void AetherEngine::cleanupMemory()
 	cleanedImageViews.clear();
 	cleanedImageSamplers.clear();
 
-	//std::cout << "createdBuffers: " << createdBuffers << "\n";
-	//std::cout << "destroyedVmaAllocations: " << destroyedVmaAllocations << "\n";
+	if (vkInit.enableValidationLayers) {
+		std::cout << "createdBuffers: " << createdBuffers << "\n";
+		std::cout << "destroyedVmaAllocations: " << destroyedVmaAllocations << "\n";
+	}
 
 	// will free all allocated descriptor sets from this pool
 	vkDestroyDescriptorPool(vkInit.device, descriptorPool, nullptr);

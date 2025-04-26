@@ -9,6 +9,7 @@
 #include <QResizeEvent>
 #include "Character.h"
 #include "GameContext.h"
+#include "PauseMenuRenderer.h"
 
 class InGameWindow : public QWindow
 {
@@ -16,12 +17,14 @@ class InGameWindow : public QWindow
 private:
     Character* character;
     GameContext* gameContext;
+    PauseMenuRenderer* pauseMenuView = nullptr;
 
 public:
     InGameWindow(
         QVulkanInstance* instance,
         Character& character, GameContext& gameContext
     );
+    void setPauseMenuView(PauseMenuRenderer* view) { pauseMenuView = view; }
 
     double latestMouseDx = 0.0;
     double latestMouseDy = 0.0;
@@ -33,6 +36,8 @@ signals:
     void lostFocus();
 
 protected:
+    bool eventFilter(QObject* obj, QEvent* event);
+
     void resizeEvent(QResizeEvent* event) override;
     void moveEvent(QMoveEvent* event) override;
     void closeEvent(QCloseEvent* event) override;

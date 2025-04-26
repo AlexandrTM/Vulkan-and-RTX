@@ -55,6 +55,8 @@ struct Texture {
     VkImageView                             imageView     = VK_NULL_HANDLE;
     VkSampler                               sampler       = VK_NULL_HANDLE;
     uint32_t                                mipLevels     = 0;
+    uint32_t                                width         = 0;
+    uint32_t                                height        = 0;
 
 	explicit operator bool() const {
 		return 
@@ -62,7 +64,9 @@ struct Texture {
             vmaAllocation != VK_NULL_HANDLE &&
 			imageView     != VK_NULL_HANDLE &&
 			sampler       != VK_NULL_HANDLE &&
-            mipLevels     != 0;
+            mipLevels     != 0 &&
+            width         != 0 &&
+            height        != 0;
 	}
 };
 

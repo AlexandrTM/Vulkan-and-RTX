@@ -17,7 +17,7 @@ struct Vertex {
 	static VkVertexInputBindingDescription getBindingDescription();
 
 	// how to extract a vertex attribute from a chunk of vertex data originating from a binding description to shaders
-	static std::array<VkVertexInputAttributeDescription, 7> getAttributeDescriptions();
+	static std::vector<VkVertexInputAttributeDescription> getAttributeDescriptions(VertexLayoutType vertexLayoutType);
 
 	bool operator==(const Vertex& other) const;
 };
