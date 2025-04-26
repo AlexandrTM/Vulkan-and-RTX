@@ -112,6 +112,8 @@ void AetherEngine::recreateSwapchain()
 	cleanupShaderBuffers(sky);
 	cleanupShaderBuffers(models);
 	cleanupModels(uiModels);
+	cleanupTexture(depthTexture);
+	cleanupTexture(msaaTexture);
 
 	createPipelinesAndSwapchain();
 	createColorTexture(msaaTexture);

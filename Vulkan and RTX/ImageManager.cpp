@@ -279,6 +279,9 @@ void AetherEngine::createImage(uint32_t width, uint32_t height, uint32_t mipLeve
 	if (vmaCreateImage(vmaAllocator, &imageInfo, &allocCreateInfo, &image, &vmaAllocation, nullptr) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create image with VMA!");
 	}
+	else {
+		createdBuffers += 1;
+	}
 }
 
 void AetherEngine::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)

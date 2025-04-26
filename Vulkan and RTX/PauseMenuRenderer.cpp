@@ -48,6 +48,25 @@ PauseMenuRenderer::~PauseMenuRenderer() {
     }
 }
 
+bool PauseMenuRenderer::handleEvent(QEvent* event) {
+    switch (event->type()) {
+    case QEvent::MouseButtonPress:
+    case QEvent::MouseButtonRelease:
+    case QEvent::MouseMove: {
+        QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
+        forwardMouseEvent(mouseEvent);
+        return true;
+    }
+    case QEvent::HoverMove: {
+        QHoverEvent* hoverEvent = static_cast<QHoverEvent*>(event);
+        forwardHoverEvent(hoverEvent);
+        return true;
+    }
+    default:
+        return false;
+    }
+}
+
 void PauseMenuRenderer::forwardMouseEvent(QMouseEvent* event) {
     QCoreApplication::sendEvent(quickWindow, event);
 }

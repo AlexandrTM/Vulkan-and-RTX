@@ -715,9 +715,9 @@ void AetherEngine::createDescriptorPool(
 	poolSizes[1].descriptorCount = (objectModels.size() * 4)
 		* static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 	poolSizes[2].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	poolSizes[2].descriptorCount = (totalMeshes + 2)
+	poolSizes[2].descriptorCount = (totalMeshes + 5)
 		* static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
-
+		
 	VkDescriptorPoolCreateInfo poolInfo{};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());

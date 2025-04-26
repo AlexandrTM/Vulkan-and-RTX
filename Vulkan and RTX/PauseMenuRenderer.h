@@ -15,6 +15,7 @@ public:
     QOpenGLFramebufferObject* getFbo() const { return fbo; }
     QQuickWindow* getQuickWindow() const { return quickWindow; }
 
+    bool handleEvent(QEvent* event);
     void forwardMouseEvent(QMouseEvent* event);
     void forwardHoverEvent(QHoverEvent* event);
 

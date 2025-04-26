@@ -13,26 +13,18 @@ InGameWindow::InGameWindow(
 }
 
 bool InGameWindow::eventFilter(QObject* obj, QEvent* event) {
-    if (pauseMenuView && gameContext->currentGameState == GameState::PAUSED) {
-        switch (event->type()) {
-        case QEvent::MouseButtonPress:
-        case QEvent::MouseButtonRelease:
-        case QEvent::MouseMove: {
-            QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
-            pauseMenuView->forwardMouseEvent(mouseEvent);
-            return true;
-        }
-        case QEvent::HoverMove: {
-            QHoverEvent* hoverEvent = static_cast<QHoverEvent*>(event);
-            pauseMenuView->forwardHoverEvent(hoverEvent);
-            return true;
-        }
-        default:
-            break;
-        }
+    if (sendEventToUI(event)) {
+        return true;
     }
     // For all other cases, let normal event processing happen
     return QWindow::eventFilter(obj, event);
+}
+
+bool InGameWindow::sendEventToUI(QEvent* event) {
+    if (pauseMenuView && gameContext->currentGameState == GameState::PAUSED) {
+        return pauseMenuView->handleEvent(event);
+    }
+    return false;
 }
 
 void InGameWindow::keyPressEvent(QKeyEvent* event) {
