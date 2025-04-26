@@ -13,7 +13,7 @@ InGameWindow::InGameWindow(
 }
 
 bool InGameWindow::eventFilter(QObject* obj, QEvent* event) {
-    if (pauseMenuView/* && pauseMenuView->isVisible()*/) {
+    if (pauseMenuView && gameContext->currentGameState == GameState::PAUSED) {
         switch (event->type()) {
         case QEvent::MouseButtonPress:
         case QEvent::MouseButtonRelease:
