@@ -615,11 +615,25 @@ void AetherEngine::recordCommandBuffer(
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["ui"]);
 			recordModelToCommandBuffer(pauseMenuModel, commandBuffer);
 		}
-		if (gameContext.currentGameState == GameState::DUNGEON_EXPLORATION ||
-			gameContext.currentGameState == GameState::IN_GAME_TESTING     ||
-			gameContext.currentGameState == GameState::COMBAT_PLAYER_TURN  ||
-			gameContext.currentGameState == GameState::COMBAT_MOB_TURN     ||
+		if (gameContext.currentGameState == GameState::COMBAT_PLAYER_SELECT_EQUATION) {
+			renderQmlToTexture(selectEquationRenderer, selectEquationTexture);
+
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["ui"]);
+			recordModelToCommandBuffer(selectEquationModel, commandBuffer);
+		}
+		if (gameContext.currentGameState == GameState::COMBAT_PLAYER_SOLVE_EQUATION) {
+			renderQmlToTexture(solveEquationRenderer, solveEquationTexture);
+
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["ui"]);
+			recordModelToCommandBuffer(solveEquationModel, commandBuffer);
+		}
+		if (gameContext.currentGameState == GameState::DUNGEON_EXPLORATION			 ||
+			gameContext.currentGameState == GameState::IN_GAME_TESTING				 ||
+			gameContext.currentGameState == GameState::COMBAT_PLAYER_SELECT_EQUATION ||
+			gameContext.currentGameState == GameState::COMBAT_PLAYER_SOLVE_EQUATION  ||
+			gameContext.currentGameState == GameState::COMBAT_MOB_TURN				 ||
 			gameContext.currentGameState == GameState::PAUSED) {
+
 			updateInGameOverlay();
 			renderQmlToTexture(inGameOverlayRenderer, inGameOverlayTexture);
 
@@ -635,6 +649,32 @@ void AetherEngine::recordCommandBuffer(
 	}
 }
 
+void AetherEngine::updateSelectEquation() {
+	if (!selectEquationRenderer) return;
+
+	auto rootItem = selectEquationRenderer->getRootItem();
+	if (!rootItem) return;
+
+	QObject* difficulty0 = rootItem->findChild<QObject*>("difficulty0");
+	QObject* difficulty1 = rootItem->findChild<QObject*>("difficulty1");
+	QObject* difficulty2 = rootItem->findChild<QObject*>("difficulty2");
+
+	QObject* damage0 = rootItem->findChild<QObject*>("damage0");
+	QObject* damage1 = rootItem->findChild<QObject*>("damage1");
+	QObject* damage2 = rootItem->findChild<QObject*>("damage2");
+
+	if (damage0 and damage1 and damage2) {
+		damage0->setProperty("value", 5);
+		damage1->setProperty("value", 15);
+		damage2->setProperty("value", 25);
+	}
+
+	if (difficulty0 and difficulty1 and difficulty2) {
+		difficulty0->setProperty("value", 1);
+		difficulty1->setProperty("value", 2);
+		difficulty2->setProperty("value", 3);
+	}
+}
 void AetherEngine::updateInGameOverlay() {
 	if (!inGameOverlayRenderer) return;
 
@@ -669,7 +709,7 @@ void AetherEngine::renderQmlToTexture(UserInterfaceRenderer* renderer, Texture& 
 
 	if (texture.width != static_cast<uint32_t>(image.width()) ||
 		texture.height != static_cast<uint32_t>(image.height())) {
-		cleanupTexture(&texture);
+		cleanupTexture(texture);
 
 		createSolidColorTexture({ 0, 0, 0, 0 }, image.width(), image.height(), texture);
 	}
@@ -831,13 +871,13 @@ void AetherEngine::addTextureToDescriptorSet(
 	vkUpdateDescriptorSets(vkInit.device, 1, &descriptorWrite, 0, nullptr);
 }
 void AetherEngine::addTextureIfExistToDescriptorSet(
-	const Texture* texture,
+	const Texture& texture,
 	VkDescriptorSet descriptorSet, uint32_t dstBinding
 ) const
 {
 	if (texture) {
 		addTextureToDescriptorSet(
-			*texture,
+			texture,
 			descriptorSet, dstBinding
 		);
 	}

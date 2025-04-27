@@ -12,6 +12,7 @@
 #include "PauseMenuQuickView.h"
 #include "UserInterfaceRenderer.h"
 #include "PauseMenuSlotHandler.h"
+#include "SelectEquationSlotHandler.h"
 
 #include "ModelManager.h"
 #include "GameContext.h"
@@ -45,7 +46,6 @@ private:
 
 	InGameWindow* inGameWindow = nullptr;
 	QWidget* inGameWidget = nullptr;
-	//QWidget* inGameContainerWidget = nullptr;
 
 	MainMenuWidget* mainMenuWidget = nullptr;
 	SettingsMenuWidget* settingsMenuWidget = nullptr;
@@ -96,6 +96,14 @@ private:
 	Texture inGameOverlayTexture;
 	Model inGameOverlayModel;
 
+	UserInterfaceRenderer* selectEquationRenderer = nullptr;
+	Texture selectEquationTexture;
+	Model selectEquationModel;
+
+	UserInterfaceRenderer* solveEquationRenderer = nullptr;
+	Texture solveEquationTexture;
+	Model solveEquationModel;
+
 	bool isFramebufferResized = false;
 
 	std::vector<Model> models;
@@ -133,8 +141,9 @@ public:
 
 private:
 	void changeState(GameState newGameState);
-	void handleInDungeonState(double deltaTime, double timeSinceLaunch);
+	void handleDungeonExplorationState(double deltaTime, double timeSinceLaunch);
 	void handleInGameTestingState(double deltaTime, double timeSinceLaunch, bool fpsMenu);
+	void updateSelectEquation();
 	void updateInGameOverlay();
 
 	std::string createPuzzleEquation(std::string name, int32_t& answer);
@@ -144,7 +153,7 @@ private:
 	void createSettingsMenuWidget();
 
 	void createPauseMenuRenderer();
-	void createInGameOverlayRenderer();
+	void createInGameUI();
 
 	void createMainWindow();
 	void createInGameWindow();
@@ -163,7 +172,7 @@ private:
 	void cleanupShaderBuffers(std::vector<Model>& models) const;
 	void cleanupShaderBuffers(Model& model) const;
 	void cleanupShaderBuffers(Mesh& mesh) const;
-	void cleanupTexture(Texture* texture) const;
+	void cleanupTexture(Texture& texture) const;
 	void cleanupMaterial(Material& material) const;
 	void cleanupSwapchain();
 
@@ -176,7 +185,7 @@ private:
 		const std::string& directory,
 		std::vector<Model>& models
 	);
-	Texture* loadTexture(const std::string& texturePath, const aiScene* scene);
+	Texture loadTexture(const std::string& texturePath, const aiScene* scene);
 	Material processMaterial(aiMaterial* aiMat, const aiScene* scene);
 	void processNode(
 		aiNode* node, const aiScene* scene,
@@ -265,7 +274,7 @@ private:
 		VkDescriptorSet descriptorSet, uint32_t dstBinding
 	) const;
 	void addTextureIfExistToDescriptorSet(
-		const Texture* texture,
+		const Texture& texture,
 		VkDescriptorSet descriptorSet, uint32_t dstBinding
 	) const;
 	void addBufferToDescriptorSet(

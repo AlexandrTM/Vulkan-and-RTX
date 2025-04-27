@@ -18,13 +18,17 @@ private:
     Character* character = nullptr;
     GameContext* gameContext = nullptr;
     UserInterfaceRenderer* pauseMenuRenderer = nullptr;
+    UserInterfaceRenderer* selectEquationRenderer = nullptr;
+    UserInterfaceRenderer* solveEquationRenderer = nullptr;
 
 public:
     InGameWindow(
         QVulkanInstance* instance,
         Character& character, GameContext& gameContext
     );
-    void setPauseMenuRenderer(UserInterfaceRenderer* renderer) { pauseMenuRenderer = renderer; }
+    void setPauseMenuRenderer     (UserInterfaceRenderer* renderer) { pauseMenuRenderer = renderer; }
+    void setSelectEquationRenderer(UserInterfaceRenderer* renderer) { selectEquationRenderer = renderer; }
+    void setSolveEquationRenderer (UserInterfaceRenderer* renderer) { solveEquationRenderer = renderer; }
 
     double latestMouseDx = 0.0;
     double latestMouseDy = 0.0;

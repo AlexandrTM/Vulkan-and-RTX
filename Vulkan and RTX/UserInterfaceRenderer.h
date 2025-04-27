@@ -16,6 +16,7 @@ public:
     QQuickWindow* getQuickWindow() const { return quickWindow; }
 
     bool handleEvent(QEvent* event);
+    void forwardKeyEvent(QKeyEvent* event);
     void forwardMouseEvent(QMouseEvent* event);
     void forwardHoverEvent(QHoverEvent* event);
     QQuickItem* getRootItem() const { return rootItem; }

@@ -16,15 +16,12 @@ public slots:
     void onResumeGameClicked() {
         gameContext->requestedGameState = GameState::DUNGEON_EXPLORATION;
     }
-
     void onOpenSettingsClicked() {
         gameContext->requestedGameState = GameState::SETTINGS_MENU;
     }
-
     void onOpenMainMenuClicked() {
         gameContext->requestedGameState = GameState::MAIN_MENU;
     }
-
     void onExitGameClicked() {
         gameContext->requestedGameState = GameState::EXIT;
     }

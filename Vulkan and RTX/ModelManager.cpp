@@ -57,7 +57,7 @@ void ModelManager::createCuboid(
 	Mesh mesh{};
 
 	Material material{};
-	material.diffuseTexture = &texture;
+	material.diffuseTexture = texture;
 
 #pragma region
 	localVertices[0].position = { glm::vec3(0.0f , 0.0f  , 0.0f) + glm::vec3(x, y, z) };
@@ -198,7 +198,8 @@ Model ModelManager::createQuad(
 	Model model{};
 	Mesh mesh{};
 	Material material{};
-	material.diffuseTexture = &texture;
+	material.diffuseTexture = texture;
+	//material.diffuseTexture.uniqueHash = material.diffuseTexture.generateRandomHash();
 
 	// Quad corners in tangent space
 	/*vertices[0].position = origin;
@@ -943,16 +944,16 @@ void AetherEngine::createTextureFromEmbedded(
 	std::cout << " - Mip Levels: " << texture.mipLevels << "\n";
 	std::cout << " - Compression: " << (embeddedTexture->mHeight == 0 ? "Yes" : "No") << "\n";*/
 }
-Texture* AetherEngine::loadTexture(const std::string& texturePath, const aiScene* scene) 
+Texture AetherEngine::loadTexture(const std::string& texturePath, const aiScene* scene) 
 {
-	Texture* texture = new Texture();
+	Texture texture;
 
 	// Embedded texture in .glb file, the path is in the form "*n", where n is the index
 	if (texturePath[0] == '*') {
-		createTextureFromEmbedded(texturePath, scene, *texture);
+		createTextureFromEmbedded(texturePath, scene, texture);
 	}
 	else {
-		createTextureFromPath(("textures\\" + std::string(texturePath)), *texture);
+		createTextureFromPath(("textures\\" + std::string(texturePath)), texture);
 	}
 
 	return texture;
@@ -975,7 +976,7 @@ Material AetherEngine::processMaterial(aiMaterial* aiMat, const aiScene* scene)
 		
 		aiString texturePath;
 		if (aiMat->GetTexture(aiTextureType_DIFFUSE, 0, &texturePath) == AI_SUCCESS) {
-			material.diffuseTexture = loadTexture(texturePath.C_Str(), scene);
+			material.diffuseTexture = std::move(loadTexture(texturePath.C_Str(), scene));
 		}
 	}
 
@@ -983,7 +984,7 @@ Material AetherEngine::processMaterial(aiMaterial* aiMat, const aiScene* scene)
 
 		aiString texturePath;
 		if (aiMat->GetTexture(aiTextureType_EMISSIVE, 0, &texturePath) == AI_SUCCESS) {
-			material.emissiveTexture = loadTexture(texturePath.C_Str(), scene);
+			material.emissiveTexture = std::move(loadTexture(texturePath.C_Str(), scene));
 		}
 	}
 

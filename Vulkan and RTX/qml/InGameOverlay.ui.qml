@@ -10,12 +10,13 @@ Rectangle {
 
     color: "#00000000"
     property color buttonColor: "#dbdbdb"
+    property real defaultFontSize: Math.max(height * 0.025, 13)
 
     Rectangle {
         id: playerHealthBackground
         x: parent.width * 0.1
         y: parent.height * 0.85
-        width: parent.width * 0.2
+        width: parent.width * 0.17
         height: parent.height * 0.08
         color: "#90ffd380"
         visible: playerHealth.value > 0
@@ -29,15 +30,15 @@ Rectangle {
             font.family: Qt.application.font.family
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
-            font.pointSize: Math.max(pauseMenu.height * 0.03, 16)
+            font.pointSize: defaultFontSize
         }
     }
 
     Rectangle {
-        id: mobHealthBackgroundz
+        id: mobHealthBackground
         x: parent.width * 0.75
         y: parent.height * 0.85
-        width: parent.width * 0.2
+        width: parent.width * 0.17
         height: parent.height * 0.08
         color: "#90ffd380"
         visible: mobHealth.value > 0
@@ -51,7 +52,7 @@ Rectangle {
             font.family: Qt.application.font.family
             horizontalAlignment: Text.AlignHCenter
             verticalAlignment: Text.AlignVCenter
-            font.pointSize: Math.max(parent.height * 0.03, 16)
+            font.pointSize: defaultFontSize
         }
     }
 }

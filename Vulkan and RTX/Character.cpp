@@ -56,7 +56,7 @@ void Character::handleInGamePlayerInput(GameContext& gameContext)
 		}
 	}*/
 }
-void Character::handleInDungeonPlayerInput(GameContext& gameContext)
+void Character::handleDungeonExplorationPlayerInput(GameContext& gameContext)
 {
 	if (gameContext.keyboardKeys[Qt::Key_Escape]) {
 		gameContext.requestedGameState = GameState::PAUSED;
@@ -74,7 +74,8 @@ void Character::handleDungeonRoomMovement(GameContext& gameContext)
 		gameContext.roomMovementHandled = false;
 	}
 
-	if (gameContext.roomMovementHandled) {
+	// ensure per key release movement	// ensure no pending movement, to not skip dungeon room
+	if (gameContext.roomMovementHandled || gameContext.requestedGameState != GameState::NONE) {
 		return;
 	}
 
@@ -118,10 +119,6 @@ void Character::handleDungeonRoomMovement(GameContext& gameContext)
 				}
 			}
 		}
-	}
-
-	if (!gameContext.currentRoom->mobs.empty()) {
-		gameContext.requestedGameState = GameState::COMBAT_PLAYER_TURN;
 	}
 }
 

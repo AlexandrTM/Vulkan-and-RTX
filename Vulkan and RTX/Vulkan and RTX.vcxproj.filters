@@ -266,5 +266,8 @@
     <QtMoc Include="PauseMenuSlotHandler.h">
       <Filter>source\UI</Filter>
     </QtMoc>
+    <QtMoc Include="SelectEquationSlotHandler.h">
+      <Filter>source\UI</Filter>
+    </QtMoc>
   </ItemGroup>
 </Project>

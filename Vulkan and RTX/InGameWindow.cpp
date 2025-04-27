@@ -24,6 +24,12 @@ bool InGameWindow::sendEventToUI(QEvent* event) {
     if (pauseMenuRenderer && gameContext->currentGameState == GameState::PAUSED) {
         return pauseMenuRenderer->handleEvent(event);
     }
+    if (selectEquationRenderer && gameContext->currentGameState == GameState::COMBAT_PLAYER_SELECT_EQUATION) {
+        return selectEquationRenderer->handleEvent(event);
+    }
+    if (solveEquationRenderer && gameContext->currentGameState == GameState::COMBAT_PLAYER_SOLVE_EQUATION) {
+        return solveEquationRenderer->handleEvent(event);
+    }
     return false;
 }
 

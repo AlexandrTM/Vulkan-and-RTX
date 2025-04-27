@@ -81,10 +81,10 @@ struct Texture {
 };
 
 struct Material {
-    Texture*                                diffuseTexture  = nullptr; // basic color
-    Texture*                                normalTexture   = nullptr;
-    Texture*                                specularTexture = nullptr;
-    Texture*                                emissiveTexture = nullptr;
+    Texture                                 diffuseTexture; // basic color
+    Texture                                 normalTexture;
+    Texture                                 specularTexture;
+    Texture                                 emissiveTexture;
 };
 
 struct Cuboid

@@ -260,6 +260,7 @@
     <ClInclude Include="IsCreature.h" />
     <ClInclude Include="resource.h" />
     <QtMoc Include="SettingsMenuWidget.h" />
+    <QtMoc Include="SelectEquationSlotHandler.h" />
     <ClInclude Include="StellarCalculations.h" />
     <ClInclude Include="TerrainGenerator.h" />
     <ClInclude Include="Vertex.h" />

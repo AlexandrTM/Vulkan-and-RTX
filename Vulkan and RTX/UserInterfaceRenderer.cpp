@@ -50,6 +50,12 @@ UserInterfaceRenderer::~UserInterfaceRenderer() {
 
 bool UserInterfaceRenderer::handleEvent(QEvent* event) {
     switch (event->type()) {
+    case QEvent::KeyPress:
+    case QEvent::KeyRelease: {
+        QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
+        forwardKeyEvent(keyEvent);
+        return true;
+    }
     case QEvent::MouseButtonPress:
     case QEvent::MouseButtonRelease:
     case QEvent::MouseMove: {
@@ -67,10 +73,12 @@ bool UserInterfaceRenderer::handleEvent(QEvent* event) {
     }
 }
 
+void UserInterfaceRenderer::forwardKeyEvent(QKeyEvent* event) {
+    QCoreApplication::sendEvent(quickWindow, event);
+}
 void UserInterfaceRenderer::forwardMouseEvent(QMouseEvent* event) {
     QCoreApplication::sendEvent(quickWindow, event);
 }
-
 void UserInterfaceRenderer::forwardHoverEvent(QHoverEvent* event) {
     QCoreApplication::sendEvent(quickWindow, event);
 }

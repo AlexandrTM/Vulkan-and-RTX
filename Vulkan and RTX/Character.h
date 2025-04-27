@@ -49,7 +49,7 @@ public:
 		float gravity, const std::vector<Model>& models
 	);
 	void handleInGamePlayerInput(GameContext& gameContext);
-	void handleInDungeonPlayerInput(GameContext& gameContext);
+	void handleDungeonExplorationPlayerInput(GameContext& gameContext);
 	void handleDungeonRoomMovement(GameContext& gameContext);
 
 	// ========== not used currently ==========

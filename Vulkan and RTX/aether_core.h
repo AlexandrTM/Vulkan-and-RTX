@@ -24,18 +24,29 @@ enum class Gamemode : uint32_t
 	SURVIVAL = 1,
 };
 
+enum class EquationDifficulty : uint32_t
+{
+	EASY = 0,
+	MEDIUM = 1,
+	HARD = 2,
+	INSANE = 3,
+	BEYOND = 4,
+	UNKNOWN = std::numeric_limits<uint32_t>::max(),
+};
+
 enum class GameState : uint32_t
 {
 	MAIN_MENU = 0,
 	SETTINGS_MENU = 1,
-	IN_GAME_TESTING = 2, // for testing purposes only
-	DUNGEON_EXPLORATION = 3,
-	COMBAT_PLAYER_TURN = 4,
-	COMBAT_MOB_TURN = 5,
-	SHOP = 6,
-	PAUSED = 7,
-	HALL_OF_FAME = 8,
-	GAME_OVER = 9,
+	PAUSED = 2,
+	IN_GAME_TESTING = 3, // for testing purposes only
+	DUNGEON_EXPLORATION = 4,
+	COMBAT_PLAYER_SELECT_EQUATION = 5,
+	COMBAT_PLAYER_SOLVE_EQUATION = 6,
+	COMBAT_MOB_TURN = 7,
+	SHOP = 8,
+	HALL_OF_FAME = 9,
+	GAME_OVER = 10,
 	EXIT = std::numeric_limits<uint32_t>::max() - 1,
 	NONE = std::numeric_limits<uint32_t>::max(),
 };
