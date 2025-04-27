@@ -58,6 +58,15 @@ struct Texture {
     uint32_t                                width         = 0;
     uint32_t                                height        = 0;
 
+    uint64_t uniqueHash = 0;
+
+    Texture() { uniqueHash = generateRandomHash(); }
+
+    static uint64_t generateRandomHash() {
+        static std::mt19937_64 rng{ std::random_device{}() };
+        return rng();
+    }
+
 	explicit operator bool() const {
 		return 
             image         != VK_NULL_HANDLE &&
@@ -66,15 +75,16 @@ struct Texture {
 			sampler       != VK_NULL_HANDLE &&
             mipLevels     != 0 &&
             width         != 0 &&
-            height        != 0;
+            height        != 0 &&
+            uniqueHash    != 0;
 	}
 };
 
 struct Material {
-    Texture                                 diffuseTexture; // basic color
-    Texture                                 normalTexture;
-    Texture                                 specularTexture;
-    Texture                                 emissiveTexture;
+    Texture*                                diffuseTexture  = nullptr; // basic color
+    Texture*                                normalTexture   = nullptr;
+    Texture*                                specularTexture = nullptr;
+    Texture*                                emissiveTexture = nullptr;
 };
 
 struct Cuboid

@@ -50,13 +50,6 @@ private:
 	MainMenuWidget* mainMenuWidget = nullptr;
 	SettingsMenuWidget* settingsMenuWidget = nullptr;
 
-	UserInterfaceRenderer* pauseMenuRenderer = nullptr;
-	UserInterfaceRenderer* inGameOverlayRenderer = nullptr;
-	Texture pauseMenuTexture;
-	Texture inGameOverlayTexture;
-
-	std::vector<Model> pauseMenuModel;
-
 	QVulkanInstance qVulkanInstance;
 
 	VkDescriptorPool          descriptorPool;
@@ -95,6 +88,14 @@ private:
 	std::vector<VkFence>     inFlightFences;
 	uint32_t currentFrame = 0;
 
+	UserInterfaceRenderer* pauseMenuRenderer = nullptr;
+	Texture pauseMenuTexture;
+	Model pauseMenuModel;
+
+	UserInterfaceRenderer* inGameOverlayRenderer = nullptr;
+	Texture inGameOverlayTexture;
+	Model inGameOverlayModel;
+
 	bool isFramebufferResized = false;
 
 	std::vector<Model> models;
@@ -114,9 +115,7 @@ private:
 	Texture depthTexture;
 	Texture msaaTexture;
 
-	mutable std::unordered_set<VkImage>     cleanedImages;
-	mutable std::unordered_set<VkImageView> cleanedImageViews;
-	mutable std::unordered_set<VkSampler>   cleanedImageSamplers;
+	mutable std::unordered_set<uint64_t> deletedTextureHashes;
 
 	size_t createdBuffers = 0;
 	mutable size_t destroyedVmaAllocations = 0;
@@ -143,7 +142,9 @@ private:
 	void setWindowSize();
 	void createMainMenuWidget();
 	void createSettingsMenuWidget();
+
 	void createPauseMenuRenderer();
+	void createInGameOverlayRenderer();
 
 	void createMainWindow();
 	void createInGameWindow();
@@ -162,7 +163,7 @@ private:
 	void cleanupShaderBuffers(std::vector<Model>& models) const;
 	void cleanupShaderBuffers(Model& model) const;
 	void cleanupShaderBuffers(Mesh& mesh) const;
-	void cleanupTexture(Texture& texture) const;
+	void cleanupTexture(Texture* texture) const;
 	void cleanupMaterial(Material& material) const;
 	void cleanupSwapchain();
 
@@ -175,7 +176,7 @@ private:
 		const std::string& directory,
 		std::vector<Model>& models
 	);
-	Texture loadTexture(const std::string& texturePath, const aiScene* scene);
+	Texture* loadTexture(const std::string& texturePath, const aiScene* scene);
 	Material processMaterial(aiMaterial* aiMat, const aiScene* scene);
 	void processNode(
 		aiNode* node, const aiScene* scene,
@@ -256,10 +257,7 @@ private:
 	void createDescriptorSets(Model& model, size_t swapchainImageCount);
 	void createDescriptorSets(Mesh& mesh, size_t swapchainImageCount);
 
-	void createDescriptorPool(
-		const std::vector<Model>& models,
-		const std::vector<Model>& uiModels
-	);
+	void createDescriptorPool(const std::vector<Model>& models);
 	void createDescriptorSetLayout(VkDescriptorSetLayout& descriptorSetLayout) const;
 	void createDescriptorSet(VkDescriptorSet& descriptorSet);
 	void addTextureToDescriptorSet(
@@ -267,7 +265,7 @@ private:
 		VkDescriptorSet descriptorSet, uint32_t dstBinding
 	) const;
 	void addTextureIfExistToDescriptorSet(
-		const Texture& texture,
+		const Texture* texture,
 		VkDescriptorSet descriptorSet, uint32_t dstBinding
 	) const;
 	void addBufferToDescriptorSet(

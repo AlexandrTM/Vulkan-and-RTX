@@ -101,6 +101,7 @@ void UserInterfaceRenderer::resize(const QSize& size) {
     surfaceSize = size;
 
     if (fbo) {
+        context->makeCurrent(offscreenSurface);
         delete fbo;
         fbo = nullptr;
     }
@@ -122,6 +123,11 @@ void UserInterfaceRenderer::createFbo(const QSize& size) {
         surfaceSize
     );
     quickWindow->setRenderTarget(renderTarget);
+
+    /*qDebug() << "Attachment:" << fbo->format().attachment();
+    qDebug() << "Texture target:" << fbo->format().textureTarget();
+    qDebug() << "Internal texture format:" << fbo->format().internalTextureFormat();
+    qDebug() << "Samples:" << fbo->format().samples();*/
 }
 
 void UserInterfaceRenderer::render() {
@@ -134,7 +140,7 @@ void UserInterfaceRenderer::render() {
         qWarning() << "Failed to make OpenGL context current!";
         return;
     }
-    
+
     QOpenGLFunctions* f = context->functions();
     f->glViewport(0, 0, surfaceSize.width(), surfaceSize.height());
     f->glClearColor(0, 0, 0, 0); // transparent clear

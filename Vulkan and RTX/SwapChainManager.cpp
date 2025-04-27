@@ -111,9 +111,12 @@ void AetherEngine::recreateSwapchain()
 	cleanupSwapchain();
 	cleanupShaderBuffers(sky);
 	cleanupShaderBuffers(models);
-	cleanupModels(pauseMenuModel);
-	cleanupTexture(depthTexture);
-	cleanupTexture(msaaTexture);
+
+	cleanupModel(pauseMenuModel);
+	cleanupModel(inGameOverlayModel);
+
+	cleanupTexture(&depthTexture);
+	cleanupTexture(&msaaTexture);
 
 	createPipelinesAndSwapchain();
 	createColorTexture(msaaTexture);
@@ -122,21 +125,27 @@ void AetherEngine::recreateSwapchain()
 	createCommandBuffers();
 	
 	createSolidColorTexture({ 0, 0, 0, 0 }, windowWidth, windowHeight, pauseMenuTexture);
-	pauseMenuModel.push_back(ModelManager::createQuad(
+	pauseMenuModel = ModelManager::createQuad(
 		{ -1.0f, -1.0f, 0.0f }, { 2.0f, 2.0f },
 		{ 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f },
 		glm::vec3(0.5f),
 		pauseMenuTexture
-	));
-
-	//createDescriptorPool(models, uiModels);
-
+	);
 	computeAABB_createVertexIndexBuffers(pauseMenuModel);
 	createDescriptorSets(pauseMenuModel, MAX_FRAMES_IN_FLIGHT);
 
+	createSolidColorTexture({ 0, 0, 0, 0 }, windowWidth, windowHeight, inGameOverlayTexture);
+	inGameOverlayModel = ModelManager::createQuad(
+		{ -1.0f, -1.0f, 0.0f }, { 2.0f, 2.0f },
+		{ 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f },
+		glm::vec3(0.5f),
+		inGameOverlayTexture
+	);
+	computeAABB_createVertexIndexBuffers(inGameOverlayModel);
+	createDescriptorSets(inGameOverlayModel, MAX_FRAMES_IN_FLIGHT);
+
 	createShaderBuffers(sky, MAX_FRAMES_IN_FLIGHT);
 	createShaderBuffers(models, MAX_FRAMES_IN_FLIGHT);
-	//createShaderBuffers(uiModels, MAX_FRAMES_IN_FLIGHT);
 	//createDescriptorSets(sky, MAX_FRAMES_IN_FLIGHT);
 	//createDescriptorSets(models, MAX_FRAMES_IN_FLIGHT);
 }

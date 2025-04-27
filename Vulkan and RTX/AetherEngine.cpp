@@ -23,6 +23,7 @@ void AetherEngine::prepareUI()
 	createMainMenuWidget();
 	createSettingsMenuWidget();
 	createPauseMenuRenderer();
+	createInGameOverlayRenderer();
 
 	mainWindow->addWidget(mainMenuWidget);
 	mainWindow->addWidget(inGameWidget);
@@ -32,6 +33,7 @@ void AetherEngine::prepareUI()
 
 	gameContext.requestedGameState = GameState::MAIN_MENU;
 	gameContext.requestedGameState = GameState::IN_GAME_TESTING;
+	gameContext.requestedGameState = GameState::COMBAT_PLAYER_TURN;
 	gameContext.requestedGameState = GameState::DUNGEON_EXPLORATION;
 	gameContext.clearInputs();
 }
@@ -64,7 +66,6 @@ void AetherEngine::prepareResources()
 	createTextureFromPath("textures/stone_floor_floor_2.png", stone_floor_floor_2_texture);
 	createTextureFromPath("textures/floor_background_floor_2.png", floor_background_floor_2_texture);
 	createSolidColorTexture({ 0, 0, 0, 0 }, 1, 1, transparentTexture);
-	createSolidColorTexture({ 0, 0, 0, 0 }, windowWidth, windowHeight, pauseMenuTexture);
 
 	//loadModelsFromDirectory("models", models);
 	
@@ -85,34 +86,43 @@ void AetherEngine::prepareResources()
 	//	terrainGenerator.get(), 1
 	//);
 
+	ModelManager::createSkyModel(sky);
+
 	Dungeon::createDungeonFloor(
 		gameContext.dungeonFloor, models, 
 		stone_floor_floor_2_texture, stone_wall_floor_2_texture
 	);
 	Dungeon::enterDungeonFloor(gameContext.dungeonFloor, gameContext, character);
 
-	pauseMenuModel.push_back(ModelManager::createQuad(
-		{ -1.0f, -1.0f, 0.0f }, { 2.0f, 2.0f }, 
-		{ 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f }, 
-		glm::vec3(0.5f), 
+	createDescriptorPool(models);
+
+	createSolidColorTexture({ 0, 0, 0, 0 }, windowWidth, windowHeight, pauseMenuTexture);
+	pauseMenuModel = ModelManager::createQuad(
+		{ -1.0f, -1.0f, 0.0f }, { 2.0f, 2.0f },
+		{ 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f },
+		glm::vec3(0.5f),
 		pauseMenuTexture
-	));
+	);
+	computeAABB_createVertexIndexBuffers(pauseMenuModel);
+	createDescriptorSets(pauseMenuModel, MAX_FRAMES_IN_FLIGHT);
 
-	ModelManager::createSkyModel(sky);
-
-	createDescriptorPool(models, pauseMenuModel);
+	createSolidColorTexture({ 0, 0, 0, 0 }, windowWidth, windowHeight, inGameOverlayTexture);
+	inGameOverlayModel = ModelManager::createQuad(
+		{ -1.0f, -1.0f, 0.0f }, { 2.0f, 2.0f },
+		{ 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f },
+		glm::vec3(0.5f),
+		inGameOverlayTexture
+	);
+	computeAABB_createVertexIndexBuffers(inGameOverlayModel);
+	createDescriptorSets(inGameOverlayModel, MAX_FRAMES_IN_FLIGHT);
 
 	computeAABB_createVertexIndexBuffers(sky);
-	computeAABB_createVertexIndexBuffers(models);
-	computeAABB_createVertexIndexBuffers(pauseMenuModel);
-
-	createShaderBuffers(sky, MAX_FRAMES_IN_FLIGHT);
-	createShaderBuffers(models, MAX_FRAMES_IN_FLIGHT);
-	//createShaderBuffers(uiModels, MAX_FRAMES_IN_FLIGHT);
-
 	createDescriptorSets(sky, MAX_FRAMES_IN_FLIGHT);
+	createShaderBuffers(sky, MAX_FRAMES_IN_FLIGHT);
+
+	computeAABB_createVertexIndexBuffers(models);
 	createDescriptorSets(models, MAX_FRAMES_IN_FLIGHT);
-	createDescriptorSets(pauseMenuModel, MAX_FRAMES_IN_FLIGHT);
+	createShaderBuffers(models, MAX_FRAMES_IN_FLIGHT);
 }
 
 //void AetherEngine::createGLFWWindow()
@@ -175,6 +185,7 @@ void AetherEngine::onMainWindowResized(int width, int height) {
 	//std::cout << "center pos: " << gameContext.windowCenterPos.x() << " " << gameContext.windowCenterPos.y() << "\n";
 	character.camera.setViewportSize(windowWidth, windowHeight);
 	pauseMenuRenderer->resize(QSize(windowWidth, windowHeight));
+	inGameOverlayRenderer->resize(QSize(windowWidth, windowHeight));
 }
 void AetherEngine::onMainWindowMoved(int x, int y) {
 	//pauseMenuView->getQuickWindow()->setPosition(x, y);
@@ -234,28 +245,11 @@ void AetherEngine::createPauseMenuRenderer() {
 	connect(rootItem, SIGNAL(openMainMenuClicked()), pauseMenuSlotHandler, SLOT(onOpenMainMenuClicked()));
 	connect(rootItem, SIGNAL(exitGameClicked()), pauseMenuSlotHandler, SLOT(onExitGameClicked()));
 }
-void AetherEngine::updateInGameOverlay() {
-	if (!inGameOverlayRenderer) return;
+void AetherEngine::createInGameOverlayRenderer() {
+	inGameOverlayRenderer = new UserInterfaceRenderer();
 
-	auto rootItem = inGameOverlayRenderer->getRootItem();
-	if (!rootItem) return;
-
-	// Update player health
-	QObject* playerHealth = rootItem->findChild<QObject*>("playerHealth");
-	if (playerHealth)
-		playerHealth->setProperty("text", tr("Health: %1").arg(character.health));
-
-	// Update mob health
-	QObject* mobHealth = rootItem->findChild<QObject*>("mobHealth");
-	if (mobHealth) {
-		if (!gameContext.currentRoom->mobs.empty()) {
-			mobHealth->setProperty("text", tr("Mob health: %1").arg(gameContext.currentRoom->mobs[0].health));
-			mobHealth->setProperty("visible", true);
-		}
-		else {
-			mobHealth->setProperty("visible", false);
-		}
-	}
+	inGameOverlayRenderer->initialize(QSize(windowWidth, windowHeight), "qml/InGameOverlay.ui.qml");
+	inGameOverlayRenderer->setParent(mainWindow);
 }
 
 void AetherEngine::createMainWindow()
@@ -470,9 +464,10 @@ void AetherEngine::mainLoop()
 			handleInGameTestingState(deltaTime, timeSinceLaunch, fpsMenu);
 		}
 
-		if (gameContext.currentGameState == GameState::DUNGEON_EXPLORATION      ||
-			gameContext.currentGameState == GameState::IN_GAME_TESTING ||
-			gameContext.currentGameState == GameState::COMBAT_PLAYER_TURN       ||
+		if (gameContext.currentGameState == GameState::DUNGEON_EXPLORATION ||
+			gameContext.currentGameState == GameState::IN_GAME_TESTING     ||
+			gameContext.currentGameState == GameState::COMBAT_PLAYER_TURN  ||
+			gameContext.currentGameState == GameState::COMBAT_MOB_TURN     ||
 			gameContext.currentGameState == GameState::PAUSED) {
 
 			drawFrame(timeSinceLaunch, deltaTime);
@@ -486,27 +481,26 @@ void AetherEngine::cleanupMemory()
 {
 	cleanupModel(sky);
 	cleanupModels(models);
-	cleanupModels(pauseMenuModel);
 
-	cleanupTexture(stone_wall_floor_1_texture);
-	cleanupTexture(stone_wall_floor_2_texture);
-	cleanupTexture(stone_wall_floor_3_texture);
-	cleanupTexture(stone_floor_floor_1_texture);
-	cleanupTexture(stone_floor_floor_2_texture);
-	cleanupTexture(stone_floor_floor_3_texture);
-	cleanupTexture(floor_background_floor_2_texture);
+	cleanupModel(pauseMenuModel);
+	cleanupModel(inGameOverlayModel);
 
-	cleanupTexture(grassTexture);
-	cleanupTexture(transparentTexture);
-	cleanupTexture(pauseMenuTexture);
-	cleanupTexture(depthTexture);
-	cleanupTexture(msaaTexture);
+	cleanupTexture(&stone_wall_floor_1_texture);
+	cleanupTexture(&stone_wall_floor_2_texture);
+	cleanupTexture(&stone_wall_floor_3_texture);
+	cleanupTexture(&stone_floor_floor_1_texture);
+	cleanupTexture(&stone_floor_floor_2_texture);
+	cleanupTexture(&stone_floor_floor_3_texture);
+	cleanupTexture(&floor_background_floor_2_texture);
+
+	cleanupTexture(&grassTexture);
+	cleanupTexture(&transparentTexture);
+	cleanupTexture(&depthTexture);
+	cleanupTexture(&msaaTexture);
 
 	cleanupSwapchain();
 
-	cleanedImages.clear();
-	cleanedImageViews.clear();
-	cleanedImageSamplers.clear();
+	deletedTextureHashes.clear();
 
 	if (vkInit.enableValidationLayers) {
 		std::cout << "createdBuffers: " << createdBuffers << "\n";
@@ -522,7 +516,7 @@ void AetherEngine::cleanupMemory()
 		vkDestroySemaphore(vkInit.device, imageAvailableSemaphores[i], nullptr);
 		vkDestroyFence(vkInit.device, inFlightFences[i], nullptr);
 	}
-
+	
 	vmaDestroyAllocator(vmaAllocator);
 	vkDestroyCommandPool(vkInit.device, commandPool, nullptr);
 
@@ -596,26 +590,36 @@ void AetherEngine::cleanupMaterial(Material& material) const
 	cleanupTexture(material.specularTexture);
 	cleanupTexture(material.emissiveTexture);
 }
-void AetherEngine::cleanupTexture(Texture& texture) const
+void AetherEngine::cleanupTexture(Texture* texture) const
 {
-	if (texture.imageView && cleanedImageViews.insert(texture.imageView).second) {
-		vkDestroyImageView(vkInit.device, texture.imageView, nullptr);
-		texture.imageView = VK_NULL_HANDLE;
-	}
-	if (texture.sampler && cleanedImageSamplers.insert(texture.sampler).second) {
-		vkDestroySampler(vkInit.device, texture.sampler, nullptr);
-		texture.sampler = VK_NULL_HANDLE;
-	}
-	if (texture.image && texture.vmaAllocation && cleanedImages.insert(texture.image).second) {
-		vmaDestroyImage(vmaAllocator, texture.image, texture.vmaAllocation);
-		texture.image = VK_NULL_HANDLE;
-		texture.vmaAllocation = VK_NULL_HANDLE;
-		destroyedVmaAllocations += 1;
+	if (!texture || texture->uniqueHash == 0) {
+		return;
 	}
 
-	texture.width = 0;
-	texture.height = 0;
-	texture.mipLevels = 0;
+	if (deletedTextureHashes.insert(texture->uniqueHash).second) {
+		if (texture->imageView) {
+			vkDestroyImageView(vkInit.device, texture->imageView, nullptr);
+			texture->imageView = VK_NULL_HANDLE;
+		}
+		if (texture->sampler) {
+			vkDestroySampler(vkInit.device, texture->sampler, nullptr);
+			texture->sampler = VK_NULL_HANDLE;
+		}
+		if (texture->image || texture->vmaAllocation) {
+			vmaDestroyImage(vmaAllocator, texture->image, texture->vmaAllocation);
+			texture->image = VK_NULL_HANDLE;
+			texture->vmaAllocation = VK_NULL_HANDLE;
+			destroyedVmaAllocations += 1;
+		}
+
+		texture->width = 0;
+		texture->height = 0;
+		texture->mipLevels = 0;
+		texture->uniqueHash = 0;
+	}
+	/*else {
+		std::cout << "texture with this hash has already been deleted: " << texture->uniqueHash << "\n";
+	}*/
 }
 void AetherEngine::cleanupShaderBuffers(std::vector<Model>& models) const
 {

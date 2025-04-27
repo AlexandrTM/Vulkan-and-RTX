@@ -25,7 +25,7 @@ DungeonRoom::DungeonRoom(
     centerPosition = position + glm::vec3(metricWidth / 2.0f, 0.0f, metricLength / 2.0f);
     //std::cout << "center position: " << glm::to_string(centerPosition) << "\n";
 
-    cameraPosition = centerPosition + glm::vec3(-8.3 * 3, 7.5 * 3, 0.0);
+    cameraPosition = centerPosition + glm::vec3(-8.3 * 1.4, 7.5 * 1.4, 0.0);
 }
 
 void DungeonRoom::createRoomModels(std::vector<Model>& models) {

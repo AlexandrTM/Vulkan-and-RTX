@@ -2,6 +2,19 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="en_US">
 <context>
+    <name>InGameOverlay.ui</name>
+    <message>
+        <location filename="../qml/InGameOverlay.ui.qml" line="24"/>
+        <source>Health: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/InGameOverlay.ui.qml" line="40"/>
+        <source>Mob health: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+</context>
+<context>
     <name>MainMenu.ui</name>
     <message>
         <location filename="../qml/MainMenu.ui.qml" line="21"/>

@@ -57,7 +57,7 @@ void ModelManager::createCuboid(
 	Mesh mesh{};
 
 	Material material{};
-	material.diffuseTexture = texture;
+	material.diffuseTexture = &texture;
 
 #pragma region
 	localVertices[0].position = { glm::vec3(0.0f , 0.0f  , 0.0f) + glm::vec3(x, y, z) };
@@ -198,7 +198,7 @@ Model ModelManager::createQuad(
 	Model model{};
 	Mesh mesh{};
 	Material material{};
-	material.diffuseTexture = texture;
+	material.diffuseTexture = &texture;
 
 	// Quad corners in tangent space
 	/*vertices[0].position = origin;
@@ -613,6 +613,54 @@ static glm::mat4 setScaleToOne(const glm::mat4& matrix) {
 	return translationMatrix * rotationMatrix * scaleMatrix;
 }
 
+// creating texture for MSAA sampling
+void AetherEngine::createColorTexture(Texture& texture)
+{
+	if (texture.uniqueHash == 0) {
+		texture.uniqueHash = Texture::generateRandomHash();
+	}
+
+	VkFormat colorFormat = swapchainImageFormat;
+	uint32_t mipLevels = 1;
+
+	createImage(
+		swapchainExtent.width, swapchainExtent.height, mipLevels, vkInit.colorSamples, colorFormat,
+		VK_IMAGE_TILING_OPTIMAL,
+		VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		texture.image, texture.vmaAllocation
+	);
+
+	texture.imageView = createImageView(texture.image, colorFormat, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels);
+}
+void AetherEngine::createDepthTexture(Texture& texture)
+{
+	if (texture.uniqueHash == 0) {
+		texture.uniqueHash = Texture::generateRandomHash();
+	}
+
+	VkFormat depthFormat = findDepthFormat();
+	uint32_t mipLevels = 1;
+
+	createImage(
+		swapchainExtent.width, swapchainExtent.height, mipLevels, vkInit.colorSamples, depthFormat,
+		VK_IMAGE_TILING_OPTIMAL,
+		VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+		texture.image, texture.vmaAllocation
+	);
+
+	texture.imageView = createImageView(texture.image, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, mipLevels);
+
+	transitionImageLayout(
+		texture.image, depthFormat,
+		VK_IMAGE_ASPECT_DEPTH_BIT,
+		VK_IMAGE_LAYOUT_UNDEFINED,
+		VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL,
+		mipLevels
+	);
+}
+
 void AetherEngine::uploadRawDataToTexture(void* rawImage, uint32_t width, uint32_t height, Texture& texture)
 {
 	VkBuffer stagingBuffer;
@@ -642,11 +690,11 @@ void AetherEngine::uploadRawDataToTexture(void* rawImage, uint32_t width, uint32
 	copyBufferToImage(stagingBuffer, texture.image, width, height);
 
 	transitionImageLayout(
-		pauseMenuTexture.image, VK_FORMAT_R8G8B8A8_SRGB,
+		texture.image, VK_FORMAT_R8G8B8A8_SRGB,
 		VK_IMAGE_ASPECT_COLOR_BIT,
 		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 		VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-		pauseMenuTexture.mipLevels
+		texture.mipLevels
 	);
 
 	vmaDestroyBuffer(vmaAllocator, stagingBuffer, stagingAllocation);
@@ -656,6 +704,10 @@ void AetherEngine::createSolidColorTexture(
 	std::array<uint8_t, 4> color, uint32_t width, uint32_t height, Texture& texture
 )
 {
+	if (texture.uniqueHash == 0) {
+		texture.uniqueHash = Texture::generateRandomHash();
+	}
+
 	VkBuffer stagingBuffer;
 	VmaAllocation stagingAllocation;
 
@@ -723,6 +775,10 @@ void AetherEngine::createSolidColorTexture(
 }
 void AetherEngine::createTextureFromPath(const std::string& texturePath, Texture& texture)
 {
+	if (texture.uniqueHash == 0) {
+		texture.uniqueHash = Texture::generateRandomHash();
+	}
+
 	VkBuffer stagingBuffer;
 	VmaAllocation stagingAllocation;
 
@@ -791,6 +847,10 @@ void AetherEngine::createTextureFromEmbedded(
 	const std::string& embeddedTextureName,
 	const aiScene* scene, Texture& texture
 ) {
+	if (texture.uniqueHash == 0) {
+		texture.uniqueHash = Texture::generateRandomHash();
+	}
+
 	const aiTexture* embeddedTexture = scene->GetEmbeddedTexture(embeddedTextureName.c_str());
 
 	if (!embeddedTexture) {
@@ -883,16 +943,16 @@ void AetherEngine::createTextureFromEmbedded(
 	std::cout << " - Mip Levels: " << texture.mipLevels << "\n";
 	std::cout << " - Compression: " << (embeddedTexture->mHeight == 0 ? "Yes" : "No") << "\n";*/
 }
-Texture AetherEngine::loadTexture(const std::string& texturePath, const aiScene* scene) 
+Texture* AetherEngine::loadTexture(const std::string& texturePath, const aiScene* scene) 
 {
-	Texture texture{};
+	Texture* texture = new Texture();
 
 	// Embedded texture in .glb file, the path is in the form "*n", where n is the index
 	if (texturePath[0] == '*') {
-		createTextureFromEmbedded(texturePath, scene, texture);
+		createTextureFromEmbedded(texturePath, scene, *texture);
 	}
 	else {
-		createTextureFromPath(("textures\\" + std::string(texturePath)), texture);
+		createTextureFromPath(("textures\\" + std::string(texturePath)), *texture);
 	}
 
 	return texture;

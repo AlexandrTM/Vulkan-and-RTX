@@ -613,7 +613,18 @@ void AetherEngine::recordCommandBuffer(
 			renderQmlToTexture(pauseMenuRenderer, pauseMenuTexture);
 
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["ui"]);
-			recordModelsToCommandBuffer(pauseMenuModel, commandBuffer);
+			recordModelToCommandBuffer(pauseMenuModel, commandBuffer);
+		}
+		if (gameContext.currentGameState == GameState::DUNGEON_EXPLORATION ||
+			gameContext.currentGameState == GameState::IN_GAME_TESTING     ||
+			gameContext.currentGameState == GameState::COMBAT_PLAYER_TURN  ||
+			gameContext.currentGameState == GameState::COMBAT_MOB_TURN     ||
+			gameContext.currentGameState == GameState::PAUSED) {
+			updateInGameOverlay();
+			renderQmlToTexture(inGameOverlayRenderer, inGameOverlayTexture);
+
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["ui"]);
+			recordModelToCommandBuffer(inGameOverlayModel, commandBuffer);
 		}
 	}
 
@@ -624,10 +635,30 @@ void AetherEngine::recordCommandBuffer(
 	}
 }
 
+void AetherEngine::updateInGameOverlay() {
+	if (!inGameOverlayRenderer) return;
+
+	auto rootItem = inGameOverlayRenderer->getRootItem();
+	if (!rootItem) return;
+
+	QObject* playerHealth = rootItem->findChild<QObject*>("playerHealth");
+	if (playerHealth) {
+		playerHealth->setProperty("value", character.health);
+	}
+
+	//std::cout << "character.health: " << character.health << " " << gameContext.currentRoom->mobs[0].health << "\n";
+	QObject* mobHealth = rootItem->findChild<QObject*>("mobHealth");
+	if (mobHealth) {
+		if (!gameContext.currentRoom->mobs.empty()) {
+			mobHealth->setProperty("value", gameContext.currentRoom->mobs[0].health);
+		}
+	}
+}
+
 void AetherEngine::renderQmlToTexture(UserInterfaceRenderer* renderer, Texture& texture)
 {
 	renderer->render();
-	QImage image = renderer->getFbo()->toImage();
+	QImage image = renderer->getFbo()->toImage().convertToFormat(QImage::Format_RGBA8888);
 
 	/*static bool hasSavedPauseMenuImage = false;
 
@@ -638,7 +669,7 @@ void AetherEngine::renderQmlToTexture(UserInterfaceRenderer* renderer, Texture& 
 
 	if (texture.width != static_cast<uint32_t>(image.width()) ||
 		texture.height != static_cast<uint32_t>(image.height())) {
-		cleanupTexture(texture);
+		cleanupTexture(&texture);
 
 		createSolidColorTexture({ 0, 0, 0, 0 }, image.width(), image.height(), texture);
 	}
@@ -693,16 +724,10 @@ void AetherEngine::recordModelToCommandBuffer(const Model& model, VkCommandBuffe
 	}
 }
 
-void AetherEngine::createDescriptorPool(
-	const std::vector<Model>& objectModels, 
-	const std::vector<Model>& uiModels
-)
+void AetherEngine::createDescriptorPool(const std::vector<Model>& objectModels)
 {
 	size_t totalMeshes = 0;
 	for (const Model& model : objectModels) {
-		totalMeshes += model.meshes.size();
-	}
-	for (const Model& model : uiModels) {
 		totalMeshes += model.meshes.size();
 	}
 
@@ -715,14 +740,14 @@ void AetherEngine::createDescriptorPool(
 	poolSizes[1].descriptorCount = (objectModels.size() * 4)
 		* static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 	poolSizes[2].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	poolSizes[2].descriptorCount = (totalMeshes + 5)
+	poolSizes[2].descriptorCount = (totalMeshes + 10)
 		* static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 		
 	VkDescriptorPoolCreateInfo poolInfo{};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
 	poolInfo.pPoolSizes = poolSizes.data();
-	poolInfo.maxSets = (totalMeshes + (objectModels.size() + uiModels.size()) * 2 + 2)
+	poolInfo.maxSets = (totalMeshes + (objectModels.size()) * 2 + 10)
 		* static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 	poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 
@@ -806,13 +831,13 @@ void AetherEngine::addTextureToDescriptorSet(
 	vkUpdateDescriptorSets(vkInit.device, 1, &descriptorWrite, 0, nullptr);
 }
 void AetherEngine::addTextureIfExistToDescriptorSet(
-	const Texture& texture,
+	const Texture* texture,
 	VkDescriptorSet descriptorSet, uint32_t dstBinding
 ) const
 {
 	if (texture) {
 		addTextureToDescriptorSet(
-			texture,
+			*texture,
 			descriptorSet, dstBinding
 		);
 	}
@@ -886,9 +911,6 @@ void AetherEngine::createDescriptorSet(VkDescriptorSet& descriptorSet)
 void AetherEngine::bindVertexAndIndexBuffersToCommandBuffer(const Mesh& mesh, VkCommandBuffer commandBuffer)
 {
 	VkDeviceSize offsets[] = { 0 };
-	if (mesh.indices.size() == 6) {
-		true;
-	}
 	vkCmdBindVertexBuffers(commandBuffer, 0, 1, &mesh.vertexBuffer, offsets);
 	vkCmdBindIndexBuffer(commandBuffer, mesh.indexBuffer, 0, VK_INDEX_TYPE_UINT32);
 	vkCmdDrawIndexed(commandBuffer, static_cast<uint32_t>(mesh.indices.size()), 1, 0, 0, 0);

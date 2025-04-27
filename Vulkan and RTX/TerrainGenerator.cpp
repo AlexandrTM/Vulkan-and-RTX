@@ -42,7 +42,7 @@ void TerrainGenerator::generateTerrain(
     Model model{};
 
     Material material{};
-    material.diffuseTexture = terrainTexture;
+    material.diffuseTexture = &terrainTexture;
 
     for (size_t chunkX = 0; chunkX < terrainData.chunkCols; ++chunkX) {
         for (size_t chunkZ = 0; chunkZ < terrainData.chunkRows; ++chunkZ) {
