@@ -18,6 +18,9 @@ struct GameContext
 	DungeonFloor dungeonFloor;
 	DungeonRoom* currentRoom = nullptr;
 	bool roomMovementHandled = false;
+
+	std::vector<Equation> equations;
+	int32_t selectedEquation = std::numeric_limits<int32_t>::max();
 };
 
 #endif

@@ -9,9 +9,9 @@ void Dungeon::createDungeonFloor(
 
 	size_t minRoomCount = 15;
 	size_t maxRoomCount = 15;
-	float cellSize = 2.0f;
+	float cellSize = 0.5f;
 	size_t maxRoomDimension = 9; // max of width or height
-	float roomSpacing = (maxRoomDimension * cellSize) + cellSize * 10;
+	float roomSpacing = (maxRoomDimension * cellSize) + cellSize * 1;
 
 	generateDungeonFloorGrid(minRoomCount, maxRoomCount, roomGrid);
 
@@ -53,7 +53,7 @@ void Dungeon::generateDungeonFloorGrid(
 			directionOffsets.begin(),
 			directionOffsets.end()
 		);
-		std::shuffle(shuffledOffsets.begin(), shuffledOffsets.end(), std::default_random_engine(1));
+		std::shuffle(shuffledOffsets.begin(), shuffledOffsets.end(), gen);
 		size_t neighborChance = 15;
 
 		// try generate dungeon floor layout
@@ -72,7 +72,7 @@ void Dungeon::generateDungeonFloorGrid(
 				// Randomly decide to add neighbor room
 				if (roomGrid.size() < maxRoomCount &&
 					roomGrid.find(neighbor) == roomGrid.end() &&
-					(rand() % 100 < neighborChance)) {
+					(randomInt(0, 99) < neighborChance)) {
 					roomGrid[neighbor] = oppositeDirection(dir);
 					mask = static_cast<RoomConnectionMask>(mask | dir);
 					frontier.push(neighbor);

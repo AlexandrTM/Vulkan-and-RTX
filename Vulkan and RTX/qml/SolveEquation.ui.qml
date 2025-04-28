@@ -2,7 +2,7 @@ import QtQuick
 import QtQuick.Controls
 
 Rectangle {
-    id: selectEquation
+    id: solveEquation
     width: parent ? parent.width : 1360
     height: parent ? parent.height : 768
 
@@ -13,179 +13,66 @@ Rectangle {
     property real buttonWidth: width * 0.15
     property real buttonHeight: height * 0.4
 
+    signal answerSubmitted(string answer)
     signal buttonClicked(int buttonIndex)
 
-    function difficultyText(value) {
-        if (value === 0)
-            return qsTr("Easy")
-        else if (value === 1)
-            return qsTr("Medium")
-        else if (value === 2)
-            return qsTr("Hard")
-        else if (value === 3)
-            return qsTr("Insane")
-        else
-            return qsTr("Unknown")
+    Rectangle {
+        id: equationBackground
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: parent.top
+        anchors.topMargin: parent.height * 0.2
+        width: parent.width * 0.6
+        height: parent.height * 0.15
+        color: "#a8bbbbbb"
+        radius: 10
+
+        Text {
+            id: expression
+            objectName: "expression"
+            anchors.centerIn: parent
+            property string value: ""
+            text: qsTr("Expression: %1").arg(value)
+            font.family: Qt.application.font.family
+            font.pointSize: solveEquation.defaultFontSize * 1.2
+            color: "black"
+            wrapMode: Text.WordWrap
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+        }
     }
 
     Rectangle {
-        id: titleBackground
+        id: answerBackground
         anchors.horizontalCenter: parent.horizontalCenter
-        y: parent.height * 0.1
-        width: parent.width * 0.2
-        height: parent.height * 0.07
-        color: "#a8bbbbbb"
+        anchors.top: equationBackground.bottom
+        anchors.topMargin: parent.height * 0.1
+        width: parent.width * 0.25
+        height: parent.height * 0.12
+        color: "#80bbbbdb"
+        radius: 10
 
-        Text {
-            id: title
-            anchors.centerIn: parent
-            text: qsTr("Select an equation")
+        // Text {
+        //     text: activeFocus ? "I have active focus!" : "I do not have active focus"
+        // }
+        // onVisibleChanged: answerInput.forceActiveFocus()
+        TextField {
+            id: answerInput
+            objectName: "answerInput"
+            anchors.fill: parent
+            anchors.margins: 10
             font.family: Qt.application.font.family
-            font.pointSize: defaultFontSize
+            font.pointSize: solveEquation.defaultFontSize
             color: "black"
+            placeholderText: qsTr("Enter your answer...")
+            background: null
+            text: ""
+            horizontalAlignment: Text.AlignHCenter
+            verticalAlignment: Text.AlignVCenter
+
+            focus: true
+            onTextChanged: solveEquation.answerSubmitted(answerInput.text)
+            onAccepted: solveEquation.answerSubmitted(answerInput.text)
         }
     }
-
-    Button {
-        id: button0
-        anchors.left: parent.left
-        anchors.leftMargin: parent.width * 0.1
-        anchors.verticalCenter: parent.verticalCenter
-        width: selectEquation.buttonWidth
-        height: selectEquation.buttonHeight
-        onClicked: selectEquation.buttonClicked(0)
-
-        background: Rectangle {
-            color: selectEquation.buttonColor
-            radius: 10
-        }
-
-        contentItem: Item {
-            anchors.centerIn: parent
-            anchors.fill: parent
-
-            Text {
-                id: difficulty0
-                objectName: "difficulty0"
-                property int value: 99
-                text: qsTr("Difficulty: %1").arg(difficultyText(value))
-                font.family: Qt.application.font.family
-                font.pointSize: defaultFontSize
-                wrapMode: Text.WordWrap
-                color: "black"
-                anchors.top: parent.top
-                width: parent.width * 0.8
-                anchors.topMargin: parent.height * 0.1
-                anchors.horizontalCenter: parent.horizontalCenter
-            }
-            Text {
-                id: damage0
-                objectName: "damage0"
-                property int value: 0
-                text: qsTr("Damage: %1").arg(value)
-                font.family: Qt.application.font.family
-                font.pointSize: defaultFontSize
-                color: "black"
-                width: parent.width * 0.9
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: parent.height * 0.1
-                anchors.horizontalCenter: parent.horizontalCenter
-            }
-        }
-    }
-
-    Button {
-        id: button1
-        anchors.horizontalCenter: parent.horizontalCenter
-        anchors.verticalCenter: parent.verticalCenter
-        width: selectEquation.buttonWidth
-        height: selectEquation.buttonHeight
-        onClicked: selectEquation.buttonClicked(1)
-
-        background: Rectangle {
-            color: selectEquation.buttonColor
-            radius: 10
-        }
-
-        contentItem: Item {
-            anchors.centerIn: parent
-            anchors.fill: parent
-
-            Text {
-                id: difficulty1
-                objectName: "difficulty1"
-                property int value: 99
-                text: qsTr("Difficulty: %1").arg(difficultyText(value))
-                font.family: Qt.application.font.family
-                font.pointSize: defaultFontSize
-                wrapMode: Text.WordWrap
-                color: "black"
-                anchors.top: parent.top
-                width: parent.width * 0.8
-                anchors.topMargin: parent.height * 0.1
-                anchors.horizontalCenter: parent.horizontalCenter
-            }
-            Text {
-                id: damage1
-                objectName: "damage1"
-                property int value: 0
-                text: qsTr("Damage: %1").arg(value)
-                font.family: Qt.application.font.family
-                font.pointSize: defaultFontSize
-                color: "black"
-                width: parent.width * 0.9
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: parent.height * 0.1
-                anchors.horizontalCenter: parent.horizontalCenter
-            }
-        }
-    }
-
-    Button {
-        id: button2
-        anchors.right: parent.right
-        anchors.rightMargin: parent.width * 0.1
-        anchors.verticalCenter: parent.verticalCenter
-        width: selectEquation.buttonWidth
-        height: selectEquation.buttonHeight
-        onClicked: selectEquation.buttonClicked(2)
-
-        background: Rectangle {
-            color: selectEquation.buttonColor
-            radius: 10
-        }
-
-        contentItem: Item {
-            anchors.centerIn: parent
-            anchors.fill: parent
-
-            Text {
-                id: difficulty2
-                objectName: "difficulty2"
-                property int value: 99
-                text: qsTr("Difficulty: %1").arg(difficultyText(value))
-                font.family: Qt.application.font.family
-                font.pointSize: defaultFontSize
-                wrapMode: Text.WordWrap
-                color: "black"
-                anchors.top: parent.top
-                width: parent.width * 0.8
-                anchors.topMargin: parent.height * 0.1
-                anchors.horizontalCenter: parent.horizontalCenter
-            }
-            Text {
-                id: damage2
-                objectName: "damage2"
-                property int value: 0
-                text: qsTr("Damage: %1").arg(value)
-                font.family: Qt.application.font.family
-                font.pointSize: defaultFontSize
-                color: "black"
-                width: parent.width * 0.9
-                anchors.bottom: parent.bottom
-                anchors.bottomMargin: parent.height * 0.1
-                anchors.horizontalCenter: parent.horizontalCenter
-            }
-        }
-    }
+    //Component.onCompleted: answerInput.forceActiveFocus()
 }

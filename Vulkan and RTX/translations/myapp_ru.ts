@@ -73,30 +73,35 @@
     <message>
         <location filename="../qml/SelectEquation.ui.qml" line="20"/>
         <source>Easy</source>
-        <translation>Легко</translation>
+        <translation>Легкая</translation>
     </message>
     <message>
         <location filename="../qml/SelectEquation.ui.qml" line="22"/>
         <source>Medium</source>
-        <translation>Средне</translation>
+        <translation>Средняя</translation>
     </message>
     <message>
         <location filename="../qml/SelectEquation.ui.qml" line="24"/>
         <source>Hard</source>
-        <translation>Сложно</translation>
+        <translation>Сложная</translation>
     </message>
     <message>
         <location filename="../qml/SelectEquation.ui.qml" line="26"/>
         <source>Insane</source>
-        <translation>Безумно</translation>
+        <translation>Безумная</translation>
     </message>
     <message>
         <location filename="../qml/SelectEquation.ui.qml" line="28"/>
+        <source>Beyond</source>
+        <translation>Запредельная</translation>
+    </message>
+    <message>
+        <location filename="../qml/SelectEquation.ui.qml" line="30"/>
         <source>Unknown</source>
         <translation>Неизвестно</translation>
     </message>
     <message>
-        <location filename="../qml/SelectEquation.ui.qml" line="42"/>
+        <location filename="../qml/SelectEquation.ui.qml" line="44"/>
         <source>Select an equation</source>
         <translation>Выберете уравнение</translation>
     </message>
@@ -105,16 +110,16 @@
         <translation type="vanished">Выберете уравнение</translation>
     </message>
     <message>
-        <location filename="../qml/SelectEquation.ui.qml" line="71"/>
-        <location filename="../qml/SelectEquation.ui.qml" line="118"/>
-        <location filename="../qml/SelectEquation.ui.qml" line="166"/>
+        <location filename="../qml/SelectEquation.ui.qml" line="73"/>
+        <location filename="../qml/SelectEquation.ui.qml" line="120"/>
+        <location filename="../qml/SelectEquation.ui.qml" line="168"/>
         <source>Difficulty: %1</source>
         <translation>Сложность: %1</translation>
     </message>
     <message>
-        <location filename="../qml/SelectEquation.ui.qml" line="85"/>
-        <location filename="../qml/SelectEquation.ui.qml" line="132"/>
-        <location filename="../qml/SelectEquation.ui.qml" line="180"/>
+        <location filename="../qml/SelectEquation.ui.qml" line="87"/>
+        <location filename="../qml/SelectEquation.ui.qml" line="134"/>
+        <location filename="../qml/SelectEquation.ui.qml" line="182"/>
         <source>Damage: %1</source>
         <translation>Урон: %1</translation>
     </message>
@@ -135,23 +140,14 @@
 <context>
     <name>SolveEquation.ui</name>
     <message>
-        <location filename="../qml/SolveEquation.ui.qml" line="20"/>
-        <source>Select an Equation</source>
-        <translation></translation>
+        <location filename="../qml/SolveEquation.ui.qml" line="33"/>
+        <source>Expression: %1</source>
+        <translation>Выражение: %1</translation>
     </message>
     <message>
-        <location filename="../qml/SolveEquation.ui.qml" line="45"/>
-        <location filename="../qml/SolveEquation.ui.qml" line="81"/>
-        <location filename="../qml/SolveEquation.ui.qml" line="118"/>
-        <source>Difficulty: %1</source>
-        <translation></translation>
-    </message>
-    <message>
-        <location filename="../qml/SolveEquation.ui.qml" line="56"/>
-        <location filename="../qml/SolveEquation.ui.qml" line="92"/>
-        <location filename="../qml/SolveEquation.ui.qml" line="129"/>
-        <source>Damage: %1</source>
-        <translation></translation>
+        <location filename="../qml/SolveEquation.ui.qml" line="65"/>
+        <source>Enter your answer...</source>
+        <translation>Введите ваш ответ...</translation>
     </message>
 </context>
 </TS>

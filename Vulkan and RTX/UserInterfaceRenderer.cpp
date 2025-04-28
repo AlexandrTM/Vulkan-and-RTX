@@ -4,8 +4,12 @@
 UserInterfaceRenderer::UserInterfaceRenderer() {
     renderControl = new QQuickRenderControl();
     quickWindow = new QQuickWindow(renderControl);
-    quickWindow->setColor(Qt::transparent);
     quickWindow->setGraphicsApi(QSGRendererInterface::OpenGL);
+    quickWindow->setFlags(
+        Qt::FramelessWindowHint | Qt::Tool | 
+        Qt::WindowStaysOnTopHint | Qt::WindowTransparentForInput
+    );
+    quickWindow->setColor(Qt::transparent);
 
     context = new QOpenGLContext;
     context->setFormat(QSurfaceFormat::defaultFormat());
@@ -18,6 +22,7 @@ UserInterfaceRenderer::UserInterfaceRenderer() {
     context->makeCurrent(offscreenSurface);
     quickWindow->setGraphicsDevice(QQuickGraphicsDevice::fromOpenGLContext(context));
     renderControl->initialize();
+    quickWindow->create();
 
     engine = new QQmlEngine;
     if (!engine->incubationController()) {
@@ -48,40 +53,33 @@ UserInterfaceRenderer::~UserInterfaceRenderer() {
     }
 }
 
-bool UserInterfaceRenderer::handleEvent(QEvent* event) {
-    switch (event->type()) {
-    case QEvent::KeyPress:
-    case QEvent::KeyRelease: {
-        QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
-        forwardKeyEvent(keyEvent);
-        return true;
-    }
-    case QEvent::MouseButtonPress:
-    case QEvent::MouseButtonRelease:
-    case QEvent::MouseMove: {
-        QMouseEvent* mouseEvent = static_cast<QMouseEvent*>(event);
-        forwardMouseEvent(mouseEvent);
-        return true;
-    }
-    case QEvent::HoverMove: {
-        QHoverEvent* hoverEvent = static_cast<QHoverEvent*>(event);
-        forwardHoverEvent(hoverEvent);
-        return true;
-    }
-    default:
-        return false;
-    }
+void UserInterfaceRenderer::forwardEvent(QEvent* event) {
+    QCoreApplication::sendEvent(quickWindow, event);
+    //QCoreApplication::postEvent(quickWindow, event);
 }
 
-void UserInterfaceRenderer::forwardKeyEvent(QKeyEvent* event) {
-    QCoreApplication::sendEvent(quickWindow, event);
-}
-void UserInterfaceRenderer::forwardMouseEvent(QMouseEvent* event) {
-    QCoreApplication::sendEvent(quickWindow, event);
-}
-void UserInterfaceRenderer::forwardHoverEvent(QHoverEvent* event) {
-    QCoreApplication::sendEvent(quickWindow, event);
-}
+//void UserInterfaceRenderer::forwardKeyEvent(QKeyEvent* event) {
+//    QCoreApplication::sendEvent(quickWindow, event);
+//}
+//void UserInterfaceRenderer::forwardInputMethodEvent(QInputMethodEvent* event) {
+//    QCoreApplication::sendEvent(quickWindow, event);
+//}
+//void UserInterfaceRenderer::forwardFocusEvent(QFocusEvent* event) {
+//    QCoreApplication::sendEvent(quickWindow, event);
+//}
+//void UserInterfaceRenderer::forwardMouseEvent(QMouseEvent* event) {
+//    QCoreApplication::sendEvent(quickWindow, event);
+//
+//    if (event->type() == QEvent::MouseButtonPress) {
+//        QPointF mousePos = event->localPos();  // Mouse position in window coordinates
+//        if (QQuickItem* item = quickWindow->contentItem()->childAt(mousePos.x(), mousePos.y())) {
+//            quickWindow->setFocusItem(item);
+//        }
+//    }
+//}
+//void UserInterfaceRenderer::forwardHoverEvent(QHoverEvent* event) {
+//    QCoreApplication::sendEvent(quickWindow, event);
+//}
 
 void UserInterfaceRenderer::initialize(const QSize& size, const QString& qmlPath) {
     component = new QQmlComponent(engine, QUrl::fromLocalFile(qmlPath));

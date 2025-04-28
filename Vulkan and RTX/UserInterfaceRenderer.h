@@ -15,8 +15,10 @@ public:
     QOpenGLFramebufferObject* getFbo() const { return fbo; }
     QQuickWindow* getQuickWindow() const { return quickWindow; }
 
-    bool handleEvent(QEvent* event);
+    void forwardEvent(QEvent* event);
     void forwardKeyEvent(QKeyEvent* event);
+    void forwardInputMethodEvent(QInputMethodEvent* event);
+    void forwardFocusEvent(QFocusEvent* event);
     void forwardMouseEvent(QMouseEvent* event);
     void forwardHoverEvent(QHoverEvent* event);
     QQuickItem* getRootItem() const { return rootItem; }

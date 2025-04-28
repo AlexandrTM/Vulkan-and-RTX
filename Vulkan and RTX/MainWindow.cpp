@@ -37,18 +37,18 @@ void MainWindow::closeEvent(QCloseEvent* event) {
 }
 
 void MainWindow::keyPressEvent(QKeyEvent* event) {
-    gameContext->keyboardKeys[event->key()] = true;
+    //gameContext->keyboardKeys[event->key()] = true;
 }
 
 void MainWindow::keyReleaseEvent(QKeyEvent* event) {
-    gameContext->keyboardKeys[event->key()] = false;
+    //gameContext->keyboardKeys[event->key()] = false;
 }
 
 void MainWindow::mousePressEvent(QMouseEvent* event) {
-    gameContext->mouseKeys[event->button()] = true;
+    //gameContext->mouseKeys[event->button()] = true;
 }
 
 void MainWindow::mouseReleaseEvent(QMouseEvent* event) {
-    gameContext->mouseKeys[event->button()] = false;
+    //gameContext->mouseKeys[event->button()] = false;
 }
 

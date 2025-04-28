@@ -24,6 +24,8 @@ Rectangle {
             return qsTr("Hard")
         else if (value === 3)
             return qsTr("Insane")
+        else if (value === 4)
+            return qsTr("Beyond")
         else
             return qsTr("Unknown")
     }

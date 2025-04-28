@@ -21,15 +21,59 @@ bool InGameWindow::eventFilter(QObject* obj, QEvent* event) {
 }
 
 bool InGameWindow::sendEventToUI(QEvent* event) {
+    const QEvent::Type eventType = event->type();
+
     if (pauseMenuRenderer && gameContext->currentGameState == GameState::PAUSED) {
-        return pauseMenuRenderer->handleEvent(event);
+        switch (eventType) {
+        //case QEvent::FocusIn:
+        //case QEvent::FocusOut:
+        case QEvent::MouseButtonPress:
+        case QEvent::MouseButtonRelease:
+        case QEvent::MouseMove:
+        case QEvent::HoverMove:
+            pauseMenuRenderer->forwardEvent(event);
+            return true;
+        default:
+            break;
+        }
     }
+
     if (selectEquationRenderer && gameContext->currentGameState == GameState::COMBAT_PLAYER_SELECT_EQUATION) {
-        return selectEquationRenderer->handleEvent(event);
+        switch (eventType) {
+        //case QEvent::FocusIn:
+        //case QEvent::FocusOut:
+        case QEvent::MouseButtonPress:
+        case QEvent::MouseButtonRelease:
+        case QEvent::MouseMove:
+        case QEvent::HoverMove:
+            selectEquationRenderer->forwardEvent(event);
+            return true;
+        default:
+            break;
+        }
     }
+
+    // First: Events for solveEquationRenderer (full set)
     if (solveEquationRenderer && gameContext->currentGameState == GameState::COMBAT_PLAYER_SOLVE_EQUATION) {
-        return solveEquationRenderer->handleEvent(event);
+        //solveEquationRenderer->forwardEvent(event);
+        //return false;
+        switch (eventType) {
+        //case QEvent::FocusIn:
+        //case QEvent::FocusOut:
+        case QEvent::MouseButtonPress:
+        case QEvent::MouseButtonRelease:
+        case QEvent::MouseMove:
+        case QEvent::HoverMove:
+        case QEvent::KeyPress:
+        case QEvent::KeyRelease:
+        case QEvent::InputMethod:
+            solveEquationRenderer->forwardEvent(event);
+            return false; // need for text field to work
+        default:
+            break;
+        }
     }
+
     return false;
 }
 

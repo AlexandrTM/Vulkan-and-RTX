@@ -622,6 +622,7 @@ void AetherEngine::recordCommandBuffer(
 			recordModelToCommandBuffer(selectEquationModel, commandBuffer);
 		}
 		if (gameContext.currentGameState == GameState::COMBAT_PLAYER_SOLVE_EQUATION) {
+			updateSolveEquation();
 			renderQmlToTexture(solveEquationRenderer, solveEquationTexture);
 
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["ui"]);
@@ -649,30 +650,73 @@ void AetherEngine::recordCommandBuffer(
 	}
 }
 
-void AetherEngine::updateSelectEquation() {
-	if (!selectEquationRenderer) return;
+void AetherEngine::updateSolveEquation() {
+	if (!solveEquationRenderer) return;
+	auto rootItem = solveEquationRenderer->getRootItem();
+	if (!rootItem) return;
+	//solveEquationRenderer->getQuickWindow()->show();
+	//auto item = rootItem->findChild<QObject*>("answerInput");
+	//std::cout << "is active: " << inGameWindow->isActive() << "\n";
+	//QFocusEvent focusIn(QEvent::FocusIn);
+	solveEquationRenderer->getQuickWindow()->contentItem()->setFocus(true);
+	if (!solveEquationWasActivated) {
+		//solveEquationRenderer->getQuickWindow()->show();
+		//solveEquationRenderer->getQuickWindow()->hide();
+		solveEquationRenderer->getQuickWindow()->requestActivate();
+		solveEquationWasActivated = true;
+		//std::cout << "yes\n";
+		//solveEquationRenderer->getQuickWindow()->requestActivate();
+		//QCoreApplication::sendEvent(solveEquationRenderer->getQuickWindow(), &focusIn);
+		//QObject* inputObject = rootItem->findChild<QObject*>("answerInput");
+		/*if (inputObject) {
+			rootItem->forceActiveFocus();
+		}*/
+		//if (inputObject) { inputObject->setProperty("focus", true); }
+	}
 
+	QObject* expression = rootItem->findChild<QObject*>("expression");
+	if (expression) {
+		expression->setProperty(
+			"value", 
+			QString::fromStdString(gameContext.equations[gameContext.selectedEquation].expression)
+		);
+	}
+}
+void AetherEngine::updateSelectEquation() {
+	gameContext.equations.clear();
+	for (size_t i = 0; i < 3; ++i) {
+		int32_t difficulty = randomInt(0, 4);
+		int32_t damage = std::max(difficulty * 2, 1);
+		int32_t x = randomInt(1, 10);
+		int32_t a = randomInt(1, 10);
+		int32_t b = x * a + randomInt(-5, 5);
+
+		std::ostringstream oss;
+		oss << a << "x + " << (b - a * x) << " = " << b;
+
+		gameContext.equations.push_back({ oss.str(), difficulty, damage });
+	}
+
+	if (!selectEquationRenderer) return;
 	auto rootItem = selectEquationRenderer->getRootItem();
 	if (!rootItem) return;
 
 	QObject* difficulty0 = rootItem->findChild<QObject*>("difficulty0");
 	QObject* difficulty1 = rootItem->findChild<QObject*>("difficulty1");
 	QObject* difficulty2 = rootItem->findChild<QObject*>("difficulty2");
-
 	QObject* damage0 = rootItem->findChild<QObject*>("damage0");
 	QObject* damage1 = rootItem->findChild<QObject*>("damage1");
 	QObject* damage2 = rootItem->findChild<QObject*>("damage2");
 
-	if (damage0 and damage1 and damage2) {
-		damage0->setProperty("value", 5);
-		damage1->setProperty("value", 15);
-		damage2->setProperty("value", 25);
+	if (damage0 && damage1 && damage2) {
+		damage0->setProperty("value", gameContext.equations[0].damage);
+		damage1->setProperty("value", gameContext.equations[1].damage);
+		damage2->setProperty("value", gameContext.equations[2].damage);
 	}
-
-	if (difficulty0 and difficulty1 and difficulty2) {
-		difficulty0->setProperty("value", 1);
-		difficulty1->setProperty("value", 2);
-		difficulty2->setProperty("value", 3);
+	if (difficulty0 && difficulty1 && difficulty2) {
+		difficulty0->setProperty("value", gameContext.equations[0].difficulty);
+		difficulty1->setProperty("value", gameContext.equations[1].difficulty);
+		difficulty2->setProperty("value", gameContext.equations[2].difficulty);
 	}
 }
 void AetherEngine::updateInGameOverlay() {
@@ -691,6 +735,9 @@ void AetherEngine::updateInGameOverlay() {
 	if (mobHealth) {
 		if (!gameContext.currentRoom->mobs.empty()) {
 			mobHealth->setProperty("value", gameContext.currentRoom->mobs[0].health);
+		}
+		else {
+			mobHealth->setProperty("value", 0);
 		}
 	}
 }

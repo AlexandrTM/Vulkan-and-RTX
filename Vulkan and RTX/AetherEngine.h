@@ -13,6 +13,7 @@
 #include "UserInterfaceRenderer.h"
 #include "PauseMenuSlotHandler.h"
 #include "SelectEquationSlotHandler.h"
+#include "SolveEquationSlotHandler.h"
 
 #include "ModelManager.h"
 #include "GameContext.h"
@@ -101,6 +102,7 @@ private:
 	Model selectEquationModel;
 
 	UserInterfaceRenderer* solveEquationRenderer = nullptr;
+	bool solveEquationWasActivated = false;
 	Texture solveEquationTexture;
 	Model solveEquationModel;
 
@@ -143,8 +145,10 @@ private:
 	void changeState(GameState newGameState);
 	void handleDungeonExplorationState(double deltaTime, double timeSinceLaunch);
 	void handleInGameTestingState(double deltaTime, double timeSinceLaunch, bool fpsMenu);
+
 	void updateSelectEquation();
 	void updateInGameOverlay();
+	void updateSolveEquation();
 
 	std::string createPuzzleEquation(std::string name, int32_t& answer);
 

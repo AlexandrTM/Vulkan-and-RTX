@@ -1,5 +1,7 @@
-#ifndef AETHER_H
-#define AETHER_H
+#ifndef AETHER_CORE_H
+#define AETHER_CORE_H
+
+#include <boost/random.hpp>
 
 constexpr uint32_t MAX_BONES_NUM = 256;
 constexpr uint32_t MAX_FRAMES_IN_FLIGHT = 2;
@@ -33,6 +35,19 @@ enum class EquationDifficulty : uint32_t
 	BEYOND = 4,
 	UNKNOWN = std::numeric_limits<uint32_t>::max(),
 };
+
+struct Equation
+{
+	std::string expression;
+	int32_t difficulty;
+	int32_t damage;
+};
+
+extern std::default_random_engine gen;
+//extern boost::random::mt19937 genenerator;
+void seedRandomGenerator();
+int32_t randomInt(int32_t min, int32_t max);
+float randomNormalizedReal();
 
 enum class GameState : uint32_t
 {

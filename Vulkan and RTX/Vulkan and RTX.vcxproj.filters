@@ -156,6 +156,9 @@
     <ClCompile Include="CollisionManager.cpp">
       <Filter>source</Filter>
     </ClCompile>
+    <ClCompile Include="aether_core.cpp">
+      <Filter>headers\precompiled</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -267,6 +270,9 @@
       <Filter>source\UI</Filter>
     </QtMoc>
     <QtMoc Include="SelectEquationSlotHandler.h">
+      <Filter>source\UI</Filter>
+    </QtMoc>
+    <QtMoc Include="SolveEquationSlotHandler.h">
       <Filter>source\UI</Filter>
     </QtMoc>
   </ItemGroup>

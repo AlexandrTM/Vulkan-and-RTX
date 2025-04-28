@@ -87,7 +87,8 @@ static int runAether() {
 
 	loadTranslation(app);
 
-	srand(static_cast<unsigned>(time(0))); // Seed the random number generator once
+	seedRandomGenerator();
+
 	AetherEngine aetherEngine;
 
 	try {

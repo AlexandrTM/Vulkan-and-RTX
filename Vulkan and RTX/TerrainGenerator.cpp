@@ -1,14 +1,14 @@
 #include "pch.h"
 #include "TerrainGenerator.h"
 
-TerrainGenerator::TerrainGenerator(size_t seed) : generator(seed) 
+TerrainGenerator::TerrainGenerator()
 {
     // Initialize the permutation vector with values 0-255
     permutation.resize(256);
     std::iota(permutation.begin(), permutation.end(), 0);
 
     // Shuffle the permutation vector
-    std::shuffle(permutation.begin(), permutation.end(), std::default_random_engine(seed));
+    std::shuffle(permutation.begin(), permutation.end(), gen);
 
     // Duplicate the permutation vector
     permutation.insert(permutation.end(), permutation.begin(), permutation.end());
@@ -22,10 +22,10 @@ std::vector<std::vector<float>> TerrainGenerator::generateDiamondHeightMap(
     std::vector<std::vector<float>> heightmap(width, std::vector<float>(length, 0.0f));
 
     // Set the corner heights randomly
-    heightmap[0        ][0         ] = roughness == 0.0 ? 0.0 : getRandomNormalizedReal();
-    heightmap[0        ][length - 1] = roughness == 0.0 ? 0.0 : getRandomNormalizedReal();
-    heightmap[width - 1][0         ] = roughness == 0.0 ? 0.0 : getRandomNormalizedReal();
-    heightmap[width - 1][length - 1] = roughness == 0.0 ? 0.0 : getRandomNormalizedReal();
+    heightmap[0        ][0         ] = roughness == 0.0 ? 0.0 : randomNormalizedReal();
+    heightmap[0        ][length - 1] = roughness == 0.0 ? 0.0 : randomNormalizedReal();
+    heightmap[width - 1][0         ] = roughness == 0.0 ? 0.0 : randomNormalizedReal();
+    heightmap[width - 1][length - 1] = roughness == 0.0 ? 0.0 : randomNormalizedReal();
 
     // Perform the Diamond-Square algorithm
     diamondSquare(heightmap, 0, 0, width - 1, length - 1, roughness);
@@ -37,7 +37,7 @@ void TerrainGenerator::generateTerrain(
     float startX, float startY, float startZ,
     const TerrainData& terrainData,
     std::vector<Model>& models, Texture& terrainTexture, float metricTextureSize,
-    TerrainGenerator* terrainGenerator, size_t seed
+    size_t seed
 ) {
     Model model{};
 
@@ -51,7 +51,7 @@ void TerrainGenerator::generateTerrain(
             size_t chunkXoffset = chunkX * terrainData.chunkWidth;
             size_t chunkZoffset = chunkZ * terrainData.chunkLength;
 
-            auto heightmap = terrainGenerator->generatePerlinHeightMap(
+            auto heightmap = generatePerlinHeightMap(
                 chunkXoffset, chunkZoffset,
                 terrainData.chunkWidth, terrainData.chunkLength,
                 terrainData.scale, terrainData.height
@@ -63,7 +63,7 @@ void TerrainGenerator::generateTerrain(
                 startZ + chunkZoffset * terrainData.gridSize
             );
 
-            terrainGenerator->generateTerrainMesh(
+            createTerrainMesh(
                 chunkOffset,
                 heightmap, terrainData.gridSize, mesh, metricTextureSize
             );
@@ -152,12 +152,8 @@ void TerrainGenerator::diamondSquare(
 
 // Get a random height offset based on the roughness
 float TerrainGenerator::getRandomOffset(float roughness) {
-    std::uniform_real_distribution<float> distribution(-roughness, roughness);
-    return distribution(generator);
-}
-float TerrainGenerator::getRandomNormalizedReal() {
-    std::uniform_real_distribution<float> distribution(0.0f, 1.0f);
-    return distribution(generator);
+    boost::random::uniform_real_distribution<float> distribution(-roughness, roughness);
+    return distribution(gen);
 }
 
 float TerrainGenerator::perlinNoise(float x, float y, float z) {
@@ -219,7 +215,7 @@ float TerrainGenerator::perlinNoise(float x, float y, float z) {
     //return (res + 1) / 2; // result is in range [0, 1]
 }
 
-void TerrainGenerator::generateTerrainMesh(
+void TerrainGenerator::createTerrainMesh(
     glm::vec3 offset,
     const std::vector<std::vector<float>>& heightmap, 
     float gridSize, 

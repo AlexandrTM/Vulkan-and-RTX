@@ -187,6 +187,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Aether.cpp" />
+    <ClCompile Include="aether_core.cpp" />
     <ClCompile Include="BufferManager.cpp" />
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CollisionManager.cpp" />
@@ -261,6 +262,7 @@
     <ClInclude Include="resource.h" />
     <QtMoc Include="SettingsMenuWidget.h" />
     <QtMoc Include="SelectEquationSlotHandler.h" />
+    <QtMoc Include="SolveEquationSlotHandler.h" />
     <ClInclude Include="StellarCalculations.h" />
     <ClInclude Include="TerrainGenerator.h" />
     <ClInclude Include="Vertex.h" />

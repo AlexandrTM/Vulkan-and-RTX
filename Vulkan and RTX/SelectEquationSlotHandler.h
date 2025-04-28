@@ -14,7 +14,8 @@ public:
 
 public slots:
     void onButtonClicked(int buttonId) {
-        qDebug() << "Button clicked:" << buttonId;
+        gameContext->requestedGameState = GameState::COMBAT_PLAYER_SOLVE_EQUATION;
+        gameContext->selectedEquation = buttonId;
     }
 
 private:

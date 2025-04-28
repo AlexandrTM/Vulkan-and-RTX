@@ -84,25 +84,30 @@
     </message>
     <message>
         <location filename="../qml/SelectEquation.ui.qml" line="28"/>
+        <source>Beyond</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/SelectEquation.ui.qml" line="30"/>
         <source>Unknown</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/SelectEquation.ui.qml" line="42"/>
+        <location filename="../qml/SelectEquation.ui.qml" line="44"/>
         <source>Select an equation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/SelectEquation.ui.qml" line="71"/>
-        <location filename="../qml/SelectEquation.ui.qml" line="118"/>
-        <location filename="../qml/SelectEquation.ui.qml" line="166"/>
+        <location filename="../qml/SelectEquation.ui.qml" line="73"/>
+        <location filename="../qml/SelectEquation.ui.qml" line="120"/>
+        <location filename="../qml/SelectEquation.ui.qml" line="168"/>
         <source>Difficulty: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/SelectEquation.ui.qml" line="85"/>
-        <location filename="../qml/SelectEquation.ui.qml" line="132"/>
-        <location filename="../qml/SelectEquation.ui.qml" line="180"/>
+        <location filename="../qml/SelectEquation.ui.qml" line="87"/>
+        <location filename="../qml/SelectEquation.ui.qml" line="134"/>
+        <location filename="../qml/SelectEquation.ui.qml" line="182"/>
         <source>Damage: %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -123,22 +128,13 @@
 <context>
     <name>SolveEquation.ui</name>
     <message>
-        <location filename="../qml/SolveEquation.ui.qml" line="20"/>
-        <source>Select an Equation</source>
+        <location filename="../qml/SolveEquation.ui.qml" line="33"/>
+        <source>Expression: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/SolveEquation.ui.qml" line="45"/>
-        <location filename="../qml/SolveEquation.ui.qml" line="81"/>
-        <location filename="../qml/SolveEquation.ui.qml" line="118"/>
-        <source>Difficulty: %1</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../qml/SolveEquation.ui.qml" line="56"/>
-        <location filename="../qml/SolveEquation.ui.qml" line="92"/>
-        <location filename="../qml/SolveEquation.ui.qml" line="129"/>
-        <source>Damage: %1</source>
+        <location filename="../qml/SolveEquation.ui.qml" line="65"/>
+        <source>Enter your answer...</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

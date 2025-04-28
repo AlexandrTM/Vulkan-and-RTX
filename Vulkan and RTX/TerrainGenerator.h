@@ -1,8 +1,10 @@
 #include "pch.h"
-#include "Model.h"
 
 #ifndef TERRAIN_GENERATOR
 #define TERRAIN_GENERATOR
+
+#include "Model.h"
+#include "aether_core.h"
 
 struct TerrainData
 {
@@ -18,7 +20,7 @@ struct TerrainData
 class TerrainGenerator
 {
 public:
-    TerrainGenerator(size_t seed);
+    TerrainGenerator();
 
     std::vector<std::vector<float>> generateDiamondHeightMap(
         size_t width, size_t length, 
@@ -30,14 +32,14 @@ public:
         float scale, float height
     );
 
-    static void generateTerrain(
+    void generateTerrain(
         float startX, float startY, float startZ,
         const TerrainData& terrainData,
         std::vector<Model>& models, Texture& terrainTexture, float metricTextureSize,
-        TerrainGenerator* terrainGenerator, size_t seed
+        size_t seed
     );
 
-    void generateTerrainMesh(
+    static void createTerrainMesh(
         glm::vec3 offset,
         const std::vector<std::vector<float>>& heightmap,
         float gridSize,
@@ -46,7 +48,6 @@ public:
 
 private:
     std::vector<uint32_t> permutation;
-    std::default_random_engine generator;
 
     // Perform the Diamond-Square algorithm recursively
     void diamondSquare(
@@ -57,7 +58,6 @@ private:
 
     // Get a random height offset based on the roughness
     float getRandomOffset(float roughness);
-    float getRandomNormalizedReal();
 
     float perlinNoise(float x, float y, float z = 0.34567);
     float fade(float t);

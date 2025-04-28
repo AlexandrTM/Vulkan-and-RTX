@@ -31,10 +31,11 @@ void AetherEngine::prepareUI()
 	mainWindow->addWidget(settingsMenuWidget);
 	mainWindow->show();
 
-	gameContext.requestedGameState = GameState::MAIN_MENU;
 	gameContext.requestedGameState = GameState::IN_GAME_TESTING;
+	gameContext.requestedGameState = GameState::COMBAT_PLAYER_SOLVE_EQUATION;
 	gameContext.requestedGameState = GameState::COMBAT_PLAYER_SELECT_EQUATION;
 	gameContext.requestedGameState = GameState::DUNGEON_EXPLORATION;
+	gameContext.requestedGameState = GameState::MAIN_MENU;
 	gameContext.clearInputs();
 }
 
@@ -76,7 +77,7 @@ void AetherEngine::prepareResources()
 	//	0.1f,     // scale
 	//	0.2f,     // height
 	//};
-	//terrainGenerator = std::make_unique<TerrainGenerator>(1);
+	//terrainGenerator = TerrainGenerator(generator);
 	//TerrainGenerator::generateTerrain(
 	//	-(terrainData.chunkWidth * terrainData.chunkRows / 2 * terrainData.gridSize),
 	//	0,
@@ -165,6 +166,7 @@ void AetherEngine::onMainWindowMoved(int x, int y) {
 }
 void AetherEngine::onInGameWindowMoved(int x, int y) {
 	//pauseMenuView->setPosition(x, y);
+	solveEquationRenderer->getQuickWindow()->setPosition(inGameWindow->position() + QPoint(x, y));
 }
 void AetherEngine::onInGameWindowLostFocus() {
 	//std::cout << "lost focus\n";
@@ -227,11 +229,26 @@ void AetherEngine::createInGameUI() {
 	inGameWindow->setSelectEquationRenderer(selectEquationRenderer);
 	SelectEquationSlotHandler* selectEquationSlotHandler = new SelectEquationSlotHandler(gameContext, this);
 	auto rootItem = selectEquationRenderer->getRootItem();
-	QObject::connect(rootItem, SIGNAL(buttonClicked(int)), selectEquationSlotHandler, SLOT(onButtonClicked(int)));
+	QObject::connect(
+		rootItem, SIGNAL(buttonClicked(int)), 
+		selectEquationSlotHandler, SLOT(onButtonClicked(int))
+	);
 
 	solveEquationRenderer = new UserInterfaceRenderer();
 	solveEquationRenderer->initialize(QSize(windowWidth, windowHeight), "qml/SolveEquation.ui.qml");
 	solveEquationRenderer->setParent(mainWindow);
+
+	inGameWindow->setSolveEquationRenderer(solveEquationRenderer);
+	SolveEquationSlotHandler* solveEquationSlotHandler = new SolveEquationSlotHandler(gameContext, this);
+	rootItem = solveEquationRenderer->getRootItem();
+	QObject::connect(
+		rootItem, SIGNAL(answerSubmitted(QString)), 
+		solveEquationSlotHandler, SLOT(onAnswerSubmitted(QString))
+	);
+	QObject::connect(
+		rootItem, SIGNAL(buttonClicked(int)),
+		selectEquationSlotHandler, SLOT(onButtonClicked(int))
+	);
 }
 
 void AetherEngine::createMainWindow()
@@ -315,6 +332,9 @@ void AetherEngine::changeState(GameState newGameState) {
 	case GameState::IN_GAME_TESTING:
 		QApplication::setOverrideCursor(Qt::ArrowCursor);
 		break;
+	case GameState::COMBAT_PLAYER_SOLVE_EQUATION:
+		solveEquationWasActivated = false;
+		break;
 	case GameState::PAUSED:
 		break;
 	case GameState::EXIT:
@@ -349,7 +369,11 @@ void AetherEngine::changeState(GameState newGameState) {
 		stackedWidget->setCurrentWidget(inGameWidget);
 		updateSelectEquation();
 		break;
+	case GameState::COMBAT_PLAYER_SOLVE_EQUATION:
+		stackedWidget->setCurrentWidget(inGameWidget);
+		break;
 	case GameState::PAUSED:
+		stackedWidget->setCurrentWidget(inGameWidget);
 		break;
 	case GameState::EXIT:
 		QCoreApplication::quit();
@@ -413,11 +437,11 @@ void AetherEngine::mainLoop()
 		previousTime = currentTime;
 		timeSinceLaunch += deltaTime;
 
-		QCoreApplication::processEvents();
+		//std::cout << "is active: " << inGameWindow->isActive() << "\n";
 
-		if (!mainWindow or !inGameWindow) {
-			break;
-		}
+		QCoreApplication::processEvents();
+		//QFocusEvent focusIn(QEvent::FocusIn);
+		//QCoreApplication::sendEvent(solveEquationRenderer->getQuickWindow(), &focusIn);
 
 		if (gameContext.requestedGameState != GameState::NONE) {
 			changeState(gameContext.requestedGameState);
