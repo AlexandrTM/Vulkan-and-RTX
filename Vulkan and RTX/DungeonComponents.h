@@ -35,7 +35,7 @@ struct DungeonRoom
         Texture& wallTexture
     );
 
-    void createRoomModels(std::vector<Model>& models);
+    std::vector<Model> createDungeonRoomModels();
     static std::vector<std::string> createRoomLayoutFromMask(
         RoomConnectionMask mask,
         size_t width, size_t length
@@ -47,7 +47,7 @@ struct DungeonFloor
     std::vector<DungeonRoom> dungeonRooms;
     DungeonRoom* entrance = nullptr;
 
-    void createDungeonFloor(std::vector<Model>& models);
+    std::vector<Model> createDungeonFloor();
 
     void addDungeonRoom(DungeonRoom dungeonRoom);
 };

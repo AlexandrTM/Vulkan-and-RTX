@@ -34,8 +34,8 @@ void AetherEngine::prepareUI()
 	gameContext.requestedGameState = GameState::IN_GAME_TESTING;
 	gameContext.requestedGameState = GameState::COMBAT_PLAYER_SOLVE_EQUATION;
 	gameContext.requestedGameState = GameState::COMBAT_PLAYER_SELECT_EQUATION;
-	gameContext.requestedGameState = GameState::DUNGEON_EXPLORATION;
 	gameContext.requestedGameState = GameState::MAIN_MENU;
+	gameContext.requestedGameState = GameState::DUNGEON_EXPLORATION;
 	gameContext.clearInputs();
 }
 
@@ -89,12 +89,13 @@ void AetherEngine::prepareResources()
 
 	ModelManager::createSkyModel(sky);
 
-	Dungeon::createDungeonFloor(
-		gameContext.dungeonFloor, models, 
-		stone_floor_floor_2_texture, stone_wall_floor_2_texture
+	std::vector<Model> dungeonModels = Dungeon::createDungeonFloor(
+		gameContext.dungeonFloor,
+		stone_floor_floor_2_texture,
+		stone_wall_floor_2_texture
 	);
-	Dungeon::enterDungeonFloor(gameContext.dungeonFloor, gameContext, character);
-
+	models.insert(models.end(), dungeonModels.begin(), dungeonModels.end());
+	gameContext.currentRoom = Dungeon::enterDungeonFloor(gameContext.dungeonFloor, character);
 	createDescriptorPool(models);
 
 	createSolidColorTexture({ 0, 0, 0, 0 }, windowWidth, windowHeight, pauseMenuTexture);
@@ -209,7 +210,7 @@ void AetherEngine::createPauseMenuRenderer() {
 	pauseMenuRenderer->setParent(mainWindow);
 
 	inGameWindow->setPauseMenuRenderer(pauseMenuRenderer);
-	PauseMenuSlotHandler* pauseMenuSlotHandler = new PauseMenuSlotHandler(gameContext, this);
+	PauseMenuSlotHandler* pauseMenuSlotHandler = new PauseMenuSlotHandler(this);
 	auto rootItem = pauseMenuRenderer->getRootItem();
 
 	connect(rootItem, SIGNAL(resumeGameClicked()), pauseMenuSlotHandler, SLOT(onResumeGameClicked()));
@@ -227,7 +228,7 @@ void AetherEngine::createInGameUI() {
 	selectEquationRenderer->setParent(mainWindow);
 
 	inGameWindow->setSelectEquationRenderer(selectEquationRenderer);
-	SelectEquationSlotHandler* selectEquationSlotHandler = new SelectEquationSlotHandler(gameContext, this);
+	SelectEquationSlotHandler* selectEquationSlotHandler = new SelectEquationSlotHandler(this);
 	auto rootItem = selectEquationRenderer->getRootItem();
 	QObject::connect(
 		rootItem, SIGNAL(buttonClicked(int)), 
@@ -239,7 +240,7 @@ void AetherEngine::createInGameUI() {
 	solveEquationRenderer->setParent(mainWindow);
 
 	inGameWindow->setSolveEquationRenderer(solveEquationRenderer);
-	SolveEquationSlotHandler* solveEquationSlotHandler = new SolveEquationSlotHandler(gameContext, this);
+	SolveEquationSlotHandler* solveEquationSlotHandler = new SolveEquationSlotHandler(character, this);
 	rootItem = solveEquationRenderer->getRootItem();
 	QObject::connect(
 		rootItem, SIGNAL(answerSubmitted(QString)), 
@@ -253,7 +254,7 @@ void AetherEngine::createInGameUI() {
 
 void AetherEngine::createMainWindow()
 {
-	mainWindow = new MainWindow(gameContext);
+	mainWindow = new MainWindow();
 	mainWindow->resize(windowWidth, windowHeight);
 	mainWindow->setWindowTitle("Aether");
 	mainWindow->setWindowIcon(QIcon("textures/granite_square.png"));
@@ -287,7 +288,7 @@ void AetherEngine::createInGameWindow()
 		throw std::runtime_error("Failed to create Vulkan instance in Qt.");
 	}
 
-	inGameWindow = new InGameWindow(&qVulkanInstance, character, gameContext);
+	inGameWindow = new InGameWindow(&qVulkanInstance, character);
 	inGameWindow->setParent(mainWindow->windowHandle());
 	inGameWindow->setFlags(Qt::FramelessWindowHint);
 	inGameWindow->resize(windowWidth, windowHeight);
@@ -361,19 +362,26 @@ void AetherEngine::changeState(GameState newGameState) {
 		QApplication::setOverrideCursor(Qt::BlankCursor);
 		character.camera._isFirstMouse = true;
 		stackedWidget->setCurrentWidget(inGameWidget);
+		//if (!inGameWidget->hasFocus()) { inGameWidget->setFocus(); }
 		break;
 	case GameState::DUNGEON_EXPLORATION:
 		stackedWidget->setCurrentWidget(inGameWidget);
+		if (!inGameWindow->isActive()) { inGameWindow->requestActivate(); }
+		//if (!inGameWidget->hasFocus()) { inGameWidget->setFocus(); }
 		break;
 	case GameState::COMBAT_PLAYER_SELECT_EQUATION:
 		stackedWidget->setCurrentWidget(inGameWidget);
 		updateSelectEquation();
+		//if (!inGameWidget->hasFocus()) { inGameWidget->setFocus(); }
 		break;
 	case GameState::COMBAT_PLAYER_SOLVE_EQUATION:
 		stackedWidget->setCurrentWidget(inGameWidget);
+		clearSolveEquationInput();
+		//if (!inGameWidget->hasFocus()) { inGameWidget->setFocus(); }
 		break;
 	case GameState::PAUSED:
 		stackedWidget->setCurrentWidget(inGameWidget);
+		if (!inGameWindow->isActive()) { inGameWindow->requestActivate(); }
 		break;
 	case GameState::EXIT:
 		QCoreApplication::quit();
@@ -382,19 +390,11 @@ void AetherEngine::changeState(GameState newGameState) {
 		break;
 	}
 }
-void AetherEngine::handleDungeonExplorationState(double deltaTime, double timeSinceLaunch)
-{
-	character.handleDungeonExplorationPlayerInput(gameContext);
-
-	if (!gameContext.currentRoom->mobs.empty()) {
-		gameContext.requestedGameState = GameState::COMBAT_PLAYER_SELECT_EQUATION;
-	}
-}
 void AetherEngine::handleInGameTestingState(double deltaTime, double timeSinceLaunch, bool fpsMenu)
 {
-	character.handleInGamePlayerInput(gameContext);
+	character.handleInGamePlayerInput();
 	if (!character.isInteracting) {
-		character.handleCharacterMovement(gameContext, deltaTime, gravity, models);
+		character.handleCharacterMovement(deltaTime, gravity, models);
 	}
 
 	// skipping qt mouse movements on the first frame
@@ -467,14 +467,27 @@ void AetherEngine::mainLoop()
 			}
 		}
 
-		if (gameContext.currentGameState == GameState::DUNGEON_EXPLORATION and inGameWindow->isExposed()) {
-			handleDungeonExplorationState(deltaTime, timeSinceLaunch);
-		}
-		
-		if (gameContext.currentGameState == GameState::IN_GAME_TESTING and inGameWindow->isExposed()) {
+		if (!inGameWindow->isExposed()) { continue; }
+
+		if (gameContext.currentGameState == GameState::IN_GAME_TESTING) {
 			handleInGameTestingState(deltaTime, timeSinceLaunch, fpsMenu);
 		}
+		if (gameContext.currentGameState == GameState::DUNGEON_EXPLORATION) {
+			if (!gameContext.currentRoom->mobs.empty()) {
+				gameContext.requestedGameState = GameState::COMBAT_PLAYER_SELECT_EQUATION;
+			}
 
+			character.handleDungeonExplorationPlayerInput();
+		}
+		if (gameContext.currentGameState == GameState::COMBAT_MOB_TURN) {
+			character.takeDamage(gameContext.currentRoom->mobs);
+			if (character.isAlive()) {
+				gameContext.requestedGameState = GameState::COMBAT_PLAYER_SELECT_EQUATION;
+			}
+			else {
+				gameContext.requestedGameState = GameState::PLAYER_DEAD;
+			}
+		}
 		if (gameContext.currentGameState == GameState::DUNGEON_EXPLORATION			 ||
 			gameContext.currentGameState == GameState::IN_GAME_TESTING				 ||
 			gameContext.currentGameState == GameState::COMBAT_PLAYER_SELECT_EQUATION ||

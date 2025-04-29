@@ -20,27 +20,16 @@ enum class VertexLayoutType : uint32_t
 	POSITION_TEXCOORDS = 2,
 };
 
+enum class ModelType : uint32_t
+{
+	DUNGEON = 0,
+	OTHER = std::numeric_limits<uint32_t>::max(),
+};
+
 enum class Gamemode : uint32_t
 {
 	CREATIVE = 0,
 	SURVIVAL = 1,
-};
-
-enum class EquationDifficulty : uint32_t
-{
-	EASY = 0,
-	MEDIUM = 1,
-	HARD = 2,
-	INSANE = 3,
-	BEYOND = 4,
-	UNKNOWN = std::numeric_limits<uint32_t>::max(),
-};
-
-struct Equation
-{
-	std::string expression;
-	int32_t difficulty;
-	int32_t damage;
 };
 
 extern std::default_random_engine gen;
@@ -61,7 +50,7 @@ enum class GameState : uint32_t
 	COMBAT_MOB_TURN = 7,
 	SHOP = 8,
 	HALL_OF_FAME = 9,
-	GAME_OVER = 10,
+	PLAYER_DEAD = 10,
 	EXIT = std::numeric_limits<uint32_t>::max() - 1,
 	NONE = std::numeric_limits<uint32_t>::max(),
 };

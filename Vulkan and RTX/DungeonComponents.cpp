@@ -28,21 +28,21 @@ DungeonRoom::DungeonRoom(
     cameraPosition = centerPosition + glm::vec3(-8.3 * 1.4, 7.5 * 1.4, 0.0);
 }
 
-void DungeonRoom::createRoomModels(std::vector<Model>& models) {
+std::vector<Model> DungeonRoom::createDungeonRoomModels() {
+    std::vector<Model> models;
     // Generate walls based on the room layout
     for (size_t x = 0; x < roomLayout.size(); ++x) {
         for (size_t y = 0; y < roomLayout[x].length(); ++y) {
             if (roomLayout[x][y] == 'w') {
                 // Place wall cubes
-                ModelManager::createCube(
+                models.push_back(ModelManager::createCube(
                     position.x + x * cellSize,
                     position.y,
                     position.z + y * cellSize,
                     cellSize,
                     glm::vec3(0.5f),
-                    wallTexture,
-                    models
-                );
+                    wallTexture
+                ));
             }
             else if (roomLayout[x][y] == 'a') {
                 // Empty space (air), skip rendering
@@ -52,7 +52,7 @@ void DungeonRoom::createRoomModels(std::vector<Model>& models) {
     }
 
     // Create the floor of the room
-    ModelManager::createCuboid(
+    models.push_back(ModelManager::createCuboid(
         position.x,
         position.y - 0.1f,
         position.z,
@@ -60,9 +60,10 @@ void DungeonRoom::createRoomModels(std::vector<Model>& models) {
         0.1f,
         metricWidth,
         glm::vec3(1.0f),
-        floorTexture,
-        models
-    );
+        floorTexture
+    ));
+
+    return models;
 }
 
 std::vector<std::string> DungeonRoom::createRoomLayoutFromMask(
@@ -102,7 +103,8 @@ std::vector<std::string> DungeonRoom::createRoomLayoutFromMask(
 }
 
 // Method to generate all rooms on the floor
-void DungeonFloor::createDungeonFloor(std::vector<Model>& models) {
+std::vector<Model> DungeonFloor::createDungeonFloor() {
+    std::vector<Model> floorModels;
 
     if (!dungeonRooms.empty()) {
         entrance = &dungeonRooms.front();
@@ -113,7 +115,9 @@ void DungeonFloor::createDungeonFloor(std::vector<Model>& models) {
 
     // Generate each room in the dungeon
     for (auto& room : dungeonRooms) {
-        room.createRoomModels(models);
+        std::vector<Model> roomModels = room.createDungeonRoomModels();
+
+        floorModels.insert(floorModels.end(), roomModels.begin(), roomModels.end());
 
         if (&room != entrance) {
             room.mobs.push_back(Mob(
@@ -126,6 +130,7 @@ void DungeonFloor::createDungeonFloor(std::vector<Model>& models) {
                 5));
         }
     }
+    return floorModels;
 }
 
 void DungeonFloor::addDungeonRoom(DungeonRoom dungeonRoom) {

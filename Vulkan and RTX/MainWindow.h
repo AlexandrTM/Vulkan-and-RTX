@@ -7,17 +7,16 @@
 #include <QMouseEvent>
 #include <QWheelEvent>
 #include <QResizeEvent>
-#include "GameContext.h"
+#include "gamecontext_instance.h"
 
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
 private:
     QStackedWidget* stackedWidget;
-    GameContext* gameContext;
 
 public:
-    MainWindow(GameContext& gameContext, QWidget* parent = nullptr);
+    MainWindow(QWidget* parent = nullptr);
     QStackedWidget* getStackedWidget();
     void addWidget(QWidget* widget);
 

@@ -8,7 +8,7 @@
 #include <QWheelEvent>
 #include <QResizeEvent>
 #include "Character.h"
-#include "GameContext.h"
+#include "gamecontext_instance.h"
 #include "UserInterfaceRenderer.h"
 
 class InGameWindow : public QWindow
@@ -16,7 +16,6 @@ class InGameWindow : public QWindow
     Q_OBJECT
 private:
     Character* character = nullptr;
-    GameContext* gameContext = nullptr;
     UserInterfaceRenderer* pauseMenuRenderer = nullptr;
     UserInterfaceRenderer* selectEquationRenderer = nullptr;
     UserInterfaceRenderer* solveEquationRenderer = nullptr;
@@ -24,7 +23,7 @@ private:
 public:
     InGameWindow(
         QVulkanInstance* instance,
-        Character& character, GameContext& gameContext
+        Character& character
     );
     void setPauseMenuRenderer     (UserInterfaceRenderer* renderer) { pauseMenuRenderer = renderer; }
     void setSelectEquationRenderer(UserInterfaceRenderer* renderer) { selectEquationRenderer = renderer; }

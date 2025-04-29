@@ -4,25 +4,22 @@
 
 namespace ModelManager
 {
-	void generateCubicLandscape(
+	std::vector<Model> generateCubicLandscape(
 		size_t landscapeWidth, size_t landscapeLenght,
 		float_t cubeSize,
 		glm::vec3 color,
-		Texture& texture,
-		std::vector<Model>& models
+		Texture& texture
 	);
-	void createCube(
+	Model createCube(
 		float x, float y, float z, float cubeSize,
 		glm::vec3 color,
-		Texture& texture,
-		std::vector<Model>& models
+		Texture& texture
 	);
-	void createCuboid(
+	Model createCuboid(
 		float x, float y, float z,
 		float width, float height, float length,
 		glm::vec3 color,
-		Texture& texture,
-		std::vector<Model>& models
+		Texture& texture
 	);
 	Model createQuad(
 		glm::vec3 origin,

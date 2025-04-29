@@ -16,13 +16,14 @@
 #include "SolveEquationSlotHandler.h"
 
 #include "ModelManager.h"
-#include "GameContext.h"
+#include "gamecontext_instance.h"
 #include "Model.h"
 #include "TerrainGenerator.h"
 #include "Character.h"
 #include "Vertex.h"
 #include "DungeonComponents.h"
 #include "Dungeon.h"
+#include "Equations.h"
 
 class AetherEngine : public QObject {
 	Q_OBJECT
@@ -34,7 +35,6 @@ private:
 
 	float gravity = 9.81f;
 	Character character;
-	GameContext gameContext;
 
 	uint32_t windowWidth = 0;
 	uint32_t windowHeight = 0;
@@ -143,12 +143,13 @@ public:
 
 private:
 	void changeState(GameState newGameState);
-	void handleDungeonExplorationState(double deltaTime, double timeSinceLaunch);
+	//void handleDungeonExplorationState(double deltaTime, double timeSinceLaunch);
 	void handleInGameTestingState(double deltaTime, double timeSinceLaunch, bool fpsMenu);
 
 	void updateSelectEquation();
 	void updateInGameOverlay();
 	void updateSolveEquation();
+	void clearSolveEquationInput();
 
 	std::string createPuzzleEquation(std::string name, int32_t& answer);
 

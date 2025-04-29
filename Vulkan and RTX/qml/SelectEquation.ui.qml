@@ -83,7 +83,7 @@ Rectangle {
             Text {
                 id: damage0
                 objectName: "damage0"
-                property int value: 0
+                property string value: ""
                 text: qsTr("Damage: %1").arg(value)
                 font.family: Qt.application.font.family
                 font.pointSize: defaultFontSize
@@ -130,7 +130,7 @@ Rectangle {
             Text {
                 id: damage1
                 objectName: "damage1"
-                property int value: 0
+                property string value: ""
                 text: qsTr("Damage: %1").arg(value)
                 font.family: Qt.application.font.family
                 font.pointSize: defaultFontSize
@@ -178,7 +178,7 @@ Rectangle {
             Text {
                 id: damage2
                 objectName: "damage2"
-                property int value: 0
+                property string value: ""
                 text: qsTr("Damage: %1").arg(value)
                 font.family: Qt.application.font.family
                 font.pointSize: defaultFontSize

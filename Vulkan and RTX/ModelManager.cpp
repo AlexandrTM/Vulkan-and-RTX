@@ -3,53 +3,50 @@
 #include "AetherEngine.h"
 #include "Vertex.h"
 
-void ModelManager::generateCubicLandscape(
+std::vector<Model> ModelManager::generateCubicLandscape(
 		size_t landscapeWidth, size_t landscapeLenght, 
 		float_t cubeSize,
 		glm::vec3 color,
-		Texture& texture,
-		std::vector<Model>& models
+		Texture& texture
 )
+{
+	std::vector<Model> models;
+	for (size_t i = 0; i < landscapeWidth; i++)
 	{
-		for (size_t i = 0; i < landscapeWidth; i++)
+		for (size_t j = 0; j < landscapeLenght; j++)
 		{
-			for (size_t j = 0; j < landscapeLenght; j++)
-			{
-				float random_height = 0.01 * (rand() % 51);
-				createCube(
-					0.0f + (float)i * cubeSize - landscapeWidth / 4,
-					-2 + random_height,
-					0.0f + (float)j * cubeSize - landscapeLenght / 4,
-					cubeSize,
-					color,
-					texture,
-					models
-				);
-			}
+			float random_height = 0.01 * (rand() % 51);
+			models.push_back(createCube(
+				0.0f + (float)i * cubeSize - landscapeWidth / 4,
+				-2 + random_height,
+				0.0f + (float)j * cubeSize - landscapeLenght / 4,
+				cubeSize,
+				color,
+				texture
+			));
 		}
 	}
-void ModelManager::createCube(
+	return models;
+}
+Model ModelManager::createCube(
 	float x, float y, float z, 
 	float cubeSize,
 	glm::vec3 color,
-	Texture& texture,
-	std::vector<Model>& models
+	Texture& texture
 )
 {
-	createCuboid(
+	return createCuboid(
 		x, y, z, 
 		cubeSize, cubeSize, cubeSize, 
 		color, 
-		texture,
-		models
+		texture
 	);
 }
-void ModelManager::createCuboid(
+Model ModelManager::createCuboid(
 	float x, float y, float z,
 	float width, float height, float length, 
 	glm::vec3 color,
-	Texture& texture,
-	std::vector<Model>& models
+	Texture& texture
 )
 {
 	std::vector<Vertex> localVertices(24);
@@ -181,7 +178,7 @@ void ModelManager::createCuboid(
 
 	model.meshes.push_back(mesh);
 	//model.isCollidable = true;
-	models.push_back(model);
+	return model;
 }
 Model ModelManager::createQuad(
 	glm::vec3 origin,

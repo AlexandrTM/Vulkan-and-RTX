@@ -1,7 +1,7 @@
-#ifndef GAME_CONTEXT
-#define GAME_CONTEXT
+#pragma once
 
 #include "DungeonComponents.h"
+#include "Equations.h"
 
 struct GameContext
 {
@@ -20,7 +20,5 @@ struct GameContext
 	bool roomMovementHandled = false;
 
 	std::vector<Equation> equations;
-	int32_t selectedEquation = std::numeric_limits<int32_t>::max();
+	int32_t selectedEquationIndex = std::numeric_limits<int32_t>::max();
 };
-
-#endif

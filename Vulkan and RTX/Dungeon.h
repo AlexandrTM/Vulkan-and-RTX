@@ -2,17 +2,16 @@
 
 #include "Model.h"
 #include "DungeonComponents.h"
-#include "GameContext.h"
 #include "Character.h"
 
 namespace Dungeon
 {
-	void createDungeonFloor(
-		DungeonFloor& dungeonFloor, std::vector<Model>& models,
+	std::vector<Model> createDungeonFloor(
+		DungeonFloor& dungeonFloor,
 		Texture& floorTexture, Texture& wallTexture
 	);
-	void enterDungeonFloor(
-		DungeonFloor& dungeonFloor, GameContext& gameContext, Character& character
+	DungeonRoom* enterDungeonFloor(
+		DungeonFloor& dungeonFloor, Character& character
 	);
 
 	void generateDungeonFloorGrid(

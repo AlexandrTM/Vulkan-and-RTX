@@ -3,10 +3,9 @@
 
 InGameWindow::InGameWindow(
     QVulkanInstance* instance, 
-    Character& character, GameContext& gameContext
+    Character& character
 ) {
     this->character = &character;
-    this->gameContext = &gameContext;
     setSurfaceType(QWindow::VulkanSurface);
     setVulkanInstance(instance);
     this->installEventFilter(this);
@@ -23,10 +22,8 @@ bool InGameWindow::eventFilter(QObject* obj, QEvent* event) {
 bool InGameWindow::sendEventToUI(QEvent* event) {
     const QEvent::Type eventType = event->type();
 
-    if (pauseMenuRenderer && gameContext->currentGameState == GameState::PAUSED) {
+    if (pauseMenuRenderer && gameContext.currentGameState == GameState::PAUSED) {
         switch (eventType) {
-        //case QEvent::FocusIn:
-        //case QEvent::FocusOut:
         case QEvent::MouseButtonPress:
         case QEvent::MouseButtonRelease:
         case QEvent::MouseMove:
@@ -38,10 +35,8 @@ bool InGameWindow::sendEventToUI(QEvent* event) {
         }
     }
 
-    if (selectEquationRenderer && gameContext->currentGameState == GameState::COMBAT_PLAYER_SELECT_EQUATION) {
+    if (selectEquationRenderer && gameContext.currentGameState == GameState::COMBAT_PLAYER_SELECT_EQUATION) {
         switch (eventType) {
-        //case QEvent::FocusIn:
-        //case QEvent::FocusOut:
         case QEvent::MouseButtonPress:
         case QEvent::MouseButtonRelease:
         case QEvent::MouseMove:
@@ -53,13 +48,8 @@ bool InGameWindow::sendEventToUI(QEvent* event) {
         }
     }
 
-    // First: Events for solveEquationRenderer (full set)
-    if (solveEquationRenderer && gameContext->currentGameState == GameState::COMBAT_PLAYER_SOLVE_EQUATION) {
-        //solveEquationRenderer->forwardEvent(event);
-        //return false;
+    if (solveEquationRenderer && gameContext.currentGameState == GameState::COMBAT_PLAYER_SOLVE_EQUATION) {
         switch (eventType) {
-        //case QEvent::FocusIn:
-        //case QEvent::FocusOut:
         case QEvent::MouseButtonPress:
         case QEvent::MouseButtonRelease:
         case QEvent::MouseMove:
@@ -68,7 +58,7 @@ bool InGameWindow::sendEventToUI(QEvent* event) {
         case QEvent::KeyRelease:
         case QEvent::InputMethod:
             solveEquationRenderer->forwardEvent(event);
-            return false; // need for text field to work
+            return true;
         default:
             break;
         }
@@ -78,37 +68,37 @@ bool InGameWindow::sendEventToUI(QEvent* event) {
 }
 
 void InGameWindow::keyPressEvent(QKeyEvent* event) {
-    gameContext->keyboardKeys[event->key()] = true;
+    gameContext.keyboardKeys[event->key()] = true;
 }
 
 void InGameWindow::keyReleaseEvent(QKeyEvent* event) {
-    gameContext->keyboardKeys[event->key()] = false;
+    gameContext.keyboardKeys[event->key()] = false;
 }
 
 void InGameWindow::mousePressEvent(QMouseEvent* event) {
-    gameContext->mouseKeys[event->button()] = true;
+    gameContext.mouseKeys[event->button()] = true;
 }
 
 void InGameWindow::mouseReleaseEvent(QMouseEvent* event) {
-    gameContext->mouseKeys[event->button()] = false;
+    gameContext.mouseKeys[event->button()] = false;
 }
 
 void InGameWindow::resizeEvent(QResizeEvent* event) {
     emit resized(event->size().width(), event->size().height());
     //std::cout << "in game window resized: " << event->size().width() << " " <<  event->size().height() << "\n";
-    gameContext->windowCenterPos = { event->size().width() / 2, event->size().height() / 2 };
-    gameContext->windowCenterPos = mapToGlobal(gameContext->windowCenterPos);
-    if (isActive() and (gameContext->currentGameState == GameState::IN_GAME_TESTING)) {
-        QCursor::setPos(gameContext->windowCenterPos);
-        //std::cout << "center pos: " << gameContext->windowCenterPos.x() << " " << gameContext->windowCenterPos.y() << "\n";
+    gameContext.windowCenterPos = { event->size().width() / 2, event->size().height() / 2 };
+    gameContext.windowCenterPos = mapToGlobal(gameContext.windowCenterPos);
+    if (isActive() and (gameContext.currentGameState == GameState::IN_GAME_TESTING)) {
+        QCursor::setPos(gameContext.windowCenterPos);
+        //std::cout << "center pos: " << gameContext.windowCenterPos.x() << " " << gameContext.windowCenterPos.y() << "\n";
     }
     character->camera._isFirstMouse = true;
 }
 
 void InGameWindow::moveEvent(QMoveEvent* event) {
     emit moved(event->pos().x(), event->pos().y());
-    gameContext->windowCenterPos = { width() / 2, height() / 2 };
-    gameContext->windowCenterPos = mapToGlobal(gameContext->windowCenterPos);
+    gameContext.windowCenterPos = { width() / 2, height() / 2 };
+    gameContext.windowCenterPos = mapToGlobal(gameContext.windowCenterPos);
 }
 
 void InGameWindow::closeEvent(QCloseEvent* event) {
@@ -117,22 +107,22 @@ void InGameWindow::closeEvent(QCloseEvent* event) {
 }
 
 void InGameWindow::mouseMoveEvent(QMouseEvent* event) {
-    if (!(isActive() and (gameContext->currentGameState == GameState::IN_GAME_TESTING))) {
+    if (!(isActive() and (gameContext.currentGameState == GameState::IN_GAME_TESTING))) {
         return;
     }
 
     if (character->camera._isFirstMouse) {
-        QCursor::setPos(gameContext->windowCenterPos);
+        QCursor::setPos(gameContext.windowCenterPos);
         //std::cout << "set mouse pos 2: " << windowCenterPos.x() << " " << windowCenterPos.y() << "\n";
         return;
     }
 
-    latestMouseDx = (event->globalPosition().x() - gameContext->windowCenterPos.x()) * character->mouseSensitivity;
-    latestMouseDy = (gameContext->windowCenterPos.y() - event->globalPosition().y()) * character->mouseSensitivity;
+    latestMouseDx = (event->globalPosition().x() - gameContext.windowCenterPos.x()) * character->mouseSensitivity;
+    latestMouseDy = (gameContext.windowCenterPos.y() - event->globalPosition().y()) * character->mouseSensitivity;
 }
 
 void InGameWindow::wheelEvent(QWheelEvent* event) {
-    if (!(gameContext->currentGameState == GameState::IN_GAME_TESTING)) {
+    if (!(gameContext.currentGameState == GameState::IN_GAME_TESTING)) {
         return;
     }
 
@@ -141,7 +131,7 @@ void InGameWindow::wheelEvent(QWheelEvent* event) {
 }
 
 void InGameWindow::focusInEvent(QFocusEvent* event) {
-    if (gameContext->currentGameState == GameState::IN_GAME_TESTING) {
+    if (gameContext.currentGameState == GameState::IN_GAME_TESTING) {
         setCursor(Qt::BlankCursor);
     }
     character->camera._isFirstMouse = true;

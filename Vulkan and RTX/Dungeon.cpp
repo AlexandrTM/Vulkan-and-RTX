@@ -1,8 +1,8 @@
 #include "pch.h"
 #include "Dungeon.h"
 
-void Dungeon::createDungeonFloor(
-	DungeonFloor& dungeonFloor, std::vector<Model>& models,
+std::vector<Model> Dungeon::createDungeonFloor(
+	DungeonFloor& dungeonFloor,
 	Texture& floorTexture, Texture& wallTexture
 ) {
 	std::unordered_map<glm::ivec2, RoomConnectionMask> roomGrid;
@@ -21,15 +21,13 @@ void Dungeon::createDungeonFloor(
 		floorTexture, wallTexture
 	);
 
-	dungeonFloor.createDungeonFloor(models);
+	return dungeonFloor.createDungeonFloor();
 }
-void Dungeon::enterDungeonFloor(
-	DungeonFloor& dungeonFloor, GameContext& gameContext, Character& character
-)
+DungeonRoom* Dungeon::enterDungeonFloor(DungeonFloor& dungeonFloor, Character& character)
 {
-	gameContext.currentRoom = dungeonFloor.entrance;
-	if (gameContext.currentRoom != nullptr) {
+	if (dungeonFloor.entrance != nullptr) {
 		character.camera.setPosition(dungeonFloor.entrance->cameraPosition);
+		return dungeonFloor.entrance;
 	}
 	else {
 		std::cout << "there is no entrance room for this dungeon floor\n";

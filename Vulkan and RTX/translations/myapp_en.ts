@@ -4,13 +4,31 @@
 <context>
     <name>InGameOverlay.ui</name>
     <message>
-        <location filename="../qml/InGameOverlay.ui.qml" line="29"/>
+        <location filename="../qml/InGameOverlay.ui.qml" line="37"/>
+        <source>Player</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/InGameOverlay.ui.qml" line="50"/>
+        <location filename="../qml/InGameOverlay.ui.qml" line="114"/>
         <source>Health: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/InGameOverlay.ui.qml" line="51"/>
-        <source>Mob health: %1</source>
+        <location filename="../qml/InGameOverlay.ui.qml" line="61"/>
+        <location filename="../qml/InGameOverlay.ui.qml" line="125"/>
+        <source>Damage: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/InGameOverlay.ui.qml" line="72"/>
+        <location filename="../qml/InGameOverlay.ui.qml" line="136"/>
+        <source>Defense: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/InGameOverlay.ui.qml" line="101"/>
+        <source>Mob</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -128,12 +146,12 @@
 <context>
     <name>SolveEquation.ui</name>
     <message>
-        <location filename="../qml/SolveEquation.ui.qml" line="33"/>
+        <location filename="../qml/SolveEquation.ui.qml" line="34"/>
         <source>Expression: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/SolveEquation.ui.qml" line="65"/>
+        <location filename="../qml/SolveEquation.ui.qml" line="66"/>
         <source>Enter your answer...</source>
         <translation type="unfinished"></translation>
     </message>

@@ -1,23 +1,22 @@
 #pragma once
 
 #include <QObject>
-#include "GameContext.h"
+#include "gamecontext_instance.h"
 
 class SelectEquationSlotHandler : public QObject
 {
     Q_OBJECT
 
 public:
-    explicit SelectEquationSlotHandler(GameContext& context, QObject* parent = nullptr)
-        : QObject(parent), gameContext(&context) {
+    explicit SelectEquationSlotHandler(QObject* parent = nullptr)
+        : QObject(parent) {
     }
 
 public slots:
     void onButtonClicked(int buttonId) {
-        gameContext->requestedGameState = GameState::COMBAT_PLAYER_SOLVE_EQUATION;
-        gameContext->selectedEquation = buttonId;
+        gameContext.selectedEquationIndex = buttonId;
+        gameContext.requestedGameState = GameState::COMBAT_PLAYER_SOLVE_EQUATION;
     }
 
 private:
-    GameContext* gameContext = nullptr;
 };

@@ -7,8 +7,9 @@
 #include "CollisionManager.h"
 #include "InteractableVolume.h"
 #include "Model.h"
-#include "GameContext.h"
+#include "gamecontext_instance.h"
 #include "DungeonComponents.h"
+#include "Mob.h"
 
 class Character
 {
@@ -42,15 +43,19 @@ public:
 		int32_t damageTaken = std::max(damage - defense, static_cast<int32_t>(1));
 		health = std::max(health - damageTaken, 0);
 	}
+	void takeDamage(std::vector<Mob>& mobs) {
+		for (const Mob& mob : mobs) {
+			takeDamage(mob.attackPower);
+		}
+	}
 
 	void handleCharacterMovement(
-		GameContext& gameContext,
 		float deltaTime,
 		float gravity, const std::vector<Model>& models
 	);
-	void handleInGamePlayerInput(GameContext& gameContext);
-	void handleDungeonExplorationPlayerInput(GameContext& gameContext);
-	void handleDungeonRoomMovement(GameContext& gameContext);
+	void handleInGamePlayerInput();
+	void handleDungeonExplorationPlayerInput();
+	void handleDungeonRoomMovement();
 
 	// ========== not used currently ==========
 	std::vector<InteractableVolume> interactableCuboids = {

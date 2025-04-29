@@ -2,7 +2,6 @@
 #include "aether_core.h"
 
 boost::random::mt19937 generator;
-
 std::default_random_engine gen;
 
 void seedRandomGenerator() {

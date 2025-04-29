@@ -123,6 +123,7 @@ struct Mesh
 };
 
 struct Model {
+    ModelType                               modelType = ModelType::OTHER;
     std::vector<Mesh>                       meshes;
     glm::vec3                               position;
     glm::vec3                               scale;
