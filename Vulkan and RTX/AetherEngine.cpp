@@ -31,10 +31,10 @@ void AetherEngine::prepareUI()
 	mainWindow->addWidget(settingsMenuWidget);
 	mainWindow->show();
 
-	gameContext.requestedGameState = GameState::IN_GAME_TESTING;
 	gameContext.requestedGameState = GameState::COMBAT_PLAYER_SOLVE_EQUATION;
 	gameContext.requestedGameState = GameState::COMBAT_PLAYER_SELECT_EQUATION;
 	gameContext.requestedGameState = GameState::MAIN_MENU;
+	gameContext.requestedGameState = GameState::IN_GAME_TESTING;
 	gameContext.requestedGameState = GameState::DUNGEON_EXPLORATION;
 	gameContext.clearInputs();
 }
@@ -156,10 +156,10 @@ void AetherEngine::onMainWindowResized(int width, int height) {
 	//std::cout << "center pos: " << gameContext.windowCenterPos.x() << " " << gameContext.windowCenterPos.y() << "\n";
 	character.camera.setViewportSize(windowWidth, windowHeight);
 
-	pauseMenuRenderer     ->resize(QSize(windowWidth, windowHeight));
-	inGameOverlayRenderer ->resize(QSize(windowWidth, windowHeight));
+	pauseMenuRenderer->resize(QSize(windowWidth, windowHeight));
+	inGameOverlayRenderer->resize(QSize(windowWidth, windowHeight));
 	selectEquationRenderer->resize(QSize(windowWidth, windowHeight));
-	solveEquationRenderer ->resize(QSize(windowWidth, windowHeight));
+	solveEquationRenderer->resize(QSize(windowWidth, windowHeight));
 }
 void AetherEngine::onMainWindowMoved(int x, int y) {
 	//pauseMenuView->getQuickWindow()->setPosition(x, y);
@@ -377,6 +377,7 @@ void AetherEngine::changeState(GameState newGameState) {
 	case GameState::COMBAT_PLAYER_SOLVE_EQUATION:
 		stackedWidget->setCurrentWidget(inGameWidget);
 		clearSolveEquationInput();
+		gameContext.timeRemainingToSolveEquation = gameContext.selectedEquation->timeToSolve;
 		//if (!inGameWidget->hasFocus()) { inGameWidget->setFocus(); }
 		break;
 	case GameState::PAUSED:
@@ -479,6 +480,14 @@ void AetherEngine::mainLoop()
 
 			character.handleDungeonExplorationPlayerInput();
 		}
+		if (gameContext.currentGameState == GameState::COMBAT_PLAYER_SOLVE_EQUATION) {
+			gameContext.timeRemainingToSolveEquation -= deltaTime;
+			gameContext.timeRemainingToSolveEquation = std::max(0.0, gameContext.timeRemainingToSolveEquation);
+			if (gameContext.timeRemainingToSolveEquation <= 0.0) {
+				//std::cout << "Time's up! Equation failed.\n";
+				gameContext.requestedGameState = GameState::COMBAT_MOB_TURN;
+			}
+		}
 		if (gameContext.currentGameState == GameState::COMBAT_MOB_TURN) {
 			character.takeDamage(gameContext.currentRoom->mobs);
 			if (character.isAlive()) {
@@ -487,6 +496,39 @@ void AetherEngine::mainLoop()
 			else {
 				gameContext.requestedGameState = GameState::PLAYER_DEAD;
 			}
+		}
+		if (gameContext.currentGameState == GameState::PLAYER_DEAD) {
+			// Step 1: Clear only dungeon models
+			vkDeviceWaitIdle(vkInit.device);
+			models.erase(std::remove_if(models.begin(), models.end(),
+				[this](Model& model) {
+					if (model.type == ModelType::DUNGEON) {
+						cleanupModel(model);
+						return true;
+					}
+					return false;
+				}), models.end());
+
+			// Step 2: Reset the dungeon floor
+			gameContext.dungeonFloor = {};
+
+			// Step 3: Create and enter a new dungeon
+			createTextureFromPath("textures/stone_wall_floor_3.png", stone_wall_floor_2_texture);
+			createTextureFromPath("textures/stone_floor_floor_2.png", stone_floor_floor_2_texture);
+			std::vector<Model> dungeonModels = Dungeon::createDungeonFloor(
+				gameContext.dungeonFloor,
+				stone_floor_floor_2_texture,
+				stone_wall_floor_2_texture
+			);
+			computeAABB_createVertexIndexBuffers(dungeonModels);
+			createShaderBuffers(dungeonModels, MAX_FRAMES_IN_FLIGHT);
+			createDescriptorSets(dungeonModels, MAX_FRAMES_IN_FLIGHT);
+			models.insert(models.end(), dungeonModels.begin(), dungeonModels.end());
+
+			character.health = character.maxHealth;
+			gameContext.currentRoom = Dungeon::enterDungeonFloor(gameContext.dungeonFloor, character);
+
+			gameContext.requestedGameState = GameState::DUNGEON_EXPLORATION;
 		}
 		if (gameContext.currentGameState == GameState::DUNGEON_EXPLORATION			 ||
 			gameContext.currentGameState == GameState::IN_GAME_TESTING				 ||

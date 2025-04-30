@@ -37,6 +37,7 @@ Rectangle {
         width: parent.width * 0.2
         height: parent.height * 0.07
         color: "#a8bbbbbb"
+        radius: 10
 
         Text {
             id: title

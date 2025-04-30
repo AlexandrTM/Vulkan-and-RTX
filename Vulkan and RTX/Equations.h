@@ -16,7 +16,7 @@ struct Equation
 	int32_t difficulty;
 	int32_t damage;
 	double answer; // exact until ~9 quadrillion
-
+	double timeToSolve;
 };
 
 namespace Equations

@@ -20,5 +20,6 @@ struct GameContext
 	bool roomMovementHandled = false;
 
 	std::vector<Equation> equations;
-	int32_t selectedEquationIndex = std::numeric_limits<int32_t>::max();
+	Equation* selectedEquation = nullptr;
+	double timeRemainingToSolveEquation = 0.0;
 };

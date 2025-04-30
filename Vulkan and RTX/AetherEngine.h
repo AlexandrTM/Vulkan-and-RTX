@@ -216,6 +216,7 @@ private:
 		VkImage& image, VmaAllocation& vmaAllocation
 	);
 	void generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels);
+	QColor interpolateColor(const QColor& from, const QColor& to, double t);
 
 	// how to sample through texels of the texture for drawing them on 3D model
 	void createTextureSampler(uint32_t& mipLevels, VkSampler& textureSampler) const;

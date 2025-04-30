@@ -610,8 +610,8 @@ void AetherEngine::recordCommandBuffer(
 		recordModelsToCommandBuffer(models, commandBuffer);
 
 		if (gameContext.currentGameState == GameState::PAUSED) {
-			renderQmlToTexture(pauseMenuRenderer, pauseMenuTexture);
 
+			renderQmlToTexture(pauseMenuRenderer, pauseMenuTexture);
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["ui"]);
 			recordModelToCommandBuffer(pauseMenuModel, commandBuffer);
 		}
@@ -655,19 +655,52 @@ void AetherEngine::updateSolveEquation() {
 	auto rootItem = solveEquationRenderer->getRootItem();
 	if (!rootItem) return;
 
-	solveEquationRenderer->getQuickWindow()->contentItem()->setFocus(true);
+	auto contentItem = solveEquationRenderer->getQuickWindow()->contentItem();
+	if (!contentItem->hasFocus()) {
+		contentItem->setFocus(true);
+	}
 	if (!solveEquationWasActivated) {
 		solveEquationRenderer->getQuickWindow()->requestActivate();
 		solveEquationWasActivated = true;
 	}
 
 	QObject* expression = rootItem->findChild<QObject*>("expression");
+	QObject* timeRemaining = rootItem->findChild<QObject*>("timeRemaining");
+
 	if (expression) {
 		expression->setProperty(
 			"value", 
-			QString::fromStdString(gameContext.equations[gameContext.selectedEquationIndex].expression)
+			QString::fromStdString(gameContext.selectedEquation->expression)
 		);
 	}
+	if (timeRemaining) {
+		double remainingTime = gameContext.timeRemainingToSolveEquation;
+		double timeToSolve = gameContext.selectedEquation->timeToSolve;
+
+		QString timeText = QString("%1s").arg(remainingTime, 0, 'f', 2);
+		timeRemaining->setProperty("value", timeText);
+
+		double t = std::clamp(1.0 - (remainingTime / timeToSolve), 0.0, 1.0);
+		// Start fading only after fraction of time has passed
+		double timeChangeOffset = 0.0;
+		t = (t - timeChangeOffset) / (1.0 - timeChangeOffset); 
+		t = std::clamp(t, 0.0, 1.0);
+
+		int r = 255;
+		int g = static_cast<int>(255 * (1.0 - t) + 100 * t);
+		int b = static_cast<int>(255 * (1.0 - t) + 100 * t);
+
+		QColor color = interpolateColor(QColor(255, 255, 255, 255), QColor(210, 100, 100, 255), t);
+		timeRemaining->setProperty("dynamicColor", color);
+	}
+}
+QColor AetherEngine::interpolateColor(const QColor& from, const QColor& to, double t) {
+	t = std::clamp(t, 0.0, 1.0);
+	int r = static_cast<int>(from.red()   * (1.0 - t) + to.red()   * t);
+	int g = static_cast<int>(from.green() * (1.0 - t) + to.green() * t);
+	int b = static_cast<int>(from.blue()  * (1.0 - t) + to.blue()  * t);
+	int a = static_cast<int>(from.alpha() * (1.0 - t) + to.alpha() * t);
+	return QColor(r, g, b, a);
 }
 void AetherEngine::clearSolveEquationInput() {
 	auto rootItem = solveEquationRenderer->getRootItem();

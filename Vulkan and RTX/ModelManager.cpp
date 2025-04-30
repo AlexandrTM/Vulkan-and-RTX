@@ -4,10 +4,11 @@
 #include "Vertex.h"
 
 std::vector<Model> ModelManager::generateCubicLandscape(
-		size_t landscapeWidth, size_t landscapeLenght, 
-		float_t cubeSize,
-		glm::vec3 color,
-		Texture& texture
+	size_t landscapeWidth, size_t landscapeLenght, 
+	float_t cubeSize,
+	glm::vec3 color,
+	Texture& texture,
+	ModelType modelType
 )
 {
 	std::vector<Model> models;
@@ -22,7 +23,8 @@ std::vector<Model> ModelManager::generateCubicLandscape(
 				0.0f + (float)j * cubeSize - landscapeLenght / 4,
 				cubeSize,
 				color,
-				texture
+				texture,
+				modelType
 			));
 		}
 	}
@@ -32,25 +34,29 @@ Model ModelManager::createCube(
 	float x, float y, float z, 
 	float cubeSize,
 	glm::vec3 color,
-	Texture& texture
+	Texture& texture,
+	ModelType modelType
 )
 {
 	return createCuboid(
 		x, y, z, 
 		cubeSize, cubeSize, cubeSize, 
 		color, 
-		texture
+		texture,
+		modelType
 	);
 }
 Model ModelManager::createCuboid(
 	float x, float y, float z,
 	float width, float height, float length, 
 	glm::vec3 color,
-	Texture& texture
+	Texture& texture,
+	ModelType modelType
 )
 {
 	std::vector<Vertex> localVertices(24);
 	Model model{};
+	model.type = modelType;
 	Mesh mesh{};
 
 	Material material{};

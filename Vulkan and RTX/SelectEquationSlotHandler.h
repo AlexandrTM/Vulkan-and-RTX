@@ -14,7 +14,7 @@ public:
 
 public slots:
     void onButtonClicked(int buttonId) {
-        gameContext.selectedEquationIndex = buttonId;
+        gameContext.selectedEquation = &gameContext.equations[buttonId];
         gameContext.requestedGameState = GameState::COMBAT_PLAYER_SOLVE_EQUATION;
     }
 

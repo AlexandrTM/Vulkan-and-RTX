@@ -39,14 +39,15 @@ public:
 		return health > 0;
 	}
 
+	void takeDamage(const std::vector<Mob>& mobs) {
+		for (const Mob& mob : mobs) { takeDamage(mob); }
+	}
+	void takeDamage(const Mob& mob) {
+		takeDamage(mob.attackPower);
+	}
 	void takeDamage(int32_t damage) {
 		int32_t damageTaken = std::max(damage - defense, static_cast<int32_t>(1));
 		health = std::max(health - damageTaken, 0);
-	}
-	void takeDamage(std::vector<Mob>& mobs) {
-		for (const Mob& mob : mobs) {
-			takeDamage(mob.attackPower);
-		}
 	}
 
 	void handleCharacterMovement(

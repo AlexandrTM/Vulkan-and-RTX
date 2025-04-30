@@ -8,18 +8,21 @@ namespace ModelManager
 		size_t landscapeWidth, size_t landscapeLenght,
 		float_t cubeSize,
 		glm::vec3 color,
-		Texture& texture
+		Texture& texture,
+		ModelType modelType
 	);
 	Model createCube(
 		float x, float y, float z, float cubeSize,
 		glm::vec3 color,
-		Texture& texture
+		Texture& texture,
+		ModelType modelType
 	);
 	Model createCuboid(
 		float x, float y, float z,
 		float width, float height, float length,
 		glm::vec3 color,
-		Texture& texture
+		Texture& texture,
+		ModelType modelType
 	);
 	Model createQuad(
 		glm::vec3 origin,

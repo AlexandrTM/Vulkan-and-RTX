@@ -17,8 +17,8 @@ public slots:
     void onAnswerSubmitted(QString answer) {
         //qDebug() << "answer:" << answer.toDouble() << " " << answer;
 
-        const Equation& selectedEquation = gameContext.equations[gameContext.selectedEquationIndex];
-        if (answer.toDouble() == selectedEquation.answer) {
+        const Equation& selectedEquation = *gameContext.selectedEquation;
+        if (std::abs(answer.toDouble() - selectedEquation.answer) < 1e-2) {
             auto& mobs = gameContext.currentRoom->mobs;
             Mob& mob = mobs[0];
             mob.takeDamage(selectedEquation.damage + character->attackPower);

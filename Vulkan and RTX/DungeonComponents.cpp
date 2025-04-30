@@ -25,7 +25,7 @@ DungeonRoom::DungeonRoom(
     centerPosition = position + glm::vec3(metricWidth / 2.0f, 0.0f, metricLength / 2.0f);
     //std::cout << "center position: " << glm::to_string(centerPosition) << "\n";
 
-    cameraPosition = centerPosition + glm::vec3(-8.3 * 1.4, 7.5 * 1.4, 0.0);
+    cameraPosition = centerPosition + glm::vec3(-8.3 * 0.75, 7.5 * 0.75, 0.0);
 }
 
 std::vector<Model> DungeonRoom::createDungeonRoomModels() {
@@ -41,7 +41,8 @@ std::vector<Model> DungeonRoom::createDungeonRoomModels() {
                     position.z + y * cellSize,
                     cellSize,
                     glm::vec3(0.5f),
-                    wallTexture
+                    wallTexture,
+                    ModelType::DUNGEON
                 ));
             }
             else if (roomLayout[x][y] == 'a') {
@@ -60,7 +61,8 @@ std::vector<Model> DungeonRoom::createDungeonRoomModels() {
         0.1f,
         metricWidth,
         glm::vec3(1.0f),
-        floorTexture
+        floorTexture,
+        ModelType::DUNGEON
     ));
 
     return models;

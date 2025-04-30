@@ -14,7 +14,7 @@ std::vector<Equation> Equations::generateEquations() {
 		std::ostringstream oss;
 		oss << a << "x + " << (b - a * x) << " = " << b;
 
-		equations.push_back({ oss.str(), difficulty, damage, 1 });
+		equations.push_back({ oss.str(), difficulty, damage, 1, 10 });
 	}
 
 	return equations;
