@@ -4,31 +4,117 @@
 <context>
     <name>InGameOverlay.ui</name>
     <message>
+        <location filename="../qml/InGameOverlay.ui.qml" line="23"/>
+        <source>Slime</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/InGameOverlay.ui.qml" line="25"/>
+        <source>Goblin</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/InGameOverlay.ui.qml" line="27"/>
+        <source>Orc</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/InGameOverlay.ui.qml" line="29"/>
+        <source>Skeleton</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/InGameOverlay.ui.qml" line="31"/>
+        <source>Zombie</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/InGameOverlay.ui.qml" line="33"/>
+        <source>Bandit</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/InGameOverlay.ui.qml" line="35"/>
+        <source>Dark Mage</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
         <location filename="../qml/InGameOverlay.ui.qml" line="37"/>
+        <source>Wolf</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/InGameOverlay.ui.qml" line="39"/>
+        <source>Troll</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/InGameOverlay.ui.qml" line="41"/>
+        <source>Vampire</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/InGameOverlay.ui.qml" line="43"/>
+        <source>Elemental</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/InGameOverlay.ui.qml" line="45"/>
+        <source>Shadow Fiend</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/InGameOverlay.ui.qml" line="47"/>
+        <source>Lich</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/InGameOverlay.ui.qml" line="49"/>
+        <source>Demon Brute</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/InGameOverlay.ui.qml" line="51"/>
+        <source>Ancient Wyrm</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/InGameOverlay.ui.qml" line="53"/>
+        <source>Unknown Mob</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/InGameOverlay.ui.qml" line="86"/>
         <source>Player</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/InGameOverlay.ui.qml" line="50"/>
-        <location filename="../qml/InGameOverlay.ui.qml" line="114"/>
+        <location filename="../qml/InGameOverlay.ui.qml" line="98"/>
+        <location filename="../qml/InGameOverlay.ui.qml" line="175"/>
         <source>Health: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/InGameOverlay.ui.qml" line="61"/>
-        <location filename="../qml/InGameOverlay.ui.qml" line="125"/>
+        <location filename="../qml/InGameOverlay.ui.qml" line="109"/>
+        <location filename="../qml/InGameOverlay.ui.qml" line="186"/>
         <source>Damage: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/InGameOverlay.ui.qml" line="72"/>
-        <location filename="../qml/InGameOverlay.ui.qml" line="136"/>
+        <location filename="../qml/InGameOverlay.ui.qml" line="120"/>
+        <location filename="../qml/InGameOverlay.ui.qml" line="197"/>
         <source>Defense: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/InGameOverlay.ui.qml" line="101"/>
-        <source>Mob</source>
+        <location filename="../qml/InGameOverlay.ui.qml" line="131"/>
+        <location filename="../qml/InGameOverlay.ui.qml" line="208"/>
+        <source>Exp: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/InGameOverlay.ui.qml" line="163"/>
+        <source>%1</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -111,21 +197,21 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/SelectEquation.ui.qml" line="44"/>
+        <location filename="../qml/SelectEquation.ui.qml" line="47"/>
         <source>Select an equation</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/SelectEquation.ui.qml" line="73"/>
-        <location filename="../qml/SelectEquation.ui.qml" line="120"/>
-        <location filename="../qml/SelectEquation.ui.qml" line="168"/>
+        <location filename="../qml/SelectEquation.ui.qml" line="77"/>
+        <location filename="../qml/SelectEquation.ui.qml" line="125"/>
+        <location filename="../qml/SelectEquation.ui.qml" line="174"/>
         <source>Difficulty: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/SelectEquation.ui.qml" line="87"/>
-        <location filename="../qml/SelectEquation.ui.qml" line="134"/>
-        <location filename="../qml/SelectEquation.ui.qml" line="182"/>
+        <location filename="../qml/SelectEquation.ui.qml" line="91"/>
+        <location filename="../qml/SelectEquation.ui.qml" line="139"/>
+        <location filename="../qml/SelectEquation.ui.qml" line="188"/>
         <source>Damage: %1</source>
         <translation type="unfinished"></translation>
     </message>
@@ -146,12 +232,17 @@
 <context>
     <name>SolveEquation.ui</name>
     <message>
-        <location filename="../qml/SolveEquation.ui.qml" line="34"/>
+        <location filename="../qml/SolveEquation.ui.qml" line="37"/>
+        <source>Time: &lt;font color=&apos;%1&apos;&gt;%2&lt;/font&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/SolveEquation.ui.qml" line="61"/>
         <source>Expression: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../qml/SolveEquation.ui.qml" line="66"/>
+        <location filename="../qml/SolveEquation.ui.qml" line="89"/>
         <source>Enter your answer...</source>
         <translation type="unfinished"></translation>
     </message>

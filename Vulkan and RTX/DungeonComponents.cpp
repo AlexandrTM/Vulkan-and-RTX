@@ -122,14 +122,7 @@ std::vector<Model> DungeonFloor::createDungeonFloor() {
         floorModels.insert(floorModels.end(), roomModels.begin(), roomModels.end());
 
         if (&room != entrance) {
-            room.mobs.push_back(Mob(
-                room.centerPosition,
-                "mob",
-                15,
-                15,
-                5,
-                0,
-                5));
+            room.mobs.push_back(Mob::generateRandomMob(room.centerPosition, 0, 1));
         }
     }
     return floorModels;

@@ -622,8 +622,6 @@ void AetherEngine::recordCommandBuffer(
 			gameContext.currentGameState == GameState::COMBAT_MOB_TURN ||
 			gameContext.currentGameState == GameState::PAUSED) {
 
-			updateInGameOverlay();
-
 			renderQmlToTexture(inGameOverlayRenderer, inGameOverlayTexture);
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["ui"]);
 			recordModelToCommandBuffer(inGameOverlayModel, commandBuffer);
@@ -635,7 +633,6 @@ void AetherEngine::recordCommandBuffer(
 			recordModelToCommandBuffer(selectEquationModel, commandBuffer);
 		}
 		if (gameContext.currentGameState == GameState::COMBAT_PLAYER_SOLVE_EQUATION) {
-			updateSolveEquation();
 
 			renderQmlToTexture(solveEquationRenderer, solveEquationTexture);
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["ui"]);
@@ -747,20 +744,25 @@ void AetherEngine::updateInGameOverlay() {
 	QObject* playerHealth = rootItem->findChild<QObject*>("playerHealth");
 	QObject* playerDamage = rootItem->findChild<QObject*>("playerDamage");
 	QObject* playerDefense = rootItem->findChild<QObject*>("playerDefense");
+	QObject* playerExperience = rootItem->findChild<QObject*>("playerExperience");
 	if (playerHealth)  { playerHealth->setProperty("value", character.health); }
 	if (playerDamage)  { playerDamage->setProperty("value", character.attackPower); }
 	if (playerDefense) { playerDefense->setProperty("value", character.defense); }
+	if (playerExperience) { playerExperience->setProperty("value", character.experience); }
 
-	//std::cout << "character.health: " << character.health << " " << gameContext.currentRoom->mobs[0].health << "\n";
+	QObject* mobTitle = rootItem->findChild<QObject*>("mobTitle");
 	QObject* mobHealth = rootItem->findChild<QObject*>("mobHealth");
 	QObject* mobDamage = rootItem->findChild<QObject*>("mobDamage");
 	QObject* mobDefense = rootItem->findChild<QObject*>("mobDefense");
+	QObject* mobExperience = rootItem->findChild<QObject*>("mobExperience");
 
 	if (!gameContext.currentRoom->mobs.empty()) {
 		Mob& mob = gameContext.currentRoom->mobs[0];
-		if (mobHealth)  { mobHealth->setProperty("value", mob.health); }
-		if (mobDamage)  { mobDamage->setProperty("value", mob.attackPower); }
-		if (mobDefense) { mobDefense->setProperty("value", mob.defense); }
+		if (mobTitle)      { mobTitle->setProperty("value", mob.id); }
+		if (mobHealth)     { mobHealth->setProperty("value", mob.health); }
+		if (mobDamage)     { mobDamage->setProperty("value", mob.attackPower); }
+		if (mobDefense)    { mobDefense->setProperty("value", mob.defense); }
+		if (mobExperience) { mobExperience->setProperty("value", mob.experienceReward); }
 	}
 	else {
 		mobHealth->setProperty("value", 0); // making invisible

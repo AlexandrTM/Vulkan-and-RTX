@@ -14,12 +14,61 @@ Rectangle {
     property real statWidth: width * 0.14
     property real statHeight: height * 0.065
 
+    property string fontFamily: Qt.application.font.family
+    property color fontColor: "black"
+
+    function mobNameText(mobIndex) {
+        switch (mobIndex) {
+        case 0:
+            return qsTr("Slime")
+        case 1:
+            return qsTr("Goblin")
+        case 2:
+            return qsTr("Orc")
+        case 3:
+            return qsTr("Skeleton")
+        case 4:
+            return qsTr("Zombie")
+        case 5:
+            return qsTr("Bandit")
+        case 6:
+            return qsTr("Dark Mage")
+        case 7:
+            return qsTr("Wolf")
+        case 8:
+            return qsTr("Troll")
+        case 9:
+            return qsTr("Vampire")
+        case 10:
+            return qsTr("Elemental")
+        case 11:
+            return qsTr("Shadow Fiend")
+        case 12:
+            return qsTr("Lich")
+        case 13:
+            return qsTr("Demon Brute")
+        case 14:
+            return qsTr("Ancient Wyrm")
+        default:
+            return qsTr("Unknown Mob")
+        }
+    }
+
+    Text {
+        id: textStyle
+        font.family: fontFamily
+        font.pointSize: defaultFontSize
+        horizontalAlignment: Text.AlignHCenter
+        verticalAlignment: Text.AlignVCenter
+        color: fontColor
+    }
+
     Rectangle {
         id: playerStatsBackground
         x: parent.width * 0.1
-        y: parent.height - (parent.statHeight * 3.75) - parent.height * 0.04
+        y: parent.height - (parent.statHeight * 4.0) - parent.height * 0.04
         width: parent.statWidth
-        height: parent.statHeight * 3.75
+        height: parent.statHeight * 4.0
         color: statColor
         visible: playerHealth.value > 0
 
@@ -30,50 +79,61 @@ Rectangle {
             anchors.rightMargin: parent.width * 0.085
             anchors.bottomMargin: parent.height * 0.085
             anchors.topMargin: parent.height * 0.05
-            spacing: parent.height * 0.04
+            spacing: parent.height * 0.02
 
             Text {
                 id: playerTitle
                 text: qsTr("Player")
-                font.family: Qt.application.font.family
                 font.bold: true
-                font.pointSize: defaultFontSize
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                color: "black"
+                font.family: textStyle.font.family
+                font.pointSize: textStyle.font.pointSize * 0.9
+                horizontalAlignment: textStyle.horizontalAlignment
+                verticalAlignment: textStyle.verticalAlignment
+                color: textStyle.color
             }
-
             Text {
                 id: playerHealth
                 objectName: "playerHealth"
                 property int value: 0
                 text: qsTr("Health: %1").arg(value)
-                font.family: Qt.application.font.family
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                font.pointSize: defaultFontSize
+                font.family: textStyle.font.family
+                font.pointSize: textStyle.font.pointSize
+                horizontalAlignment: textStyle.horizontalAlignment
+                verticalAlignment: textStyle.verticalAlignment
+                color: textStyle.color
             }
-
             Text {
                 id: playerDamage
                 objectName: "playerDamage"
                 property int value: 0
                 text: qsTr("Damage: %1").arg(value)
-                font.family: Qt.application.font.family
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                font.pointSize: defaultFontSize
+                font.family: textStyle.font.family
+                font.pointSize: textStyle.font.pointSize
+                horizontalAlignment: textStyle.horizontalAlignment
+                verticalAlignment: textStyle.verticalAlignment
+                color: textStyle.color
             }
-
             Text {
                 id: playerDefense
                 objectName: "playerDefense"
                 property int value: 0
                 text: qsTr("Defense: %1").arg(value)
-                font.family: Qt.application.font.family
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                font.pointSize: defaultFontSize
+                font.family: textStyle.font.family
+                font.pointSize: textStyle.font.pointSize
+                horizontalAlignment: textStyle.horizontalAlignment
+                verticalAlignment: textStyle.verticalAlignment
+                color: textStyle.color
+            }
+            Text {
+                id: playerExperience
+                objectName: "playerExperience"
+                property int value: 0
+                text: qsTr("Exp: %1").arg(value)
+                font.family: textStyle.font.family
+                font.pointSize: textStyle.font.pointSize
+                horizontalAlignment: textStyle.horizontalAlignment
+                verticalAlignment: textStyle.verticalAlignment
+                color: textStyle.color
             }
         }
     }
@@ -81,9 +141,9 @@ Rectangle {
     Rectangle {
         id: mobStatsBackground
         x: parent.width * 0.9 - parent.statWidth
-        y: parent.height - (parent.statHeight * 3.75) - parent.height * 0.04
+        y: parent.height - (parent.statHeight * 4.0) - parent.height * 0.04
         width: parent.statWidth
-        height: parent.statHeight * 3.75
+        height: parent.statHeight * 4.0
         color: statColor
         visible: mobHealth.value > 0
 
@@ -94,50 +154,63 @@ Rectangle {
             anchors.rightMargin: parent.width * 0.085
             anchors.bottomMargin: parent.height * 0.085
             anchors.topMargin: parent.height * 0.05
-            spacing: parent.height * 0.04
+            spacing: parent.height * 0.02
 
             Text {
                 id: mobTitle
-                text: qsTr("Mob")
-                font.family: Qt.application.font.family
+                objectName: "mobTitle"
+                property int value: 99
+                text: qsTr("%1").arg(mobNameText(value))
                 font.bold: true
-                font.pointSize: defaultFontSize
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                color: "black"
+                font.family: textStyle.font.family
+                font.pointSize: textStyle.font.pointSize * 0.9
+                horizontalAlignment: textStyle.horizontalAlignment
+                verticalAlignment: textStyle.verticalAlignment
+                color: textStyle.color
             }
-
             Text {
                 id: mobHealth
                 objectName: "mobHealth"
                 property int value: 0
                 text: qsTr("Health: %1").arg(value)
-                font.family: Qt.application.font.family
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                font.pointSize: defaultFontSize
+                font.family: textStyle.font.family
+                font.pointSize: textStyle.font.pointSize
+                horizontalAlignment: textStyle.horizontalAlignment
+                verticalAlignment: textStyle.verticalAlignment
+                color: textStyle.color
             }
-
             Text {
                 id: mobDamage
                 objectName: "mobDamage"
                 property int value: 0
                 text: qsTr("Damage: %1").arg(value)
-                font.family: Qt.application.font.family
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                font.pointSize: defaultFontSize
+                font.family: textStyle.font.family
+                font.pointSize: textStyle.font.pointSize
+                horizontalAlignment: textStyle.horizontalAlignment
+                verticalAlignment: textStyle.verticalAlignment
+                color: textStyle.color
             }
-
             Text {
                 id: mobDefense
                 objectName: "mobDefense"
                 property int value: 0
                 text: qsTr("Defense: %1").arg(value)
-                font.family: Qt.application.font.family
-                horizontalAlignment: Text.AlignHCenter
-                verticalAlignment: Text.AlignVCenter
-                font.pointSize: defaultFontSize
+                font.family: textStyle.font.family
+                font.pointSize: textStyle.font.pointSize
+                horizontalAlignment: textStyle.horizontalAlignment
+                verticalAlignment: textStyle.verticalAlignment
+                color: textStyle.color
+            }
+            Text {
+                id: mobExperience
+                objectName: "mobExperience"
+                property int value: 0
+                text: qsTr("Exp: %1").arg(value)
+                font.family: textStyle.font.family
+                font.pointSize: textStyle.font.pointSize
+                horizontalAlignment: textStyle.horizontalAlignment
+                verticalAlignment: textStyle.verticalAlignment
+                color: textStyle.color
             }
         }
     }

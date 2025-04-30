@@ -33,9 +33,16 @@ enum class Gamemode : uint32_t
 };
 
 extern std::default_random_engine gen;
-//extern boost::random::mt19937 genenerator;
+extern boost::random::mt19937 generator;
 void seedRandomGenerator();
-int32_t randomInt(int32_t min, int32_t max);
+
+template<typename IntType>
+typename std::enable_if<std::is_integral<IntType>::value, IntType>::type
+randomInt(IntType min, IntType max) {
+	boost::random::uniform_int_distribution<IntType> distribution(min, max);
+	return distribution(generator);
+}
+float randomReal(float min, float max);
 float randomNormalizedReal();
 
 enum class GameState : uint32_t

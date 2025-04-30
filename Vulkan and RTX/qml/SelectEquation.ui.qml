@@ -33,6 +33,8 @@ Rectangle {
     Rectangle {
         id: titleBackground
         anchors.horizontalCenter: parent.horizontalCenter
+        anchors.top: parent.top
+        anchors.topMargin: parent.height * 0.06
         y: parent.height * 0.1
         width: parent.width * 0.2
         height: parent.height * 0.07
@@ -53,7 +55,8 @@ Rectangle {
         id: button0
         anchors.left: parent.left
         anchors.leftMargin: parent.width * 0.1
-        anchors.verticalCenter: parent.verticalCenter
+        anchors.top: parent.top
+        anchors.topMargin: parent.height * 0.2
         width: selectEquation.buttonWidth
         height: selectEquation.buttonHeight
         onClicked: selectEquation.buttonClicked(0)
@@ -100,7 +103,8 @@ Rectangle {
     Button {
         id: button1
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.verticalCenter: parent.verticalCenter
+        anchors.top: parent.top
+        anchors.topMargin: parent.height * 0.2
         width: selectEquation.buttonWidth
         height: selectEquation.buttonHeight
         onClicked: selectEquation.buttonClicked(1)
@@ -148,7 +152,8 @@ Rectangle {
         id: button2
         anchors.right: parent.right
         anchors.rightMargin: parent.width * 0.1
-        anchors.verticalCenter: parent.verticalCenter
+        anchors.top: parent.top
+        anchors.topMargin: parent.height * 0.2
         width: selectEquation.buttonWidth
         height: selectEquation.buttonHeight
         onClicked: selectEquation.buttonClicked(2)

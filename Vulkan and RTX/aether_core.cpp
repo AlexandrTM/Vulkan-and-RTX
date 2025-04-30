@@ -10,8 +10,8 @@ void seedRandomGenerator() {
 	srand(static_cast<unsigned>(time(0))); // seed std generator
 }
 
-int32_t randomInt(int32_t min, int32_t max) {
-	boost::random::uniform_int_distribution<int32_t> distribution(min, max);
+float randomReal(float min, float max) {
+	std::uniform_real_distribution<float> distribution(min, max);
 	return distribution(generator);
 }
 float randomNormalizedReal() {

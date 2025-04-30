@@ -483,6 +483,9 @@ void AetherEngine::mainLoop()
 		if (gameContext.currentGameState == GameState::COMBAT_PLAYER_SOLVE_EQUATION) {
 			gameContext.timeRemainingToSolveEquation -= deltaTime;
 			gameContext.timeRemainingToSolveEquation = std::max(0.0, gameContext.timeRemainingToSolveEquation);
+
+			updateSolveEquation();
+
 			if (gameContext.timeRemainingToSolveEquation <= 0.0) {
 				//std::cout << "Time's up! Equation failed.\n";
 				gameContext.requestedGameState = GameState::COMBAT_MOB_TURN;
@@ -536,6 +539,8 @@ void AetherEngine::mainLoop()
 			gameContext.currentGameState == GameState::COMBAT_PLAYER_SOLVE_EQUATION  ||
 			gameContext.currentGameState == GameState::COMBAT_MOB_TURN				 ||
 			gameContext.currentGameState == GameState::PAUSED) {
+
+			updateInGameOverlay();
 
 			drawFrame(timeSinceLaunch, deltaTime);
 		}
