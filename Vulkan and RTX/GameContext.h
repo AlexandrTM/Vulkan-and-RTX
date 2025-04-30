@@ -17,9 +17,10 @@ struct GameContext
 
 	DungeonFloor dungeonFloor;
 	DungeonRoom* currentRoom = nullptr;
-	bool roomMovementHandled = false;
+	bool isRoomMovementHandled = false;
 
 	std::vector<Equation> equations;
 	Equation* selectedEquation = nullptr;
 	double timeRemainingToSolveEquation = 0.0;
+	bool isAnswerSubmitted = false;
 };

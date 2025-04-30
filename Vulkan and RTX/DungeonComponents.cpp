@@ -25,7 +25,8 @@ DungeonRoom::DungeonRoom(
     centerPosition = position + glm::vec3(metricWidth / 2.0f, 0.0f, metricLength / 2.0f);
     //std::cout << "center position: " << glm::to_string(centerPosition) << "\n";
 
-    cameraPosition = centerPosition + glm::vec3(-8.3 * 0.75, 7.5 * 0.75, 0.0);
+    float_t zoomCoefficient = 0.75;
+    cameraPosition = centerPosition + glm::vec3(-8.3 * zoomCoefficient, 7.5 * zoomCoefficient, 0.0);
 }
 
 std::vector<Model> DungeonRoom::createDungeonRoomModels() {
@@ -105,7 +106,7 @@ std::vector<std::string> DungeonRoom::createRoomLayoutFromMask(
 }
 
 // Method to generate all rooms on the floor
-std::vector<Model> DungeonFloor::createDungeonFloor() {
+std::vector<Model> DungeonFloor::createDungeonFloor(int32_t floorNumber, float difficultyScale) {
     std::vector<Model> floorModels;
 
     if (!dungeonRooms.empty()) {
@@ -122,7 +123,7 @@ std::vector<Model> DungeonFloor::createDungeonFloor() {
         floorModels.insert(floorModels.end(), roomModels.begin(), roomModels.end());
 
         if (&room != entrance) {
-            room.mobs.push_back(Mob::generateRandomMob(room.centerPosition, 0, 1));
+            room.mobs.push_back(Mob::generateRandomMob(room.centerPosition, floorNumber, difficultyScale));
         }
     }
     return floorModels;

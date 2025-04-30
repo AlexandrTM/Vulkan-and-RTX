@@ -71,11 +71,11 @@ void Character::handleDungeonRoomMovement()
 		!gameContext.keyboardKeys[Qt::Key_A] && !gameContext.keyboardKeys[Qt::Key_Left] &&
 		!gameContext.keyboardKeys[Qt::Key_S] && !gameContext.keyboardKeys[Qt::Key_Down] &&
 		!gameContext.keyboardKeys[Qt::Key_D] && !gameContext.keyboardKeys[Qt::Key_Right]) {
-		gameContext.roomMovementHandled = false;
+		gameContext.isRoomMovementHandled = false;
 	}
 
 	// ensure per key release movement	// ensure no pending movement, to not skip dungeon room
-	if (gameContext.roomMovementHandled || gameContext.requestedGameState != GameState::NONE) {
+	if (gameContext.isRoomMovementHandled || gameContext.requestedGameState != GameState::NONE) {
 		return;
 	}
 
@@ -114,7 +114,7 @@ void Character::handleDungeonRoomMovement()
 				if (room.gridPosition == targetGrid) {
 					gameContext.currentRoom = &room;
 					camera.setPosition(room.cameraPosition);
-					gameContext.roomMovementHandled = true;
+					gameContext.isRoomMovementHandled = true;
 					break;
 				}
 			}

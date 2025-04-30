@@ -11,23 +11,23 @@ struct MobTemplate
 };
 
 const std::vector<MobTemplate> mobTemplates = {
-    { "Slime",        12, 12, 3,  0,  5  },
-    { "Goblin",       15, 15, 5,  1, 10  },
-    { "Orc",          17, 17, 7,  2, 20  },
-    { "Skeleton",     18, 18, 4,  0, 12  },
-    { "Zombie",       25, 25, 6,  3, 15  },
-
-    { "Bandit",       22, 22, 6,  1, 18  },
-    { "Dark Mage",    16, 16, 9,  1, 25  },
-    { "Wolf",         20, 20, 5,  2, 14  },
-    { "Troll",        45, 45, 5,  4, 35  },
-    { "Vampire",      28, 28, 7,  3, 40  },
-
-    { "Elemental",    35, 35, 10, 2, 50  },
-    { "Shadow Fiend", 40, 40, 11, 1, 60  },
-    { "Lich",         30, 30, 13, 3, 75  },
-    { "Demon Brute",  60, 60, 14, 5, 90  },
-    { "Ancient Wyrm", 85, 85, 18, 7, 120 }
+    { "Slime",        12, 12,  3,  0,   5 },
+    { "Goblin",       15, 15,  5,  1,   7 },
+    { "Skeleton",     18, 18,  6,  0,  10 },
+    { "Zombie",       25, 25,  2,  4,  11 },
+    { "Orc",          20, 20,  4,  3,  17 },
+                                       
+    { "Wolf",         20, 20,  5,  1,  14 },
+    { "Bandit",       22, 22,  6,  2,  18 },
+    { "Dark Mage",    16, 16,  9,  2,  25 },
+    { "Troll",        45, 45,  4,  5,  35 },
+    { "Vampire",      28, 28,  7,  3,  40 },
+                                   
+    { "Elemental",    35, 35, 10,  2,  50 },
+    { "Shadow Fiend", 40, 40, 11,  1,  60 },
+    { "Lich",         25, 25, 19,  2,  75 },
+    { "Demon Brute",  70, 70,  8,  9,  90 },
+    { "Ancient Wyrm", 85, 85, 15,  7, 120 }
 };
 
 struct Mob
@@ -71,14 +71,14 @@ struct Mob
 		health = std::max(health - damageTaken, 0);
 	}
 
-    static Mob generateRandomMob(const glm::vec3& position, size_t floorIndex, float difficultyScale) {
+    static Mob generateRandomMob(const glm::vec3& position, int32_t floorNumber, float difficultyScale) {
         size_t templatesPerFloor = mobTemplates.size() / 3;
-        size_t start = floorIndex * templatesPerFloor;
+        size_t start = floorNumber * templatesPerFloor;
         size_t end = std::min(start + templatesPerFloor, mobTemplates.size());
 
-        // Safety fallback in case of invalid floorIndex
+        // Safety fallback in case of invalid floorNumber
         if (start >= mobTemplates.size()) {
-            std::cout << "wrond floor index: " << floorIndex << "\n";
+            std::cout << "wrond floor index: " << floorNumber << "\n";
             start = 0;
             end = templatesPerFloor;
         }
@@ -91,6 +91,15 @@ struct Mob
         int32_t attack  = static_cast<int32_t>(mobTemplate.attackPower * difficultyScale * randomFactor);
         int32_t defense = static_cast<int32_t>(mobTemplate.defense * difficultyScale * randomFactor);
         int32_t exp     = static_cast<int32_t>(mobTemplate.experienceReward * difficultyScale * randomFactor);
+
+        /*std::cout << "Generated Mob: "
+            << "Name: " << mobTemplate.name
+            << ", MobIndex: " << mobIndex
+            << ", Health: " << health
+            << ", Attack: " << attack
+            << ", Defense: " << defense
+            << ", Exp: " << exp
+            << "\n";*/
 
         return Mob(position, mobTemplate.name, mobIndex, health, health, attack, defense, exp);
     }

@@ -21,6 +21,6 @@ struct Equation
 
 namespace Equations
 {
-	std::vector<Equation> generateEquations();
+	std::vector<Equation> generateEquations(size_t amount, float difficultyScale);
 }
 

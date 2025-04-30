@@ -98,11 +98,12 @@ private:
 	Model inGameOverlayModel;
 
 	UserInterfaceRenderer* selectEquationRenderer = nullptr;
+	bool isSelectEquationActivated = false;
 	Texture selectEquationTexture;
 	Model selectEquationModel;
 
 	UserInterfaceRenderer* solveEquationRenderer = nullptr;
-	bool solveEquationWasActivated = false;
+	bool isSolveEquationTextFieldActivated = false;
 	Texture solveEquationTexture;
 	Model solveEquationModel;
 
@@ -144,7 +145,7 @@ public:
 private:
 	void changeState(GameState newGameState);
 	//void handleDungeonExplorationState(double deltaTime, double timeSinceLaunch);
-	void handleInGameTestingState(double deltaTime, double timeSinceLaunch, bool fpsMenu);
+	void handleInGameTestingState(double deltaTime, double timeSinceLaunch);
 
 	void updateSelectEquation();
 	void updateInGameOverlay();
@@ -169,8 +170,7 @@ private:
 
 	void mainLoop();
 
-	void restrictCharacterMovement(Camera& camera);
-
+	void recreateDungeonFloor(int32_t floorNumber, float difficultyScale);
 	void cleanupModels(std::vector<Model>& models) const;
 	void cleanupModel(Model& model) const;
 	void cleanupMesh(Mesh& mesh) const; 
@@ -180,6 +180,8 @@ private:
 	void cleanupTexture(Texture& texture) const;
 	void cleanupMaterial(Material& material) const;
 	void cleanupSwapchain();
+
+	void restrictCharacterMovement(Camera& camera);
 
 	void cleanupMemory();
 

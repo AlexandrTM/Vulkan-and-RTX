@@ -9,39 +9,61 @@ class SolveEquationSlotHandler : public QObject
     Q_OBJECT
 
 public:
-    explicit SolveEquationSlotHandler(Character& character, QObject* parent = nullptr)
-        : QObject(parent), character(&character) {
+    explicit SolveEquationSlotHandler(Character& character, bool& isSolveEquationTextFieldActivated, QObject* parent = nullptr)
+        : QObject(parent), character(&character), isSolveEquationTextFieldActivated(&isSolveEquationTextFieldActivated) {
     }
 
 public slots:
     void onAnswerSubmitted(QString answer) {
         //qDebug() << "answer:" << answer.toDouble() << " " << answer;
-
+        *isSolveEquationTextFieldActivated = false;
         const Equation& selectedEquation = *gameContext.selectedEquation;
-        if (std::abs(answer.toDouble() - selectedEquation.answer) < 1e-2) {
-            auto& mobs = gameContext.currentRoom->mobs;
-            Mob& mob = mobs[0];
-            mob.takeDamage(selectedEquation.damage + character->attackPower);
+        if (std::abs(answer.toDouble() - selectedEquation.answer) < 2e-1) {
+            handleRightAnswer(selectedEquation);
+        }
+        else {
+            handleWrongAnswer();
+        }
+    }
 
-            // Award experience for dead mobs BEFORE erasing them
-            for (const Mob& mob : mobs) {
-                if (!mob.isAlive()) {
-                    character->experience += mob.experienceReward;
-                }
-            }
+    void handleRightAnswer(const Equation& selectedEquation) {
+        auto& mobs = gameContext.currentRoom->mobs;
+        Mob& mob = mobs[0];
+        mob.takeDamage(selectedEquation.damage + character->attackPower);
 
-            mobs.erase(std::remove_if(mobs.begin(), mobs.end(),
-                [](const Mob& mob) { return !mob.isAlive(); }), mobs.end());
-
-            if (!mobs.empty()) {
-                gameContext.requestedGameState = GameState::COMBAT_MOB_TURN;
-            }
-            else {
-                gameContext.requestedGameState = GameState::DUNGEON_EXPLORATION;
+        // Award experience for dead mobs BEFORE erasing them
+        for (const Mob& mob : mobs) {
+            if (!mob.isAlive()) {
+                character->experience += mob.experienceReward;
             }
         }
+
+        mobs.erase(std::remove_if(mobs.begin(), mobs.end(),
+            [](const Mob& mob) { return !mob.isAlive(); }), mobs.end());
+
+        if (!mobs.empty()) {
+            gameContext.requestedGameState = GameState::COMBAT_MOB_TURN;
+            //gameContext.requestedGameState = GameState::COMBAT_PLAYER_SELECT_EQUATION;
+        }
+        else {
+            gameContext.requestedGameState = GameState::DUNGEON_EXPLORATION;
+        }
+    }
+    void handleWrongAnswer() {
+        if (gameContext.isAnswerSubmitted) {
+            return;
+        }
+
+        gameContext.timeRemainingToSolveEquation -= 1.0;
+        gameContext.timeRemainingToSolveEquation = std::max(gameContext.timeRemainingToSolveEquation, 0.0);
+        gameContext.isAnswerSubmitted = true;
+
+        QTimer::singleShot(500, this, [this]() {
+            gameContext.isAnswerSubmitted = false;
+        });
     }
 
 private:
     Character* character = nullptr;
+    bool* isSolveEquationTextFieldActivated = nullptr;
 };

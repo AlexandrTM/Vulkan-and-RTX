@@ -14,7 +14,7 @@ Rectangle {
     property real buttonHeight: height * 0.4
 
     signal answerSubmitted(string answer)
-    signal buttonClicked(int buttonIndex)
+    signal answerButtonClicked(int buttonIndex)
 
     Rectangle {
         id: timeRemainingBackground
@@ -22,7 +22,7 @@ Rectangle {
         anchors.rightMargin: parent.width * 0.1
         anchors.top: parent.top
         anchors.topMargin: parent.height * 0.06
-        width: parent.width * 0.10
+        width: parent.width * 0.12
         height: parent.height * 0.065
         color: "#bb333333"
         radius: 10
@@ -93,8 +93,22 @@ Rectangle {
             verticalAlignment: Text.AlignVCenter
 
             focus: true
-            onTextChanged: solveEquation.answerSubmitted(answerInput.text)
+            //onTextChanged: solveEquation.answerSubmitted(answerInput.text)
             onAccepted: solveEquation.answerSubmitted(answerInput.text)
+        }
+        Button {
+            width: solveEquation.width * 0.12
+            height: parent.height
+            anchors.left: parent.right
+            anchors.leftMargin: solveEquation.width * 0.04
+            anchors.verticalCenter: parent.verticalCenter
+            text: qsTr("Submit")
+            onClicked: solveEquation.answerSubmitted(answerInput.text)
+
+            background: Rectangle {
+                color: solveEquation.buttonColor
+                radius: 10
+            }
         }
     }
 }

@@ -214,8 +214,12 @@
     </message>
     <message>
         <location filename="../qml/SelectEquation.ui.qml" line="47"/>
+        <source>Select an expression</source>
+        <translation>Выберите выражение</translation>
+    </message>
+    <message>
         <source>Select an equation</source>
-        <translation>Выберете уравнение</translation>
+        <translation type="vanished">Выберете уравнение</translation>
     </message>
     <message>
         <source>Select an Equation</source>
@@ -265,6 +269,11 @@
         <location filename="../qml/SolveEquation.ui.qml" line="89"/>
         <source>Enter your answer...</source>
         <translation>Введите ваш ответ...</translation>
+    </message>
+    <message>
+        <location filename="../qml/SolveEquation.ui.qml" line="105"/>
+        <source>Submit</source>
+        <translation>Подтвердить</translation>
     </message>
 </context>
 </TS>

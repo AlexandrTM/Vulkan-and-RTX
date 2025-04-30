@@ -648,18 +648,21 @@ void AetherEngine::recordCommandBuffer(
 }
 
 void AetherEngine::updateSolveEquation() {
-	if (!solveEquationRenderer) return;
-	auto rootItem = solveEquationRenderer->getRootItem();
-	if (!rootItem) return;
-
+	if (!isSolveEquationTextFieldActivated) {
+		solveEquationRenderer->getQuickWindow()->requestActivate();
+		isSolveEquationTextFieldActivated = true;
+	}
 	auto contentItem = solveEquationRenderer->getQuickWindow()->contentItem();
 	if (!contentItem->hasFocus()) {
 		contentItem->setFocus(true);
 	}
-	if (!solveEquationWasActivated) {
-		solveEquationRenderer->getQuickWindow()->requestActivate();
-		solveEquationWasActivated = true;
-	}
+
+	if (!solveEquationRenderer) return;
+	auto rootItem = solveEquationRenderer->getRootItem();
+	if (!rootItem) return;
+
+	QObject* answerInput = rootItem->findChild<QObject*>("answerInput");
+	if (answerInput) { answerInput->setProperty("focus", true); }
 
 	QObject* expression = rootItem->findChild<QObject*>("expression");
 	QObject* timeRemaining = rootItem->findChild<QObject*>("timeRemaining");
@@ -706,7 +709,7 @@ void AetherEngine::clearSolveEquationInput() {
 	solveEquationRenderer->getQuickWindow()->contentItem()->setFocus(false);
 }
 void AetherEngine::updateSelectEquation() {
-	gameContext.equations = Equations::generateEquations();
+	gameContext.equations = Equations::generateEquations(3, 1);
 
 	if (!selectEquationRenderer) return;
 	auto rootItem = selectEquationRenderer->getRootItem();

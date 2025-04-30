@@ -47,7 +47,7 @@ struct DungeonFloor
     std::vector<DungeonRoom> dungeonRooms;
     DungeonRoom* entrance = nullptr;
 
-    std::vector<Model> createDungeonFloor();
+    std::vector<Model> createDungeonFloor(int32_t floorNumber, float difficultyScale);
 
     void addDungeonRoom(DungeonRoom dungeonRoom);
 };

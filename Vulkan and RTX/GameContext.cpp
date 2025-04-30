@@ -8,6 +8,6 @@ void GameContext::clearInputs() {
 	for (auto& pair : mouseKeys) {
 		pair.second = false;
 	}
-	keyboardKeys.clear();
-	mouseKeys.clear();
+	//keyboardKeys.clear();
+	//mouseKeys.clear();
 }

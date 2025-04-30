@@ -2,6 +2,7 @@
 #include "Dungeon.h"
 
 std::vector<Model> Dungeon::createDungeonFloor(
+	int32_t floorNumber, float difficultyScale, 
 	DungeonFloor& dungeonFloor,
 	Texture& floorTexture, Texture& wallTexture
 ) {
@@ -9,9 +10,9 @@ std::vector<Model> Dungeon::createDungeonFloor(
 
 	size_t minRoomCount = 15;
 	size_t maxRoomCount = 15;
-	float cellSize = 0.5f;
+	float cellSize = 1.0f;
 	size_t maxRoomDimension = 9; // max of width or height
-	float roomSpacing = (maxRoomDimension * cellSize) + cellSize * 1;
+	float roomSpacing = (maxRoomDimension * cellSize) + cellSize * 10;
 
 	generateDungeonFloorGrid(minRoomCount, maxRoomCount, roomGrid);
 
@@ -21,7 +22,7 @@ std::vector<Model> Dungeon::createDungeonFloor(
 		floorTexture, wallTexture
 	);
 
-	return dungeonFloor.createDungeonFloor();
+	return dungeonFloor.createDungeonFloor(floorNumber, difficultyScale);
 }
 DungeonRoom* Dungeon::enterDungeonFloor(DungeonFloor& dungeonFloor, Character& character)
 {

@@ -63,8 +63,8 @@ void AetherEngine::prepareResources()
 	createSyncObjects();
 
 	createTextureFromPath("textures/grass001.png", grassTexture);
-	createTextureFromPath("textures/stone_wall_floor_3.png", stone_wall_floor_2_texture);
-	createTextureFromPath("textures/stone_floor_floor_2.png", stone_floor_floor_2_texture);
+	createTextureFromPath("textures/stone_wall_floor_1.png", stone_wall_floor_1_texture);
+	createTextureFromPath("textures/stone_floor_floor_1.png", stone_floor_floor_1_texture);
 	createTextureFromPath("textures/floor_background_floor_2.png", floor_background_floor_2_texture);
 	createSolidColorTexture({ 0, 0, 0, 0 }, 1, 1, transparentTexture);
 
@@ -90,9 +90,10 @@ void AetherEngine::prepareResources()
 	ModelManager::createSkyModel(sky);
 
 	std::vector<Model> dungeonModels = Dungeon::createDungeonFloor(
+		0, 1,
 		gameContext.dungeonFloor,
-		stone_floor_floor_2_texture,
-		stone_wall_floor_2_texture
+		stone_floor_floor_1_texture,
+		stone_wall_floor_1_texture
 	);
 	models.insert(models.end(), dungeonModels.begin(), dungeonModels.end());
 	gameContext.currentRoom = Dungeon::enterDungeonFloor(gameContext.dungeonFloor, character);
@@ -240,15 +241,11 @@ void AetherEngine::createInGameUI() {
 	solveEquationRenderer->setParent(mainWindow);
 
 	inGameWindow->setSolveEquationRenderer(solveEquationRenderer);
-	SolveEquationSlotHandler* solveEquationSlotHandler = new SolveEquationSlotHandler(character, this);
+	SolveEquationSlotHandler* solveEquationSlotHandler = new SolveEquationSlotHandler(character, isSolveEquationTextFieldActivated, this);
 	rootItem = solveEquationRenderer->getRootItem();
 	QObject::connect(
 		rootItem, SIGNAL(answerSubmitted(QString)), 
 		solveEquationSlotHandler, SLOT(onAnswerSubmitted(QString))
-	);
-	QObject::connect(
-		rootItem, SIGNAL(buttonClicked(int)),
-		selectEquationSlotHandler, SLOT(onButtonClicked(int))
 	);
 }
 
@@ -333,8 +330,11 @@ void AetherEngine::changeState(GameState newGameState) {
 	case GameState::IN_GAME_TESTING:
 		QApplication::setOverrideCursor(Qt::ArrowCursor);
 		break;
+	case GameState::COMBAT_PLAYER_SELECT_EQUATION:
+		isSelectEquationActivated = false;
+		break;
 	case GameState::COMBAT_PLAYER_SOLVE_EQUATION:
-		solveEquationWasActivated = false;
+		isSolveEquationTextFieldActivated = false;
 		break;
 	case GameState::PAUSED:
 		break;
@@ -391,7 +391,7 @@ void AetherEngine::changeState(GameState newGameState) {
 		break;
 	}
 }
-void AetherEngine::handleInGameTestingState(double deltaTime, double timeSinceLaunch, bool fpsMenu)
+void AetherEngine::handleInGameTestingState(double deltaTime, double timeSinceLaunch)
 {
 	character.handleInGamePlayerInput();
 	if (!character.isInteracting) {
@@ -405,22 +405,6 @@ void AetherEngine::handleInGameTestingState(double deltaTime, double timeSinceLa
 		QCursor::setPos(gameContext.windowCenterPos);
 		//std::cout << "set mouse pos 0: " << gameContext.windowCenterPos.x() << " " << gameContext.windowCenterPos.y() << "\n";
 	}
-
-	// FPS meter
-	static uint32_t counter = 0;
-	static double accumulator = 0.0;
-	static double fps = 0.0;
-	
-	if (fpsMenu) {
-		counter++;
-		accumulator += deltaTime;
-		if (accumulator >= 1.0) {
-			fps = 1 / (accumulator / counter);
-			counter = 0;
-			accumulator = 0;
-			std::cout << "fps: " << fps << "\n";
-		}
-	}
 }
 
 void AetherEngine::mainLoop()
@@ -431,6 +415,9 @@ void AetherEngine::mainLoop()
 	double timeSinceLaunch = 0.0f;
 
 	bool fpsMenu = 0;
+	uint32_t counter = 0;
+	double accumulator = 0.0;
+	double fps = 0.0;
 
 	while (gameContext.currentGameState != GameState::EXIT) {
 		currentTime = std::chrono::high_resolution_clock::now();
@@ -443,6 +430,17 @@ void AetherEngine::mainLoop()
 		QCoreApplication::processEvents();
 		//QFocusEvent focusIn(QEvent::FocusIn);
 		//QCoreApplication::sendEvent(solveEquationRenderer->getQuickWindow(), &focusIn);
+
+		if (fpsMenu) {
+			counter++;
+			accumulator += deltaTime;
+			if (accumulator >= 1.0) {
+				fps = 1 / (accumulator / counter);
+				counter = 0;
+				accumulator = 0;
+				std::cout << "fps: " << fps << "\n";
+			}
+		}
 
 		if (gameContext.requestedGameState != GameState::NONE) {
 			changeState(gameContext.requestedGameState);
@@ -471,7 +469,7 @@ void AetherEngine::mainLoop()
 		if (!inGameWindow->isExposed()) { continue; }
 
 		if (gameContext.currentGameState == GameState::IN_GAME_TESTING) {
-			handleInGameTestingState(deltaTime, timeSinceLaunch, fpsMenu);
+			handleInGameTestingState(deltaTime, timeSinceLaunch);
 		}
 		if (gameContext.currentGameState == GameState::DUNGEON_EXPLORATION) {
 			if (!gameContext.currentRoom->mobs.empty()) {
@@ -480,9 +478,28 @@ void AetherEngine::mainLoop()
 
 			character.handleDungeonExplorationPlayerInput();
 		}
+		if (gameContext.currentGameState == GameState::COMBAT_PLAYER_SELECT_EQUATION) {
+			if (!inGameWindow->isActive()) {
+				inGameWindow->requestActivate();
+				isSelectEquationActivated = true;
+			}
+
+			if (gameContext.keyboardKeys[Qt::Key_1]) {
+				gameContext.selectedEquation = &gameContext.equations[0];
+				gameContext.requestedGameState = GameState::COMBAT_PLAYER_SOLVE_EQUATION;
+			}
+			if (gameContext.keyboardKeys[Qt::Key_2]) {
+				gameContext.selectedEquation = &gameContext.equations[1];
+				gameContext.requestedGameState = GameState::COMBAT_PLAYER_SOLVE_EQUATION;
+			}
+			if (gameContext.keyboardKeys[Qt::Key_3]) {
+				gameContext.selectedEquation = &gameContext.equations[2];
+				gameContext.requestedGameState = GameState::COMBAT_PLAYER_SOLVE_EQUATION;
+			}
+		}
 		if (gameContext.currentGameState == GameState::COMBAT_PLAYER_SOLVE_EQUATION) {
 			gameContext.timeRemainingToSolveEquation -= deltaTime;
-			gameContext.timeRemainingToSolveEquation = std::max(0.0, gameContext.timeRemainingToSolveEquation);
+			gameContext.timeRemainingToSolveEquation = std::max(gameContext.timeRemainingToSolveEquation, 0.0);
 
 			updateSolveEquation();
 
@@ -501,32 +518,7 @@ void AetherEngine::mainLoop()
 			}
 		}
 		if (gameContext.currentGameState == GameState::PLAYER_DEAD) {
-			// Step 1: Clear only dungeon models
-			vkDeviceWaitIdle(vkInit.device);
-			models.erase(std::remove_if(models.begin(), models.end(),
-				[this](Model& model) {
-					if (model.type == ModelType::DUNGEON) {
-						cleanupModel(model);
-						return true;
-					}
-					return false;
-				}), models.end());
-
-			// Step 2: Reset the dungeon floor
-			gameContext.dungeonFloor = {};
-
-			// Step 3: Create and enter a new dungeon
-			createTextureFromPath("textures/stone_wall_floor_3.png", stone_wall_floor_2_texture);
-			createTextureFromPath("textures/stone_floor_floor_2.png", stone_floor_floor_2_texture);
-			std::vector<Model> dungeonModels = Dungeon::createDungeonFloor(
-				gameContext.dungeonFloor,
-				stone_floor_floor_2_texture,
-				stone_wall_floor_2_texture
-			);
-			computeAABB_createVertexIndexBuffers(dungeonModels);
-			createShaderBuffers(dungeonModels, MAX_FRAMES_IN_FLIGHT);
-			createDescriptorSets(dungeonModels, MAX_FRAMES_IN_FLIGHT);
-			models.insert(models.end(), dungeonModels.begin(), dungeonModels.end());
+			recreateDungeonFloor(0, 1);
 
 			character.health = character.maxHealth;
 			gameContext.currentRoom = Dungeon::enterDungeonFloor(gameContext.dungeonFloor, character);
@@ -548,7 +540,36 @@ void AetherEngine::mainLoop()
 
 	vkDeviceWaitIdle(vkInit.device);
 }
+void AetherEngine::recreateDungeonFloor(int32_t floorNumber, float difficultyScale)
+{
+	// Step 1: Clear only dungeon models
+	vkDeviceWaitIdle(vkInit.device);
+	models.erase(std::remove_if(models.begin(), models.end(),
+		[this](Model& model) {
+			if (model.type == ModelType::DUNGEON) {
+				cleanupModel(model);
+				return true;
+			}
+			return false;
+		}), models.end());
 
+	// Step 2: Reset the dungeon floor
+	gameContext.dungeonFloor = {};
+
+	// Step 3: Create and enter a new dungeon
+	createTextureFromPath("textures/stone_wall_floor_1.png", stone_wall_floor_1_texture);
+	createTextureFromPath("textures/stone_floor_floor_1.png", stone_floor_floor_1_texture);
+	std::vector<Model> dungeonModels = Dungeon::createDungeonFloor(
+		floorNumber, difficultyScale,
+		gameContext.dungeonFloor,
+		stone_floor_floor_1_texture,
+		stone_wall_floor_1_texture
+	);
+	computeAABB_createVertexIndexBuffers(dungeonModels);
+	createShaderBuffers(dungeonModels, MAX_FRAMES_IN_FLIGHT);
+	createDescriptorSets(dungeonModels, MAX_FRAMES_IN_FLIGHT);
+	models.insert(models.end(), dungeonModels.begin(), dungeonModels.end());
+}
 void AetherEngine::cleanupMemory()
 {
 	cleanupModel(sky);

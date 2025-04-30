@@ -44,7 +44,7 @@ Rectangle {
         Text {
             id: title
             anchors.centerIn: parent
-            text: qsTr("Select an equation")
+            text: qsTr("Select an expression")
             font.family: Qt.application.font.family
             font.pointSize: defaultFontSize
             color: "black"
@@ -53,8 +53,8 @@ Rectangle {
 
     Button {
         id: button0
-        anchors.left: parent.left
-        anchors.leftMargin: parent.width * 0.1
+        anchors.right: button1.left
+        anchors.rightMargin: parent.width * 0.07
         anchors.top: parent.top
         anchors.topMargin: parent.height * 0.2
         width: selectEquation.buttonWidth
@@ -150,8 +150,8 @@ Rectangle {
 
     Button {
         id: button2
-        anchors.right: parent.right
-        anchors.rightMargin: parent.width * 0.1
+        anchors.left: button1.right
+        anchors.leftMargin: parent.width * 0.07
         anchors.top: parent.top
         anchors.topMargin: parent.height * 0.2
         width: selectEquation.buttonWidth

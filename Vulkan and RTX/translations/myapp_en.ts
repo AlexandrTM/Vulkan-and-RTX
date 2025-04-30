@@ -198,7 +198,7 @@
     </message>
     <message>
         <location filename="../qml/SelectEquation.ui.qml" line="47"/>
-        <source>Select an equation</source>
+        <source>Select an expression</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -244,6 +244,11 @@
     <message>
         <location filename="../qml/SolveEquation.ui.qml" line="89"/>
         <source>Enter your answer...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../qml/SolveEquation.ui.qml" line="105"/>
+        <source>Submit</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

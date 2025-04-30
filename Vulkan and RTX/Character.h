@@ -31,7 +31,7 @@ public:
 
 	int32_t health = 30;
 	int32_t maxHealth = 30;
-	int32_t attackPower = 5;
+	int32_t attackPower = 4;
 	int32_t defense = 0;
 	int32_t experience = 0;
 
