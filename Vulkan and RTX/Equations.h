@@ -13,14 +13,26 @@ enum class EquationDifficulty : uint32_t
 struct Equation
 {
 	std::string expression;
-	int32_t difficulty;
+	double difficulty;
 	int32_t damage;
-	double answer; // exact until ~9 quadrillion
+	double answer; // exact integer until ~9 quadrillion
+	double wrongAnswerPenalty;
 	double timeToSolve;
 };
 
 namespace Equations
 {
-	std::vector<Equation> generateEquations(size_t amount, float difficultyScale);
+	extern std::vector<float> linearWeights;
+
+	std::vector<Equation> generateEquations(size_t amount, double difficultyScale);
+	std::string generate_positive_int_linear_equation(double difficulty);
+	void printEquations(size_t amount, double difficultyScale);
+
+	double solveForX(
+		const std::string& equation, 
+		double minX = -1000.0, double maxX = 1000.0, 
+		double tolerance = 1e-3, 
+		size_t maxIterations = 100
+	);
 }
 

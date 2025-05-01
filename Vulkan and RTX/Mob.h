@@ -78,7 +78,7 @@ struct Mob
 
         // Safety fallback in case of invalid floorNumber
         if (start >= mobTemplates.size()) {
-            std::cout << "wrond floor index: " << floorNumber << "\n";
+            std::cout << "wrond floor number: " << floorNumber << "\n";
             start = 0;
             end = templatesPerFloor;
         }
@@ -90,7 +90,7 @@ struct Mob
         int32_t health  = static_cast<int32_t>(mobTemplate.health * difficultyScale * randomFactor);
         int32_t attack  = static_cast<int32_t>(mobTemplate.attackPower * difficultyScale * randomFactor);
         int32_t defense = static_cast<int32_t>(mobTemplate.defense * difficultyScale * randomFactor);
-        int32_t exp     = static_cast<int32_t>(mobTemplate.experienceReward * difficultyScale * randomFactor);
+        int32_t exp     = static_cast<int32_t>(mobTemplate.experienceReward * randomFactor);
 
         /*std::cout << "Generated Mob: "
             << "Name: " << mobTemplate.name

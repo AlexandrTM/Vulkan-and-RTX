@@ -44,6 +44,7 @@ randomInt(IntType min, IntType max) {
 }
 float randomReal(float min, float max);
 float randomNormalizedReal();
+float randomNormalizedWeightedReal(std::vector<float>& weights);
 
 enum class GameState : uint32_t
 {
@@ -55,9 +56,10 @@ enum class GameState : uint32_t
 	COMBAT_PLAYER_SELECT_EQUATION = 5,
 	COMBAT_PLAYER_SOLVE_EQUATION = 6,
 	COMBAT_MOB_TURN = 7,
-	SHOP = 8,
-	HALL_OF_FAME = 9,
-	PLAYER_DEAD = 10,
+	DUNGEON_ROOM_CLEANED = 8,
+	SHOP = 9,
+	HALL_OF_FAME = 10,
+	PLAYER_DEAD = 11,
 	EXIT = std::numeric_limits<uint32_t>::max() - 1,
 	NONE = std::numeric_limits<uint32_t>::max(),
 };

@@ -90,7 +90,7 @@ void AetherEngine::prepareResources()
 	ModelManager::createSkyModel(sky);
 
 	std::vector<Model> dungeonModels = Dungeon::createDungeonFloor(
-		0, 1,
+		gameContext.currentFloor, 1,
 		gameContext.dungeonFloor,
 		stone_floor_floor_1_texture,
 		stone_wall_floor_1_texture
@@ -479,7 +479,7 @@ void AetherEngine::mainLoop()
 			character.handleDungeonExplorationPlayerInput();
 		}
 		if (gameContext.currentGameState == GameState::COMBAT_PLAYER_SELECT_EQUATION) {
-			if (!inGameWindow->isActive()) {
+			if (!isSelectEquationActivated) {
 				inGameWindow->requestActivate();
 				isSelectEquationActivated = true;
 			}
@@ -517,10 +517,20 @@ void AetherEngine::mainLoop()
 				gameContext.requestedGameState = GameState::PLAYER_DEAD;
 			}
 		}
-		if (gameContext.currentGameState == GameState::PLAYER_DEAD) {
-			recreateDungeonFloor(0, 1);
+		if (gameContext.currentGameState == GameState::DUNGEON_ROOM_CLEANED) {
+			if (Dungeon::isDungeonFloorCleaned(gameContext.dungeonFloor)) {
+				gameContext.currentFloor += 1;
+				recreateDungeonFloor(gameContext.currentFloor, 1);
+				gameContext.currentRoom = Dungeon::enterDungeonFloor(gameContext.dungeonFloor, character);
+			}
 
+			gameContext.requestedGameState = GameState::DUNGEON_EXPLORATION;
+		}
+		if (gameContext.currentGameState == GameState::PLAYER_DEAD) {
 			character.health = character.maxHealth;
+
+			gameContext.currentFloor = 0;
+			recreateDungeonFloor(gameContext.currentFloor, 1);
 			gameContext.currentRoom = Dungeon::enterDungeonFloor(gameContext.dungeonFloor, character);
 
 			gameContext.requestedGameState = GameState::DUNGEON_EXPLORATION;
@@ -530,6 +540,7 @@ void AetherEngine::mainLoop()
 			gameContext.currentGameState == GameState::COMBAT_PLAYER_SELECT_EQUATION ||
 			gameContext.currentGameState == GameState::COMBAT_PLAYER_SOLVE_EQUATION  ||
 			gameContext.currentGameState == GameState::COMBAT_MOB_TURN				 ||
+			gameContext.currentGameState == GameState::DUNGEON_ROOM_CLEANED          ||
 			gameContext.currentGameState == GameState::PAUSED) {
 
 			updateInGameOverlay();

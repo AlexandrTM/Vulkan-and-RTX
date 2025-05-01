@@ -615,11 +615,12 @@ void AetherEngine::recordCommandBuffer(
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["ui"]);
 			recordModelToCommandBuffer(pauseMenuModel, commandBuffer);
 		}
-		if (gameContext.currentGameState == GameState::DUNGEON_EXPLORATION ||
-			gameContext.currentGameState == GameState::IN_GAME_TESTING ||
+		if (gameContext.currentGameState == GameState::DUNGEON_EXPLORATION			 ||
+			gameContext.currentGameState == GameState::IN_GAME_TESTING				 ||
 			gameContext.currentGameState == GameState::COMBAT_PLAYER_SELECT_EQUATION ||
-			gameContext.currentGameState == GameState::COMBAT_PLAYER_SOLVE_EQUATION ||
-			gameContext.currentGameState == GameState::COMBAT_MOB_TURN ||
+			gameContext.currentGameState == GameState::COMBAT_PLAYER_SOLVE_EQUATION  ||
+			gameContext.currentGameState == GameState::COMBAT_MOB_TURN				 ||
+			gameContext.currentGameState == GameState::DUNGEON_ROOM_CLEANED          ||
 			gameContext.currentGameState == GameState::PAUSED) {
 
 			renderQmlToTexture(inGameOverlayRenderer, inGameOverlayTexture);

@@ -1,6 +1,15 @@
 #include "pch.h"
 #include "Dungeon.h"
 
+bool Dungeon::isDungeonFloorCleaned(const DungeonFloor& floor) {
+	for (const auto& room : floor.dungeonRooms) {
+		if (!room.mobs.empty()) {
+			return false;
+		}
+	}
+	return true;
+}
+
 std::vector<Model> Dungeon::createDungeonFloor(
 	int32_t floorNumber, float difficultyScale, 
 	DungeonFloor& dungeonFloor,
@@ -32,6 +41,7 @@ DungeonRoom* Dungeon::enterDungeonFloor(DungeonFloor& dungeonFloor, Character& c
 	}
 	else {
 		std::cout << "there is no entrance room for this dungeon floor\n";
+		return nullptr;
 	}
 }
 

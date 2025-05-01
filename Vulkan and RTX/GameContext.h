@@ -16,6 +16,7 @@ struct GameContext
 	void clearInputs();
 
 	DungeonFloor dungeonFloor;
+	int32_t currentFloor = 0;
 	DungeonRoom* currentRoom = nullptr;
 	bool isRoomMovementHandled = false;
 

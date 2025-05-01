@@ -46,6 +46,7 @@
 #include <tiny_obj_loader.h>
 
 #include "vk_mem_alloc.h"
+#include "exprtk.hpp"
 
 #include <chrono>
 #include <iostream>

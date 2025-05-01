@@ -10,7 +10,7 @@ Rectangle {
 
     color: "#00000000"
     property color statColor: "#90ffd380"
-    property real defaultFontSize: Math.max(height * 0.023, 12)
+    property real defaultFontSize: Math.max(height * 0.0215, 11)
     property real statWidth: width * 0.14
     property real statHeight: height * 0.065
 
@@ -66,9 +66,9 @@ Rectangle {
     Rectangle {
         id: playerStatsBackground
         x: parent.width * 0.1
-        y: parent.height - (parent.statHeight * 4.0) - parent.height * 0.04
+        y: parent.height - (parent.statHeight * 3.7) - parent.height * 0.04
         width: parent.statWidth
-        height: parent.statHeight * 4.0
+        height: parent.statHeight * 3.7
         color: statColor
         visible: playerHealth.value > 0
 
@@ -141,9 +141,9 @@ Rectangle {
     Rectangle {
         id: mobStatsBackground
         x: parent.width * 0.9 - parent.statWidth
-        y: parent.height - (parent.statHeight * 4.0) - parent.height * 0.04
+        y: parent.height - (parent.statHeight * 3.7) - parent.height * 0.04
         width: parent.statWidth
-        height: parent.statHeight * 4.0
+        height: parent.statHeight * 3.7
         color: statColor
         visible: mobHealth.value > 0
 

@@ -16,15 +16,15 @@ Rectangle {
     signal buttonClicked(int buttonIndex)
 
     function difficultyText(value) {
-        if (value === 0)
+        if (value >= 0 && value < 1.5)
             return qsTr("Easy")
-        else if (value === 1)
+        else if (value >= 1.5 && value < 3)
             return qsTr("Medium")
-        else if (value === 2)
+        else if (value >= 3 && value < 4.5)
             return qsTr("Hard")
-        else if (value === 3)
+        else if (value >= 4.5 && value < 6)
             return qsTr("Insane")
-        else if (value === 4)
+        else if (value >= 6)
             return qsTr("Beyond")
         else
             return qsTr("Unknown")

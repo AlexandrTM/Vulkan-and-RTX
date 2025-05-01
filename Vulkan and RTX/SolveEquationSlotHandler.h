@@ -22,7 +22,7 @@ public slots:
             handleRightAnswer(selectedEquation);
         }
         else {
-            handleWrongAnswer();
+            handleWrongAnswer(selectedEquation);
         }
     }
 
@@ -46,15 +46,16 @@ public slots:
             //gameContext.requestedGameState = GameState::COMBAT_PLAYER_SELECT_EQUATION;
         }
         else {
-            gameContext.requestedGameState = GameState::DUNGEON_EXPLORATION;
+            //gameContext.requestedGameState = GameState::DUNGEON_EXPLORATION
+            gameContext.requestedGameState = GameState::DUNGEON_ROOM_CLEANED;
         }
     }
-    void handleWrongAnswer() {
+    void handleWrongAnswer(const Equation& selectedEquation) {
         if (gameContext.isAnswerSubmitted) {
             return;
         }
 
-        gameContext.timeRemainingToSolveEquation -= 1.0;
+        gameContext.timeRemainingToSolveEquation -= selectedEquation.wrongAnswerPenalty;
         gameContext.timeRemainingToSolveEquation = std::max(gameContext.timeRemainingToSolveEquation, 0.0);
         gameContext.isAnswerSubmitted = true;
 
