@@ -709,8 +709,8 @@ void AetherEngine::clearSolveEquationInput() {
 	if (answerInput) { answerInput->setProperty("text", ""); }
 	solveEquationRenderer->getQuickWindow()->contentItem()->setFocus(false);
 }
-void AetherEngine::updateSelectEquation() {
-	gameContext.equations = Equations::generateEquations(3, 1);
+void AetherEngine::updateSelectEquation(size_t amountOfEquations) {
+	gameContext.equations = Equations::generateEquations(amountOfEquations, 1);
 
 	const auto& equations = gameContext.equations;
 
@@ -718,75 +718,36 @@ void AetherEngine::updateSelectEquation() {
 	auto rootItem = selectEquationRenderer->getRootItem();
 	if (!rootItem) return;
 
-	QObject* difficulty0 = rootItem->findChild<QObject*>("difficulty0");
-	QObject* difficulty1 = rootItem->findChild<QObject*>("difficulty1");
-	QObject* difficulty2 = rootItem->findChild<QObject*>("difficulty2");
+	for (size_t i = 0; i < amountOfEquations; ++i) {
+		QObject* difficultyItem = rootItem->findChild<QObject*>(QString("difficulty%1").arg(i));
+		if (!difficultyItem) continue;
 
-	QObject* damage0 = rootItem->findChild<QObject*>("damage0");
-	QObject* damage1 = rootItem->findChild<QObject*>("damage1");
-	QObject* damage2 = rootItem->findChild<QObject*>("damage2");
-	QString damageString0 = QString("%1 + <font color='#ffda6502'>%2</font>").arg(character.attackPower).arg(equations[0].damage);
-	QString damageString1 = QString("%1 + <font color='#ffda6502'>%2</font>").arg(character.attackPower).arg(equations[1].damage);
-	QString damageString2 = QString("%1 + <font color='#ffda6502'>%2</font>").arg(character.attackPower).arg(equations[2].damage);
-	
-	if (damage0 && damage1 && damage2) {
-		damage0->setProperty("value", damageString0);
-		damage1->setProperty("value", damageString1);
-		damage2->setProperty("value", damageString2);
+		difficultyItem->setProperty("value", gameContext.equations[i].difficulty);		
 	}
 
-	for (size_t i = 0; i < 3; ++i) {
+	for (size_t i = 0; i < amountOfEquations; ++i) {
+		QObject* damageItem = rootItem->findChild<QObject*>(QString("damage%1").arg(i));
+		if (!damageItem) continue;
+
+		QString damageString = QString("%1 + <font color='#ffda6502'>%2</font>")
+			.arg(character.attackPower).arg(equations[i].damage);
+		damageItem->setProperty("value", damageString);		
+	}
+
+	for (size_t i = 0; i < amountOfEquations; ++i) {
 		QObject* defenceItem = rootItem->findChild<QObject*>(QString("defence%1").arg(i));
 		if (!defenceItem) continue;
 
 		int32_t defenceValue = equations[i].defence;
 		if (defenceValue > 0) {
-			QString defenceString = QString("%1 + <font color='#ff0265da'>%2</font>").arg(character.defence).arg(defenceValue);
+			QString defenceString = QString("%1 + <font color='#ff0265da'>%2</font>")
+				.arg(character.defence).arg(defenceValue);
 			defenceItem->setProperty("visible", true);
 			defenceItem->setProperty("value", defenceString);
 		}
 		else {
 			defenceItem->setProperty("visible", false);
 		}
-	}
-
-	/*QObject* defence0 = rootItem->findChild<QObject*>("defence0");
-	QObject* defence1 = rootItem->findChild<QObject*>("defence1");
-	QObject* defence2 = rootItem->findChild<QObject*>("defence2");
-	int32_t defenceValue0 = equations[0].defence;
-	int32_t defenceValue1 = equations[1].defence;
-	int32_t defenceValue2 = equations[2].defence;
-	QString defenceString0 = QString("%1 + <font color='#ff0265da'>%2</font>").arg(character.defence).arg(equations[0].defence);
-	QString defenceString1 = QString("%1 + <font color='#ff0265da'>%2</font>").arg(character.defence).arg(equations[1].defence);
-	QString defenceString2 = QString("%1 + <font color='#ff0265da'>%2</font>").arg(character.defence).arg(equations[2].defence);
-	if (defence0 && defence1 && defence2) {
-		if (defenceValue0 > 0) {
-			defence0->setProperty("visible", true);
-			defence0->setProperty("value", defenceString0);
-		}
-		else {
-			defence0->setProperty("visible", false);
-		}
-		if (defenceValue1 > 0) {
-			defence1->setProperty("visible", true);
-			defence1->setProperty("value", defenceString1);
-		}
-		else {
-			defence1->setProperty("visible", false);
-		}
-		if (defenceValue2 > 0) {
-			defence2->setProperty("visible", true);
-			defence2->setProperty("value", defenceString2);
-		}
-		else {
-			defence2->setProperty("visible", false);
-		}
-	}*/
-
-	if (difficulty0 && difficulty1 && difficulty2) {
-		difficulty0->setProperty("value", gameContext.equations[0].difficulty);
-		difficulty1->setProperty("value", gameContext.equations[1].difficulty);
-		difficulty2->setProperty("value", gameContext.equations[2].difficulty);
 	}
 }
 void AetherEngine::updateInGameOverlay() {

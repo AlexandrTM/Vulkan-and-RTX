@@ -142,7 +142,7 @@ private:
 	//void handleDungeonExplorationState(double deltaTime, double timeSinceLaunch);
 	void handleInGameTestingState(double deltaTime, double timeSinceLaunch);
 
-	void updateSelectEquation();
+	void updateSelectEquation(size_t amountOfEquations);
 	void updateInGameOverlay();
 	void updateSolveEquation();
 	void clearSolveEquationInput();
@@ -187,7 +187,7 @@ private:
 		const std::string& directory,
 		std::vector<Model>& models
 	);
-	Texture loadTexture(const std::string& texturePath, const aiScene* scene);
+	Texture loadTextureForModel(const std::string& texturePath, const aiScene* scene);
 	void loadTexturesFromFolder(
 		const std::string& texturePath, 
 		std::unordered_map<std::string, Texture>& textures

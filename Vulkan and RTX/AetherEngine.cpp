@@ -31,6 +31,7 @@ void AetherEngine::prepareUI()
 	mainWindow->addWidget(settingsMenuWidget);
 	mainWindow->show();
 
+
 	gameContext.requestedGameState = GameState::COMBAT_PLAYER_SOLVE_EQUATION;
 	gameContext.requestedGameState = GameState::COMBAT_PLAYER_SELECT_EQUATION;
 	gameContext.requestedGameState = GameState::MAIN_MENU;
@@ -173,6 +174,7 @@ void AetherEngine::onInGameWindowLostFocus() {
 
 void AetherEngine::setWindowSize()
 {
+	//QRect screenGeometry = QApplication::primaryScreen()->geometry();
 	QRect screenGeometry = QApplication::primaryScreen()->availableGeometry();
 	windowWidth = screenGeometry.width() / 1.5;
 	windowHeight = screenGeometry.height() / 1.5;
@@ -249,8 +251,11 @@ void AetherEngine::createMainWindow()
 {
 	mainWindow = new MainWindow();
 	mainWindow->resize(windowWidth, windowHeight);
+	//mainWindow->setWindowState(Qt::WindowFullScreen);
+    //mainWindow->setWindowFlags(Qt::FramelessWindowHint);
 	mainWindow->setWindowTitle("Aether");
 	mainWindow->setWindowIcon(QIcon("textures/granite_square.png"));
+	//mainWindow->setWindowState(Qt::WindowMaximized);
 
 	stackedWidget = mainWindow->getStackedWidget();
 
@@ -287,6 +292,7 @@ void AetherEngine::createInGameWindow()
 	inGameWindow->resize(windowWidth, windowHeight);
 	inGameWindow->setTitle("Aether in game");
 	inGameWindow->create();
+	//inGameWindow->setKeyboardGrabEnabled(true);
 
 	vkInit.surface = qVulkanInstance.surfaceForWindow(inGameWindow);
 	if (vkInit.surface == VK_NULL_HANDLE) {
@@ -306,7 +312,7 @@ void AetherEngine::createInGameWindow()
 
 	connect(inGameWindow, &InGameWindow::closed, [this]() {
 		gameContext.requestedGameState = GameState::EXIT;
-		});
+	});
 }
 
 void AetherEngine::changeState(GameState newGameState) {
@@ -367,7 +373,7 @@ void AetherEngine::changeState(GameState newGameState) {
 		break;
 	case GameState::COMBAT_PLAYER_SELECT_EQUATION:
 		stackedWidget->setCurrentWidget(inGameWidget);
-		updateSelectEquation();
+		updateSelectEquation(3);
 		//if (!inGameWidget->hasFocus()) { inGameWidget->setFocus(); }
 		break;
 	case GameState::COMBAT_PLAYER_SOLVE_EQUATION:
@@ -521,7 +527,9 @@ void AetherEngine::mainLoop()
 		}
 		if (gameContext.currentGameState == GameState::DUNGEON_ROOM_CLEANED) {
 			if (Dungeon::isDungeonFloorCleaned(gameContext.dungeonFloor)) {
-				gameContext.currentFloor += 1;
+				// loops from 0 to 2, than again 0
+				gameContext.currentFloor = (gameContext.currentFloor + 1) % 3;
+
 				recreateDungeonFloor(gameContext.currentFloor, 1);
 				gameContext.currentRoom = Dungeon::enterDungeonFloor(gameContext.dungeonFloor, character);
 			}
@@ -544,6 +552,21 @@ void AetherEngine::mainLoop()
 			gameContext.currentGameState == GameState::COMBAT_MOB_TURN				 ||
 			gameContext.currentGameState == GameState::DUNGEON_ROOM_CLEANED          ||
 			gameContext.currentGameState == GameState::PAUSED) {
+
+			if (gameContext.isCameraTransitioning) {
+				gameContext.cameraCurrentTransitionTime += deltaTime;
+
+				float rawT = std::min(gameContext.cameraCurrentTransitionTime / gameContext.cameraTransitionDuration, 1.0f);
+				float t = std::min(rawT * rawT * (3.0f - 2.0f * rawT), 1.0f); // smoothstep easing
+				glm::vec3 newPos = glm::mix(gameContext.cameraStartPosition, gameContext.cameraTargetPosition, t);
+				character.camera.setPosition(newPos);
+
+				if (t >= 1.0f) {
+					gameContext.currentRoom = gameContext.targetRoom;
+					gameContext.targetRoom = nullptr;
+					gameContext.isCameraTransitioning = false;
+				}
+			}
 
 			updateInGameOverlay();
 

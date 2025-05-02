@@ -47,8 +47,8 @@ Rectangle {
         id: expressionBackground
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
-        anchors.topMargin: parent.height * 0.2
-        width: parent.width * 0.6
+        anchors.topMargin: parent.height * 0.16
+        width: parent.width * 0.55
         height: parent.height * 0.15
         color: "#a8bbbbbb"
         radius: 10
@@ -98,9 +98,9 @@ Rectangle {
         }
         Button {
             width: solveEquation.width * 0.12
-            height: parent.height
+            height: parent.height * 0.9
             anchors.left: parent.right
-            anchors.leftMargin: solveEquation.width * 0.04
+            anchors.leftMargin: solveEquation.width * 0.01
             anchors.verticalCenter: parent.verticalCenter
             text: qsTr("Submit")
             onClicked: solveEquation.answerSubmitted(answerInput.text)
@@ -108,6 +108,15 @@ Rectangle {
             background: Rectangle {
                 color: solveEquation.buttonColor
                 radius: 10
+            }
+
+            contentItem: Text {
+                text: parent.text
+                anchors.centerIn: parent
+                font.family: Qt.application.font.family
+                font.pointSize: solveEquation.defaultFontSize * 0.8
+                horizontalAlignment: Text.AlignHCenter
+                verticalAlignment: Text.AlignVCenter
             }
         }
     }

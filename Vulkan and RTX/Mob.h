@@ -20,13 +20,13 @@ const std::vector<MobTemplate> mobTemplates = {
     { "Bandit",       22, 22,  6,  2,  18 },
     { "Dark Mage",    16, 16,  9,  2,  25 },
     { "Wolf",         20, 20,  5,  1,  14 },
-    { "Troll",        40, 40,  3,  5,  35 },
+    { "Troll",        40, 40,  3,  7,  35 },
     { "Vampire",      28, 28,  7,  3,  40 },
                                    
     { "Elemental",    35, 35, 10,  4,  50 },
     { "Shadow Fiend", 40, 40, 11,  5,  60 },
     { "Lich",         25, 25, 19,  3,  75 },
-    { "Demon Brute",  70, 70,  8,  9,  90 },
+    { "Demon Brute",  60, 60,  8, 11,  90 },
     { "Ancient Wyrm", 85, 85, 15,  9, 120 }
 };
 

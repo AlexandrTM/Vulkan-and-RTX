@@ -33,7 +33,7 @@ std::vector<Equation> Equations::generateEquations(size_t amount, double difficu
 		//int32_t defence = static_cast<int32_t>(std::max(std::exp(real_difficulty * 0.33) - 1, 0.0));
 		int32_t defence = static_cast<int32_t>(std::max(
 			0.122 * real_difficulty * real_difficulty +
-			0.307 * real_difficulty + 0.2,
+			0.307 * real_difficulty/* + 0.2*/,
 			0.0));
 		
 		double rawPenalty = std::max(
@@ -179,7 +179,7 @@ void Equations::printEquations(size_t amount, double difficultyScale)
 				<< "def: " << equation.defence << ", "
 				<< "expr: " << equation.expression << ", "
 				<< "ans: " << std::fixed << std::setprecision(2) << equation.answer << ", "
-				<< "tts: " << std::fixed << std::setprecision(2) << equation.wrongAnswerPenalty << "s"
+				<< "wap: " << std::fixed << std::setprecision(2) << equation.wrongAnswerPenalty << "s"
 				<< "\n";
 		}
 	}

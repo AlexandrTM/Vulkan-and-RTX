@@ -947,7 +947,7 @@ void AetherEngine::createTextureFromEmbedded(
 	std::cout << " - Mip Levels: " << texture.mipLevels << "\n";
 	std::cout << " - Compression: " << (embeddedTexture->mHeight == 0 ? "Yes" : "No") << "\n";*/
 }
-Texture AetherEngine::loadTexture(const std::string& texturePath, const aiScene* scene) 
+Texture AetherEngine::loadTextureForModel(const std::string& texturePath, const aiScene* scene) 
 {
 	Texture texture;
 
@@ -968,7 +968,7 @@ void AetherEngine::loadTexturesFromFolder(
 {
 	for (const auto& entry : std::filesystem::directory_iterator(texturePath)) {
 		if (!entry.is_regular_file()) continue;
-
+		//std::cout << "entry: " << entry << "\n";
 		std::string path = entry.path().string();
 		std::string name = entry.path().stem().string();
 
@@ -995,7 +995,7 @@ Material AetherEngine::processMaterial(aiMaterial* aiMat, const aiScene* scene)
 		
 		aiString texturePath;
 		if (aiMat->GetTexture(aiTextureType_DIFFUSE, 0, &texturePath) == AI_SUCCESS) {
-			material.diffuseTexture = std::move(loadTexture(texturePath.C_Str(), scene));
+			material.diffuseTexture = std::move(loadTextureForModel(texturePath.C_Str(), scene));
 		}
 	}
 
@@ -1003,7 +1003,7 @@ Material AetherEngine::processMaterial(aiMaterial* aiMat, const aiScene* scene)
 
 		aiString texturePath;
 		if (aiMat->GetTexture(aiTextureType_EMISSIVE, 0, &texturePath) == AI_SUCCESS) {
-			material.emissiveTexture = std::move(loadTexture(texturePath.C_Str(), scene));
+			material.emissiveTexture = std::move(loadTextureForModel(texturePath.C_Str(), scene));
 		}
 	}
 

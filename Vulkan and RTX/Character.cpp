@@ -67,6 +67,10 @@ void Character::handleDungeonExplorationPlayerInput()
 
 void Character::handleDungeonRoomMovement() 
 {
+	if (gameContext.isCameraTransitioning) { 
+		return; 
+	}
+
 	if (!gameContext.keyboardKeys[Qt::Key_W] && !gameContext.keyboardKeys[Qt::Key_Up] &&
 		!gameContext.keyboardKeys[Qt::Key_A] && !gameContext.keyboardKeys[Qt::Key_Left] &&
 		!gameContext.keyboardKeys[Qt::Key_S] && !gameContext.keyboardKeys[Qt::Key_Down] &&
@@ -112,8 +116,13 @@ void Character::handleDungeonRoomMovement()
 			// Search for target room in dungeon
 			for (DungeonRoom& room : gameContext.dungeonFloor.dungeonRooms) {
 				if (room.gridPosition == targetGrid) {
-					gameContext.currentRoom = &room;
-					camera.setPosition(room.cameraPosition);
+					gameContext.targetRoom = &room;
+
+					gameContext.cameraStartPosition = camera.getPosition();
+					gameContext.cameraTargetPosition = room.cameraPosition;
+					gameContext.cameraCurrentTransitionTime = 0.0f;
+
+					gameContext.isCameraTransitioning = true;
 					gameContext.isRoomMovementHandled = true;
 					break;
 				}

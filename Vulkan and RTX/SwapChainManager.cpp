@@ -130,45 +130,48 @@ void AetherEngine::recreateSwapchain()
 	createSwapchainFramebuffers();
 	createCommandBuffers();
 	
-	createSolidColorTexture({ 0, 0, 0, 0 }, windowWidth, windowHeight, pauseMenuTexture);
-	pauseMenuModel = ModelManager::createQuad(
-		{ -1.0f, -1.0f, 0.0f }, { 2.0f, 2.0f },
-		{ 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f },
-		glm::vec3(0.5f),
-		pauseMenuTexture
-	);
-	computeAABB_createVertexIndexBuffers(pauseMenuModel);
-	createDescriptorSets(pauseMenuModel, MAX_FRAMES_IN_FLIGHT);
+	// interface elements creation
+	{
+		createSolidColorTexture({ 0, 0, 0, 0 }, windowWidth, windowHeight, pauseMenuTexture);
+		pauseMenuModel = ModelManager::createQuad(
+			{ -1.0f, -1.0f, 0.0f }, { 2.0f, 2.0f },
+			{ 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f },
+			glm::vec3(0.5f),
+			pauseMenuTexture
+		);
+		computeAABB_createVertexIndexBuffers(pauseMenuModel);
+		createDescriptorSets(pauseMenuModel, MAX_FRAMES_IN_FLIGHT);
 
-	createSolidColorTexture({ 0, 0, 0, 0 }, windowWidth, windowHeight, inGameOverlayTexture);
-	inGameOverlayModel = ModelManager::createQuad(
-		{ -1.0f, -1.0f, 0.0f }, { 2.0f, 2.0f },
-		{ 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f },
-		glm::vec3(0.5f),
-		inGameOverlayTexture
-	);
-	computeAABB_createVertexIndexBuffers(inGameOverlayModel);
-	createDescriptorSets(inGameOverlayModel, MAX_FRAMES_IN_FLIGHT);
+		createSolidColorTexture({ 0, 0, 0, 0 }, windowWidth, windowHeight, inGameOverlayTexture);
+		inGameOverlayModel = ModelManager::createQuad(
+			{ -1.0f, -1.0f, 0.0f }, { 2.0f, 2.0f },
+			{ 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f },
+			glm::vec3(0.5f),
+			inGameOverlayTexture
+		);
+		computeAABB_createVertexIndexBuffers(inGameOverlayModel);
+		createDescriptorSets(inGameOverlayModel, MAX_FRAMES_IN_FLIGHT);
 
-	createSolidColorTexture({ 0, 0, 0, 0 }, windowWidth, windowHeight, selectEquationTexture);
-	selectEquationModel = ModelManager::createQuad(
-		{ -1.0f, -1.0f, 0.0f }, { 2.0f, 2.0f },
-		{ 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f },
-		glm::vec3(0.5f),
-		selectEquationTexture
-	);
-	computeAABB_createVertexIndexBuffers(selectEquationModel);
-	createDescriptorSets(selectEquationModel, MAX_FRAMES_IN_FLIGHT);
+		createSolidColorTexture({ 0, 0, 0, 0 }, windowWidth, windowHeight, selectEquationTexture);
+		selectEquationModel = ModelManager::createQuad(
+			{ -1.0f, -1.0f, 0.0f }, { 2.0f, 2.0f },
+			{ 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f },
+			glm::vec3(0.5f),
+			selectEquationTexture
+		);
+		computeAABB_createVertexIndexBuffers(selectEquationModel);
+		createDescriptorSets(selectEquationModel, MAX_FRAMES_IN_FLIGHT);
 
-	createSolidColorTexture({ 0, 0, 0, 0 }, windowWidth, windowHeight, solveEquationTexture);
-	solveEquationModel = ModelManager::createQuad(
-		{ -1.0f, -1.0f, 0.0f }, { 2.0f, 2.0f },
-		{ 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f },
-		glm::vec3(0.5f),
-		solveEquationTexture
-	);
-	computeAABB_createVertexIndexBuffers(solveEquationModel);
-	createDescriptorSets(solveEquationModel, MAX_FRAMES_IN_FLIGHT);
+		createSolidColorTexture({ 0, 0, 0, 0 }, windowWidth, windowHeight, solveEquationTexture);
+		solveEquationModel = ModelManager::createQuad(
+			{ -1.0f, -1.0f, 0.0f }, { 2.0f, 2.0f },
+			{ 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f },
+			glm::vec3(0.5f),
+			solveEquationTexture
+		);
+		computeAABB_createVertexIndexBuffers(solveEquationModel);
+		createDescriptorSets(solveEquationModel, MAX_FRAMES_IN_FLIGHT);
+	}
 
 	createShaderBuffers(sky, MAX_FRAMES_IN_FLIGHT);
 	createShaderBuffers(models, MAX_FRAMES_IN_FLIGHT);

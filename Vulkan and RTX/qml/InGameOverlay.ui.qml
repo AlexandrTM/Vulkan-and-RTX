@@ -72,8 +72,8 @@ Rectangle {
 
     Rectangle {
         id: playerStatsBackground
-        x: parent.width * 0.04
-        y: parent.height - (parent.statHeight * 3.7) - parent.height * 0.04
+        x: parent.width * 0.015
+        y: parent.height - (parent.statHeight * 3.7) - parent.width * 0.015
         width: parent.statWidth
         height: parent.statHeight * 3.7
         color: statColor
@@ -147,8 +147,8 @@ Rectangle {
 
     Rectangle {
         id: mobStatsBackground
-        x: parent.width * 0.96 - parent.statWidth
-        y: parent.height - (parent.statHeight * 3.7) - parent.height * 0.04
+        x: parent.width * 0.985 - parent.statWidth
+        y: parent.height - (parent.statHeight * 3.7) - parent.width * 0.01
         width: parent.statWidth
         height: parent.statHeight * 3.7
         color: statColor
@@ -223,9 +223,10 @@ Rectangle {
         Image {
             id: mobIcon
             source: mobIconPath(mobTitle.value)
-            width: parent.width
+            width: parent.width * 1.5
             //anchors.horizontalCenter: mobStatsColumn.horizontalCenter
             anchors.bottom: parent.top
+            anchors.right: parent.right
             //anchors.bottomMargin: height * 0.1
             fillMode: Image.PreserveAspectFit
             //smooth: true
