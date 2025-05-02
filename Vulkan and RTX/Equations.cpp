@@ -1,23 +1,48 @@
 #include "pch.h"
 #include "Equations.h"
 
-std::vector<float> Equations::linearWeights = { 0.1489f, 0.2075f, 0.2645f, 0.3791f };
+#include "exprtk.hpp"
+
+std::vector<float> Equations::positive_linear_weights = { 0.1196f, 0.1739f, 0.2860f, 0.4206f };
+std::vector<float> Equations::negative_linear_weights = { 0.1237f, 0.1727f, 0.2924f, 0.4112f };
 
 std::vector<Equation> Equations::generateEquations(size_t amount, double difficultyScale) {
 	std::vector<Equation> equations;
 
 	while (equations.size() < amount) {
-		double real_difficulty = randomNormalizedWeightedReal(linearWeights) * 6 * difficultyScale;
+		size_t equationType = randomInt(0, 1);
+		double real_difficulty = 0;
+		std::string equationString;
 		//double real_difficulty = randomReal(0, 6) * difficultyScale;
 		//int32_t int_difficulty = static_cast<int32_t>(real_difficulty);
-		int32_t damage = std::max(static_cast<int32_t>(real_difficulty * 1.55), 1);
-
-		std::string equationString = generate_positive_int_linear_equation(real_difficulty);
+		//double step = 6.0 * difficultyScale / static_cast<double>(amount);
+		//real_difficulty = step * static_cast<double>(equations.size() + 1);
+		switch (equationType) {
+		case 0: 
+			real_difficulty = randomNormalizedWeightedReal(positive_linear_weights) * 6 * difficultyScale;
+			equationString = generate_positive_int_linear_equation(real_difficulty);
+			break;
+		case 1: 
+			real_difficulty = randomNormalizedWeightedReal(negative_linear_weights) * 6 * difficultyScale;
+			equationString = generate_negative_int_linear_equation(real_difficulty); 
+			break;
+		}
 		if (equationString.empty()) continue;
 
-		double wrondAnswerPenalty = 2.0;
-		double answer = solveForX(equationString);
+		int32_t damage = std::max(static_cast<int32_t>(real_difficulty * 1.75), 1);
+		//int32_t defence = static_cast<int32_t>(std::max(std::exp(real_difficulty * 0.33) - 1, 0.0));
+		int32_t defence = static_cast<int32_t>(std::max(
+			0.122 * real_difficulty * real_difficulty +
+			0.307 * real_difficulty + 0.2,
+			0.0));
+		
+		double rawPenalty = std::max(
+			0.025 * real_difficulty * real_difficulty +
+			0.130 * real_difficulty + 2.4, 0.0);
+		double wrongAnswerPenalty = std::round(rawPenalty * 4.0) / 4.0;
 		double timeToSolve = 9.5;
+		double answer = solveForX(equationString);
+		bool isSolved = false;
 
 		//double answer = static_cast<double>(x);
 		//std::cout << "real_difficulty: " << real_difficulty << "\n";
@@ -26,7 +51,12 @@ std::vector<Equation> Equations::generateEquations(size_t amount, double difficu
 
 		if (!std::isnan(answer)) {
 			equations.push_back({ 
-				equationString, real_difficulty, damage, answer, wrondAnswerPenalty, timeToSolve 
+				equationString, 
+				real_difficulty, 
+				damage, defence, 
+				answer, 
+				wrongAnswerPenalty, timeToSolve,
+				isSolved
 			});
 		}
 	}
@@ -44,42 +74,78 @@ std::string Equations::generate_positive_int_linear_equation(double difficulty)
 	);
 	int32_t a = randomInt(
 		2 + static_cast<int32_t>(difficulty * 0.8),
-		4 + static_cast<int32_t>(difficulty * 1.85)
+		4 + static_cast<int32_t>(difficulty * 2.2)
 	);
 	int32_t b = randomInt(
 		-5 - static_cast<int32_t>(difficulty * 2.0),
-		5 + static_cast<int32_t>(difficulty * 8.0)
+		5 + static_cast<int32_t>(difficulty * 6.0)
 	);
 	int32_t c = x * a + b;
 
 	oss << a << "x + " << b << " = " << c;
 
+	if (isLinearAcceptable(x, a, b, c, difficulty)) {
+		return oss.str();
+	}
+	else {
+		/*std::cout <<
+			"equation is invalid, difficulty: " << difficulty << " " <<
+			a << "x + " << b << " = " << c << "\n";*/
+		return "";
+	}
+}
+std::string Equations::generate_negative_int_linear_equation(double difficulty)
+{
+	std::ostringstream oss;
+
+	int32_t x = -randomInt(
+		1 + static_cast<int32_t>(difficulty * 0.9),
+		5 + static_cast<int32_t>(difficulty * 1.35)
+	);
+
+	int32_t a = -randomInt(
+		2 + static_cast<int32_t>(difficulty * 0.8),
+		4 + static_cast<int32_t>(difficulty * 2.2)
+	); // Negative 'a'
+
+	int32_t b = -randomInt(
+		-5 - static_cast<int32_t>(difficulty * 2.0),
+		5 + static_cast<int32_t>(difficulty * 6.0)
+	); // Mostly negative 'b'
+
+	int32_t c = a * x + b;
+
+	oss << a << "x + " << b << " = " << c;
+
+	if (isLinearAcceptable(x, a, b, c, difficulty)) {
+		return oss.str();
+	}
+	else {
+		return "";
+	}
+}
+bool Equations::isLinearAcceptable(int32_t x, int32_t a, int32_t b, int32_t c, double difficulty)
+{
 	if (difficulty >= 1.5) {
-		if (a == 1 || x == 1 || std::abs(b) == 1 || b == 0 || a == b || a == x) {
-			/*std::cout <<
-				"equation is invalid, difficulty: " << difficulty << " " <<
-				a << "x + " << b << " = " << c << "\n";*/
-			return "";
+		if (a == b || a == x || b == x ||
+			std::abs(x) < 2 || std::abs(a) < 2 || std::abs(b) < 2) {
+			return false;
 		}
 	}
 	if (difficulty >= 3.0) {
-		if (a % 10 == 0 || b % 10 == 0 || x % 10 == 0) {
-			/*std::cout <<
-				"equation is invalid, difficulty: " << difficulty << " " <<
-				a << "x + " << b << " = " << c << "\n";*/
-			return "";
+		if (a % 10 == 0 || b % 10 == 0 || x % 10 == 0 || 
+			std::abs(x) < 5 || std::abs(a) < 4 || std::abs(b) < 7) {
+			return false;
 		}
 	}
 	if (difficulty >= 4.5) {
-		if (a % 5 == 0 || b % 5 == 0 || x % 5 == 0) {
-			/*std::cout <<
-				"equation is invalid, difficulty: " << difficulty << " " <<
-				a << "x + " << b << " = " << c << "\n"; */
-			return ""; 
+		if (a % 5 == 0 || b % 5 == 0 || x % 5 == 0 || 
+			std::abs(x) < 7 || std::abs(a) < 6 || std::abs(b) < 11) {
+			return false;
 		}
 	}
 
-	return oss.str();
+	return true;
 }
 
 void Equations::printEquations(size_t amount, double difficultyScale)
@@ -106,14 +172,16 @@ void Equations::printEquations(size_t amount, double difficultyScale)
 		else if (equation.difficulty < 4.5) count_3_0___4_5++;
 		else if (equation.difficulty < 6.0) count_4_5___6_0++;
 									   else count_6_0___inf++;
-
-		//std::cout
-		//	<< "diff: "  << std::fixed << std::setprecision(2) << equation.difficulty << ", "
-		//	<< "dmg: "      << equation.damage << ", "
-		//	<< "expr: "  << equation.expression << ", "
-		//	//<< "ans: "      << std::fixed << std::setprecision(2) << equation.answer << ", "
-		//	//<< "tts: " << std::fixed << std::setprecision(2) << equation.timeToSolve << "s"
-		//	<< "\n";
+		if (equation.difficulty >= 0.0) {
+			std::cout
+				<< "diff: " << std::fixed << std::setprecision(2) << equation.difficulty << ", "
+				<< "dmg: " << equation.damage << ", "
+				<< "def: " << equation.defence << ", "
+				<< "expr: " << equation.expression << ", "
+				<< "ans: " << std::fixed << std::setprecision(2) << equation.answer << ", "
+				<< "tts: " << std::fixed << std::setprecision(2) << equation.wrongAnswerPenalty << "s"
+				<< "\n";
+		}
 	}
 
 	std::cout << "\nEquation difficulty distribution:\n";
@@ -149,7 +217,7 @@ void Equations::printEquations(size_t amount, double difficultyScale)
 	
 	std::cout << "Normalized inverse weights: ";
 	for (float w : invWeights) {
-		std::cout << std::fixed << std::setprecision(4) << w << ", ";
+		std::cout << std::fixed << std::setprecision(4) << w << "f, ";
 	}
 	std::cout << "\n";
 }

@@ -17,8 +17,8 @@ public slots:
     void onAnswerSubmitted(QString answer) {
         //qDebug() << "answer:" << answer.toDouble() << " " << answer;
         *isSolveEquationTextFieldActivated = false;
-        const Equation& selectedEquation = *gameContext.selectedEquation;
-        if (std::abs(answer.toDouble() - selectedEquation.answer) < 2e-1) {
+        Equation& selectedEquation = *gameContext.selectedEquation;
+        if (std::abs(answer.toDouble() - selectedEquation.answer) < 0.25) {
             handleRightAnswer(selectedEquation);
         }
         else {
@@ -26,7 +26,7 @@ public slots:
         }
     }
 
-    void handleRightAnswer(const Equation& selectedEquation) {
+    void handleRightAnswer(Equation& selectedEquation) {
         auto& mobs = gameContext.currentRoom->mobs;
         Mob& mob = mobs[0];
         mob.takeDamage(selectedEquation.damage + character->attackPower);
@@ -49,6 +49,8 @@ public slots:
             //gameContext.requestedGameState = GameState::DUNGEON_EXPLORATION
             gameContext.requestedGameState = GameState::DUNGEON_ROOM_CLEANED;
         }
+
+        selectedEquation.isSolved = true;
     }
     void handleWrongAnswer(const Equation& selectedEquation) {
         if (gameContext.isAnswerSubmitted) {

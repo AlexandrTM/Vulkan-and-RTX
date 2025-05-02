@@ -677,7 +677,7 @@ void AetherEngine::updateSolveEquation() {
 	if (timeRemaining) {
 		double remainingTime = gameContext.timeRemainingToSolveEquation;
 		double timeToSolve = gameContext.selectedEquation->timeToSolve;
-
+		
 		QString timeText = QString("%1s").arg(remainingTime, 0, 'f', 2);
 		timeRemaining->setProperty("value", timeText);
 
@@ -712,6 +712,8 @@ void AetherEngine::clearSolveEquationInput() {
 void AetherEngine::updateSelectEquation() {
 	gameContext.equations = Equations::generateEquations(3, 1);
 
+	const auto& equations = gameContext.equations;
+
 	if (!selectEquationRenderer) return;
 	auto rootItem = selectEquationRenderer->getRootItem();
 	if (!rootItem) return;
@@ -719,20 +721,68 @@ void AetherEngine::updateSelectEquation() {
 	QObject* difficulty0 = rootItem->findChild<QObject*>("difficulty0");
 	QObject* difficulty1 = rootItem->findChild<QObject*>("difficulty1");
 	QObject* difficulty2 = rootItem->findChild<QObject*>("difficulty2");
+
 	QObject* damage0 = rootItem->findChild<QObject*>("damage0");
 	QObject* damage1 = rootItem->findChild<QObject*>("damage1");
 	QObject* damage2 = rootItem->findChild<QObject*>("damage2");
-
-	const auto& equations = gameContext.equations;
-	QString damageString0 = QString("%1 + %2").arg(equations[0].damage).arg(character.attackPower);
-	QString damageString1 = QString("%1 + %2").arg(equations[1].damage).arg(character.attackPower);
-	QString damageString2 = QString("%1 + %2").arg(equations[2].damage).arg(character.attackPower);
+	QString damageString0 = QString("%1 + <font color='#ffda6502'>%2</font>").arg(character.attackPower).arg(equations[0].damage);
+	QString damageString1 = QString("%1 + <font color='#ffda6502'>%2</font>").arg(character.attackPower).arg(equations[1].damage);
+	QString damageString2 = QString("%1 + <font color='#ffda6502'>%2</font>").arg(character.attackPower).arg(equations[2].damage);
 	
 	if (damage0 && damage1 && damage2) {
 		damage0->setProperty("value", damageString0);
 		damage1->setProperty("value", damageString1);
 		damage2->setProperty("value", damageString2);
 	}
+
+	for (size_t i = 0; i < 3; ++i) {
+		QObject* defenceItem = rootItem->findChild<QObject*>(QString("defence%1").arg(i));
+		if (!defenceItem) continue;
+
+		int32_t defenceValue = equations[i].defence;
+		if (defenceValue > 0) {
+			QString defenceString = QString("%1 + <font color='#ff0265da'>%2</font>").arg(character.defence).arg(defenceValue);
+			defenceItem->setProperty("visible", true);
+			defenceItem->setProperty("value", defenceString);
+		}
+		else {
+			defenceItem->setProperty("visible", false);
+		}
+	}
+
+	/*QObject* defence0 = rootItem->findChild<QObject*>("defence0");
+	QObject* defence1 = rootItem->findChild<QObject*>("defence1");
+	QObject* defence2 = rootItem->findChild<QObject*>("defence2");
+	int32_t defenceValue0 = equations[0].defence;
+	int32_t defenceValue1 = equations[1].defence;
+	int32_t defenceValue2 = equations[2].defence;
+	QString defenceString0 = QString("%1 + <font color='#ff0265da'>%2</font>").arg(character.defence).arg(equations[0].defence);
+	QString defenceString1 = QString("%1 + <font color='#ff0265da'>%2</font>").arg(character.defence).arg(equations[1].defence);
+	QString defenceString2 = QString("%1 + <font color='#ff0265da'>%2</font>").arg(character.defence).arg(equations[2].defence);
+	if (defence0 && defence1 && defence2) {
+		if (defenceValue0 > 0) {
+			defence0->setProperty("visible", true);
+			defence0->setProperty("value", defenceString0);
+		}
+		else {
+			defence0->setProperty("visible", false);
+		}
+		if (defenceValue1 > 0) {
+			defence1->setProperty("visible", true);
+			defence1->setProperty("value", defenceString1);
+		}
+		else {
+			defence1->setProperty("visible", false);
+		}
+		if (defenceValue2 > 0) {
+			defence2->setProperty("visible", true);
+			defence2->setProperty("value", defenceString2);
+		}
+		else {
+			defence2->setProperty("visible", false);
+		}
+	}*/
+
 	if (difficulty0 && difficulty1 && difficulty2) {
 		difficulty0->setProperty("value", gameContext.equations[0].difficulty);
 		difficulty1->setProperty("value", gameContext.equations[1].difficulty);
@@ -751,7 +801,7 @@ void AetherEngine::updateInGameOverlay() {
 	QObject* playerExperience = rootItem->findChild<QObject*>("playerExperience");
 	if (playerHealth)  { playerHealth->setProperty("value", character.health); }
 	if (playerDamage)  { playerDamage->setProperty("value", character.attackPower); }
-	if (playerDefense) { playerDefense->setProperty("value", character.defense); }
+	if (playerDefense) { playerDefense->setProperty("value", character.defence); }
 	if (playerExperience) { playerExperience->setProperty("value", character.experience); }
 
 	QObject* mobTitle = rootItem->findChild<QObject*>("mobTitle");
@@ -765,7 +815,7 @@ void AetherEngine::updateInGameOverlay() {
 		if (mobTitle)      { mobTitle->setProperty("value", mob.id); }
 		if (mobHealth)     { mobHealth->setProperty("value", mob.health); }
 		if (mobDamage)     { mobDamage->setProperty("value", mob.attackPower); }
-		if (mobDefense)    { mobDefense->setProperty("value", mob.defense); }
+		if (mobDefense)    { mobDefense->setProperty("value", mob.defence); }
 		if (mobExperience) { mobExperience->setProperty("value", mob.experienceReward); }
 	}
 	else {
@@ -842,30 +892,25 @@ void AetherEngine::recordModelToCommandBuffer(const Model& model, VkCommandBuffe
 	}
 }
 
-void AetherEngine::createDescriptorPool(const std::vector<Model>& objectModels)
+void AetherEngine::createDescriptorPool(size_t modelsNum, size_t meshesNum, VkDescriptorPool& descriptorPool)
 {
-	size_t totalMeshes = 0;
-	for (const Model& model : objectModels) {
-		totalMeshes += model.meshes.size();
-	}
-
 	std::array<VkDescriptorPoolSize, 3> poolSizes{};
 
 	poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	poolSizes[0].descriptorCount = (totalMeshes * 5 + objectModels.size() * 6)
+	poolSizes[0].descriptorCount = (meshesNum * 5 + modelsNum * 6)
 		* static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT) + 5;
 	poolSizes[1].type = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER;
-	poolSizes[1].descriptorCount = (objectModels.size() * 4)
+	poolSizes[1].descriptorCount = (modelsNum * 4)
 		* static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 	poolSizes[2].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-	poolSizes[2].descriptorCount = (totalMeshes + 10)
+	poolSizes[2].descriptorCount = (meshesNum + 10)
 		* static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 		
 	VkDescriptorPoolCreateInfo poolInfo{};
 	poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
 	poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizes.size());
 	poolInfo.pPoolSizes = poolSizes.data();
-	poolInfo.maxSets = (totalMeshes + (objectModels.size()) * 2 + 10)
+	poolInfo.maxSets = (meshesNum + modelsNum * 2 + 10)
 		* static_cast<uint32_t>(MAX_FRAMES_IN_FLIGHT);
 	poolInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
 

@@ -15,17 +15,23 @@ struct Equation
 	std::string expression;
 	double difficulty;
 	int32_t damage;
+	int32_t defence;
 	double answer; // exact integer until ~9 quadrillion
 	double wrongAnswerPenalty;
 	double timeToSolve;
+	bool isSolved;
 };
 
 namespace Equations
 {
-	extern std::vector<float> linearWeights;
+	extern std::vector<float> positive_linear_weights;
+	extern std::vector<float> negative_linear_weights;
 
 	std::vector<Equation> generateEquations(size_t amount, double difficultyScale);
 	std::string generate_positive_int_linear_equation(double difficulty);
+	std::string generate_negative_int_linear_equation(double difficulty);
+	bool isLinearAcceptable(int32_t x, int32_t a, int32_t b, int32_t c, double difficulty);
+
 	void printEquations(size_t amount, double difficultyScale);
 
 	double solveForX(

@@ -112,16 +112,11 @@ private:
 	std::vector<Model> models;
 	Model			   sky;
 
-	Texture stone_wall_floor_1_texture;
-	Texture stone_wall_floor_2_texture;
-	Texture stone_wall_floor_3_texture;
-	Texture stone_floor_floor_1_texture;
-	Texture stone_floor_floor_2_texture;
-	Texture stone_floor_floor_3_texture;
-	Texture floor_background_floor_2_texture;
+	std::unordered_map<std::string, Texture> dungeonTextures;
 
 	Texture grassTexture;
 	Texture	transparentTexture;
+	Texture	notFoundTexture;
 
 	Texture depthTexture;
 	Texture msaaTexture;
@@ -188,11 +183,15 @@ private:
 	// recreating swap chain in some special cases
 	void recreateSwapchain();
 
-	void loadModelsFromDirectory(
+	void loadModelsFromFolder(
 		const std::string& directory,
 		std::vector<Model>& models
 	);
 	Texture loadTexture(const std::string& texturePath, const aiScene* scene);
+	void loadTexturesFromFolder(
+		const std::string& texturePath, 
+		std::unordered_map<std::string, Texture>& textures
+	);
 	Material processMaterial(aiMaterial* aiMat, const aiScene* scene);
 	void processNode(
 		aiNode* node, const aiScene* scene,
@@ -207,7 +206,7 @@ private:
 	void createSolidColorTexture(
 		std::array<uint8_t, 4> color, uint32_t width, uint32_t height, Texture& texture
 	);
-	void createTextureFromPath(const std::string& texturePath, Texture& texture);
+	void loadTextureFromPath(const std::string& texturePath, Texture& texture);
 	void createTextureFromEmbedded(
 		const std::string& embeddedTextureName, 
 		const aiScene* scene, Texture& texture
@@ -274,7 +273,7 @@ private:
 	void createDescriptorSets(Model& model, size_t swapchainImageCount);
 	void createDescriptorSets(Mesh& mesh, size_t swapchainImageCount);
 
-	void createDescriptorPool(const std::vector<Model>& models);
+	void createDescriptorPool(size_t modelsNum, size_t meshesNum, VkDescriptorPool& pDescriptorPool);
 	void createDescriptorSetLayout(VkDescriptorSetLayout& descriptorSetLayout) const;
 	void createDescriptorSet(VkDescriptorSet& descriptorSet);
 	void addTextureToDescriptorSet(

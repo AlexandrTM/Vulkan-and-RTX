@@ -218,6 +218,13 @@
         <translation>Выберите выражение</translation>
     </message>
     <message>
+        <location filename="../qml/SelectEquation.ui.qml" line="104"/>
+        <location filename="../qml/SelectEquation.ui.qml" line="165"/>
+        <location filename="../qml/SelectEquation.ui.qml" line="227"/>
+        <source>Defence: %1</source>
+        <translation>Защита: %1</translation>
+    </message>
+    <message>
         <source>Select an equation</source>
         <translation type="vanished">Выберете уравнение</translation>
     </message>
@@ -227,15 +234,15 @@
     </message>
     <message>
         <location filename="../qml/SelectEquation.ui.qml" line="77"/>
-        <location filename="../qml/SelectEquation.ui.qml" line="125"/>
-        <location filename="../qml/SelectEquation.ui.qml" line="174"/>
+        <location filename="../qml/SelectEquation.ui.qml" line="138"/>
+        <location filename="../qml/SelectEquation.ui.qml" line="200"/>
         <source>Difficulty: %1</source>
         <translation>Сложность: %1</translation>
     </message>
     <message>
         <location filename="../qml/SelectEquation.ui.qml" line="91"/>
-        <location filename="../qml/SelectEquation.ui.qml" line="139"/>
-        <location filename="../qml/SelectEquation.ui.qml" line="188"/>
+        <location filename="../qml/SelectEquation.ui.qml" line="152"/>
+        <location filename="../qml/SelectEquation.ui.qml" line="214"/>
         <source>Damage: %1</source>
         <translation>Урон: %1</translation>
     </message>

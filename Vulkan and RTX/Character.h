@@ -32,7 +32,7 @@ public:
 	int32_t health = 30;
 	int32_t maxHealth = 30;
 	int32_t attackPower = 4;
-	int32_t defense = 0;
+	int32_t defence = 0;
 	int32_t experience = 0;
 
 	bool isAlive() const {
@@ -46,7 +46,7 @@ public:
 		takeDamage(mob.attackPower);
 	}
 	void takeDamage(int32_t damage) {
-		int32_t damageTaken = std::max(damage - defense, static_cast<int32_t>(1));
+		int32_t damageTaken = std::max(damage - defence, static_cast<int32_t>(0));
 		health = std::max(health - damageTaken, 0);
 	}
 

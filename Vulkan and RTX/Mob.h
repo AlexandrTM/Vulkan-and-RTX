@@ -6,28 +6,28 @@ struct MobTemplate
     int32_t health;
     int32_t maxHealth;
     int32_t attackPower;
-    int32_t defense;
+    int32_t defence;
     int32_t experienceReward;
 };
 
 const std::vector<MobTemplate> mobTemplates = {
     { "Slime",        12, 12,  3,  0,   5 },
     { "Goblin",       15, 15,  5,  1,   7 },
+    { "Orc",          20, 20,  4,  3,  17 },
     { "Skeleton",     18, 18,  6,  0,  10 },
     { "Zombie",       25, 25,  2,  4,  11 },
-    { "Orc",          20, 20,  4,  3,  17 },
                                        
-    { "Wolf",         20, 20,  5,  1,  14 },
     { "Bandit",       22, 22,  6,  2,  18 },
     { "Dark Mage",    16, 16,  9,  2,  25 },
-    { "Troll",        45, 45,  4,  5,  35 },
+    { "Wolf",         20, 20,  5,  1,  14 },
+    { "Troll",        40, 40,  3,  5,  35 },
     { "Vampire",      28, 28,  7,  3,  40 },
                                    
-    { "Elemental",    35, 35, 10,  2,  50 },
-    { "Shadow Fiend", 40, 40, 11,  1,  60 },
-    { "Lich",         25, 25, 19,  2,  75 },
+    { "Elemental",    35, 35, 10,  4,  50 },
+    { "Shadow Fiend", 40, 40, 11,  5,  60 },
+    { "Lich",         25, 25, 19,  3,  75 },
     { "Demon Brute",  70, 70,  8,  9,  90 },
-    { "Ancient Wyrm", 85, 85, 15,  7, 120 }
+    { "Ancient Wyrm", 85, 85, 15,  9, 120 }
 };
 
 struct Mob
@@ -37,7 +37,7 @@ struct Mob
     int32_t health;
     int32_t maxHealth;
     int32_t attackPower;
-    int32_t defense;
+    int32_t defence;
     int32_t experienceReward;
 
     glm::vec3 position;
@@ -58,7 +58,7 @@ struct Mob
         health(currentHealth),
         maxHealth(maxHealth),
         attackPower(atk), 
-        defense(def), 
+        defence(def), 
         experienceReward(exp)
     {
     }
@@ -67,7 +67,7 @@ struct Mob
     const glm::vec3& getPosition() const { return position; }
 
 	void takeDamage(int32_t damage) {
-		int32_t damageTaken = std::max(damage - defense, static_cast<int32_t>(1));
+		int32_t damageTaken = std::max(damage - defence, static_cast<int32_t>(0));
 		health = std::max(health - damageTaken, 0);
 	}
 
@@ -89,7 +89,7 @@ struct Mob
         float randomFactor = randomReal(0.9, 1.1);
         int32_t health  = static_cast<int32_t>(mobTemplate.health * difficultyScale * randomFactor);
         int32_t attack  = static_cast<int32_t>(mobTemplate.attackPower * difficultyScale * randomFactor);
-        int32_t defense = static_cast<int32_t>(mobTemplate.defense * difficultyScale * randomFactor);
+        int32_t defence = static_cast<int32_t>(mobTemplate.defence * difficultyScale * randomFactor);
         int32_t exp     = static_cast<int32_t>(mobTemplate.experienceReward * randomFactor);
 
         /*std::cout << "Generated Mob: "
@@ -97,11 +97,11 @@ struct Mob
             << ", MobIndex: " << mobIndex
             << ", Health: " << health
             << ", Attack: " << attack
-            << ", Defense: " << defense
+            << ", Defense: " << defence
             << ", Exp: " << exp
             << "\n";*/
 
-        return Mob(position, mobTemplate.name, mobIndex, health, health, attack, defense, exp);
+        return Mob(position, mobTemplate.name, mobIndex, health, health, attack, defence, exp);
     }
 };
 

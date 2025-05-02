@@ -9,8 +9,8 @@ Rectangle {
     //anchors.fill: parent
     color: "#00000000"
     property color buttonColor: "#80bbbbdb"
-    property real defaultFontSize: Math.max(height * 0.025, 13)
-    property real buttonWidth: width * 0.15
+    property real defaultFontSize: Math.max(height * 0.025, 12)
+    property real buttonWidth: width * 0.14
     property real buttonHeight: height * 0.4
 
     signal buttonClicked(int buttonIndex)
@@ -54,7 +54,7 @@ Rectangle {
     Button {
         id: button0
         anchors.right: button1.left
-        anchors.rightMargin: parent.width * 0.07
+        anchors.rightMargin: parent.width * 0.03
         anchors.top: parent.top
         anchors.topMargin: parent.height * 0.2
         width: selectEquation.buttonWidth
@@ -95,6 +95,19 @@ Rectangle {
                 width: parent.width * 0.9
                 anchors.bottom: parent.bottom
                 anchors.bottomMargin: parent.height * 0.1
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+            Text {
+                id: defence0
+                objectName: "defence0"
+                property string value: ""
+                text: qsTr("Defence: %1").arg(value)
+                font.family: Qt.application.font.family
+                font.pointSize: defaultFontSize
+                color: "black"
+                width: parent.width * 0.9
+                anchors.bottom: damage0.top
+                anchors.bottomMargin: parent.height * 0.04
                 anchors.horizontalCenter: parent.horizontalCenter
             }
         }
@@ -145,13 +158,26 @@ Rectangle {
                 anchors.bottomMargin: parent.height * 0.1
                 anchors.horizontalCenter: parent.horizontalCenter
             }
+            Text {
+                id: defence1
+                objectName: "defence1"
+                property string value: ""
+                text: qsTr("Defence: %1").arg(value)
+                font.family: Qt.application.font.family
+                font.pointSize: defaultFontSize
+                color: "black"
+                width: parent.width * 0.9
+                anchors.bottom: damage1.top
+                anchors.bottomMargin: parent.height * 0.04
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
         }
     }
 
     Button {
         id: button2
         anchors.left: button1.right
-        anchors.leftMargin: parent.width * 0.07
+        anchors.leftMargin: parent.width * 0.03
         anchors.top: parent.top
         anchors.topMargin: parent.height * 0.2
         width: selectEquation.buttonWidth
@@ -192,6 +218,19 @@ Rectangle {
                 width: parent.width * 0.9
                 anchors.bottom: parent.bottom
                 anchors.bottomMargin: parent.height * 0.1
+                anchors.horizontalCenter: parent.horizontalCenter
+            }
+            Text {
+                id: defence2
+                objectName: "defence2"
+                property string value: ""
+                text: qsTr("Defence: %1").arg(value)
+                font.family: Qt.application.font.family
+                font.pointSize: defaultFontSize
+                color: "black"
+                width: parent.width * 0.9
+                anchors.bottom: damage2.top
+                anchors.bottomMargin: parent.height * 0.04
                 anchors.horizontalCenter: parent.horizontalCenter
             }
         }

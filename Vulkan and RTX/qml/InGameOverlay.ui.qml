@@ -54,6 +54,13 @@ Rectangle {
         }
     }
 
+    function mobIconPath(mobIndex) {
+        if (mobIndex >= 0 && mobIndex <= 14)
+            return "../textures/mobs/" + mobIndex + ".png"
+        else
+            return "../textures/mobs/defaultMobTexture.png"
+    }
+
     Text {
         id: textStyle
         font.family: fontFamily
@@ -65,7 +72,7 @@ Rectangle {
 
     Rectangle {
         id: playerStatsBackground
-        x: parent.width * 0.1
+        x: parent.width * 0.04
         y: parent.height - (parent.statHeight * 3.7) - parent.height * 0.04
         width: parent.statWidth
         height: parent.statHeight * 3.7
@@ -140,7 +147,7 @@ Rectangle {
 
     Rectangle {
         id: mobStatsBackground
-        x: parent.width * 0.9 - parent.statWidth
+        x: parent.width * 0.96 - parent.statWidth
         y: parent.height - (parent.statHeight * 3.7) - parent.height * 0.04
         width: parent.statWidth
         height: parent.statHeight * 3.7
@@ -212,6 +219,17 @@ Rectangle {
                 verticalAlignment: textStyle.verticalAlignment
                 color: textStyle.color
             }
+        }
+        Image {
+            id: mobIcon
+            source: mobIconPath(mobTitle.value)
+            width: parent.width
+            //anchors.horizontalCenter: mobStatsColumn.horizontalCenter
+            anchors.bottom: parent.top
+            //anchors.bottomMargin: height * 0.1
+            fillMode: Image.PreserveAspectFit
+            //smooth: true
+            visible: mobStatsColumn.visible
         }
     }
 }

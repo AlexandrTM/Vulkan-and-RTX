@@ -62,13 +62,11 @@ void AetherEngine::prepareResources()
 	createCommandBuffers();
 	createSyncObjects();
 
-	createTextureFromPath("textures/grass001.png", grassTexture);
-	createTextureFromPath("textures/stone_wall_floor_1.png", stone_wall_floor_1_texture);
-	createTextureFromPath("textures/stone_floor_floor_1.png", stone_floor_floor_1_texture);
-	createTextureFromPath("textures/floor_background_floor_2.png", floor_background_floor_2_texture);
+	loadTextureFromPath("textures/grass001.png", grassTexture);
 	createSolidColorTexture({ 0, 0, 0, 0 }, 1, 1, transparentTexture);
+	loadTextureFromPath("textures/notFoundTexture.png", notFoundTexture);
 
-	//loadModelsFromDirectory("models", models);
+	//loadModelsFromFolder("models", models);
 	
 	//TerrainData terrainData = {
 	//	100, 100, // chunkWidth, chunkLength
@@ -89,63 +87,61 @@ void AetherEngine::prepareResources()
 
 	ModelManager::createSkyModel(sky);
 
-	std::vector<Model> dungeonModels = Dungeon::createDungeonFloor(
-		gameContext.currentFloor, 1,
-		gameContext.dungeonFloor,
-		stone_floor_floor_1_texture,
-		stone_wall_floor_1_texture
-	);
-	models.insert(models.end(), dungeonModels.begin(), dungeonModels.end());
+	/*size_t meshesNum = 0;
+	for (const Model& model : models) {
+		meshesNum += model.meshes.size();
+	}*/
+	createDescriptorPool(33 * 15, 33 * 15, descriptorPool);
+
+	recreateDungeonFloor(gameContext.currentFloor, 1);
 	gameContext.currentRoom = Dungeon::enterDungeonFloor(gameContext.dungeonFloor, character);
-	createDescriptorPool(models);
 
-	createSolidColorTexture({ 0, 0, 0, 0 }, windowWidth, windowHeight, pauseMenuTexture);
-	pauseMenuModel = ModelManager::createQuad(
-		{ -1.0f, -1.0f, 0.0f }, { 2.0f, 2.0f },
-		{ 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f },
-		glm::vec3(0.5f),
-		pauseMenuTexture
-	);
-	computeAABB_createVertexIndexBuffers(pauseMenuModel);
-	createDescriptorSets(pauseMenuModel, MAX_FRAMES_IN_FLIGHT);
+	// interface elements creation
+	{
+		createSolidColorTexture({ 0, 0, 0, 0 }, windowWidth, windowHeight, pauseMenuTexture);
+		pauseMenuModel = ModelManager::createQuad(
+			{ -1.0f, -1.0f, 0.0f }, { 2.0f, 2.0f },
+			{ 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f },
+			glm::vec3(0.5f),
+			pauseMenuTexture
+		);
+		computeAABB_createVertexIndexBuffers(pauseMenuModel);
+		createDescriptorSets(pauseMenuModel, MAX_FRAMES_IN_FLIGHT);
 
-	createSolidColorTexture({ 0, 0, 0, 0 }, windowWidth, windowHeight, inGameOverlayTexture);
-	inGameOverlayModel = ModelManager::createQuad(
-		{ -1.0f, -1.0f, 0.0f }, { 2.0f, 2.0f },
-		{ 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f },
-		glm::vec3(0.5f),
-		inGameOverlayTexture
-	);
-	computeAABB_createVertexIndexBuffers(inGameOverlayModel);
-	createDescriptorSets(inGameOverlayModel, MAX_FRAMES_IN_FLIGHT);
+		createSolidColorTexture({ 0, 0, 0, 0 }, windowWidth, windowHeight, inGameOverlayTexture);
+		inGameOverlayModel = ModelManager::createQuad(
+			{ -1.0f, -1.0f, 0.0f }, { 2.0f, 2.0f },
+			{ 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f },
+			glm::vec3(0.5f),
+			inGameOverlayTexture
+		);
+		computeAABB_createVertexIndexBuffers(inGameOverlayModel);
+		createDescriptorSets(inGameOverlayModel, MAX_FRAMES_IN_FLIGHT);
 
-	createSolidColorTexture({ 0, 0, 0, 0 }, windowWidth, windowHeight, selectEquationTexture);
-	selectEquationModel = ModelManager::createQuad(
-		{ -1.0f, -1.0f, 0.0f }, { 2.0f, 2.0f },
-		{ 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f },
-		glm::vec3(0.5f),
-		selectEquationTexture
-	);
-	computeAABB_createVertexIndexBuffers(selectEquationModel);
-	createDescriptorSets(selectEquationModel, MAX_FRAMES_IN_FLIGHT);
+		createSolidColorTexture({ 0, 0, 0, 0 }, windowWidth, windowHeight, selectEquationTexture);
+		selectEquationModel = ModelManager::createQuad(
+			{ -1.0f, -1.0f, 0.0f }, { 2.0f, 2.0f },
+			{ 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f },
+			glm::vec3(0.5f),
+			selectEquationTexture
+		);
+		computeAABB_createVertexIndexBuffers(selectEquationModel);
+		createDescriptorSets(selectEquationModel, MAX_FRAMES_IN_FLIGHT);
 
-	createSolidColorTexture({ 0, 0, 0, 0 }, windowWidth, windowHeight, solveEquationTexture);
-	solveEquationModel = ModelManager::createQuad(
-		{ -1.0f, -1.0f, 0.0f }, { 2.0f, 2.0f },
-		{ 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f },
-		glm::vec3(0.5f),
-		solveEquationTexture
-	);
-	computeAABB_createVertexIndexBuffers(solveEquationModel);
-	createDescriptorSets(solveEquationModel, MAX_FRAMES_IN_FLIGHT);
+		createSolidColorTexture({ 0, 0, 0, 0 }, windowWidth, windowHeight, solveEquationTexture);
+		solveEquationModel = ModelManager::createQuad(
+			{ -1.0f, -1.0f, 0.0f }, { 2.0f, 2.0f },
+			{ 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f },
+			glm::vec3(0.5f),
+			solveEquationTexture
+		);
+		computeAABB_createVertexIndexBuffers(solveEquationModel);
+		createDescriptorSets(solveEquationModel, MAX_FRAMES_IN_FLIGHT);
+	}
 
 	computeAABB_createVertexIndexBuffers(sky);
 	createDescriptorSets(sky, MAX_FRAMES_IN_FLIGHT);
 	createShaderBuffers(sky, MAX_FRAMES_IN_FLIGHT);
-
-	computeAABB_createVertexIndexBuffers(models);
-	createDescriptorSets(models, MAX_FRAMES_IN_FLIGHT);
-	createShaderBuffers(models, MAX_FRAMES_IN_FLIGHT);
 }
 
 void AetherEngine::onMainWindowResized(int width, int height) {
@@ -509,7 +505,13 @@ void AetherEngine::mainLoop()
 			}
 		}
 		if (gameContext.currentGameState == GameState::COMBAT_MOB_TURN) {
-			character.takeDamage(gameContext.currentRoom->mobs);
+			character.takeDamage(
+				gameContext.currentRoom->mobs[0].attackPower - 
+				(gameContext.selectedEquation->isSolved ? 
+				gameContext.selectedEquation->defence : 
+				0)
+			);
+
 			if (character.isAlive()) {
 				gameContext.requestedGameState = GameState::COMBAT_PLAYER_SELECT_EQUATION;
 			}
@@ -567,20 +569,29 @@ void AetherEngine::recreateDungeonFloor(int32_t floorNumber, float difficultySca
 	// Step 2: Reset the dungeon floor
 	gameContext.dungeonFloor = {};
 
-	// Step 3: Create and enter a new dungeon
-	createTextureFromPath("textures/stone_wall_floor_1.png", stone_wall_floor_1_texture);
-	createTextureFromPath("textures/stone_floor_floor_1.png", stone_floor_floor_1_texture);
+	if (dungeonTextures.empty()) {
+		loadTexturesFromFolder("textures/dungeon", dungeonTextures);
+	}
+
+	std::string wallKey = "stone_wall_floor_" + std::to_string(floorNumber);
+	std::string floorKey = "stone_floor_floor_" + std::to_string(floorNumber);
+
+	Texture wallTexture = dungeonTextures.contains(wallKey) ? dungeonTextures[wallKey] : notFoundTexture;
+	Texture floorTexture = dungeonTextures.contains(floorKey) ? dungeonTextures[floorKey] : notFoundTexture;
+
 	std::vector<Model> dungeonModels = Dungeon::createDungeonFloor(
 		floorNumber, difficultyScale,
 		gameContext.dungeonFloor,
-		stone_floor_floor_1_texture,
-		stone_wall_floor_1_texture
+		floorTexture,
+		wallTexture
 	);
 	computeAABB_createVertexIndexBuffers(dungeonModels);
 	createShaderBuffers(dungeonModels, MAX_FRAMES_IN_FLIGHT);
 	createDescriptorSets(dungeonModels, MAX_FRAMES_IN_FLIGHT);
+
 	models.insert(models.end(), dungeonModels.begin(), dungeonModels.end());
 }
+
 void AetherEngine::cleanupMemory()
 {
 	cleanupModel(sky);
@@ -595,16 +606,9 @@ void AetherEngine::cleanupMemory()
 	cleanupTexture(selectEquationTexture);
 	cleanupTexture(solveEquationTexture);*/
 
-	cleanupTexture(stone_wall_floor_1_texture);
-	cleanupTexture(stone_wall_floor_2_texture);
-	cleanupTexture(stone_wall_floor_3_texture);
-	cleanupTexture(stone_floor_floor_1_texture);
-	cleanupTexture(stone_floor_floor_2_texture);
-	cleanupTexture(stone_floor_floor_3_texture);
-	cleanupTexture(floor_background_floor_2_texture);
-
 	cleanupTexture(grassTexture);
 	cleanupTexture(transparentTexture);
+	cleanupTexture(notFoundTexture);
 	cleanupTexture(depthTexture);
 	cleanupTexture(msaaTexture);
 
@@ -642,7 +646,6 @@ void AetherEngine::cleanupMemory()
 		vkInit.surface = VK_NULL_HANDLE;
 	}*/
 }
-
 void AetherEngine::cleanupModels(std::vector<Model>& models) const
 {
 	for (Model& model : models) {

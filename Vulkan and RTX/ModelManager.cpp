@@ -777,7 +777,7 @@ void AetherEngine::createSolidColorTexture(
 		texture.mipLevels);
 	createTextureSampler(texture.mipLevels, texture.sampler);
 }
-void AetherEngine::createTextureFromPath(const std::string& texturePath, Texture& texture)
+void AetherEngine::loadTextureFromPath(const std::string& texturePath, Texture& texture)
 {
 	if (texture.uniqueHash == 0) {
 		texture.uniqueHash = Texture::generateRandomHash();
@@ -956,10 +956,26 @@ Texture AetherEngine::loadTexture(const std::string& texturePath, const aiScene*
 		createTextureFromEmbedded(texturePath, scene, texture);
 	}
 	else {
-		createTextureFromPath(("textures\\" + std::string(texturePath)), texture);
+		loadTextureFromPath(("textures\\" + std::string(texturePath)), texture);
 	}
 
 	return texture;
+}
+void AetherEngine::loadTexturesFromFolder(
+	const std::string& texturePath,
+	std::unordered_map<std::string, Texture>& textures
+)
+{
+	for (const auto& entry : std::filesystem::directory_iterator(texturePath)) {
+		if (!entry.is_regular_file()) continue;
+
+		std::string path = entry.path().string();
+		std::string name = entry.path().stem().string();
+
+		Texture texture;
+		loadTextureFromPath(path, texture);
+		textures[name] = std::move(texture);
+	}
 }
 
 Material AetherEngine::processMaterial(aiMaterial* aiMat, const aiScene* scene) 
@@ -1266,7 +1282,7 @@ void AetherEngine::processNode(
 		//}
 	}
 }
-void AetherEngine::loadModelsFromDirectory(
+void AetherEngine::loadModelsFromFolder(
 	const std::string& directory, 
 	std::vector<Model>& models
 ) {
