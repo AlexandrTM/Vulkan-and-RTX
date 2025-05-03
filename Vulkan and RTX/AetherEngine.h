@@ -5,12 +5,16 @@
 
 #include "VulkanInitializer.h"
 
+#include "UserInterfaceElement.h"
+
 #include "InGameWindow.h"
 #include "MainMenuWidget.h"
 #include "MainWindow.h"
 #include "SettingsMenuWidget.h"
 #include "PauseMenuQuickView.h"
-#include "UserInterfaceRenderer.h"
+
+#include "MainMenuSlotHandler.h"
+#include "SettingsMenuSlotHandler.h"
 #include "PauseMenuSlotHandler.h"
 #include "SelectEquationSlotHandler.h"
 #include "SolveEquationSlotHandler.h"
@@ -40,16 +44,11 @@ private:
 	uint32_t windowHeight = 0;
 	double lastMousePosX, lastMousePosY;
 
-	QStackedLayout* inGameStackedLayout = nullptr;
-
 	MainWindow* mainWindow = nullptr;
 	QStackedWidget* stackedWidget = nullptr;
 
 	InGameWindow* inGameWindow = nullptr;
 	QWidget* inGameWidget = nullptr;
-
-	MainMenuWidget* mainMenuWidget = nullptr;
-	SettingsMenuWidget* settingsMenuWidget = nullptr;
 
 	QVulkanInstance qVulkanInstance;
 
@@ -89,23 +88,10 @@ private:
 	std::vector<VkFence>     inFlightFences;
 	uint32_t currentFrame = 0;
 
-	UserInterfaceRenderer* pauseMenuRenderer = nullptr;
-	Texture pauseMenuTexture;
-	Model pauseMenuModel;
-
-	UserInterfaceRenderer* inGameOverlayRenderer = nullptr;
-	Texture inGameOverlayTexture;
-	Model inGameOverlayModel;
-
-	UserInterfaceRenderer* selectEquationRenderer = nullptr;
+	UserInterfaceElement 
+		mainMenu, settingsMenu, pauseMenu, inGameOverlay, selectEquation, solveEquation;
 	bool isSelectEquationActivated = false;
-	Texture selectEquationTexture;
-	Model selectEquationModel;
-
-	UserInterfaceRenderer* solveEquationRenderer = nullptr;
 	bool isSolveEquationTextFieldActivated = false;
-	Texture solveEquationTexture;
-	Model solveEquationModel;
 
 	bool isFramebufferResized = false;
 
@@ -113,6 +99,7 @@ private:
 	Model			   sky;
 
 	std::unordered_map<std::string, Texture> dungeonTextures;
+	mutable std::unordered_set<uint64_t> deletedTextureHashes;
 
 	Texture grassTexture;
 	Texture	transparentTexture;
@@ -121,7 +108,6 @@ private:
 	Texture depthTexture;
 	Texture msaaTexture;
 
-	mutable std::unordered_set<uint64_t> deletedTextureHashes;
 
 	size_t createdBuffers = 0;
 	mutable size_t destroyedVmaAllocations = 0;
@@ -150,11 +136,14 @@ private:
 	std::string createPuzzleEquation(std::string name, int32_t& answer);
 
 	void setWindowSize();
-	void createMainMenuWidget();
-	void createSettingsMenuWidget();
 
-	void createPauseMenuRenderer();
-	void createInGameUI();
+	UserInterfaceElement createUIElement(
+		const QString& qmlPath, size_t windowWidth, size_t windowHeight, QObject* parent
+	);
+	void changeUIElementSize(
+		UserInterfaceElement& uiElement, size_t windowWidth, size_t windowHeight
+	);
+	void createUIElements();
 
 	void createMainWindow();
 	void createInGameWindow();

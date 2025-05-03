@@ -210,6 +210,7 @@
     <ClCompile Include="Mob.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="PauseMenuQuickView.cpp" />
+    <ClCompile Include="UserInterfaceElement.cpp" />
     <ClCompile Include="UserInterfaceRenderer.cpp" />
     <ClCompile Include="pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -257,6 +258,7 @@
     <ClInclude Include="HasInventory.h" />
     <ClInclude Include="IsMovable.h" />
     <ClInclude Include="Item.h" />
+    <QtMoc Include="MainMenuSlotHandler.h" />
     <ClInclude Include="Mob.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="ModelManager.h" />
@@ -267,8 +269,10 @@
     <QtMoc Include="SettingsMenuWidget.h" />
     <QtMoc Include="SelectEquationSlotHandler.h" />
     <QtMoc Include="SolveEquationSlotHandler.h" />
+    <QtMoc Include="SettingsMenuSlotHandler.h" />
     <ClInclude Include="StellarCalculations.h" />
     <ClInclude Include="TerrainGenerator.h" />
+    <ClInclude Include="UserInterfaceElement.h" />
     <ClInclude Include="Vertex.h" />
     <QtMoc Include="AetherEngine.h" />
     <ClInclude Include="VulkanInitializer.h" />

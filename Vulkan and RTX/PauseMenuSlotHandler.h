@@ -25,6 +25,4 @@ public slots:
     void onExitGameClicked() {
         gameContext.requestedGameState = GameState::EXIT;
     }
-
-private:
 };

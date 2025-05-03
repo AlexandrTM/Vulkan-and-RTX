@@ -188,9 +188,10 @@ void AetherEngine::createGraphicsPipeline(
 
 	auto bindingDescription = Vertex::getBindingDescription();
 	auto attributeDescriptions = Vertex::getAttributeDescriptions(
-		pipelineType == PipelineType::OBJECT ? 
-		VertexLayoutType::WHOLE : pipelineType == PipelineType::GUI ?
-		VertexLayoutType::POSITION_TEXCOORDS : VertexLayoutType::POSITION_ONLY
+		pipelineType == 
+			PipelineType::OBJECT ? VertexLayoutType::WHOLE : 
+			pipelineType == PipelineType::GUI ? VertexLayoutType::POSITION_TEXCOORDS : 
+			VertexLayoutType::POSITION_ONLY
 	);
 
 	vertexInputInfo.vertexBindingDescriptionCount = 1;
@@ -609,11 +610,20 @@ void AetherEngine::recordCommandBuffer(
 		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["object"]);
 		recordModelsToCommandBuffer(models, commandBuffer);
 
-		if (gameContext.currentGameState == GameState::PAUSED) {
-
-			renderQmlToTexture(pauseMenuRenderer, pauseMenuTexture);
+		if (gameContext.currentGameState == GameState::MAIN_MENU) {
+			renderQmlToTexture(mainMenu.renderer.get(), mainMenu.texture);
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["ui"]);
-			recordModelToCommandBuffer(pauseMenuModel, commandBuffer);
+			recordModelToCommandBuffer(mainMenu.model, commandBuffer);
+		}
+		if (gameContext.currentGameState == GameState::SETTINGS_MENU) {
+			renderQmlToTexture(settingsMenu.renderer.get(), settingsMenu.texture);
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["ui"]);
+			recordModelToCommandBuffer(settingsMenu.model, commandBuffer);
+		}
+		if (gameContext.currentGameState == GameState::PAUSED) {
+			renderQmlToTexture(pauseMenu.renderer.get(), pauseMenu.texture);
+			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["ui"]);
+			recordModelToCommandBuffer(pauseMenu.model, commandBuffer);
 		}
 		if (gameContext.currentGameState == GameState::DUNGEON_EXPLORATION			 ||
 			gameContext.currentGameState == GameState::IN_GAME_TESTING				 ||
@@ -623,21 +633,21 @@ void AetherEngine::recordCommandBuffer(
 			gameContext.currentGameState == GameState::DUNGEON_ROOM_CLEANED          ||
 			gameContext.currentGameState == GameState::PAUSED) {
 
-			renderQmlToTexture(inGameOverlayRenderer, inGameOverlayTexture);
+			renderQmlToTexture(inGameOverlay.renderer.get(), inGameOverlay.texture);
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["ui"]);
-			recordModelToCommandBuffer(inGameOverlayModel, commandBuffer);
+			recordModelToCommandBuffer(inGameOverlay.model, commandBuffer);
 		}
 		if (gameContext.currentGameState == GameState::COMBAT_PLAYER_SELECT_EQUATION) {
 
-			renderQmlToTexture(selectEquationRenderer, selectEquationTexture);
+			renderQmlToTexture(selectEquation.renderer.get(), selectEquation.texture);
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["ui"]);
-			recordModelToCommandBuffer(selectEquationModel, commandBuffer);
+			recordModelToCommandBuffer(selectEquation.model, commandBuffer);
 		}
 		if (gameContext.currentGameState == GameState::COMBAT_PLAYER_SOLVE_EQUATION) {
 
-			renderQmlToTexture(solveEquationRenderer, solveEquationTexture);
+			renderQmlToTexture(solveEquation.renderer.get(), solveEquation.texture);
 			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["ui"]);
-			recordModelToCommandBuffer(solveEquationModel, commandBuffer);
+			recordModelToCommandBuffer(solveEquation.model, commandBuffer);
 		}
 	}
 
@@ -650,16 +660,16 @@ void AetherEngine::recordCommandBuffer(
 
 void AetherEngine::updateSolveEquation() {
 	if (!isSolveEquationTextFieldActivated) {
-		solveEquationRenderer->getQuickWindow()->requestActivate();
+		solveEquation.renderer->getQuickWindow()->requestActivate();
 		isSolveEquationTextFieldActivated = true;
 	}
-	auto contentItem = solveEquationRenderer->getQuickWindow()->contentItem();
+	auto contentItem = solveEquation.renderer->getQuickWindow()->contentItem();
 	if (!contentItem->hasFocus()) {
 		contentItem->setFocus(true);
 	}
 
-	if (!solveEquationRenderer) return;
-	auto rootItem = solveEquationRenderer->getRootItem();
+	if (!solveEquation.renderer) return;
+	auto rootItem = solveEquation.renderer->getRootItem();
 	if (!rootItem) return;
 
 	QObject* answerInput = rootItem->findChild<QObject*>("answerInput");
@@ -704,18 +714,18 @@ QColor AetherEngine::interpolateColor(const QColor& from, const QColor& to, doub
 	return QColor(r, g, b, a);
 }
 void AetherEngine::clearSolveEquationInput() {
-	auto rootItem = solveEquationRenderer->getRootItem();
+	auto rootItem = solveEquation.renderer->getRootItem();
 	QObject* answerInput = rootItem->findChild<QObject*>("answerInput");
 	if (answerInput) { answerInput->setProperty("text", ""); }
-	solveEquationRenderer->getQuickWindow()->contentItem()->setFocus(false);
+	solveEquation.renderer->getQuickWindow()->contentItem()->setFocus(false);
 }
 void AetherEngine::updateSelectEquation(size_t amountOfEquations) {
 	gameContext.equations = Equations::generateEquations(amountOfEquations, 1);
 
 	const auto& equations = gameContext.equations;
 
-	if (!selectEquationRenderer) return;
-	auto rootItem = selectEquationRenderer->getRootItem();
+	if (!selectEquation.renderer) return;
+	auto rootItem = selectEquation.renderer->getRootItem();
 	if (!rootItem) return;
 
 	for (size_t i = 0; i < amountOfEquations; ++i) {
@@ -751,9 +761,9 @@ void AetherEngine::updateSelectEquation(size_t amountOfEquations) {
 	}
 }
 void AetherEngine::updateInGameOverlay() {
-	if (!inGameOverlayRenderer) return;
+	if (!inGameOverlay.renderer) return;
 
-	auto rootItem = inGameOverlayRenderer->getRootItem();
+	auto rootItem = inGameOverlay.renderer->getRootItem();
 	if (!rootItem) return;
 
 	QObject* playerHealth = rootItem->findChild<QObject*>("playerHealth");

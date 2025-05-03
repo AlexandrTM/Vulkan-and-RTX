@@ -22,6 +22,32 @@ bool InGameWindow::eventFilter(QObject* obj, QEvent* event) {
 bool InGameWindow::sendEventToUI(QEvent* event) {
     const QEvent::Type eventType = event->type();
 
+    if (mainMenuRenderer && gameContext.currentGameState == GameState::MAIN_MENU) {
+        switch (eventType) {
+        case QEvent::MouseButtonPress:
+        case QEvent::MouseButtonRelease:
+        case QEvent::MouseMove:
+        case QEvent::HoverMove:
+            mainMenuRenderer->forwardEvent(event);
+            return true;
+        default:
+            break;
+        }
+    }
+
+    if (settingsMenuRenderer && gameContext.currentGameState == GameState::SETTINGS_MENU) {
+        switch (eventType) {
+        case QEvent::MouseButtonPress:
+        case QEvent::MouseButtonRelease:
+        case QEvent::MouseMove:
+        case QEvent::HoverMove:
+            settingsMenuRenderer->forwardEvent(event);
+            return true;
+        default:
+            break;
+        }
+    }
+
     if (pauseMenuRenderer && gameContext.currentGameState == GameState::PAUSED) {
         switch (eventType) {
         case QEvent::MouseButtonPress:

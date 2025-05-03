@@ -16,6 +16,8 @@ class InGameWindow : public QWindow
     Q_OBJECT
 private:
     Character* character = nullptr;
+    UserInterfaceRenderer* mainMenuRenderer = nullptr;
+    UserInterfaceRenderer* settingsMenuRenderer = nullptr;
     UserInterfaceRenderer* pauseMenuRenderer = nullptr;
     UserInterfaceRenderer* selectEquationRenderer = nullptr;
     UserInterfaceRenderer* solveEquationRenderer = nullptr;
@@ -25,6 +27,8 @@ public:
         QVulkanInstance* instance,
         Character& character
     );
+    void setMainMenuRenderer      (UserInterfaceRenderer* renderer) { mainMenuRenderer = renderer; }
+    void setSettingsMenuRenderer  (UserInterfaceRenderer* renderer) { settingsMenuRenderer = renderer; }
     void setPauseMenuRenderer     (UserInterfaceRenderer* renderer) { pauseMenuRenderer = renderer; }
     void setSelectEquationRenderer(UserInterfaceRenderer* renderer) { selectEquationRenderer = renderer; }
     void setSolveEquationRenderer (UserInterfaceRenderer* renderer) { solveEquationRenderer = renderer; }

@@ -40,6 +40,9 @@
     <Filter Include="source\Procedural">
       <UniqueIdentifier>{6988ee90-9663-4551-90be-79c49d0c8de4}</UniqueIdentifier>
     </Filter>
+    <Filter Include="source\UI\Elements">
+      <UniqueIdentifier>{21ceaff3-24ca-4ecc-8dd4-777ec1896a53}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="pch.cpp">
@@ -117,21 +120,6 @@
     <ClCompile Include="GameContext.cpp">
       <Filter>source</Filter>
     </ClCompile>
-    <ClCompile Include="InGameWindow.cpp">
-      <Filter>source\UI</Filter>
-    </ClCompile>
-    <ClCompile Include="MainMenuWidget.cpp">
-      <Filter>source\UI</Filter>
-    </ClCompile>
-    <ClCompile Include="MainWindow.cpp">
-      <Filter>source\UI</Filter>
-    </ClCompile>
-    <ClCompile Include="SettingsMenuWidget.cpp">
-      <Filter>source\UI</Filter>
-    </ClCompile>
-    <ClCompile Include="PauseMenuQuickView.cpp">
-      <Filter>source\UI</Filter>
-    </ClCompile>
     <ClCompile Include="Character.cpp">
       <Filter>source</Filter>
     </ClCompile>
@@ -164,6 +152,24 @@
     </ClCompile>
     <ClCompile Include="gamecontext_instance.cpp">
       <Filter>headers\precompiled</Filter>
+    </ClCompile>
+    <ClCompile Include="UserInterfaceElement.cpp">
+      <Filter>source\UI</Filter>
+    </ClCompile>
+    <ClCompile Include="InGameWindow.cpp">
+      <Filter>source\UI\Elements</Filter>
+    </ClCompile>
+    <ClCompile Include="MainMenuWidget.cpp">
+      <Filter>source\UI\Elements</Filter>
+    </ClCompile>
+    <ClCompile Include="MainWindow.cpp">
+      <Filter>source\UI\Elements</Filter>
+    </ClCompile>
+    <ClCompile Include="PauseMenuQuickView.cpp">
+      <Filter>source\UI\Elements</Filter>
+    </ClCompile>
+    <ClCompile Include="SettingsMenuWidget.cpp">
+      <Filter>source\UI\Elements</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -245,6 +251,9 @@
     <ClInclude Include="gamecontext_instance.h">
       <Filter>headers\precompiled</Filter>
     </ClInclude>
+    <ClInclude Include="UserInterfaceElement.h">
+      <Filter>source\UI</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Vulkan and RTX.rc">
@@ -257,35 +266,41 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <QtMoc Include="InGameWindow.h">
-      <Filter>source\UI</Filter>
-    </QtMoc>
-    <QtMoc Include="MainMenuWidget.h">
-      <Filter>source\UI</Filter>
-    </QtMoc>
-    <QtMoc Include="MainWindow.h">
-      <Filter>source\UI</Filter>
-    </QtMoc>
-    <QtMoc Include="SettingsMenuWidget.h">
-      <Filter>source\UI</Filter>
-    </QtMoc>
-    <QtMoc Include="PauseMenuQuickView.h">
-      <Filter>source\UI</Filter>
-    </QtMoc>
     <QtMoc Include="AetherEngine.h">
       <Filter>headers\main class split</Filter>
     </QtMoc>
     <QtMoc Include="UserInterfaceRenderer.h">
       <Filter>source\UI</Filter>
     </QtMoc>
+    <QtMoc Include="InGameWindow.h">
+      <Filter>source\UI\Elements</Filter>
+    </QtMoc>
+    <QtMoc Include="MainMenuWidget.h">
+      <Filter>source\UI\Elements</Filter>
+    </QtMoc>
+    <QtMoc Include="MainWindow.h">
+      <Filter>source\UI\Elements</Filter>
+    </QtMoc>
+    <QtMoc Include="PauseMenuQuickView.h">
+      <Filter>source\UI\Elements</Filter>
+    </QtMoc>
     <QtMoc Include="PauseMenuSlotHandler.h">
-      <Filter>source\UI</Filter>
+      <Filter>source\UI\Elements</Filter>
     </QtMoc>
     <QtMoc Include="SelectEquationSlotHandler.h">
-      <Filter>source\UI</Filter>
+      <Filter>source\UI\Elements</Filter>
+    </QtMoc>
+    <QtMoc Include="SettingsMenuWidget.h">
+      <Filter>source\UI\Elements</Filter>
     </QtMoc>
     <QtMoc Include="SolveEquationSlotHandler.h">
-      <Filter>source\UI</Filter>
+      <Filter>source\UI\Elements</Filter>
+    </QtMoc>
+    <QtMoc Include="SettingsMenuSlotHandler.h">
+      <Filter>source\UI\Elements</Filter>
+    </QtMoc>
+    <QtMoc Include="MainMenuSlotHandler.h">
+      <Filter>source\UI\Elements</Filter>
     </QtMoc>
   </ItemGroup>
 </Project>

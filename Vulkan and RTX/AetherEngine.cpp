@@ -20,17 +20,8 @@ void AetherEngine::prepareUI()
 	createMainWindow();
 	createInGameWindow();
 
-	createMainMenuWidget();
-	createSettingsMenuWidget();
-	createPauseMenuRenderer();
-	createInGameUI();
-
-	mainWindow->addWidget(mainMenuWidget);
 	mainWindow->addWidget(inGameWidget);
-	//mainWindow->addWidget(inGameContainerWidget);
-	mainWindow->addWidget(settingsMenuWidget);
 	mainWindow->show();
-
 
 	gameContext.requestedGameState = GameState::COMBAT_PLAYER_SOLVE_EQUATION;
 	gameContext.requestedGameState = GameState::COMBAT_PLAYER_SELECT_EQUATION;
@@ -97,48 +88,7 @@ void AetherEngine::prepareResources()
 	recreateDungeonFloor(gameContext.currentFloor, 1);
 	gameContext.currentRoom = Dungeon::enterDungeonFloor(gameContext.dungeonFloor, character);
 
-	// interface elements creation
-	{
-		createSolidColorTexture({ 0, 0, 0, 0 }, windowWidth, windowHeight, pauseMenuTexture);
-		pauseMenuModel = ModelManager::createQuad(
-			{ -1.0f, -1.0f, 0.0f }, { 2.0f, 2.0f },
-			{ 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f },
-			glm::vec3(0.5f),
-			pauseMenuTexture
-		);
-		computeAABB_createVertexIndexBuffers(pauseMenuModel);
-		createDescriptorSets(pauseMenuModel, MAX_FRAMES_IN_FLIGHT);
-
-		createSolidColorTexture({ 0, 0, 0, 0 }, windowWidth, windowHeight, inGameOverlayTexture);
-		inGameOverlayModel = ModelManager::createQuad(
-			{ -1.0f, -1.0f, 0.0f }, { 2.0f, 2.0f },
-			{ 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f },
-			glm::vec3(0.5f),
-			inGameOverlayTexture
-		);
-		computeAABB_createVertexIndexBuffers(inGameOverlayModel);
-		createDescriptorSets(inGameOverlayModel, MAX_FRAMES_IN_FLIGHT);
-
-		createSolidColorTexture({ 0, 0, 0, 0 }, windowWidth, windowHeight, selectEquationTexture);
-		selectEquationModel = ModelManager::createQuad(
-			{ -1.0f, -1.0f, 0.0f }, { 2.0f, 2.0f },
-			{ 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f },
-			glm::vec3(0.5f),
-			selectEquationTexture
-		);
-		computeAABB_createVertexIndexBuffers(selectEquationModel);
-		createDescriptorSets(selectEquationModel, MAX_FRAMES_IN_FLIGHT);
-
-		createSolidColorTexture({ 0, 0, 0, 0 }, windowWidth, windowHeight, solveEquationTexture);
-		solveEquationModel = ModelManager::createQuad(
-			{ -1.0f, -1.0f, 0.0f }, { 2.0f, 2.0f },
-			{ 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f },
-			glm::vec3(0.5f),
-			solveEquationTexture
-		);
-		computeAABB_createVertexIndexBuffers(solveEquationModel);
-		createDescriptorSets(solveEquationModel, MAX_FRAMES_IN_FLIGHT);
-	}
+	createUIElements();
 
 	computeAABB_createVertexIndexBuffers(sky);
 	createDescriptorSets(sky, MAX_FRAMES_IN_FLIGHT);
@@ -154,10 +104,18 @@ void AetherEngine::onMainWindowResized(int width, int height) {
 	//std::cout << "center pos: " << gameContext.windowCenterPos.x() << " " << gameContext.windowCenterPos.y() << "\n";
 	character.camera.setViewportSize(windowWidth, windowHeight);
 
-	pauseMenuRenderer->resize(QSize(windowWidth, windowHeight));
-	inGameOverlayRenderer->resize(QSize(windowWidth, windowHeight));
-	selectEquationRenderer->resize(QSize(windowWidth, windowHeight));
-	solveEquationRenderer->resize(QSize(windowWidth, windowHeight));
+	if (pauseMenu.renderer) {
+		pauseMenu.renderer->resize(QSize(windowWidth, windowHeight));
+	}
+	if (inGameOverlay.renderer) {
+		inGameOverlay.renderer->resize(QSize(windowWidth, windowHeight));
+	}
+	if (selectEquation.renderer) {
+		selectEquation.renderer->resize(QSize(windowWidth, windowHeight));
+	}
+	if (solveEquation.renderer) {
+		solveEquation.renderer->resize(QSize(windowWidth, windowHeight));
+	}
 }
 void AetherEngine::onMainWindowMoved(int x, int y) {
 	//pauseMenuView->getQuickWindow()->setPosition(x, y);
@@ -165,7 +123,9 @@ void AetherEngine::onMainWindowMoved(int x, int y) {
 }
 void AetherEngine::onInGameWindowMoved(int x, int y) {
 	//pauseMenuView->setPosition(x, y);
-	solveEquationRenderer->getQuickWindow()->setPosition(inGameWindow->position() + QPoint(x, y));
+	if (solveEquation.renderer) {
+		solveEquation.renderer->getQuickWindow()->setPosition(inGameWindow->position() + QPoint(x, y));
+	}
 }
 void AetherEngine::onInGameWindowLostFocus() {
 	//std::cout << "lost focus\n";
@@ -179,68 +139,89 @@ void AetherEngine::setWindowSize()
 	windowWidth = screenGeometry.width() / 1.5;
 	windowHeight = screenGeometry.height() / 1.5;
 }
-void AetherEngine::createMainMenuWidget() {
-	mainMenuWidget = new MainMenuWidget();
-	mainMenuWidget->resize(windowWidth, windowHeight);
 
-	connect(mainMenuWidget, &MainMenuWidget::startGame, [this]() {
-		gameContext.requestedGameState = GameState::DUNGEON_EXPLORATION;
-		});
+UserInterfaceElement AetherEngine::createUIElement(
+	const QString& qmlPath, size_t windowWidth, size_t windowHeight, QObject* parent
+) {
+	UserInterfaceElement uiElement;
 
-	connect(mainMenuWidget, &MainMenuWidget::openSettings, [this]() {
-		gameContext.requestedGameState = GameState::SETTINGS_MENU;
-		});
+	createSolidColorTexture({ 0, 0, 0, 0 }, windowWidth, windowHeight, uiElement.texture);
+	uiElement.model = ModelManager::createQuad(
+		{ -1.0f, -1.0f, 0.0f }, { 2.0f, 2.0f },
+		{ 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f },
+		glm::vec3(0.5f),
+		uiElement.texture
+	);
+	computeAABB_createVertexIndexBuffers(uiElement.model);
+	createDescriptorSets(uiElement.model, MAX_FRAMES_IN_FLIGHT);
 
-	connect(mainMenuWidget, &MainMenuWidget::exitGame, [this]() {
-		gameContext.requestedGameState = GameState::EXIT;
-		});
+	uiElement.renderer = std::make_unique<UserInterfaceRenderer>();
+	uiElement.renderer->initialize(QSize(windowWidth, windowHeight), qmlPath);
+	uiElement.renderer->setParent(parent);
+
+	return uiElement;
 }
-void AetherEngine::createSettingsMenuWidget() {
-	settingsMenuWidget = new SettingsMenuWidget();
-	settingsMenuWidget->resize(windowWidth, windowHeight);
+void AetherEngine::changeUIElementSize(
+	UserInterfaceElement& uiElement, size_t windowWidth, size_t windowHeight
+) {
+	/*cleanupTexture(pauseMenuTexture);
+	cleanupTexture(inGameOverlayTexture);
+	cleanupTexture(selectEquationTexture);
+	cleanupTexture(solveEquationTexture);*/
 
-	connect(settingsMenuWidget, &SettingsMenuWidget::returnToMainMenu, [this]() {
-		gameContext.requestedGameState = GameState::MAIN_MENU;
-		});
+	cleanupModel(uiElement.model);
+	
+	createSolidColorTexture({ 0, 0, 0, 0 }, windowWidth, windowHeight, uiElement.texture);
+	uiElement.model = ModelManager::createQuad(
+		{ -1.0f, -1.0f, 0.0f }, { 2.0f, 2.0f },
+		{ 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f },
+		glm::vec3(0.5f),
+		uiElement.texture
+	);
+	computeAABB_createVertexIndexBuffers(uiElement.model);
+	createDescriptorSets(uiElement.model, MAX_FRAMES_IN_FLIGHT);
 }
-void AetherEngine::createPauseMenuRenderer() {
-	pauseMenuRenderer = new UserInterfaceRenderer();
-	pauseMenuRenderer->initialize(QSize(windowWidth, windowHeight), "qml/PauseMenu.ui.qml");
-	pauseMenuRenderer->setParent(mainWindow);
+void AetherEngine::createUIElements() {
+	mainMenu = createUIElement("qml/MainMenu.ui.qml", windowWidth, windowHeight, mainWindow);
+	settingsMenu = createUIElement("qml/SettingsMenu.ui.qml", windowWidth, windowHeight, mainWindow);
+	pauseMenu = createUIElement("qml/PauseMenu.ui.qml", windowWidth, windowHeight, mainWindow);
+	inGameOverlay = createUIElement("qml/InGameOverlay.ui.qml", windowWidth, windowHeight, mainWindow);
+	selectEquation = createUIElement("qml/SelectEquation.ui.qml", windowWidth, windowHeight, mainWindow);
+	solveEquation = createUIElement("qml/SolveEquation.ui.qml", windowWidth, windowHeight, mainWindow);
 
-	inGameWindow->setPauseMenuRenderer(pauseMenuRenderer);
+	inGameWindow->setMainMenuRenderer(mainMenu.renderer.get());
+	inGameWindow->setSettingsMenuRenderer(settingsMenu.renderer.get());
+	inGameWindow->setPauseMenuRenderer(pauseMenu.renderer.get());
+	inGameWindow->setSelectEquationRenderer(selectEquation.renderer.get());
+	inGameWindow->setSolveEquationRenderer(solveEquation.renderer.get());
+
+	MainMenuSlotHandler* mainMenuSlotHandler = new MainMenuSlotHandler(this);
+	SettingsMenuSlotHandler* settingsMenuSlotHandler = new SettingsMenuSlotHandler(this);
 	PauseMenuSlotHandler* pauseMenuSlotHandler = new PauseMenuSlotHandler(this);
-	auto rootItem = pauseMenuRenderer->getRootItem();
+	SelectEquationSlotHandler* selectEquationSlotHandler = new SelectEquationSlotHandler(this);
+	SolveEquationSlotHandler* solveEquationSlotHandler = new SolveEquationSlotHandler(character, isSolveEquationTextFieldActivated, this);
 
+	auto rootItem = mainMenu.renderer->getRootItem();
+	connect(rootItem, SIGNAL(startGameClicked()), mainMenuSlotHandler, SLOT(onStartGameClicked()));
+	connect(rootItem, SIGNAL(openSettingsClicked()), mainMenuSlotHandler, SLOT(onOpenSettingsClicked()));
+	connect(rootItem, SIGNAL(exitGameClicked()), mainMenuSlotHandler, SLOT(onExitGameClicked()));
+
+	rootItem = settingsMenu.renderer->getRootItem();
+	connect(rootItem, SIGNAL(returnToMainMenuClicked()), settingsMenuSlotHandler, SLOT(onReturnToMainMenuClicked()));
+
+	rootItem = pauseMenu.renderer->getRootItem();
 	connect(rootItem, SIGNAL(resumeGameClicked()), pauseMenuSlotHandler, SLOT(onResumeGameClicked()));
 	connect(rootItem, SIGNAL(openSettingsClicked()), pauseMenuSlotHandler, SLOT(onOpenSettingsClicked()));
 	connect(rootItem, SIGNAL(openMainMenuClicked()), pauseMenuSlotHandler, SLOT(onOpenMainMenuClicked()));
 	connect(rootItem, SIGNAL(exitGameClicked()), pauseMenuSlotHandler, SLOT(onExitGameClicked()));
-}
-void AetherEngine::createInGameUI() {
-	inGameOverlayRenderer = new UserInterfaceRenderer();
-	inGameOverlayRenderer->initialize(QSize(windowWidth, windowHeight), "qml/InGameOverlay.ui.qml");
-	inGameOverlayRenderer->setParent(mainWindow);
 
-	selectEquationRenderer = new UserInterfaceRenderer();
-	selectEquationRenderer->initialize(QSize(windowWidth, windowHeight), "qml/SelectEquation.ui.qml");
-	selectEquationRenderer->setParent(mainWindow);
-
-	inGameWindow->setSelectEquationRenderer(selectEquationRenderer);
-	SelectEquationSlotHandler* selectEquationSlotHandler = new SelectEquationSlotHandler(this);
-	auto rootItem = selectEquationRenderer->getRootItem();
+	rootItem = selectEquation.renderer->getRootItem();
 	QObject::connect(
 		rootItem, SIGNAL(buttonClicked(int)), 
 		selectEquationSlotHandler, SLOT(onButtonClicked(int))
 	);
 
-	solveEquationRenderer = new UserInterfaceRenderer();
-	solveEquationRenderer->initialize(QSize(windowWidth, windowHeight), "qml/SolveEquation.ui.qml");
-	solveEquationRenderer->setParent(mainWindow);
-
-	inGameWindow->setSolveEquationRenderer(solveEquationRenderer);
-	SolveEquationSlotHandler* solveEquationSlotHandler = new SolveEquationSlotHandler(character, isSolveEquationTextFieldActivated, this);
-	rootItem = solveEquationRenderer->getRootItem();
+	rootItem = solveEquation.renderer->getRootItem();
 	QObject::connect(
 		rootItem, SIGNAL(answerSubmitted(QString)), 
 		solveEquationSlotHandler, SLOT(onAnswerSubmitted(QString))
@@ -355,10 +336,8 @@ void AetherEngine::changeState(GameState newGameState) {
 	// entering new state
 	switch (newGameState) {
 	case GameState::MAIN_MENU:
-		stackedWidget->setCurrentWidget(mainMenuWidget);
 		break;
 	case GameState::SETTINGS_MENU:
-		stackedWidget->setCurrentWidget(settingsMenuWidget);
 		break;
 	case GameState::IN_GAME_TESTING:
 		QApplication::setOverrideCursor(Qt::BlankCursor);
@@ -545,7 +524,9 @@ void AetherEngine::mainLoop()
 
 			gameContext.requestedGameState = GameState::DUNGEON_EXPLORATION;
 		}
-		if (gameContext.currentGameState == GameState::DUNGEON_EXPLORATION			 ||
+		if (gameContext.currentGameState == GameState::MAIN_MENU					 ||
+			gameContext.currentGameState == GameState::SETTINGS_MENU				 ||
+			gameContext.currentGameState == GameState::DUNGEON_EXPLORATION			 ||
 			gameContext.currentGameState == GameState::IN_GAME_TESTING				 ||
 			gameContext.currentGameState == GameState::COMBAT_PLAYER_SELECT_EQUATION ||
 			gameContext.currentGameState == GameState::COMBAT_PLAYER_SOLVE_EQUATION  ||
@@ -620,10 +601,10 @@ void AetherEngine::cleanupMemory()
 	cleanupModel(sky);
 	cleanupModels(models);
 
-	cleanupModel(pauseMenuModel);
-	cleanupModel(inGameOverlayModel);
-	cleanupModel(selectEquationModel);
-	cleanupModel(solveEquationModel);
+	cleanupModel(pauseMenu.model);
+	cleanupModel(inGameOverlay.model);
+	cleanupModel(selectEquation.model);
+	cleanupModel(solveEquation.model);
 	/*cleanupTexture(pauseMenuTexture);
 	cleanupTexture(inGameOverlayTexture);
 	cleanupTexture(selectEquationTexture);
