@@ -159,16 +159,7 @@
     <ClCompile Include="InGameWindow.cpp">
       <Filter>source\UI\Elements</Filter>
     </ClCompile>
-    <ClCompile Include="MainMenuWidget.cpp">
-      <Filter>source\UI\Elements</Filter>
-    </ClCompile>
     <ClCompile Include="MainWindow.cpp">
-      <Filter>source\UI\Elements</Filter>
-    </ClCompile>
-    <ClCompile Include="PauseMenuQuickView.cpp">
-      <Filter>source\UI\Elements</Filter>
-    </ClCompile>
-    <ClCompile Include="SettingsMenuWidget.cpp">
       <Filter>source\UI\Elements</Filter>
     </ClCompile>
   </ItemGroup>
@@ -275,22 +266,13 @@
     <QtMoc Include="InGameWindow.h">
       <Filter>source\UI\Elements</Filter>
     </QtMoc>
-    <QtMoc Include="MainMenuWidget.h">
-      <Filter>source\UI\Elements</Filter>
-    </QtMoc>
     <QtMoc Include="MainWindow.h">
-      <Filter>source\UI\Elements</Filter>
-    </QtMoc>
-    <QtMoc Include="PauseMenuQuickView.h">
       <Filter>source\UI\Elements</Filter>
     </QtMoc>
     <QtMoc Include="PauseMenuSlotHandler.h">
       <Filter>source\UI\Elements</Filter>
     </QtMoc>
     <QtMoc Include="SelectEquationSlotHandler.h">
-      <Filter>source\UI\Elements</Filter>
-    </QtMoc>
-    <QtMoc Include="SettingsMenuWidget.h">
       <Filter>source\UI\Elements</Filter>
     </QtMoc>
     <QtMoc Include="SolveEquationSlotHandler.h">

@@ -23,6 +23,8 @@ void AetherEngine::prepareUI()
 	mainWindow->addWidget(inGameWidget);
 	mainWindow->show();
 
+	inGameWindow->setKeyboardGrabEnabled(true);
+
 	gameContext.requestedGameState = GameState::COMBAT_PLAYER_SOLVE_EQUATION;
 	gameContext.requestedGameState = GameState::COMBAT_PLAYER_SELECT_EQUATION;
 	gameContext.requestedGameState = GameState::MAIN_MENU;
@@ -243,14 +245,12 @@ void AetherEngine::createMainWindow()
 	connect(mainWindow, &MainWindow::resized, this,
 		&AetherEngine::onMainWindowResized
 	);
-
 	connect(mainWindow, &MainWindow::moved, this,
 		&AetherEngine::onMainWindowMoved
 	);
-
 	connect(mainWindow, &MainWindow::closed, [this]() {
 		gameContext.requestedGameState = GameState::EXIT;
-		});
+	});
 }
 void AetherEngine::createInGameWindow()
 {
@@ -273,7 +273,6 @@ void AetherEngine::createInGameWindow()
 	inGameWindow->resize(windowWidth, windowHeight);
 	inGameWindow->setTitle("Aether in game");
 	inGameWindow->create();
-	//inGameWindow->setKeyboardGrabEnabled(true);
 
 	vkInit.surface = qVulkanInstance.surfaceForWindow(inGameWindow);
 	if (vkInit.surface == VK_NULL_HANDLE) {
@@ -336,8 +335,10 @@ void AetherEngine::changeState(GameState newGameState) {
 	// entering new state
 	switch (newGameState) {
 	case GameState::MAIN_MENU:
+		stackedWidget->setCurrentWidget(inGameWidget);
 		break;
 	case GameState::SETTINGS_MENU:
+		stackedWidget->setCurrentWidget(inGameWidget);
 		break;
 	case GameState::IN_GAME_TESTING:
 		QApplication::setOverrideCursor(Qt::BlankCursor);
@@ -349,6 +350,7 @@ void AetherEngine::changeState(GameState newGameState) {
 		stackedWidget->setCurrentWidget(inGameWidget);
 		if (!inGameWindow->isActive()) { inGameWindow->requestActivate(); }
 		//if (!inGameWidget->hasFocus()) { inGameWidget->setFocus(); }
+		//if (!inGameWindow->isActive()) { inGameWindow->requestActivate(); }
 		break;
 	case GameState::COMBAT_PLAYER_SELECT_EQUATION:
 		stackedWidget->setCurrentWidget(inGameWidget);
@@ -406,11 +408,7 @@ void AetherEngine::mainLoop()
 		previousTime = currentTime;
 		timeSinceLaunch += deltaTime;
 
-		//std::cout << "is active: " << inGameWindow->isActive() << "\n";
-
 		QCoreApplication::processEvents();
-		//QFocusEvent focusIn(QEvent::FocusIn);
-		//QCoreApplication::sendEvent(solveEquationRenderer->getQuickWindow(), &focusIn);
 
 		if (fpsMenu) {
 			counter++;
@@ -447,6 +445,11 @@ void AetherEngine::mainLoop()
 			}
 		}
 
+		//std::cout << "state: " << static_cast<uint32_t>(gameContext.currentGameState) << "\n";
+
+		//std::cout << "is active: " << mainWindow->hasFocus() << "\n";
+		//mainWindow->setFocus();
+		//std::cout << "is exposed: " << mainWindow->windowHandle()->isExposed() << "\n";
 		if (!inGameWindow->isExposed()) { continue; }
 
 		if (gameContext.currentGameState == GameState::IN_GAME_TESTING) {
@@ -601,14 +604,14 @@ void AetherEngine::cleanupMemory()
 	cleanupModel(sky);
 	cleanupModels(models);
 
+	cleanupTexture(pauseMenu.texture);
+	cleanupTexture(inGameOverlay.texture);
+	cleanupTexture(selectEquation.texture);
+	cleanupTexture(solveEquation.texture);
 	cleanupModel(pauseMenu.model);
 	cleanupModel(inGameOverlay.model);
 	cleanupModel(selectEquation.model);
 	cleanupModel(solveEquation.model);
-	/*cleanupTexture(pauseMenuTexture);
-	cleanupTexture(inGameOverlayTexture);
-	cleanupTexture(selectEquationTexture);
-	cleanupTexture(solveEquationTexture);*/
 
 	cleanupTexture(grassTexture);
 	cleanupTexture(transparentTexture);

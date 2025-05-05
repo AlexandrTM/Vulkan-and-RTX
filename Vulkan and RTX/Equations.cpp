@@ -24,7 +24,7 @@ std::vector<Equation> Equations::generateEquations(size_t amount, double difficu
 			break;
 		case 1: 
 			real_difficulty = randomNormalizedWeightedReal(negative_linear_weights) * 6 * difficultyScale;
-			equationString = generate_negative_int_linear_equation(real_difficulty); 
+			equationString = generate_negative_int_linear_equation(real_difficulty * 0.9); 
 			break;
 		}
 		if (equationString.empty()) continue;
@@ -38,7 +38,7 @@ std::vector<Equation> Equations::generateEquations(size_t amount, double difficu
 		
 		double rawPenalty = std::max(
 			0.025 * real_difficulty * real_difficulty +
-			0.130 * real_difficulty + 2.4, 0.0);
+			0.130 * real_difficulty + 2.2, 0.0);
 		double wrongAnswerPenalty = std::round(rawPenalty * 4.0) / 4.0;
 		double timeToSolve = 9.5;
 		double answer = solveForX(equationString);

@@ -8,10 +8,7 @@
 #include "UserInterfaceElement.h"
 
 #include "InGameWindow.h"
-#include "MainMenuWidget.h"
 #include "MainWindow.h"
-#include "SettingsMenuWidget.h"
-#include "PauseMenuQuickView.h"
 
 #include "MainMenuSlotHandler.h"
 #include "SettingsMenuSlotHandler.h"

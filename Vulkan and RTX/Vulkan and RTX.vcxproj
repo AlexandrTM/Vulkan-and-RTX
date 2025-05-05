@@ -205,11 +205,9 @@
     <ClCompile Include="HasInventory.cpp" />
     <ClCompile Include="IsMovable.cpp" />
     <ClCompile Include="Item.cpp" />
-    <ClCompile Include="MainMenuWidget.cpp" />
     <ClCompile Include="MainWindow.cpp" />
     <ClCompile Include="Mob.cpp" />
     <ClCompile Include="Model.cpp" />
-    <ClCompile Include="PauseMenuQuickView.cpp" />
     <ClCompile Include="UserInterfaceElement.cpp" />
     <ClCompile Include="UserInterfaceRenderer.cpp" />
     <ClCompile Include="pch.cpp">
@@ -218,7 +216,6 @@
     </ClCompile>
     <ClCompile Include="ModelManager.cpp" />
     <ClCompile Include="RenderingManager.cpp" />
-    <ClCompile Include="SettingsMenuWidget.cpp" />
     <ClCompile Include="spa.c">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</ExcludedFromBuild>
@@ -240,7 +237,6 @@
   <ItemGroup>
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Character.h" />
-    <QtMoc Include="MainMenuWidget.h" />
     <ClInclude Include="CollisionManager.h" />
     <ClInclude Include="Dungeon.h" />
     <ClInclude Include="DungeonComponents.h" />
@@ -248,7 +244,6 @@
     <ClInclude Include="Equations.h" />
     <ClInclude Include="GameContext.h" />
     <QtMoc Include="MainWindow.h" />
-    <QtMoc Include="PauseMenuQuickView.h" />
     <QtMoc Include="UserInterfaceRenderer.h" />
     <ClInclude Include="aether_core.h" />
     <ClInclude Include="gamecontext_instance.h" />
@@ -266,7 +261,6 @@
     <ClInclude Include="pch.h" />
     <ClInclude Include="IsCreature.h" />
     <ClInclude Include="resource.h" />
-    <QtMoc Include="SettingsMenuWidget.h" />
     <QtMoc Include="SelectEquationSlotHandler.h" />
     <QtMoc Include="SolveEquationSlotHandler.h" />
     <QtMoc Include="SettingsMenuSlotHandler.h" />
