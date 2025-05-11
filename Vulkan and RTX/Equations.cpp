@@ -46,7 +46,7 @@ std::vector<Equation> Equations::generateEquations(size_t amount, double difficu
 
 		//double answer = static_cast<double>(x);
 		//std::cout << "real_difficulty: " << real_difficulty << "\n";
-		//std::cout << "answer " << equations.size() << ": " << answer << "\n";
+		std::cout << "answer " << equations.size() << ": " << answer << "\n";
 		//std::cout << "answer " << equations.size() << ": " << answer << "\n";
 
 		if (!std::isnan(answer)) {

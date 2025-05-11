@@ -659,13 +659,13 @@ void AetherEngine::recordCommandBuffer(
 }
 
 void AetherEngine::updateSolveEquation() {
-	if (!isSolveEquationTextFieldActivated) {
-		solveEquation.renderer->getQuickWindow()->requestActivate();
-		isSolveEquationTextFieldActivated = true;
-	}
 	auto contentItem = solveEquation.renderer->getQuickWindow()->contentItem();
 	if (!contentItem->hasFocus()) {
 		contentItem->setFocus(true);
+	}
+	if (!isSolveEquationTextFieldActivated) {
+		solveEquation.renderer->getQuickWindow()->requestActivate();
+		isSolveEquationTextFieldActivated = true;
 	}
 
 	if (!solveEquation.renderer) return;

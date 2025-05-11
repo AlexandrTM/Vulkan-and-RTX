@@ -99,6 +99,7 @@ private:
 	mutable std::unordered_set<uint64_t> deletedTextureHashes;
 
 	Texture grassTexture;
+	Texture floor_background;
 	Texture	transparentTexture;
 	Texture	notFoundTexture;
 

@@ -21,7 +21,7 @@ std::vector<Model> Dungeon::createDungeonFloor(
 	size_t maxRoomCount = 15;
 	float cellSize = 1.0f;
 	size_t maxRoomDimension = 9; // max of width or height
-	float roomSpacing = (maxRoomDimension * cellSize) + cellSize * 10;
+	float roomSpacing = (maxRoomDimension * cellSize) + cellSize * 3;
 
 	generateDungeonFloorGrid(minRoomCount, maxRoomCount, roomGrid);
 

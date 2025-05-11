@@ -57,27 +57,28 @@ void AetherEngine::prepareResources()
 	createSyncObjects();
 
 	loadTextureFromPath("textures/grass001.png", grassTexture);
+	loadTextureFromPath("textures/floor_background_floor_2.png", floor_background);
 	createSolidColorTexture({ 0, 0, 0, 0 }, 1, 1, transparentTexture);
 	loadTextureFromPath("textures/notFoundTexture.png", notFoundTexture);
 
 	//loadModelsFromFolder("models", models);
 	
-	//TerrainData terrainData = {
-	//	100, 100, // chunkWidth, chunkLength
-	//	4, 4,     // chunkRows, chunkCols
-	//	2.0f,     // gridSize
-	//	0.1f,     // scale
-	//	0.2f,     // height
-	//};
-	//terrainGenerator = TerrainGenerator(generator);
-	//TerrainGenerator::generateTerrain(
-	//	-(terrainData.chunkWidth * terrainData.chunkRows / 2 * terrainData.gridSize),
-	//	0,
-	//	-(terrainData.chunkLength * terrainData.chunkCols / 2 * terrainData.gridSize),
-	//	terrainData,
-	//	models, grassTexture, 8.0f,
-	//	terrainGenerator.get(), 1
-	//);
+	TerrainData terrainData = {
+		30, 30,   // chunkWidth, chunkLength
+		4, 4,     // chunkRows, chunkCols
+		5.0f,     // gridSize
+		0.1f,     // scale
+		0.0f,     // height
+	};
+	terrainGenerator = std::make_unique<TerrainGenerator>();
+	terrainGenerator->generateTerrain(
+		-(terrainData.chunkWidth * terrainData.chunkRows / 2 * terrainData.gridSize),
+		-0.01,
+		-(terrainData.chunkLength * terrainData.chunkCols / 2 * terrainData.gridSize),
+		terrainData,
+		models, floor_background, 8.0f,
+		1
+	);
 
 	ModelManager::createSkyModel(sky);
 
@@ -85,7 +86,7 @@ void AetherEngine::prepareResources()
 	for (const Model& model : models) {
 		meshesNum += model.meshes.size();
 	}*/
-	createDescriptorPool(33 * 15, 33 * 15, descriptorPool);
+	createDescriptorPool(33 * 15 * 2, 33 * 15 * 2, descriptorPool);
 
 	recreateDungeonFloor(gameContext.currentFloor, 1);
 	gameContext.currentRoom = Dungeon::enterDungeonFloor(gameContext.dungeonFloor, character);
@@ -95,6 +96,10 @@ void AetherEngine::prepareResources()
 	computeAABB_createVertexIndexBuffers(sky);
 	createDescriptorSets(sky, MAX_FRAMES_IN_FLIGHT);
 	createShaderBuffers(sky, MAX_FRAMES_IN_FLIGHT);
+
+	computeAABB_createVertexIndexBuffers(models);
+	createShaderBuffers(models, MAX_FRAMES_IN_FLIGHT);
+	createDescriptorSets(models, MAX_FRAMES_IN_FLIGHT);
 }
 
 void AetherEngine::onMainWindowResized(int width, int height) {
@@ -106,6 +111,12 @@ void AetherEngine::onMainWindowResized(int width, int height) {
 	//std::cout << "center pos: " << gameContext.windowCenterPos.x() << " " << gameContext.windowCenterPos.y() << "\n";
 	character.camera.setViewportSize(windowWidth, windowHeight);
 
+	if (mainMenu.renderer) {
+		mainMenu.renderer->resize(QSize(windowWidth, windowHeight));
+	}
+	if (settingsMenu.renderer) {
+		settingsMenu.renderer->resize(QSize(windowWidth, windowHeight));
+	}
 	if (pauseMenu.renderer) {
 		pauseMenu.renderer->resize(QSize(windowWidth, windowHeight));
 	}
@@ -236,7 +247,7 @@ void AetherEngine::createMainWindow()
 	mainWindow->resize(windowWidth, windowHeight);
 	//mainWindow->setWindowState(Qt::WindowFullScreen);
     //mainWindow->setWindowFlags(Qt::FramelessWindowHint);
-	mainWindow->setWindowTitle("Aether");
+	mainWindow->setWindowTitle("Math dungeon");
 	mainWindow->setWindowIcon(QIcon("textures/granite_square.png"));
 	//mainWindow->setWindowState(Qt::WindowMaximized);
 
@@ -614,6 +625,7 @@ void AetherEngine::cleanupMemory()
 	cleanupModel(solveEquation.model);
 
 	cleanupTexture(grassTexture);
+	cleanupTexture(floor_background);
 	cleanupTexture(transparentTexture);
 	cleanupTexture(notFoundTexture);
 	cleanupTexture(depthTexture);
