@@ -121,12 +121,9 @@ void AetherEngine::recreateSwapchain()
 	createSwapchainFramebuffers();
 	createCommandBuffers();
 
-	changeUIElementSize(mainMenu, windowWidth, windowHeight);
-	changeUIElementSize(settingsMenu, windowWidth, windowHeight);
-	changeUIElementSize(pauseMenu, windowWidth, windowHeight);
-	changeUIElementSize(inGameOverlay, windowWidth, windowHeight);
-	changeUIElementSize(selectEquation, windowWidth, windowHeight);
-	changeUIElementSize(solveEquation, windowWidth, windowHeight);
+	for (auto& [id, elem] : uiMap) {
+		changeUIElementSize(elem, windowWidth, windowHeight);
+	}
 
 	createShaderBuffers(sky, MAX_FRAMES_IN_FLIGHT);
 	createShaderBuffers(models, MAX_FRAMES_IN_FLIGHT);

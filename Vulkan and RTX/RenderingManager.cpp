@@ -611,19 +611,13 @@ void AetherEngine::recordCommandBuffer(
 		recordModelsToCommandBuffer(models, commandBuffer);
 
 		if (gameContext.currentGameState == GameState::MAIN_MENU) {
-			renderQmlToTexture(mainMenu.renderer.get(), mainMenu.texture);
-			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["ui"]);
-			recordModelToCommandBuffer(mainMenu.model, commandBuffer);
+			recordUiElementToCommandBuffer(uiMap[uiElementId::MainMenu], commandBuffer);
 		}
 		if (gameContext.currentGameState == GameState::SETTINGS_MENU) {
-			renderQmlToTexture(settingsMenu.renderer.get(), settingsMenu.texture);
-			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["ui"]);
-			recordModelToCommandBuffer(settingsMenu.model, commandBuffer);
+			recordUiElementToCommandBuffer(uiMap[uiElementId::SettingsMenu], commandBuffer);
 		}
 		if (gameContext.currentGameState == GameState::PAUSED) {
-			renderQmlToTexture(pauseMenu.renderer.get(), pauseMenu.texture);
-			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["ui"]);
-			recordModelToCommandBuffer(pauseMenu.model, commandBuffer);
+			recordUiElementToCommandBuffer(uiMap[uiElementId::PauseMenu], commandBuffer);
 		}
 		if (gameContext.currentGameState == GameState::DUNGEON_EXPLORATION			 ||
 			gameContext.currentGameState == GameState::IN_GAME_TESTING				 ||
@@ -633,21 +627,15 @@ void AetherEngine::recordCommandBuffer(
 			gameContext.currentGameState == GameState::DUNGEON_ROOM_CLEANED          ||
 			gameContext.currentGameState == GameState::PAUSED) {
 
-			renderQmlToTexture(inGameOverlay.renderer.get(), inGameOverlay.texture);
-			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["ui"]);
-			recordModelToCommandBuffer(inGameOverlay.model, commandBuffer);
+			recordUiElementToCommandBuffer(uiMap[uiElementId::InGameOverlay], commandBuffer);
 		}
 		if (gameContext.currentGameState == GameState::COMBAT_PLAYER_SELECT_EQUATION) {
 
-			renderQmlToTexture(selectEquation.renderer.get(), selectEquation.texture);
-			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["ui"]);
-			recordModelToCommandBuffer(selectEquation.model, commandBuffer);
+			recordUiElementToCommandBuffer(uiMap[uiElementId::SelectEquation], commandBuffer);
 		}
 		if (gameContext.currentGameState == GameState::COMBAT_PLAYER_SOLVE_EQUATION) {
 
-			renderQmlToTexture(solveEquation.renderer.get(), solveEquation.texture);
-			vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["ui"]);
-			recordModelToCommandBuffer(solveEquation.model, commandBuffer);
+			recordUiElementToCommandBuffer(uiMap[uiElementId::SolveEquation], commandBuffer);
 		}
 	}
 
@@ -659,17 +647,17 @@ void AetherEngine::recordCommandBuffer(
 }
 
 void AetherEngine::updateSolveEquation() {
-	auto contentItem = solveEquation.renderer->getQuickWindow()->contentItem();
+	auto contentItem = uiMap[uiElementId::SolveEquation].renderer->getQuickWindow()->contentItem();
 	if (!contentItem->hasFocus()) {
 		contentItem->setFocus(true);
 	}
 	if (!isSolveEquationTextFieldActivated) {
-		solveEquation.renderer->getQuickWindow()->requestActivate();
+		uiMap[uiElementId::SolveEquation].renderer->getQuickWindow()->requestActivate();
 		isSolveEquationTextFieldActivated = true;
 	}
 
-	if (!solveEquation.renderer) return;
-	auto rootItem = solveEquation.renderer->getRootItem();
+	if (!uiMap[uiElementId::SolveEquation].renderer) return;
+	auto rootItem = uiMap[uiElementId::SolveEquation].renderer->getRootItem();
 	if (!rootItem) return;
 
 	QObject* answerInput = rootItem->findChild<QObject*>("answerInput");
@@ -714,18 +702,18 @@ QColor AetherEngine::interpolateColor(const QColor& from, const QColor& to, doub
 	return QColor(r, g, b, a);
 }
 void AetherEngine::clearSolveEquationInput() {
-	auto rootItem = solveEquation.renderer->getRootItem();
+	auto rootItem = uiMap[uiElementId::SolveEquation].renderer->getRootItem();
 	QObject* answerInput = rootItem->findChild<QObject*>("answerInput");
 	if (answerInput) { answerInput->setProperty("text", ""); }
-	solveEquation.renderer->getQuickWindow()->contentItem()->setFocus(false);
+	uiMap[uiElementId::SolveEquation].renderer->getQuickWindow()->contentItem()->setFocus(false);
 }
 void AetherEngine::updateSelectEquation(size_t amountOfEquations) {
 	gameContext.equations = Equations::generateEquations(amountOfEquations, 1);
 
 	const auto& equations = gameContext.equations;
 
-	if (!selectEquation.renderer) return;
-	auto rootItem = selectEquation.renderer->getRootItem();
+	if (!uiMap[uiElementId::SelectEquation].renderer) return;
+	auto rootItem = uiMap[uiElementId::SelectEquation].renderer->getRootItem();
 	if (!rootItem) return;
 
 	for (size_t i = 0; i < amountOfEquations; ++i) {
@@ -761,9 +749,9 @@ void AetherEngine::updateSelectEquation(size_t amountOfEquations) {
 	}
 }
 void AetherEngine::updateInGameOverlay() {
-	if (!inGameOverlay.renderer) return;
+	if (!uiMap[uiElementId::InGameOverlay].renderer) return;
 
-	auto rootItem = inGameOverlay.renderer->getRootItem();
+	auto rootItem = uiMap[uiElementId::InGameOverlay].renderer->getRootItem();
 	if (!rootItem) return;
 
 	QObject* playerHealth = rootItem->findChild<QObject*>("playerHealth");
@@ -794,6 +782,12 @@ void AetherEngine::updateInGameOverlay() {
 	}
 }
 
+void AetherEngine::recordUiElementToCommandBuffer(UserInterfaceElement& uiElement, VkCommandBuffer commandBuffer)
+{
+	renderQmlToTexture(uiElement.renderer.get(), uiElement.texture);
+	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipelines["ui"]);
+	recordModelToCommandBuffer(uiElement.model, commandBuffer);
+}
 void AetherEngine::renderQmlToTexture(UserInterfaceRenderer* renderer, Texture& texture)
 {
 	renderer->render();
@@ -1020,7 +1014,9 @@ void AetherEngine::createDescriptorSets(Model& model, size_t swapchainImageCount
 void AetherEngine::createDescriptorSets(Mesh& mesh, size_t swapchainImageCount)
 {
 	for (size_t frameIndex = 0; frameIndex < swapchainImageCount; ++frameIndex) {
-		createDescriptorSet(mesh.descriptorSets[frameIndex]);
+		if (mesh.descriptorSets[frameIndex] == VK_NULL_HANDLE) {
+			createDescriptorSet(mesh.descriptorSets[frameIndex]);
+		}
 	}
 }
 void AetherEngine::createDescriptorSet(VkDescriptorSet& descriptorSet)

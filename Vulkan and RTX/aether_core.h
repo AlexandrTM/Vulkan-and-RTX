@@ -64,6 +64,17 @@ enum class GameState : uint32_t
 	NONE = std::numeric_limits<uint32_t>::max(),
 };
 
+enum class uiElementId : uint32_t
+{
+	MainMenu,
+	SettingsMenu,
+	PauseMenu,
+	InGameOverlay,
+	SelectEquation,
+	SolveEquation,
+	Count
+};
+
 struct UniformBufferObject
 {
 	alignas(16) glm::mat4 model;

@@ -1064,9 +1064,6 @@ static void processAnimations(const aiScene* scene, Model& model) {
 	}
 }
 
-static bool isRootBone(const Bone& bone) {
-	return bone.children.empty();
-}
 static aiNode* findNode(aiNode* rootNode, const std::string& name) {
 	if (name == rootNode->mName.C_Str()) {
 		return rootNode;
@@ -1078,37 +1075,6 @@ static aiNode* findNode(aiNode* rootNode, const std::string& name) {
 		}
 	}
 	return nullptr;
-}
-static void updateBoneHierarchy(
-	std::vector<Bone>& bones, int boneIndex,
-	const glm::mat4& parentTransform, const glm::mat4& globalInverseTransform
-) {
-	Bone& bone = bones[boneIndex];
-	glm::mat4 globalTransform = parentTransform * bone.globalTransform;
-
-	// Compute the final transform for skinning
-	bone.finalTransform = globalInverseTransform * bone.globalTransform * bone.offsetMatrix;
-	/*glm::vec3 position, scale;
-	glm::quat rotation;
-	decomposeTransform(bone.globalTransform, position, rotation, scale);
-	std::cout << "boneName: " << bone.name << "\n";
-	std::cout << "Position: " << glm::to_string(position) << "\n";
-	std::cout << "Rotation: " << glm::to_string(rotation) << "\n";
-	std::cout << "Scale: " << glm::to_string(scale) << "\n";*/
-
-	// Update children
-	for (int childIndex : bone.children) {
-		updateBoneHierarchy(bones, childIndex, globalTransform, globalInverseTransform);
-	}
-}
-static void updateModelBones(Model& model, const glm::mat4& globalInverseTransform) {
-	for (Mesh& mesh : model.meshes) {
-		for (size_t i = 0; i < mesh.bones.size(); ++i) {
-			if (isRootBone(mesh.bones[i])) {
-				updateBoneHierarchy(mesh.bones, i, glm::mat4(1.0f), globalInverseTransform);
-			}
-		}
-	}
 }
 static void processBones(aiMesh* mesh, const aiScene* scene, Mesh& processedMesh)
 {
@@ -1152,17 +1118,6 @@ static void processBones(aiMesh* mesh, const aiScene* scene, Mesh& processedMesh
 				boneCount[vertexID]++;
 			}
 		}
-
-		/*aiNode* boneNode = findNode(scene->mRootNode, boneName);
-		if (boneNode) {
-			for (size_t j = 0; j < boneNode->mNumChildren; ++j) {
-				std::string childName = boneNode->mChildren[j]->mName.C_Str();
-				if (processedMesh.boneMap.find(childName) != processedMesh.boneMap.end()) {
-					int childIndex = processedMesh.boneMap[childName];
-					processedMesh.bones[boneIndex].children.push_back(childIndex);
-				}
-			}
-		}*/
 	}
 
 	// Normalize weights for vertices
@@ -1317,9 +1272,6 @@ void AetherEngine::loadModelsFromFolder(
 		);
 		processAnimations(scene, rootModel);
 		models.push_back(rootModel);
-		for (size_t i = 0; i < models.size(); i++) {
-			//updateModelBones(models[i], globalInverseTransform);
-		}
 
 		/*meshesNum = 0;
 		for (size_t i = 0; i < models.size(); i++) {

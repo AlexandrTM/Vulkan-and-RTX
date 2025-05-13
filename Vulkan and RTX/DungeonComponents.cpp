@@ -25,7 +25,7 @@ DungeonRoom::DungeonRoom(
     centerPosition = position + glm::vec3(metricWidth / 2.0f, 0.0f, metricLength / 2.0f);
     //std::cout << "center position: " << glm::to_string(centerPosition) << "\n";
 
-    float_t zoomCoefficient = 1.35;
+    float_t zoomCoefficient = 1.45;
     cameraPosition = centerPosition + glm::vec3(-8.3 * zoomCoefficient, 7.5 * zoomCoefficient, 0.0);
 }
 

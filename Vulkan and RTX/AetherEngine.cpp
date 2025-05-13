@@ -111,23 +111,10 @@ void AetherEngine::onMainWindowResized(int width, int height) {
 	//std::cout << "center pos: " << gameContext.windowCenterPos.x() << " " << gameContext.windowCenterPos.y() << "\n";
 	character.camera.setViewportSize(windowWidth, windowHeight);
 
-	if (mainMenu.renderer) {
-		mainMenu.renderer->resize(QSize(windowWidth, windowHeight));
-	}
-	if (settingsMenu.renderer) {
-		settingsMenu.renderer->resize(QSize(windowWidth, windowHeight));
-	}
-	if (pauseMenu.renderer) {
-		pauseMenu.renderer->resize(QSize(windowWidth, windowHeight));
-	}
-	if (inGameOverlay.renderer) {
-		inGameOverlay.renderer->resize(QSize(windowWidth, windowHeight));
-	}
-	if (selectEquation.renderer) {
-		selectEquation.renderer->resize(QSize(windowWidth, windowHeight));
-	}
-	if (solveEquation.renderer) {
-		solveEquation.renderer->resize(QSize(windowWidth, windowHeight));
+	for (auto& [id, elem] : uiMap) {
+		if (elem.renderer) {
+			elem.renderer->resize(QSize(windowWidth, windowHeight));
+		}
 	}
 }
 void AetherEngine::onMainWindowMoved(int x, int y) {
@@ -136,8 +123,8 @@ void AetherEngine::onMainWindowMoved(int x, int y) {
 }
 void AetherEngine::onInGameWindowMoved(int x, int y) {
 	//pauseMenuView->setPosition(x, y);
-	if (solveEquation.renderer) {
-		solveEquation.renderer->getQuickWindow()->setPosition(inGameWindow->position() + QPoint(x, y));
+	if (uiMap[uiElementId::SolveEquation].renderer) {
+		uiMap[uiElementId::SolveEquation].renderer->getQuickWindow()->setPosition(inGameWindow->position() + QPoint(x, y));
 	}
 }
 void AetherEngine::onInGameWindowLostFocus() {
@@ -195,18 +182,18 @@ void AetherEngine::changeUIElementSize(
 	createDescriptorSets(uiElement.model, MAX_FRAMES_IN_FLIGHT);
 }
 void AetherEngine::createUIElements() {
-	mainMenu = createUIElement("qml/MainMenu.ui.qml", windowWidth, windowHeight, mainWindow);
-	settingsMenu = createUIElement("qml/SettingsMenu.ui.qml", windowWidth, windowHeight, mainWindow);
-	pauseMenu = createUIElement("qml/PauseMenu.ui.qml", windowWidth, windowHeight, mainWindow);
-	inGameOverlay = createUIElement("qml/InGameOverlay.ui.qml", windowWidth, windowHeight, mainWindow);
-	selectEquation = createUIElement("qml/SelectEquation.ui.qml", windowWidth, windowHeight, mainWindow);
-	solveEquation = createUIElement("qml/SolveEquation.ui.qml", windowWidth, windowHeight, mainWindow);
+	uiMap[uiElementId::MainMenu] = createUIElement("qml/MainMenu.ui.qml", windowWidth, windowHeight, mainWindow);
+	uiMap[uiElementId::SettingsMenu] = createUIElement("qml/SettingsMenu.ui.qml", windowWidth, windowHeight, mainWindow);
+	uiMap[uiElementId::PauseMenu] = createUIElement("qml/PauseMenu.ui.qml", windowWidth, windowHeight, mainWindow);
+	uiMap[uiElementId::InGameOverlay] = createUIElement("qml/InGameOverlay.ui.qml", windowWidth, windowHeight, mainWindow);
+	uiMap[uiElementId::SelectEquation] = createUIElement("qml/SelectEquation.ui.qml", windowWidth, windowHeight, mainWindow);
+	uiMap[uiElementId::SolveEquation] = createUIElement("qml/SolveEquation.ui.qml", windowWidth, windowHeight, mainWindow);
 
-	inGameWindow->setMainMenuRenderer(mainMenu.renderer.get());
-	inGameWindow->setSettingsMenuRenderer(settingsMenu.renderer.get());
-	inGameWindow->setPauseMenuRenderer(pauseMenu.renderer.get());
-	inGameWindow->setSelectEquationRenderer(selectEquation.renderer.get());
-	inGameWindow->setSolveEquationRenderer(solveEquation.renderer.get());
+	inGameWindow->setMainMenuRenderer(uiMap[uiElementId::MainMenu].renderer.get());
+	inGameWindow->setSettingsMenuRenderer(uiMap[uiElementId::SettingsMenu].renderer.get());
+	inGameWindow->setPauseMenuRenderer(uiMap[uiElementId::PauseMenu].renderer.get());
+	inGameWindow->setSelectEquationRenderer(uiMap[uiElementId::SelectEquation].renderer.get());
+	inGameWindow->setSolveEquationRenderer(uiMap[uiElementId::SolveEquation].renderer.get());
 
 	MainMenuSlotHandler* mainMenuSlotHandler = new MainMenuSlotHandler(this);
 	SettingsMenuSlotHandler* settingsMenuSlotHandler = new SettingsMenuSlotHandler(this);
@@ -214,27 +201,27 @@ void AetherEngine::createUIElements() {
 	SelectEquationSlotHandler* selectEquationSlotHandler = new SelectEquationSlotHandler(this);
 	SolveEquationSlotHandler* solveEquationSlotHandler = new SolveEquationSlotHandler(character, isSolveEquationTextFieldActivated, this);
 
-	auto rootItem = mainMenu.renderer->getRootItem();
+	auto rootItem = uiMap[uiElementId::MainMenu].renderer->getRootItem();
 	connect(rootItem, SIGNAL(startGameClicked()), mainMenuSlotHandler, SLOT(onStartGameClicked()));
 	connect(rootItem, SIGNAL(openSettingsClicked()), mainMenuSlotHandler, SLOT(onOpenSettingsClicked()));
 	connect(rootItem, SIGNAL(exitGameClicked()), mainMenuSlotHandler, SLOT(onExitGameClicked()));
 
-	rootItem = settingsMenu.renderer->getRootItem();
+	rootItem = uiMap[uiElementId::SettingsMenu].renderer->getRootItem();
 	connect(rootItem, SIGNAL(returnToMainMenuClicked()), settingsMenuSlotHandler, SLOT(onReturnToMainMenuClicked()));
 
-	rootItem = pauseMenu.renderer->getRootItem();
+	rootItem = uiMap[uiElementId::PauseMenu].renderer->getRootItem();
 	connect(rootItem, SIGNAL(resumeGameClicked()), pauseMenuSlotHandler, SLOT(onResumeGameClicked()));
 	connect(rootItem, SIGNAL(openSettingsClicked()), pauseMenuSlotHandler, SLOT(onOpenSettingsClicked()));
 	connect(rootItem, SIGNAL(openMainMenuClicked()), pauseMenuSlotHandler, SLOT(onOpenMainMenuClicked()));
 	connect(rootItem, SIGNAL(exitGameClicked()), pauseMenuSlotHandler, SLOT(onExitGameClicked()));
 
-	rootItem = selectEquation.renderer->getRootItem();
+	rootItem = uiMap[uiElementId::SelectEquation].renderer->getRootItem();
 	QObject::connect(
 		rootItem, SIGNAL(buttonClicked(int)), 
 		selectEquationSlotHandler, SLOT(onButtonClicked(int))
 	);
 
-	rootItem = solveEquation.renderer->getRootItem();
+	rootItem = uiMap[uiElementId::SolveEquation].renderer->getRootItem();
 	QObject::connect(
 		rootItem, SIGNAL(answerSubmitted(QString)), 
 		solveEquationSlotHandler, SLOT(onAnswerSubmitted(QString))
@@ -615,14 +602,14 @@ void AetherEngine::cleanupMemory()
 	cleanupModel(sky);
 	cleanupModels(models);
 
-	cleanupTexture(pauseMenu.texture);
-	cleanupTexture(inGameOverlay.texture);
-	cleanupTexture(selectEquation.texture);
-	cleanupTexture(solveEquation.texture);
-	cleanupModel(pauseMenu.model);
-	cleanupModel(inGameOverlay.model);
-	cleanupModel(selectEquation.model);
-	cleanupModel(solveEquation.model);
+	for (auto& [id, elem] : uiMap) {
+		cleanupModel(elem.model);
+
+		/*cleanupTexture(pauseMenu.texture);
+		cleanupTexture(inGameOverlay.texture);
+		cleanupTexture(selectEquation.texture);
+		cleanupTexture(solveEquation.texture);*/
+	}
 
 	cleanupTexture(grassTexture);
 	cleanupTexture(floor_background);

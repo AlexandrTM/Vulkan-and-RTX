@@ -85,8 +85,8 @@ private:
 	std::vector<VkFence>     inFlightFences;
 	uint32_t currentFrame = 0;
 
-	UserInterfaceElement 
-		mainMenu, settingsMenu, pauseMenu, inGameOverlay, selectEquation, solveEquation;
+	std::unordered_map<uiElementId, UserInterfaceElement> uiMap;
+
 	bool isSelectEquationActivated = false;
 	bool isSolveEquationTextFieldActivated = false;
 
@@ -148,6 +148,7 @@ private:
 
 	void prepareResources();
 	void prepareUI();
+	void recordUiElementToCommandBuffer(UserInterfaceElement& uiElement, VkCommandBuffer commandBuffer);
 	void renderQmlToTexture(UserInterfaceRenderer* userInterfaceRenderer, Texture& texture);
 
 	void mainLoop();

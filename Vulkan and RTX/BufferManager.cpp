@@ -141,7 +141,7 @@ void AetherEngine::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSi
 void AetherEngine::createVertexBuffer(Mesh& mesh)
 {
 	if (mesh.vertexBuffer != VK_NULL_HANDLE) {
-		std::cout << "mesh already have vertex buffer\n";
+		//std::cout << "mesh already have vertex buffer\n";
 		return;
 	}
 
@@ -208,7 +208,7 @@ void AetherEngine::createVertexBuffer(Mesh& mesh)
 void AetherEngine::createIndexBuffer(Mesh& mesh)
 {
 	if (mesh.indexBuffer != VK_NULL_HANDLE) {
-		std::cout << "mesh already have index buffer\n";
+		//std::cout << "mesh already have index buffer\n";
 		return;
 	}
 
@@ -276,15 +276,17 @@ void AetherEngine::createShaderBuffers(Model& model, size_t swapchainImageCount)
 void AetherEngine::createShaderBuffers(Mesh& mesh, size_t swapchainImageCount)
 {
 	for (size_t frameIndex = 0; frameIndex < swapchainImageCount; ++frameIndex) {
-		createBuffer(
-			sizeof(UniformBufferObject),
-			VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, true,
-			mesh.UBOBuffers[frameIndex],
-			mesh.UBOAllocations[frameIndex]
-		);
+		if (mesh.UBOBuffers[frameIndex] == VK_NULL_HANDLE) {
+			createBuffer(
+				sizeof(UniformBufferObject),
+				VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+				VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, true,
+				mesh.UBOBuffers[frameIndex],
+				mesh.UBOAllocations[frameIndex]
+			);
+		}
 
-		if (mesh.bones.size() > 0) {
+		if (mesh.bones.size() > 0 && mesh.boneSSBOBuffers[frameIndex] == VK_NULL_HANDLE) {
 			createBuffer(
 				sizeof(glm::mat4) * MAX_BONES_NUM,
 				VK_BUFFER_USAGE_STORAGE_BUFFER_BIT,
