@@ -91,8 +91,6 @@ static int runAether() {
 
 	AetherEngine aetherEngine;
 
-	//Equations::printEquations(1000, 0.85);
-
 	try {
 		aetherEngine.run();
 		return EXIT_SUCCESS;

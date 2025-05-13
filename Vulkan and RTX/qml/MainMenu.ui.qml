@@ -18,7 +18,7 @@ Rectangle {
         y: parent.height * 0.05
         width: parent.width * 0.18
         height: parent.height * 0.1
-        text: qsTr("Aether")
+        text: qsTr("Math Dungeon")
         font.family: Qt.application.font.family
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter

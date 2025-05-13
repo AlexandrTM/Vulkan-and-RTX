@@ -32,7 +32,7 @@ namespace Equations
 	std::string generate_negative_int_linear_equation(double difficulty);
 	bool isLinearAcceptable(int32_t x, int32_t a, int32_t b, int32_t c, double difficulty);
 
-	void printEquations(size_t amount, double difficultyScale);
+	void debugEquations(size_t amount, double difficultyScale);
 
 	double solveForX(
 		const std::string& equation, 

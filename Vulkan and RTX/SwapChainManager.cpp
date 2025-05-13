@@ -104,10 +104,6 @@ void AetherEngine::recreateSwapchain()
 {
 	vkDeviceWaitIdle(vkInit.device);
 
-	/*if (vkResetDescriptorPool(vkInit.device, descriptorPool, 0) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to reset descriptor pool!");
-	}*/
-
 	cleanupSwapchain();
 	cleanupShaderBuffers(sky);
 	cleanupShaderBuffers(models);
@@ -127,8 +123,6 @@ void AetherEngine::recreateSwapchain()
 
 	createShaderBuffers(sky, MAX_FRAMES_IN_FLIGHT);
 	createShaderBuffers(models, MAX_FRAMES_IN_FLIGHT);
-	//createDescriptorSets(sky, MAX_FRAMES_IN_FLIGHT);
-	//createDescriptorSets(models, MAX_FRAMES_IN_FLIGHT);
 }
 
 void AetherEngine::cleanupSwapchain()

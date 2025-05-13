@@ -6,6 +6,8 @@
 
 void AetherEngine::run()
 {
+	//Equations::debugEquations(10000, 1.0);
+
 	prepareUI();
 	vkInit.initializeVulkan(&qVulkanInstance);
 	initVMA();
@@ -283,11 +285,9 @@ void AetherEngine::createInGameWindow()
 	connect(inGameWindow, &InGameWindow::moved, this,
 		&AetherEngine::onInGameWindowMoved
 	);
-
 	connect(inGameWindow, &InGameWindow::lostFocus, this,
 		&AetherEngine::onInGameWindowLostFocus
 	);
-
 	connect(inGameWindow, &InGameWindow::closed, [this]() {
 		gameContext.requestedGameState = GameState::EXIT;
 	});
@@ -465,6 +465,9 @@ void AetherEngine::mainLoop()
 				inGameWindow->requestActivate();
 				isSelectEquationActivated = true;
 			}
+			/*if (gameContext.keyboardKeys[Qt::Key_Escape]) {
+				gameContext.requestedGameState = GameState::DUNGEON_EXPLORATION;
+			}*/
 
 			if (gameContext.keyboardKeys[Qt::Key_1]) {
 				gameContext.selectedEquation = &gameContext.equations[0];
@@ -604,11 +607,6 @@ void AetherEngine::cleanupMemory()
 
 	for (auto& [id, elem] : uiMap) {
 		cleanupModel(elem.model);
-
-		/*cleanupTexture(pauseMenu.texture);
-		cleanupTexture(inGameOverlay.texture);
-		cleanupTexture(selectEquation.texture);
-		cleanupTexture(solveEquation.texture);*/
 	}
 
 	cleanupTexture(grassTexture);

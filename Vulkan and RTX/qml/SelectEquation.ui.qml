@@ -8,10 +8,13 @@ Rectangle {
 
     //anchors.fill: parent
     color: "#00000000"
-    property color buttonColor: "#80bbbbdb"
-    property real defaultFontSize: Math.max(height * 0.025, 12)
+    property color buttonColor: "#b0aaaaaa"
+    property real defaultFontSize: Math.max(height * 0.022, 12)
     property real buttonWidth: width * 0.14
     property real buttonHeight: height * 0.4
+
+    property real borderThickness: 0.05
+    property real buttonRadius: 0.1
 
     signal buttonClicked(int buttonIndex)
 
@@ -28,6 +31,21 @@ Rectangle {
             return qsTr("Beyond")
         else
             return qsTr("Unknown")
+    }
+
+    function difficultyColor(value) {
+        if (value >= 0 && value < 1.5)
+            return "#907ab89e" // Easy
+        else if (value >= 1.5 && value < 3)
+            return "#90bdb942" // Medium
+        else if (value >= 3 && value < 4.5)
+            return "#a0d48954" // Hard
+        else if (value >= 4.5 && value < 6)
+            return "#a0b34d4d" // Insane
+        else if (value >= 6)
+            return "#b06a3d8f" // Beyond
+        else
+            return "#b0888888" // Unknown
     }
 
     Rectangle {
@@ -62,8 +80,18 @@ Rectangle {
         onClicked: selectEquation.buttonClicked(0)
 
         background: Rectangle {
-            color: selectEquation.buttonColor
-            radius: 10
+            anchors.fill: parent
+            color: difficultyColor(difficulty0.value) // Outer colored border
+            radius: width * selectEquation.buttonRadius
+
+            Rectangle {
+                anchors.fill: parent
+                anchors.margins: parent.width
+                                 * selectEquation.borderThickness // Controls border thickness
+                color: selectEquation.buttonColor
+                radius: (width - 2 * parent.width * selectEquation.borderThickness)
+                        * selectEquation.buttonRadius
+            }
         }
 
         contentItem: Item {
@@ -79,10 +107,13 @@ Rectangle {
                 font.pointSize: defaultFontSize
                 wrapMode: Text.WordWrap
                 color: "black"
-                anchors.top: parent.top
+
                 width: parent.width * 0.8
+                anchors.top: parent.top
                 anchors.topMargin: parent.height * 0.1
-                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.left: parent.left
+                anchors.leftMargin: parent.width * 0.1
+                //anchors.horizontalCenter: parent.horizontalCenter
             }
             Text {
                 id: damage0
@@ -92,10 +123,12 @@ Rectangle {
                 font.family: Qt.application.font.family
                 font.pointSize: defaultFontSize
                 color: "black"
+
                 width: parent.width * 0.9
                 anchors.bottom: parent.bottom
                 anchors.bottomMargin: parent.height * 0.1
-                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.left: parent.left
+                anchors.leftMargin: parent.width * 0.1
             }
             Text {
                 id: defence0
@@ -105,10 +138,12 @@ Rectangle {
                 font.family: Qt.application.font.family
                 font.pointSize: defaultFontSize
                 color: "black"
+
                 width: parent.width * 0.9
                 anchors.bottom: damage0.top
                 anchors.bottomMargin: parent.height * 0.04
-                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.left: parent.left
+                anchors.leftMargin: parent.width * 0.1
             }
         }
     }
@@ -123,8 +158,18 @@ Rectangle {
         onClicked: selectEquation.buttonClicked(1)
 
         background: Rectangle {
-            color: selectEquation.buttonColor
-            radius: 10
+            anchors.fill: parent
+            color: difficultyColor(difficulty1.value) // Outer colored border
+            radius: width * selectEquation.buttonRadius
+
+            Rectangle {
+                anchors.fill: parent
+                anchors.margins: parent.width
+                                 * selectEquation.borderThickness // Controls border thickness
+                color: selectEquation.buttonColor
+                radius: (width - 2 * parent.width * selectEquation.borderThickness)
+                        * selectEquation.buttonRadius
+            }
         }
 
         contentItem: Item {
@@ -140,10 +185,12 @@ Rectangle {
                 font.pointSize: defaultFontSize
                 wrapMode: Text.WordWrap
                 color: "black"
-                anchors.top: parent.top
+
                 width: parent.width * 0.8
+                anchors.top: parent.top
                 anchors.topMargin: parent.height * 0.1
-                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.left: parent.left
+                anchors.leftMargin: parent.width * 0.1
             }
             Text {
                 id: damage1
@@ -153,10 +200,12 @@ Rectangle {
                 font.family: Qt.application.font.family
                 font.pointSize: defaultFontSize
                 color: "black"
+
                 width: parent.width * 0.9
                 anchors.bottom: parent.bottom
                 anchors.bottomMargin: parent.height * 0.1
-                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.left: parent.left
+                anchors.leftMargin: parent.width * 0.1
             }
             Text {
                 id: defence1
@@ -166,10 +215,12 @@ Rectangle {
                 font.family: Qt.application.font.family
                 font.pointSize: defaultFontSize
                 color: "black"
+
                 width: parent.width * 0.9
                 anchors.bottom: damage1.top
                 anchors.bottomMargin: parent.height * 0.04
-                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.left: parent.left
+                anchors.leftMargin: parent.width * 0.1
             }
         }
     }
@@ -185,8 +236,18 @@ Rectangle {
         onClicked: selectEquation.buttonClicked(2)
 
         background: Rectangle {
-            color: selectEquation.buttonColor
-            radius: 10
+            anchors.fill: parent
+            color: difficultyColor(difficulty2.value) // Outer colored border
+            radius: width * selectEquation.buttonRadius
+
+            Rectangle {
+                anchors.fill: parent
+                anchors.margins: parent.width
+                                 * selectEquation.borderThickness // Controls border thickness
+                color: selectEquation.buttonColor
+                radius: (width - 2 * parent.width * selectEquation.borderThickness)
+                        * selectEquation.buttonRadius
+            }
         }
 
         contentItem: Item {
@@ -202,10 +263,12 @@ Rectangle {
                 font.pointSize: defaultFontSize
                 wrapMode: Text.WordWrap
                 color: "black"
-                anchors.top: parent.top
+
                 width: parent.width * 0.8
+                anchors.top: parent.top
                 anchors.topMargin: parent.height * 0.1
-                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.left: parent.left
+                anchors.leftMargin: parent.width * 0.1
             }
             Text {
                 id: damage2
@@ -215,10 +278,12 @@ Rectangle {
                 font.family: Qt.application.font.family
                 font.pointSize: defaultFontSize
                 color: "black"
+
                 width: parent.width * 0.9
                 anchors.bottom: parent.bottom
                 anchors.bottomMargin: parent.height * 0.1
-                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.left: parent.left
+                anchors.leftMargin: parent.width * 0.1
             }
             Text {
                 id: defence2
@@ -228,10 +293,12 @@ Rectangle {
                 font.family: Qt.application.font.family
                 font.pointSize: defaultFontSize
                 color: "black"
+
                 width: parent.width * 0.9
                 anchors.bottom: damage2.top
                 anchors.bottomMargin: parent.height * 0.04
-                anchors.horizontalCenter: parent.horizontalCenter
+                anchors.left: parent.left
+                anchors.leftMargin: parent.width * 0.1
             }
         }
     }

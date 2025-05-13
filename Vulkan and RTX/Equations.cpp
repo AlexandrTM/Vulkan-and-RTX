@@ -3,8 +3,8 @@
 
 #include "exprtk.hpp"
 
-std::vector<float> Equations::positive_linear_weights = { 0.1196f, 0.1739f, 0.2860f, 0.4206f };
-std::vector<float> Equations::negative_linear_weights = { 0.1237f, 0.1727f, 0.2924f, 0.4112f };
+std::vector<float> Equations::positive_linear_weights = { 0.0949f, 0.1369f, 0.3028f, 0.4653f };
+std::vector<float> Equations::negative_linear_weights = { 0.0928f, 0.1411f, 0.3036f, 0.4625f };
 
 std::vector<Equation> Equations::generateEquations(size_t amount, double difficultyScale) {
 	std::vector<Equation> equations;
@@ -13,10 +13,12 @@ std::vector<Equation> Equations::generateEquations(size_t amount, double difficu
 		size_t equationType = randomInt(0, 1);
 		double real_difficulty = 0;
 		std::string equationString;
-		//double real_difficulty = randomReal(0, 6) * difficultyScale;
+		//real_difficulty = randomReal(0, 6) * difficultyScale;
+
 		//int32_t int_difficulty = static_cast<int32_t>(real_difficulty);
 		//double step = 6.0 * difficultyScale / static_cast<double>(amount);
 		//real_difficulty = step * static_cast<double>(equations.size() + 1);
+
 		switch (equationType) {
 		case 0: 
 			real_difficulty = randomNormalizedWeightedReal(positive_linear_weights) * 6 * difficultyScale;
@@ -24,29 +26,34 @@ std::vector<Equation> Equations::generateEquations(size_t amount, double difficu
 			break;
 		case 1: 
 			real_difficulty = randomNormalizedWeightedReal(negative_linear_weights) * 6 * difficultyScale;
-			equationString = generate_negative_int_linear_equation(real_difficulty * 0.9); 
+			equationString = generate_negative_int_linear_equation(real_difficulty * 0.93); 
 			break;
 		}
 		if (equationString.empty()) continue;
 
-		int32_t damage = std::max(static_cast<int32_t>(real_difficulty * 1.75), 1);
-		//int32_t defence = static_cast<int32_t>(std::max(std::exp(real_difficulty * 0.33) - 1, 0.0));
-		int32_t defence = static_cast<int32_t>(std::max(
-			0.122 * real_difficulty * real_difficulty +
-			0.307 * real_difficulty/* + 0.2*/,
-			0.0));
+		int32_t damage = 0;
+		int32_t defence = 0;
+
+		damage = 
+			static_cast<int32_t>(std::max(real_difficulty * 1.75 * randomReal(0.85f, 1.15f), 1.0));
+		//defence = static_cast<int32_t>(std::max(std::exp(real_difficulty * 0.33) - 1, 0.0));
+		//defence = static_cast<int32_t>(std::min(std::max(
+		//	0.122 * real_difficulty * real_difficulty +
+		//	0.307 * real_difficulty/* + 0.2*/,
+		//	0.0), 7.0));
+		defence = randomReal(0.0f + real_difficulty * 0.2, std::max(real_difficulty, 1.0));
 		
-		double rawPenalty = std::max(
+		double rawAnswerPenalty = std::max(
 			0.025 * real_difficulty * real_difficulty +
 			0.130 * real_difficulty + 2.2, 0.0);
-		double wrongAnswerPenalty = std::round(rawPenalty * 4.0) / 4.0;
+		double wrongAnswerPenalty = std::round(rawAnswerPenalty * 4.0) / 4.0;
 		double timeToSolve = 9.5;
 		double answer = solveForX(equationString);
 		bool isSolved = false;
 
 		//double answer = static_cast<double>(x);
 		//std::cout << "real_difficulty: " << real_difficulty << "\n";
-		std::cout << "answer " << equations.size() << ": " << answer << "\n";
+		//std::cout << "answer " << equations.size() << ": " << answer << "\n";
 		//std::cout << "answer " << equations.size() << ": " << answer << "\n";
 
 		if (!std::isnan(answer)) {
@@ -127,19 +134,19 @@ std::string Equations::generate_negative_int_linear_equation(double difficulty)
 bool Equations::isLinearAcceptable(int32_t x, int32_t a, int32_t b, int32_t c, double difficulty)
 {
 	if (difficulty >= 1.5) {
-		if (a == b || a == x || b == x ||
+		if (std::abs(a) == std::abs(b) || std::abs(a) == std::abs(x) || std::abs(b) == std::abs(x) ||
 			std::abs(x) < 2 || std::abs(a) < 2 || std::abs(b) < 2) {
 			return false;
 		}
 	}
 	if (difficulty >= 3.0) {
-		if (a % 10 == 0 || b % 10 == 0 || x % 10 == 0 || 
+		if (std::abs(a) % 10 == 0 || std::abs(b) % 10 == 0 || std::abs(x) % 10 == 0 ||
 			std::abs(x) < 5 || std::abs(a) < 4 || std::abs(b) < 7) {
 			return false;
 		}
 	}
 	if (difficulty >= 4.5) {
-		if (a % 5 == 0 || b % 5 == 0 || x % 5 == 0 || 
+		if (std::abs(a) % 5 == 0 || std::abs(b) % 5 == 0 || std::abs(x) % 5 == 0 ||
 			std::abs(x) < 7 || std::abs(a) < 6 || std::abs(b) < 11) {
 			return false;
 		}
@@ -148,9 +155,10 @@ bool Equations::isLinearAcceptable(int32_t x, int32_t a, int32_t b, int32_t c, d
 	return true;
 }
 
-void Equations::printEquations(size_t amount, double difficultyScale)
+void Equations::debugEquations(size_t amount, double difficultyScale)
 {
 	std::vector<Equation> equations = generateEquations(amount, difficultyScale);
+	double totalAnswer = 0.0;
 
 	size_t count_0_0___1_5 = 0;
 	size_t count_1_5___3_0 = 0;
@@ -172,14 +180,17 @@ void Equations::printEquations(size_t amount, double difficultyScale)
 		else if (equation.difficulty < 4.5) count_3_0___4_5++;
 		else if (equation.difficulty < 6.0) count_4_5___6_0++;
 									   else count_6_0___inf++;
-		if (equation.difficulty >= 0.0) {
+
+		totalAnswer += std::abs(equation.answer);
+
+		if (equation.difficulty >= 10.0) {
 			std::cout
 				<< "diff: " << std::fixed << std::setprecision(2) << equation.difficulty << ", "
-				<< "dmg: " << equation.damage << ", "
-				<< "def: " << equation.defence << ", "
-				<< "expr: " << equation.expression << ", "
-				<< "ans: " << std::fixed << std::setprecision(2) << equation.answer << ", "
-				<< "wap: " << std::fixed << std::setprecision(2) << equation.wrongAnswerPenalty << "s"
+				<< "dmg: "  << std::setw(3)  << std::left << equation.damage << ", "
+				<< "def: "  << std::setw(3)   << equation.defence << ", "
+				<< "expr: " << std::setw(20)  << equation.expression << ", "
+				<< "ans: "  << std::setw(7)   << std::fixed << std::setprecision(2) << equation.answer << ", "
+				<< "wap: "  << std::setw(5)  << std::fixed << std::setprecision(2) << equation.wrongAnswerPenalty << "s"
 				<< "\n";
 		}
 	}
@@ -190,7 +201,8 @@ void Equations::printEquations(size_t amount, double difficultyScale)
 	std::cout << "[3, 4.5):  " << count_3_0___4_5 << " (" << fraction(count_3_0___4_5) << "%)\n";
 	std::cout << "[4.5, 6):  " << count_4_5___6_0 << " (" << fraction(count_4_5___6_0) << "%)\n";
 	std::cout << "[6, +inf): " << count_6_0___inf << " (" << fraction(count_6_0___inf) << "%)\n";
-	
+	std::cout << "Average answer: " << std::fixed << std::setprecision(4) << totalAnswer / equations.size() << "\n";
+
 	std::vector<float> fractions = {
 		fraction(count_0_0___1_5),
 		fraction(count_1_5___3_0),

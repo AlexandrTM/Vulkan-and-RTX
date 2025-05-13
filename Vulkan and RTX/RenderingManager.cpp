@@ -630,11 +630,9 @@ void AetherEngine::recordCommandBuffer(
 			recordUiElementToCommandBuffer(uiMap[uiElementId::InGameOverlay], commandBuffer);
 		}
 		if (gameContext.currentGameState == GameState::COMBAT_PLAYER_SELECT_EQUATION) {
-
 			recordUiElementToCommandBuffer(uiMap[uiElementId::SelectEquation], commandBuffer);
 		}
 		if (gameContext.currentGameState == GameState::COMBAT_PLAYER_SOLVE_EQUATION) {
-
 			recordUiElementToCommandBuffer(uiMap[uiElementId::SolveEquation], commandBuffer);
 		}
 	}
