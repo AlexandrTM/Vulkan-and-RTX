@@ -24,7 +24,10 @@ struct GameContext
 	std::vector<Equation> equations;
 	Equation* selectedEquation = nullptr;
 	double timeRemainingToSolveEquation = 0.0;
+
+	double submittedAnswer = std::numeric_limits<double>::max();
 	bool isAnswerSubmitted = false;
+	bool answerSubmissionAllowed = false;
 
 	bool isCameraTransitioning = false;
 	glm::vec3 cameraStartPosition;

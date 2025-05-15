@@ -128,8 +128,12 @@ private:
 
 	void updateSelectEquation(size_t amountOfEquations);
 	void updateInGameOverlay();
-	void updateSolveEquation();
+	void updateSolveEquationOverlay();
 	void clearSolveEquationInput();
+
+	void handleEquationSolving();
+	void handleRightAnswer(Equation& selectedEquation);
+	void handleWrongAnswer(const Equation& selectedEquation);
 
 	std::string createPuzzleEquation(std::string name, int32_t& answer);
 

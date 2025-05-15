@@ -68,7 +68,7 @@ void AetherEngine::prepareResources()
 	TerrainData terrainData = {
 		30, 30,   // chunkWidth, chunkLength
 		4, 4,     // chunkRows, chunkCols
-		5.0f,     // gridSize
+		8.0f,     // gridSize
 		0.1f,     // scale
 		0.0f,     // height
 	};
@@ -201,7 +201,7 @@ void AetherEngine::createUIElements() {
 	SettingsMenuSlotHandler* settingsMenuSlotHandler = new SettingsMenuSlotHandler(this);
 	PauseMenuSlotHandler* pauseMenuSlotHandler = new PauseMenuSlotHandler(this);
 	SelectEquationSlotHandler* selectEquationSlotHandler = new SelectEquationSlotHandler(this);
-	SolveEquationSlotHandler* solveEquationSlotHandler = new SolveEquationSlotHandler(character, isSolveEquationTextFieldActivated, this);
+	SolveEquationSlotHandler* solveEquationSlotHandler = new SolveEquationSlotHandler(isSolveEquationTextFieldActivated, this);
 
 	auto rootItem = uiMap[uiElementId::MainMenu].renderer->getRootItem();
 	connect(rootItem, SIGNAL(startGameClicked()), mainMenuSlotHandler, SLOT(onStartGameClicked()));
@@ -218,13 +218,13 @@ void AetherEngine::createUIElements() {
 	connect(rootItem, SIGNAL(exitGameClicked()), pauseMenuSlotHandler, SLOT(onExitGameClicked()));
 
 	rootItem = uiMap[uiElementId::SelectEquation].renderer->getRootItem();
-	QObject::connect(
+	connect(
 		rootItem, SIGNAL(buttonClicked(int)), 
 		selectEquationSlotHandler, SLOT(onButtonClicked(int))
 	);
 
 	rootItem = uiMap[uiElementId::SolveEquation].renderer->getRootItem();
-	QObject::connect(
+	connect(
 		rootItem, SIGNAL(answerSubmitted(QString)), 
 		solveEquationSlotHandler, SLOT(onAnswerSubmitted(QString))
 	);
@@ -388,6 +388,65 @@ void AetherEngine::handleInGameTestingState(double deltaTime, double timeSinceLa
 	}
 }
 
+void AetherEngine::handleRightAnswer(Equation& selectedEquation) {
+	auto& mobs = gameContext.currentRoom->mobs;
+	Mob& mob = mobs[0];
+	mob.takeDamage(selectedEquation.damage + character.attackPower);
+
+	// Award experience for dead mobs BEFORE erasing them
+	for (const Mob& mob : mobs) {
+		if (!mob.isAlive()) {
+			character.experience += mob.experienceReward;
+		}
+	}
+
+	mobs.erase(
+		std::remove_if(mobs.begin(), mobs.end(), [](const Mob& mob) { return !mob.isAlive(); }), 
+		mobs.end()
+	);
+
+	if (!mobs.empty()) {
+		gameContext.requestedGameState = GameState::COMBAT_MOB_TURN;
+		//gameContext.requestedGameState = GameState::COMBAT_PLAYER_SELECT_EQUATION;
+	}
+	else {
+		//gameContext.requestedGameState = GameState::DUNGEON_EXPLORATION
+		gameContext.requestedGameState = GameState::DUNGEON_ROOM_CLEANED;
+	}
+
+	gameContext.submittedAnswer = std::numeric_limits<double>::max();
+	selectedEquation.isSolved = true;
+}
+void AetherEngine::handleWrongAnswer(const Equation& selectedEquation) {
+	gameContext.timeRemainingToSolveEquation -= selectedEquation.wrongAnswerPenalty;
+	gameContext.timeRemainingToSolveEquation = std::max(gameContext.timeRemainingToSolveEquation, 0.0);
+}
+void AetherEngine::handleEquationSolving() {
+	if (gameContext.timeRemainingToSolveEquation <= 0.0) {
+		gameContext.requestedGameState = GameState::COMBAT_MOB_TURN;
+		gameContext.isAnswerSubmitted = false;
+		return;
+	}
+
+	if (!gameContext.keyboardKeys[Qt::Key_Enter]) {
+		gameContext.answerSubmissionAllowed = true;
+	}
+	/*else if (gameContext.keyboardKeys[Qt::Key_Enter]) {
+		std::cout << "no\n";
+	}*/
+	if (gameContext.answerSubmissionAllowed && gameContext.isAnswerSubmitted) {
+		Equation& selectedEquation = *gameContext.selectedEquation;
+		if (std::abs(gameContext.submittedAnswer - selectedEquation.answer) < 0.25) {
+			handleRightAnswer(selectedEquation);
+		}
+		else {
+			handleWrongAnswer(selectedEquation);
+		}
+
+		gameContext.answerSubmissionAllowed = false;
+		gameContext.isAnswerSubmitted = false;
+	}
+}
 void AetherEngine::mainLoop()
 {
 	std::chrono::high_resolution_clock::time_point previousTime = std::chrono::high_resolution_clock::now();
@@ -444,10 +503,10 @@ void AetherEngine::mainLoop()
 		}
 
 		//std::cout << "state: " << static_cast<uint32_t>(gameContext.currentGameState) << "\n";
-
 		//std::cout << "is active: " << mainWindow->hasFocus() << "\n";
 		//mainWindow->setFocus();
 		//std::cout << "is exposed: " << mainWindow->windowHandle()->isExposed() << "\n";
+
 		if (!inGameWindow->isExposed()) { continue; }
 
 		if (gameContext.currentGameState == GameState::IN_GAME_TESTING) {
@@ -483,15 +542,12 @@ void AetherEngine::mainLoop()
 			}
 		}
 		if (gameContext.currentGameState == GameState::COMBAT_PLAYER_SOLVE_EQUATION) {
-			gameContext.timeRemainingToSolveEquation -= deltaTime;
-			gameContext.timeRemainingToSolveEquation = std::max(gameContext.timeRemainingToSolveEquation, 0.0);
+			gameContext.timeRemainingToSolveEquation = 
+				std::max(gameContext.timeRemainingToSolveEquation - deltaTime, 0.0);
 
-			updateSolveEquation();
+			updateSolveEquationOverlay();
 
-			if (gameContext.timeRemainingToSolveEquation <= 0.0) {
-				//std::cout << "Time's up! Equation failed.\n";
-				gameContext.requestedGameState = GameState::COMBAT_MOB_TURN;
-			}
+			handleEquationSolving();
 		}
 		if (gameContext.currentGameState == GameState::COMBAT_MOB_TURN) {
 			character.takeDamage(

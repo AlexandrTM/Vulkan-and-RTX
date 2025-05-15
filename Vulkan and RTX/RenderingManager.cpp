@@ -644,19 +644,97 @@ void AetherEngine::recordCommandBuffer(
 	}
 }
 
-void AetherEngine::updateSolveEquation() {
-	auto contentItem = uiMap[uiElementId::SolveEquation].renderer->getQuickWindow()->contentItem();
+void AetherEngine::updateInGameOverlay() {
+	if (!uiMap[uiElementId::InGameOverlay].renderer) return;
+
+	auto rootItem = uiMap[uiElementId::InGameOverlay].renderer->getRootItem();
+	if (!rootItem) return;
+
+	QObject* playerHealth = rootItem->findChild<QObject*>("playerHealth");
+	QObject* playerDamage = rootItem->findChild<QObject*>("playerDamage");
+	QObject* playerDefense = rootItem->findChild<QObject*>("playerDefense");
+	QObject* playerExperience = rootItem->findChild<QObject*>("playerExperience");
+	if (playerHealth) { playerHealth->setProperty("value", character.health); }
+	if (playerDamage) { playerDamage->setProperty("value", character.attackPower); }
+	if (playerDefense) { playerDefense->setProperty("value", character.defence); }
+	if (playerExperience) { playerExperience->setProperty("value", character.experience); }
+
+	QObject* mobTitle = rootItem->findChild<QObject*>("mobTitle");
+	QObject* mobHealth = rootItem->findChild<QObject*>("mobHealth");
+	QObject* mobDamage = rootItem->findChild<QObject*>("mobDamage");
+	QObject* mobDefense = rootItem->findChild<QObject*>("mobDefense");
+	QObject* mobExperience = rootItem->findChild<QObject*>("mobExperience");
+
+	if (!gameContext.currentRoom->mobs.empty()) {
+		Mob& mob = gameContext.currentRoom->mobs[0];
+		if (mobTitle) { mobTitle->setProperty("value", mob.id); }
+		if (mobHealth) { mobHealth->setProperty("value", mob.health); }
+		if (mobDamage) { mobDamage->setProperty("value", mob.attackPower); }
+		if (mobDefense) { mobDefense->setProperty("value", mob.defence); }
+		if (mobExperience) { mobExperience->setProperty("value", mob.experienceReward); }
+	}
+	else {
+		mobHealth->setProperty("value", 0); // making invisible
+	}
+}
+void AetherEngine::updateSelectEquation(size_t amountOfEquations) {
+	gameContext.equations = Equations::generateEquations(amountOfEquations, 1);
+
+	const auto& equations = gameContext.equations;
+
+	if (!uiMap[uiElementId::SelectEquation].renderer) return;
+	auto rootItem = uiMap[uiElementId::SelectEquation].renderer->getRootItem();
+	if (!rootItem) return;
+
+	for (size_t i = 0; i < amountOfEquations; ++i) {
+		QObject* flipCard = rootItem->findChild<QObject*>(QString("flipCard%1").arg(i));
+		QObject* cardWrapper = rootItem->findChild<QObject*>(QString("cardWrapper%1").arg(i));
+		QObject* difficultyItem = rootItem->findChild<QObject*>(QString("difficulty%1").arg(i));
+		QObject* damageItem = rootItem->findChild<QObject*>(QString("damage%1").arg(i));
+		QObject* defenceItem = rootItem->findChild<QObject*>(QString("defence%1").arg(i));
+
+		if (cardWrapper) cardWrapper->setProperty("angle", 0);
+		if (flipCard) QMetaObject::invokeMethod(flipCard, "start");
+
+		if (difficultyItem) difficultyItem->setProperty("value", gameContext.equations[i].difficulty);
+
+		if (damageItem) {
+			QString damageString = QString("%1 + <font color='#ffda6502'>%2</font>")
+				.arg(character.attackPower).arg(equations[i].damage);
+			damageItem->setProperty("value", damageString);
+		}
+
+		if (defenceItem) {
+			int32_t defenceValue = equations[i].defence;
+			if (defenceValue > 0) {
+				QString defenceString = QString("%1 + <font color='#ff0265da'>%2</font>")
+					.arg(character.defence).arg(defenceValue);
+				defenceItem->setProperty("visible", true);
+				defenceItem->setProperty("value", defenceString);
+			}
+			else {
+				defenceItem->setProperty("visible", false);
+			}
+		}
+	}
+}
+void AetherEngine::updateSolveEquationOverlay() {
+	auto renderer = uiMap[uiElementId::SolveEquation].renderer.get();
+	auto contentItem = renderer->getQuickWindow()->contentItem();
+	auto rootItem = renderer->getRootItem();
+
+	if (!renderer || !rootItem) return;
+
 	if (!contentItem->hasFocus()) {
 		contentItem->setFocus(true);
 	}
+	if (inGameWindow->isActive() && !renderer->getQuickWindow()->isActive()) {
+		//renderer->getQuickWindow()->requestActivate();
+	}
 	if (!isSolveEquationTextFieldActivated) {
-		uiMap[uiElementId::SolveEquation].renderer->getQuickWindow()->requestActivate();
+		renderer->getQuickWindow()->requestActivate();
 		isSolveEquationTextFieldActivated = true;
 	}
-
-	if (!uiMap[uiElementId::SolveEquation].renderer) return;
-	auto rootItem = uiMap[uiElementId::SolveEquation].renderer->getRootItem();
-	if (!rootItem) return;
 
 	QObject* answerInput = rootItem->findChild<QObject*>("answerInput");
 	if (answerInput) { answerInput->setProperty("focus", true); }
@@ -671,13 +749,13 @@ void AetherEngine::updateSolveEquation() {
 		);
 	}
 	if (timeRemaining) {
-		double remainingTime = gameContext.timeRemainingToSolveEquation;
+		double timeRemainingToSolve = gameContext.timeRemainingToSolveEquation;
 		double timeToSolve = gameContext.selectedEquation->timeToSolve;
 		
-		QString timeText = QString("%1s").arg(remainingTime, 0, 'f', 2);
+		QString timeText = QString("%1s").arg(timeRemainingToSolve, 0, 'f', 2);
 		timeRemaining->setProperty("value", timeText);
 
-		double t = std::clamp(1.0 - (remainingTime / timeToSolve), 0.0, 1.0);
+		double t = std::clamp(1.0 - (timeRemainingToSolve / timeToSolve), 0.0, 1.0);
 		// Start fading only after fraction of time has passed
 		double timeChangeOffset = 0.0;
 		t = (t - timeChangeOffset) / (1.0 - timeChangeOffset); 
@@ -693,9 +771,9 @@ void AetherEngine::updateSolveEquation() {
 }
 QColor AetherEngine::interpolateColor(const QColor& from, const QColor& to, double t) {
 	t = std::clamp(t, 0.0, 1.0);
-	int r = static_cast<int>(from.red()   * (1.0 - t) + to.red()   * t);
+	int r = static_cast<int>(from.red() * (1.0 - t) + to.red() * t);
 	int g = static_cast<int>(from.green() * (1.0 - t) + to.green() * t);
-	int b = static_cast<int>(from.blue()  * (1.0 - t) + to.blue()  * t);
+	int b = static_cast<int>(from.blue() * (1.0 - t) + to.blue() * t);
 	int a = static_cast<int>(from.alpha() * (1.0 - t) + to.alpha() * t);
 	return QColor(r, g, b, a);
 }
@@ -704,80 +782,6 @@ void AetherEngine::clearSolveEquationInput() {
 	QObject* answerInput = rootItem->findChild<QObject*>("answerInput");
 	if (answerInput) { answerInput->setProperty("text", ""); }
 	uiMap[uiElementId::SolveEquation].renderer->getQuickWindow()->contentItem()->setFocus(false);
-}
-void AetherEngine::updateSelectEquation(size_t amountOfEquations) {
-	gameContext.equations = Equations::generateEquations(amountOfEquations, 1);
-
-	const auto& equations = gameContext.equations;
-
-	if (!uiMap[uiElementId::SelectEquation].renderer) return;
-	auto rootItem = uiMap[uiElementId::SelectEquation].renderer->getRootItem();
-	if (!rootItem) return;
-
-	for (size_t i = 0; i < amountOfEquations; ++i) {
-		QObject* difficultyItem = rootItem->findChild<QObject*>(QString("difficulty%1").arg(i));
-		if (!difficultyItem) continue;
-
-		difficultyItem->setProperty("value", gameContext.equations[i].difficulty);		
-	}
-
-	for (size_t i = 0; i < amountOfEquations; ++i) {
-		QObject* damageItem = rootItem->findChild<QObject*>(QString("damage%1").arg(i));
-		if (!damageItem) continue;
-
-		QString damageString = QString("%1 + <font color='#ffda6502'>%2</font>")
-			.arg(character.attackPower).arg(equations[i].damage);
-		damageItem->setProperty("value", damageString);		
-	}
-
-	for (size_t i = 0; i < amountOfEquations; ++i) {
-		QObject* defenceItem = rootItem->findChild<QObject*>(QString("defence%1").arg(i));
-		if (!defenceItem) continue;
-
-		int32_t defenceValue = equations[i].defence;
-		if (defenceValue > 0) {
-			QString defenceString = QString("%1 + <font color='#ff0265da'>%2</font>")
-				.arg(character.defence).arg(defenceValue);
-			defenceItem->setProperty("visible", true);
-			defenceItem->setProperty("value", defenceString);
-		}
-		else {
-			defenceItem->setProperty("visible", false);
-		}
-	}
-}
-void AetherEngine::updateInGameOverlay() {
-	if (!uiMap[uiElementId::InGameOverlay].renderer) return;
-
-	auto rootItem = uiMap[uiElementId::InGameOverlay].renderer->getRootItem();
-	if (!rootItem) return;
-
-	QObject* playerHealth = rootItem->findChild<QObject*>("playerHealth");
-	QObject* playerDamage = rootItem->findChild<QObject*>("playerDamage");
-	QObject* playerDefense = rootItem->findChild<QObject*>("playerDefense");
-	QObject* playerExperience = rootItem->findChild<QObject*>("playerExperience");
-	if (playerHealth)  { playerHealth->setProperty("value", character.health); }
-	if (playerDamage)  { playerDamage->setProperty("value", character.attackPower); }
-	if (playerDefense) { playerDefense->setProperty("value", character.defence); }
-	if (playerExperience) { playerExperience->setProperty("value", character.experience); }
-
-	QObject* mobTitle = rootItem->findChild<QObject*>("mobTitle");
-	QObject* mobHealth = rootItem->findChild<QObject*>("mobHealth");
-	QObject* mobDamage = rootItem->findChild<QObject*>("mobDamage");
-	QObject* mobDefense = rootItem->findChild<QObject*>("mobDefense");
-	QObject* mobExperience = rootItem->findChild<QObject*>("mobExperience");
-
-	if (!gameContext.currentRoom->mobs.empty()) {
-		Mob& mob = gameContext.currentRoom->mobs[0];
-		if (mobTitle)      { mobTitle->setProperty("value", mob.id); }
-		if (mobHealth)     { mobHealth->setProperty("value", mob.health); }
-		if (mobDamage)     { mobDamage->setProperty("value", mob.attackPower); }
-		if (mobDefense)    { mobDefense->setProperty("value", mob.defence); }
-		if (mobExperience) { mobExperience->setProperty("value", mob.experienceReward); }
-	}
-	else {
-		mobHealth->setProperty("value", 0); // making invisible
-	}
 }
 
 void AetherEngine::recordUiElementToCommandBuffer(UserInterfaceElement& uiElement, VkCommandBuffer commandBuffer)

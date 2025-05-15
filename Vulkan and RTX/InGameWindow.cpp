@@ -22,57 +22,26 @@ bool InGameWindow::eventFilter(QObject* obj, QEvent* event) {
 bool InGameWindow::sendEventToUI(QEvent* event) {
     const QEvent::Type eventType = event->type();
 
-    if (mainMenuRenderer && gameContext.currentGameState == GameState::MAIN_MENU) {
-        switch (eventType) {
-        case QEvent::MouseButtonPress:
-        case QEvent::MouseButtonRelease:
-        case QEvent::MouseMove:
-        case QEvent::HoverMove:
-            mainMenuRenderer->forwardEvent(event);
-            return true;
-        default:
-            break;
+    auto forwardMatchingEvents = [&](UserInterfaceRenderer* renderer, GameState state) {
+        if (renderer && gameContext.currentGameState == state) {
+            switch (eventType) {
+            case QEvent::MouseButtonPress:
+            case QEvent::MouseButtonRelease:
+            case QEvent::MouseMove:
+            case QEvent::HoverMove:
+                renderer->forwardEvent(event);
+                return true;
+            default:
+                break;
+            }
         }
-    }
+        return false;
+    };
 
-    if (settingsMenuRenderer && gameContext.currentGameState == GameState::SETTINGS_MENU) {
-        switch (eventType) {
-        case QEvent::MouseButtonPress:
-        case QEvent::MouseButtonRelease:
-        case QEvent::MouseMove:
-        case QEvent::HoverMove:
-            settingsMenuRenderer->forwardEvent(event);
-            return true;
-        default:
-            break;
-        }
-    }
-
-    if (pauseMenuRenderer && gameContext.currentGameState == GameState::PAUSED) {
-        switch (eventType) {
-        case QEvent::MouseButtonPress:
-        case QEvent::MouseButtonRelease:
-        case QEvent::MouseMove:
-        case QEvent::HoverMove:
-            pauseMenuRenderer->forwardEvent(event);
-            return true;
-        default:
-            break;
-        }
-    }
-
-    if (selectEquationRenderer && gameContext.currentGameState == GameState::COMBAT_PLAYER_SELECT_EQUATION) {
-        switch (eventType) {
-        case QEvent::MouseButtonPress:
-        case QEvent::MouseButtonRelease:
-        case QEvent::MouseMove:
-        case QEvent::HoverMove:
-            selectEquationRenderer->forwardEvent(event);
-            return true;
-        default:
-            break;
-        }
-    }
+    if (forwardMatchingEvents(mainMenuRenderer, GameState::MAIN_MENU)) return true;
+    if (forwardMatchingEvents(settingsMenuRenderer, GameState::SETTINGS_MENU)) return true;
+    if (forwardMatchingEvents(pauseMenuRenderer, GameState::PAUSED)) return true;
+    if (forwardMatchingEvents(selectEquationRenderer, GameState::COMBAT_PLAYER_SELECT_EQUATION)) return true;
 
     if (solveEquationRenderer && gameContext.currentGameState == GameState::COMBAT_PLAYER_SOLVE_EQUATION) {
         switch (eventType) {
@@ -83,8 +52,14 @@ bool InGameWindow::sendEventToUI(QEvent* event) {
         case QEvent::KeyPress:
         case QEvent::KeyRelease:
         case QEvent::InputMethod:
+            if (event->type() == QEvent::KeyRelease || event->type() == QEvent::KeyPress) {
+                QKeyEvent* keyEvent = static_cast<QKeyEvent*>(event);
+                if (keyEvent->isAutoRepeat()) {
+                    return true; // block the auto-repeat
+                }
+            }
             solveEquationRenderer->forwardEvent(event);
-            return true;
+            //return true;
         default:
             break;
         }
@@ -98,7 +73,10 @@ void InGameWindow::keyPressEvent(QKeyEvent* event) {
 }
 
 void InGameWindow::keyReleaseEvent(QKeyEvent* event) {
+    //std::cout << "Event type: " << event->type() << " Key: " << event->key() << " isAutoRepeat: " << event->isAutoRepeat() << "\n";
+    //if (!event->isAutoRepeat()) {
     gameContext.keyboardKeys[event->key()] = false;
+    //}
 }
 
 void InGameWindow::mousePressEvent(QMouseEvent* event) {

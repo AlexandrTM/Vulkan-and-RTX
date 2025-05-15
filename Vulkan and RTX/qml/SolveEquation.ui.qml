@@ -9,7 +9,7 @@ Rectangle {
     //anchors.fill: parent
     color: "#00000000"
     property color buttonColor: "#80bbbbdb"
-    property real defaultFontSize: Math.max(height * 0.025, 13)
+    property real defaultFontSize: Math.max(height * 0.021, 11)
     property real buttonWidth: width * 0.15
     property real buttonHeight: height * 0.4
 
@@ -73,7 +73,7 @@ Rectangle {
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: expressionBackground.bottom
         anchors.topMargin: parent.height * 0.1
-        width: parent.width * 0.25
+        width: parent.width * 0.2
         height: parent.height * 0.12
         color: "#80bbbbdb"
         radius: 10

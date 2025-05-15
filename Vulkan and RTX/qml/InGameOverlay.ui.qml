@@ -220,17 +220,36 @@ Rectangle {
                 color: textStyle.color
             }
         }
-        Image {
-            id: mobIcon
-            source: mobIconPath(mobTitle.value)
+        Item {
             width: parent.width * 1.5
-            //anchors.horizontalCenter: mobStatsColumn.horizontalCenter
+            height: width
             anchors.bottom: parent.top
             anchors.right: parent.right
-            //anchors.bottomMargin: height * 0.1
-            fillMode: Image.PreserveAspectFit
-            //smooth: true
+
             visible: mobStatsColumn.visible
+
+            Rectangle {
+                id: mobIconBackground
+                anchors.fill: parent
+                color: "#ff000000"
+            }
+            Image {
+                id: mobIcon
+                source: mobIconPath(mobTitle.value)
+                anchors.fill: parent
+                anchors.margins: width * 0.1
+                fillMode: Image.PreserveAspectFit
+                //smooth: true
+                //anchors.bottomMargin: height * 0.1
+                //anchors.horizontalCenter: mobStatsColumn.horizontalCenter
+            }
+            Image {
+                id: mobFrame
+                source: "../textures/mobs/mobFrame.png"
+                anchors.fill: parent
+                fillMode: Image.PreserveAspectFit
+                //smooth: true
+            }
         }
     }
 }
