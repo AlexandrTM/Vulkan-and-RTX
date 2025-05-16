@@ -69,6 +69,7 @@ struct Mob
 	void takeDamage(int32_t damage) {
 		int32_t damageTaken = std::max(damage - defence, static_cast<int32_t>(0));
 		health = std::max(health - damageTaken, 0);
+        //std::cout << "mob took: " << damage << " - " << defence << " " << "damage = " << damageTaken << "\n";
 	}
 
     static Mob generateRandomMob(const glm::vec3& position, int32_t floorNumber, float difficultyScale) {

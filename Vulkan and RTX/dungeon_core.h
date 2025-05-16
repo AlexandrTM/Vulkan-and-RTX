@@ -10,6 +10,13 @@ enum class RoomConnectionMask : uint32_t
     WEST = 1 << 3
 };
 
+enum class DungeonRoomState : uint32_t
+{
+    UNDISCOVERED = 0,
+    DISCOVERED = 1,
+    CURRENT = 2,
+};
+
 inline RoomConnectionMask operator|(RoomConnectionMask a, RoomConnectionMask b) {
     return static_cast<RoomConnectionMask>(
         static_cast<uint32_t>(a) | static_cast<uint32_t>(b)

@@ -66,7 +66,7 @@ void AetherEngine::createTextureSampler(uint32_t& mipLevels, VkSampler& textureS
 	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_NEAREST;
 	samplerInfo.minLod = 0.0f;
 	samplerInfo.maxLod = static_cast<float>(mipLevels);
-	samplerInfo.mipLodBias = 0.0f;
+	samplerInfo.mipLodBias = -0.5f;
 
 	if (vkCreateSampler(vkInit.device, &samplerInfo, nullptr, &textureSampler) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create texture sampler!");

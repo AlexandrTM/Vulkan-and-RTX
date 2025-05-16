@@ -40,7 +40,7 @@ VkCommandBuffer AetherEngine::beginSingleTimeCommands() const
 	VkCommandBufferAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
 	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	allocInfo.commandPool = commandPool;
+	allocInfo.commandPool = vkInit.commandPool;
 	allocInfo.commandBufferCount = 1;
 
 	VkCommandBuffer commandBuffer;
@@ -67,7 +67,7 @@ void AetherEngine::endSingleTimeCommands(VkCommandBuffer commandBuffer) const
 	vkQueueSubmit(vkInit.graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
 	vkQueueWaitIdle(vkInit.graphicsQueue);
 
-	vkFreeCommandBuffers(vkInit.device, commandPool, 1, &commandBuffer);
+	vkFreeCommandBuffers(vkInit.device, vkInit.commandPool, 1, &commandBuffer);
 }
 
 //size_t totalSize = 0;
@@ -116,7 +116,7 @@ void AetherEngine::createCommandBuffers()
 
 	VkCommandBufferAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	allocInfo.commandPool = commandPool;
+	allocInfo.commandPool = vkInit.commandPool;
 	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 	allocInfo.commandBufferCount = (uint32_t)commandBuffers.size();
 

@@ -8,7 +8,7 @@
 #include "InteractableVolume.h"
 #include "Model.h"
 #include "gamecontext_instance.h"
-#include "DungeonComponents.h"
+#include "Dungeon.h"
 #include "Mob.h"
 
 class Character
@@ -35,10 +35,11 @@ public:
 	int32_t defence = 0;
 	int32_t experience = 0;
 
+	DungeonRoom* enterDungeonFloor(DungeonFloor& dungeonFloor);
+
 	bool isAlive() const {
 		return health > 0;
 	}
-
 	void takeDamage(const std::vector<Mob>& mobs) {
 		for (const Mob& mob : mobs) { takeDamage(mob); }
 	}
@@ -48,6 +49,7 @@ public:
 	void takeDamage(int32_t damage) {
 		int32_t damageTaken = std::max(damage - defence, static_cast<int32_t>(0));
 		health = std::max(health - damageTaken, 0);
+		//std::cout << "player took: " << damage << " - " << defence << " " << "damage = " << damageTaken << "\n";
 	}
 
 	void handleCharacterMovement(

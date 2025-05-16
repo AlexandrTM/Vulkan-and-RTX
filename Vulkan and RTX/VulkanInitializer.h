@@ -34,6 +34,7 @@ struct VulkanInitializer
     VkQueue graphicsQueue;
     VkQueue presentQueue;
     QueueFamilyIndices queueFamilyIndices;
+    VkCommandPool commandPool;
 
     VkSampleCountFlagBits colorSamples;
     VkSampleCountFlagBits depthSamples;
@@ -51,6 +52,8 @@ struct VulkanInitializer
     void setupDebugMessenger();
     void pickPhysicalDevice();
     void createLogicalDevice();
+    // for specific queue family
+    void createCommandPool();
 
     // checks of the GPUs for availability of some features
     bool isDeviceSuitable(VkPhysicalDevice device);

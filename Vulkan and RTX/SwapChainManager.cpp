@@ -159,11 +159,11 @@ VkSurfaceFormatKHR AetherEngine::chooseSwapchainSurfaceFormat(const std::vector<
 	return availableFormats[0];
 }
 
-// choosing best present mode to glfwWindow surface
+// choosing best present mode for frames buffering
 VkPresentModeKHR AetherEngine::chooseSwapchainPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes)
 {
+	//return VK_PRESENT_MODE_IMMEDIATE_KHR;
 	for (const auto& availablePresentMode : availablePresentModes) {
-		// unlimited framerate VK_PRESENT_MODE_IMMEDIATE_KHR
 		if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
 			return availablePresentMode;
 		}
@@ -189,10 +189,14 @@ VkExtent2D AetherEngine::chooseSwapchainExtent(const VkSurfaceCapabilitiesKHR& c
 			static_cast<uint32_t>(windowSize.height())
 		};
 
-		actualExtent.width = std::clamp(actualExtent.width, capabilities.minImageExtent.width,
-			capabilities.maxImageExtent.width);
-		actualExtent.height = std::clamp(actualExtent.height, capabilities.minImageExtent.height,
-			capabilities.maxImageExtent.height);
+		actualExtent.width = std::clamp(
+			actualExtent.width, 
+			capabilities.minImageExtent.width, capabilities.maxImageExtent.width
+		);
+		actualExtent.height = std::clamp(
+			actualExtent.height, 
+			capabilities.minImageExtent.height, capabilities.maxImageExtent.height
+		);
 
 		return actualExtent;
 	}

@@ -22,7 +22,6 @@
 #include "TerrainGenerator.h"
 #include "Character.h"
 #include "Vertex.h"
-#include "DungeonComponents.h"
 #include "Dungeon.h"
 #include "Equations.h"
 
@@ -77,7 +76,6 @@ private:
 
 	std::unordered_map<std::string, VkPipeline> pipelines;
 
-	VkCommandPool commandPool;
 	std::vector<VkCommandBuffer> commandBuffers;
 
 	std::vector<VkSemaphore> imageAvailableSemaphores;
@@ -329,9 +327,6 @@ private:
 		const VkRenderPass& renderPass
 	);
 	void createPipelinesAndSwapchain();
-
-	// for specific queue family
-	void createCommandPool();
 
 	// Creating fences and semaphores
 	void createSyncObjects();

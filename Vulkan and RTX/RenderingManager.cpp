@@ -665,7 +665,7 @@ void AetherEngine::updateInGameOverlay() {
 	QObject* mobDefense = rootItem->findChild<QObject*>("mobDefense");
 	QObject* mobExperience = rootItem->findChild<QObject*>("mobExperience");
 
-	if (!gameContext.currentRoom->mobs.empty()) {
+	if (gameContext.currentRoom->hasMobs()) {
 		Mob& mob = gameContext.currentRoom->mobs[0];
 		if (mobTitle) { mobTitle->setProperty("value", mob.id); }
 		if (mobHealth) { mobHealth->setProperty("value", mob.health); }

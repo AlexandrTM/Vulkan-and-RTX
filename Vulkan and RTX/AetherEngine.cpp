@@ -52,7 +52,6 @@ void AetherEngine::prepareResources()
 
 	createPipelinesAndSwapchain();
 
-	createCommandPool();
 	createColorTexture(msaaTexture);
 	createDepthTexture(depthTexture);
 	createSwapchainFramebuffers();
@@ -403,7 +402,7 @@ void AetherEngine::handleRightAnswer(Equation& selectedEquation) {
 		mobs.end()
 	);
 
-	if (!mobs.empty()) {
+	if (gameContext.currentRoom->hasMobs()) {
 		gameContext.requestedGameState = GameState::COMBAT_MOB_TURN;
 		//gameContext.requestedGameState = GameState::COMBAT_PLAYER_SELECT_EQUATION;
 	}
@@ -518,7 +517,7 @@ void AetherEngine::mainLoop()
 			handleInGameTestingState(deltaTime, timeSinceLaunch);
 		}
 		if (gameContext.currentGameState == GameState::DUNGEON_EXPLORATION) {
-			if (!gameContext.currentRoom->mobs.empty()) {
+			if (gameContext.currentRoom->hasMobs()) {
 				gameContext.requestedGameState = GameState::COMBAT_PLAYER_SELECT_EQUATION;
 			}
 
@@ -571,7 +570,7 @@ void AetherEngine::mainLoop()
 				gameContext.currentFloor = (gameContext.currentFloor + 1) % 3;
 
 				recreateDungeonFloor(gameContext.currentFloor, 1);
-				gameContext.currentRoom = Dungeon::enterDungeonFloor(gameContext.dungeonFloor, character);
+				gameContext.currentRoom = character.enterDungeonFloor(gameContext.dungeonFloor);
 			}
 
 			gameContext.requestedGameState = GameState::DUNGEON_EXPLORATION;
@@ -581,7 +580,7 @@ void AetherEngine::mainLoop()
 
 			gameContext.currentFloor = 0;
 			recreateDungeonFloor(gameContext.currentFloor, 1);
-			gameContext.currentRoom = Dungeon::enterDungeonFloor(gameContext.dungeonFloor, character);
+			gameContext.currentRoom = character.enterDungeonFloor(gameContext.dungeonFloor);
 
 			gameContext.requestedGameState = GameState::DUNGEON_EXPLORATION;
 		}
@@ -702,7 +701,7 @@ void AetherEngine::cleanupMemory()
 	}
 	
 	vmaDestroyAllocator(vmaAllocator);
-	vkDestroyCommandPool(vkInit.device, commandPool, nullptr);
+	vkDestroyCommandPool(vkInit.device, vkInit.commandPool, nullptr);
 
 	vkDestroyDevice(vkInit.device, nullptr);
 
@@ -978,19 +977,6 @@ uint32_t AetherEngine::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags
 	}
 
 	throw std::runtime_error("failed to find suitable memory type!");
-}
-
-// command pool for specific queue family
-void AetherEngine::createCommandPool()
-{
-	VkCommandPoolCreateInfo poolInfo{};
-	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-	poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-	poolInfo.queueFamilyIndex = vkInit.queueFamilyIndices.graphicsFamily.value();
-
-	if (vkCreateCommandPool(vkInit.device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create command pool!");
-	}
 }
 
 // Creating fences and semaphores

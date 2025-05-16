@@ -52,6 +52,7 @@ void VulkanInitializer::initializeVulkan(QVulkanInstance* qInstance)
 	pickPhysicalDevice();
 	queueFamilyIndices = findQueueFamilies(physicalDevice);
 	createLogicalDevice();
+	createCommandPool();
 }
 
 void VulkanInitializer::createInstance()
@@ -180,6 +181,18 @@ void VulkanInitializer::createLogicalDevice()
 
 	vkGetDeviceQueue(device, queueFamilyIndices.graphicsFamily.value(), 0, &graphicsQueue);
 	vkGetDeviceQueue(device, queueFamilyIndices.presentFamily.value(), 0, &presentQueue);
+}
+// command pool for specific queue family
+void VulkanInitializer::createCommandPool()
+{
+	VkCommandPoolCreateInfo poolInfo{};
+	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+	poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+	poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
+
+	if (vkCreateCommandPool(device, &poolInfo, nullptr, &commandPool) != VK_SUCCESS) {
+		throw std::runtime_error("failed to create command pool!");
+	}
 }
 
 // checks of the GPUs for availability of some features

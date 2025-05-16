@@ -1,6 +1,6 @@
 #pragma once
 
-#include "DungeonComponents.h"
+#include "Dungeon.h"
 #include "Equations.h"
 
 struct GameContext

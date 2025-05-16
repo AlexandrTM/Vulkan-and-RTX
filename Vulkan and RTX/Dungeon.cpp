@@ -1,13 +1,190 @@
 #include "pch.h"
 #include "Dungeon.h"
 
+DungeonRoom::DungeonRoom(
+    glm::vec3 position,
+    glm::ivec2 gridPosition,
+    std::vector<std::string> layout,
+    RoomConnectionMask connectionMask,
+    float cellSize,
+    Texture& floorTexture,
+    Texture& wallTexture
+)
+    :
+    position(position),
+    gridPosition(gridPosition),
+    layout(layout),
+    connectionMask(connectionMask),
+    cellSize(cellSize),
+    floorTexture(floorTexture),
+    wallTexture(wallTexture)
+{
+    metricWidth = layout.size() * cellSize;
+    metricLength = layout[0].length() * cellSize;
+
+    centerPosition = position + glm::vec3(metricWidth / 2.0f, 0.0f, metricLength / 2.0f);
+    //std::cout << "center position: " << glm::to_string(centerPosition) << "\n";
+
+    float_t verticalFovDegrees = 63.0f;
+    float_t aspectRatio = 16.0f / 9.0f;
+
+    float_t maxSide = std::max(metricWidth, metricLength);
+
+    // Convert FOV to radians and get tangent
+    float_t fovRadians = glm::radians(verticalFovDegrees);
+    float_t halfFovTan = std::tan(fovRadians / 2.0f);
+
+    // Distance from the room center along the Y axis to see full height
+    float_t distanceY = (maxSide / 2.0f) / halfFovTan;
+
+    // Optionally pad it a bit
+    float_t zoomPadding = 1.45f;
+    distanceY *= zoomPadding;
+
+    // Use angle to compute final camera position (if camera is tilted)
+    float_t pitchRadians = glm::radians(40.0f);
+    float_t height = distanceY * std::sin(pitchRadians);
+    float_t backOffset = distanceY * std::cos(pitchRadians);
+
+    // Final camera position
+    cameraPosition = centerPosition + glm::vec3(-backOffset, height, 0.0f);
+}
+
+std::vector<Model> DungeonRoom::createDungeonRoomModels() {
+    std::vector<Model> models{};
+    // Generate walls based on the room layout
+    for (size_t x = 0; x < layout.size(); ++x) {
+        for (size_t y = 0; y < layout[x].length(); ++y) {
+            if (layout[x][y] == 'w') {
+                // Place wall cubes
+                models.push_back(ModelManager::createCube(
+                    position.x + x * cellSize,
+                    position.y,
+                    position.z + y * cellSize,
+                    cellSize,
+                    glm::vec3(0.5f),
+                    wallTexture,
+                    ModelType::DUNGEON
+                ));
+            }
+            else if (layout[x][y] == 'a') {
+                // Empty space (air), skip rendering
+                continue;
+            }
+        }
+    }
+
+    // Create the floor of the room
+    models.push_back(ModelManager::createCuboid(
+        position.x,
+        position.y - 0.001f,
+        position.z,
+        metricWidth,
+        0.001f,
+        metricLength,
+        glm::vec3(1.0f),
+        floorTexture,
+        ModelType::DUNGEON
+    ));
+
+    return models;
+}
+
+std::vector<std::string> DungeonRoom::createRoomLayoutFromMask(
+    RoomConnectionMask mask,
+    size_t width, size_t length
+)
+{
+    std::vector<std::string> layout(length, std::string(width, 'a'));
+
+    // Place walls on borders
+    for (size_t x = 0; x < length; ++x) {
+        for (size_t y = 0; y < width; ++y) {
+            if (x == 0 || x == length - 1 || y == 0 || y == width - 1) {
+                layout[x][y] = 'w';
+            }
+        }
+    }
+
+    size_t midX = length / 2;
+    size_t midY = width / 2;
+
+    // Open passages based on mask
+    if (hasConnection(mask, RoomConnectionMask::NORTH)) {
+        layout[0][midY] = 'a';
+    }
+    if (hasConnection(mask, RoomConnectionMask::SOUTH)) {
+        layout[length - 1][midY] = 'a';
+    }
+    if (hasConnection(mask, RoomConnectionMask::WEST)) {
+        layout[midX][0] = 'a';
+    }
+    if (hasConnection(mask, RoomConnectionMask::EAST)) {
+        layout[midX][width - 1] = 'a';
+    }
+
+    return layout;
+}
+
+// Method to generate all rooms on the floor
+std::vector<Model> DungeonFloor::createDungeonFloor(int32_t floorNumber, float difficultyScale) {
+    std::vector<Model> floorModels;
+
+    if (!dungeonRooms.empty()) {
+        entrance = &dungeonRooms.front();
+    }
+    else {
+        std::cout << "dungeon floor has no rooms\n";
+    }
+
+    // Generate each room in the dungeon
+    for (auto& room : dungeonRooms) {
+        std::vector<Model> roomModels = room.createDungeonRoomModels();
+
+        floorModels.insert(floorModels.end(), roomModels.begin(), roomModels.end());
+
+        if (&room != entrance) {
+            room.mobs.push_back(Mob::generateRandomMob(room.centerPosition, floorNumber, difficultyScale));
+        }
+    }
+    return floorModels;
+}
+
+void DungeonFloor::addDungeonRoom(DungeonRoom dungeonRoom) {
+    dungeonRooms.push_back(dungeonRoom);
+}
+
 bool Dungeon::isDungeonFloorClear(const DungeonFloor& floor) {
 	for (const auto& room : floor.dungeonRooms) {
-		if (!room.mobs.empty()) {
+		if (room.hasMobs()) {
 			return false;
 		}
 	}
 	return true;
+}
+
+void Dungeon::updateRoomsState(
+	DungeonRoom& targetRoom, 
+	DungeonRoom& previousRoom, 
+	std::vector<DungeonRoom>& floorRooms
+)
+{
+	if (previousRoom.state == DungeonRoomState::CURRENT) {
+		previousRoom.state = DungeonRoomState::DISCOVERED;
+	}
+
+	targetRoom.state = DungeonRoomState::CURRENT;
+
+	for (const auto& [dir, offset] : directionOffsets) {
+		glm::ivec2 neighborPos = targetRoom.gridPosition + offset;
+
+		for (DungeonRoom& neighbor : floorRooms) {
+			if (neighbor.gridPosition == neighborPos &&
+				neighbor.state == DungeonRoomState::UNDISCOVERED) {
+				neighbor.state = DungeonRoomState::DISCOVERED;
+			}
+		}
+	}
 }
 
 std::vector<Model> Dungeon::createDungeonFloor(
@@ -20,7 +197,7 @@ std::vector<Model> Dungeon::createDungeonFloor(
 	size_t minRoomCount = 15;
 	size_t maxRoomCount = 15;
 	float cellSize = 1.0f;
-	size_t maxRoomDimension = 9; // max of width or height
+	size_t maxRoomDimension = 15; // max of width or height
 	float roomSpacing = (maxRoomDimension * cellSize) + cellSize * 3;
 
 	generateDungeonFloorGrid(minRoomCount, maxRoomCount, roomGrid);
@@ -32,17 +209,6 @@ std::vector<Model> Dungeon::createDungeonFloor(
 	);
 
 	return dungeonFloor.createDungeonFloor(floorNumber, difficultyScale);
-}
-DungeonRoom* Dungeon::enterDungeonFloor(DungeonFloor& dungeonFloor, Character& character)
-{
-	if (dungeonFloor.entrance != nullptr) {
-		character.camera.setPosition(dungeonFloor.entrance->cameraPosition);
-		return dungeonFloor.entrance;
-	}
-	else {
-		std::cout << "there is no entrance room for this dungeon floor\n";
-		return nullptr;
-	}
 }
 
 void Dungeon::generateDungeonFloorGrid(
@@ -107,13 +273,10 @@ void Dungeon::createDungeonRoomsFromGrid(
 	Texture& floorTexture, Texture& wallTexture
 )
 {
-	for (auto& [gridPosition, connectionMask] : roomGrid) {
+	for (const auto& [gridPosition, connectionMask] : roomGrid) {
 		glm::vec3 worldPosition = glm::vec3(gridPosition.x * roomSpacing, 0.0f, gridPosition.y * roomSpacing);
-		//size_t roomWidth = (rand() % 3) * 2 + 7; // 7,9,11
-		//size_t roomHeight = (rand() % 3) * 2 + 7;
-
-		size_t roomWidth = 9;
-		size_t roomLength = 9;
+		size_t roomWidth = randomInt(9, 13);
+		size_t roomLength = roomWidth;
 
 		std::vector<std::string> layout = DungeonRoom::createRoomLayoutFromMask(connectionMask, roomWidth, roomLength);
 

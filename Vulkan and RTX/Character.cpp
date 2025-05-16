@@ -116,6 +116,11 @@ void Character::handleDungeonRoomMovement()
 			// Search for target room in dungeon
 			for (DungeonRoom& room : gameContext.dungeonFloor.dungeonRooms) {
 				if (room.gridPosition == targetGrid) {
+
+					Dungeon::updateRoomsState(
+						room, *gameContext.currentRoom, gameContext.dungeonFloor.dungeonRooms
+					);
+
 					gameContext.targetRoom = &room;
 
 					gameContext.cameraStartPosition = camera.getPosition();
@@ -128,6 +133,23 @@ void Character::handleDungeonRoomMovement()
 				}
 			}
 		}
+	}
+}
+
+DungeonRoom* Character::enterDungeonFloor(DungeonFloor& dungeonFloor)
+{
+	if (dungeonFloor.entrance != nullptr) {
+		Dungeon::updateRoomsState(
+			*dungeonFloor.entrance, *dungeonFloor.entrance, dungeonFloor.dungeonRooms
+		);
+
+		this->camera.setPosition(dungeonFloor.entrance->cameraPosition);
+
+		return dungeonFloor.entrance;
+	}
+	else {
+		std::cout << "there is no entrance room for this dungeon floor\n";
+		return nullptr;
 	}
 }
 

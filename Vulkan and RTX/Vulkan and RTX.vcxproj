@@ -192,7 +192,6 @@
     <ClCompile Include="Camera.cpp" />
     <ClCompile Include="CollisionManager.cpp" />
     <ClCompile Include="Dungeon.cpp" />
-    <ClCompile Include="DungeonComponents.cpp" />
     <ClCompile Include="Equations.cpp" />
     <ClCompile Include="gamecontext_instance.cpp" />
     <ClCompile Include="ImageManager.cpp" />
@@ -239,7 +238,6 @@
     <ClInclude Include="Character.h" />
     <ClInclude Include="CollisionManager.h" />
     <ClInclude Include="Dungeon.h" />
-    <ClInclude Include="DungeonComponents.h" />
     <ClInclude Include="dungeon_core.h" />
     <ClInclude Include="Equations.h" />
     <ClInclude Include="GameContext.h" />
