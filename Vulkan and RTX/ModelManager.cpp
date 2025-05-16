@@ -202,7 +202,7 @@ Model ModelManager::createQuad(
 	Mesh mesh{};
 	Material material{};
 	material.diffuseTexture = texture;
-	//material.diffuseTexture.uniqueHash = material.diffuseTexture.generateRandomHash();
+	//material.diffuseTexture.uniqueHash = material.diffuseTexture.randomHash64();
 
 	// Quad corners in tangent space
 	/*vertices[0].position = origin;
@@ -621,7 +621,7 @@ static glm::mat4 setScaleToOne(const glm::mat4& matrix) {
 void AetherEngine::createColorTexture(Texture& texture)
 {
 	if (texture.uniqueHash == 0) {
-		texture.uniqueHash = Texture::generateRandomHash();
+		texture.uniqueHash = randomHash64();
 	}
 
 	VkFormat colorFormat = swapchainImageFormat;
@@ -640,7 +640,7 @@ void AetherEngine::createColorTexture(Texture& texture)
 void AetherEngine::createDepthTexture(Texture& texture)
 {
 	if (texture.uniqueHash == 0) {
-		texture.uniqueHash = Texture::generateRandomHash();
+		texture.uniqueHash = randomHash64();
 	}
 
 	VkFormat depthFormat = findDepthFormat();
@@ -709,7 +709,7 @@ void AetherEngine::createSolidColorTexture(
 )
 {
 	if (texture.uniqueHash == 0) {
-		texture.uniqueHash = Texture::generateRandomHash();
+		texture.uniqueHash = randomHash64();
 	}
 
 	VkBuffer stagingBuffer;
@@ -777,11 +777,9 @@ void AetherEngine::createSolidColorTexture(
 		texture.mipLevels);
 	createTextureSampler(texture.mipLevels, texture.sampler);
 }
-void AetherEngine::loadTextureFromPath(const std::string& texturePath, Texture& texture)
+Texture AetherEngine::loadTextureFromPath(const std::string& texturePath)
 {
-	if (texture.uniqueHash == 0) {
-		texture.uniqueHash = Texture::generateRandomHash();
-	}
+	Texture texture;
 
 	VkBuffer stagingBuffer;
 	VmaAllocation stagingAllocation;
@@ -846,13 +844,15 @@ void AetherEngine::loadTextureFromPath(const std::string& texturePath, Texture& 
 		texture.mipLevels
 	);
 	createTextureSampler(texture.mipLevels, texture.sampler);
+
+	return texture;
 }
 void AetherEngine::createTextureFromEmbedded(
 	const std::string& embeddedTextureName,
 	const aiScene* scene, Texture& texture
 ) {
 	if (texture.uniqueHash == 0) {
-		texture.uniqueHash = Texture::generateRandomHash();
+		texture.uniqueHash = randomHash64();
 	}
 
 	const aiTexture* embeddedTexture = scene->GetEmbeddedTexture(embeddedTextureName.c_str());
@@ -956,7 +956,7 @@ Texture AetherEngine::loadTextureForModel(const std::string& texturePath, const 
 		createTextureFromEmbedded(texturePath, scene, texture);
 	}
 	else {
-		loadTextureFromPath(("textures\\" + std::string(texturePath)), texture);
+		texture = loadTextureFromPath(("textures\\" + std::string(texturePath)));
 	}
 
 	return texture;
@@ -972,9 +972,7 @@ void AetherEngine::loadTexturesFromFolder(
 		std::string path = entry.path().string();
 		std::string name = entry.path().stem().string();
 
-		Texture texture;
-		loadTextureFromPath(path, texture);
-		textures[name] = std::move(texture);
+		textures[name] = loadTextureFromPath(path);
 	}
 }
 

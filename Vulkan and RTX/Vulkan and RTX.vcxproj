@@ -138,7 +138,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>GeneratedFiles\$(ConfigurationName);GeneratedFiles;O:\SDKforeverything\tinyobjloader-master;O:\SDKforeverything\stb-master;O:\SDKforeverything\VulkanSDK\Include;O:\SDKforeverything\glm-master\glm;O:\SDKforeverything\glfw-3.3.8\include;O:\SDKforeverything\tinygltf-2.8.18;O:\SDKforeverything\boost_1_85_0;O:\SDKforeverything\assimp\include;O:\SDKforeverything\meshoptimizer\src;O:\SDKforeverything\NoesisGUI\Include;O:\SDKforeverything\Qt\6.8.1\msvc2022_64\include;O:\SDKforeverything\solap position algorithm;O:\SDKforeverything\VulkanMemoryAllocator\include;O:\SDKforeverything\exprtk</AdditionalIncludeDirectories>
-      <Optimization>MinSpace</Optimization>
+      <Optimization>Disabled</Optimization>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <WholeProgramOptimization>false</WholeProgramOptimization>

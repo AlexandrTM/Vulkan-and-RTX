@@ -6,7 +6,7 @@
 
 namespace Dungeon
 {
-	bool isDungeonFloorCleaned(const DungeonFloor& floor);
+	bool isDungeonFloorClear(const DungeonFloor& floor);
 
 	std::vector<Model> createDungeonFloor(
 		int32_t floorNumber, float difficultyScale,

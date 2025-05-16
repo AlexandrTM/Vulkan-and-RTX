@@ -32,8 +32,9 @@ enum class Gamemode : uint32_t
 	SURVIVAL = 1,
 };
 
-extern std::default_random_engine gen;
 extern boost::random::mt19937 generator;
+extern boost::random::mt19937_64 generator64;
+extern std::default_random_engine gen;
 void seedRandomGenerator();
 
 template<typename IntType>
@@ -43,7 +44,9 @@ randomInt(IntType min, IntType max) {
 	return distribution(generator);
 }
 float randomReal(float min, float max);
+float randomRealOffset(float offset);
 float randomNormalizedReal();
+uint64_t randomHash64();
 float randomNormalizedWeightedReal(std::vector<float>& weights);
 
 enum class GameState : uint32_t

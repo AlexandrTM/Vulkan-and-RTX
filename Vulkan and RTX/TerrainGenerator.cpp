@@ -131,29 +131,23 @@ void TerrainGenerator::diamondSquare(
     // Diamond step
     float sum = heightmap[x1][y1] + heightmap[x2][y1] + heightmap[x1][y2] + heightmap[x2][y2];
     float avg = sum / 4.0f;
-    heightmap[mx][my] = avg + getRandomOffset(roughness);
+    heightmap[mx][my] = avg + randomRealOffset(roughness);
 
     // Square step
     heightmap[x1][my] = (heightmap[x1][y1] + heightmap[x1][y2] 
-        + heightmap[mx][my]) / 3.0f + getRandomOffset(roughness);
+        + heightmap[mx][my]) / 3.0f + randomRealOffset(roughness);
     heightmap[mx][y1] = (heightmap[x1][y1] + heightmap[x2][y1] 
-        + heightmap[mx][my]) / 3.0f + getRandomOffset(roughness);
+        + heightmap[mx][my]) / 3.0f + randomRealOffset(roughness);
     heightmap[x2][my] = (heightmap[x2][y1] + heightmap[x2][y2] 
-        + heightmap[mx][my]) / 3.0f + getRandomOffset(roughness);
+        + heightmap[mx][my]) / 3.0f + randomRealOffset(roughness);
     heightmap[mx][y2] = (heightmap[x1][y2] + heightmap[x2][y2] 
-        + heightmap[mx][my]) / 3.0f + getRandomOffset(roughness);
+        + heightmap[mx][my]) / 3.0f + randomRealOffset(roughness);
 
     // Recursively apply the algorithm to the four quadrants
     diamondSquare(heightmap, x1, y1, mx, my, roughness);
     diamondSquare(heightmap, mx, y1, x2, my, roughness);
     diamondSquare(heightmap, x1, my, mx, y2, roughness);
     diamondSquare(heightmap, mx, my, x2, y2, roughness);
-}
-
-// Get a random height offset based on the roughness
-float TerrainGenerator::getRandomOffset(float roughness) {
-    boost::random::uniform_real_distribution<float> distribution(-roughness, roughness);
-    return distribution(gen);
 }
 
 float TerrainGenerator::perlinNoise(float x, float y, float z) {

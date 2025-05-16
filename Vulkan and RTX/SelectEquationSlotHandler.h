@@ -14,6 +14,7 @@ public:
 
 public slots:
     void onButtonClicked(int buttonId) {
+        //std::cout << "button clicked: " << buttonId << "\n";
         gameContext.selectedEquation = &gameContext.equations[buttonId];
         gameContext.requestedGameState = GameState::COMBAT_PLAYER_SOLVE_EQUATION;
     }

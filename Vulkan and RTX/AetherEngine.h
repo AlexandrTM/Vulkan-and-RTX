@@ -145,7 +145,7 @@ private:
 	void changeUIElementSize(
 		UserInterfaceElement& uiElement, size_t windowWidth, size_t windowHeight
 	);
-	void createUIElements();
+	void loadUIElements();
 
 	void createMainWindow();
 	void createInGameWindow();
@@ -198,7 +198,7 @@ private:
 	void createSolidColorTexture(
 		std::array<uint8_t, 4> color, uint32_t width, uint32_t height, Texture& texture
 	);
-	void loadTextureFromPath(const std::string& texturePath, Texture& texture);
+	Texture loadTextureFromPath(const std::string& texturePath);
 	void createTextureFromEmbedded(
 		const std::string& embeddedTextureName, 
 		const aiScene* scene, Texture& texture

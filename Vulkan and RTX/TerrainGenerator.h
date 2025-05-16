@@ -56,9 +56,6 @@ private:
         float roughness
     );
 
-    // Get a random height offset based on the roughness
-    float getRandomOffset(float roughness);
-
     float perlinNoise(float x, float y, float z = 0.34567);
     float fade(float t);
     float lerp(float t, float a, float b);

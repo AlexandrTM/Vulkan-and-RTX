@@ -1,8 +1,6 @@
 #include "pch.h"
 #include "Equations.h"
 
-#include "exprtk.hpp"
-
 std::vector<float> Equations::positive_linear_weights = { 0.0949f, 0.1369f, 0.3028f, 0.4653f };
 std::vector<float> Equations::negative_linear_weights = { 0.0928f, 0.1411f, 0.3036f, 0.4625f };
 

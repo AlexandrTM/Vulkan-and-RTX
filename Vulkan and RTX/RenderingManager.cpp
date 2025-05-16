@@ -681,11 +681,12 @@ void AetherEngine::updateSelectEquation(size_t amountOfEquations) {
 	gameContext.equations = Equations::generateEquations(amountOfEquations, 1);
 
 	const auto& equations = gameContext.equations;
+	auto renderer = uiMap[uiElementId::SelectEquation].renderer.get();
 
-	if (!uiMap[uiElementId::SelectEquation].renderer) return;
-	auto rootItem = uiMap[uiElementId::SelectEquation].renderer->getRootItem();
+	if (!renderer) return;
+	auto rootItem = renderer->getRootItem();
 	if (!rootItem) return;
-
+	
 	for (size_t i = 0; i < amountOfEquations; ++i) {
 		QObject* flipCard = rootItem->findChild<QObject*>(QString("flipCard%1").arg(i));
 		QObject* cardWrapper = rootItem->findChild<QObject*>(QString("cardWrapper%1").arg(i));
@@ -728,8 +729,9 @@ void AetherEngine::updateSolveEquationOverlay() {
 	if (!contentItem->hasFocus()) {
 		contentItem->setFocus(true);
 	}
-	if (inGameWindow->isActive() && !renderer->getQuickWindow()->isActive()) {
-		//renderer->getQuickWindow()->requestActivate();
+	if (inGameWindow->isActive() && gameContext.mouseKeys[Qt::LeftButton]) {
+		renderer->getQuickWindow()->requestActivate();
+		//inGameWindow->requestActivate();
 	}
 	if (!isSolveEquationTextFieldActivated) {
 		renderer->getQuickWindow()->requestActivate();

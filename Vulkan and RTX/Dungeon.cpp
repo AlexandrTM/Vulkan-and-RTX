@@ -1,7 +1,7 @@
 #include "pch.h"
 #include "Dungeon.h"
 
-bool Dungeon::isDungeonFloorCleaned(const DungeonFloor& floor) {
+bool Dungeon::isDungeonFloorClear(const DungeonFloor& floor) {
 	for (const auto& room : floor.dungeonRooms) {
 		if (!room.mobs.empty()) {
 			return false;

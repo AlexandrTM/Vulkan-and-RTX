@@ -2,6 +2,24 @@
 <!DOCTYPE TS>
 <TS version="2.1" language="ru_RU">
 <context>
+    <name>Card</name>
+    <message>
+        <location filename="../qml/Card.qml" line="61"/>
+        <source>Difficulty: %1</source>
+        <translation>Сложность: %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/Card.qml" line="78"/>
+        <source>Damage: %1</source>
+        <translation>Урон: %1</translation>
+    </message>
+    <message>
+        <location filename="../qml/Card.qml" line="93"/>
+        <source>Defence: %1</source>
+        <translation>Защита: %1</translation>
+    </message>
+</context>
+<context>
     <name>InGameOverlay.ui</name>
     <message>
         <source>Health: </source>
@@ -92,36 +110,36 @@
         <translation>Неизвестный моб</translation>
     </message>
     <message>
-        <location filename="../qml/InGameOverlay.ui.qml" line="86"/>
+        <location filename="../qml/InGameOverlay.ui.qml" line="93"/>
         <source>Player</source>
         <translation>Игрок</translation>
     </message>
     <message>
-        <location filename="../qml/InGameOverlay.ui.qml" line="98"/>
-        <location filename="../qml/InGameOverlay.ui.qml" line="175"/>
+        <location filename="../qml/InGameOverlay.ui.qml" line="105"/>
+        <location filename="../qml/InGameOverlay.ui.qml" line="182"/>
         <source>Health: %1</source>
         <translation>Здоровье: %1</translation>
     </message>
     <message>
-        <location filename="../qml/InGameOverlay.ui.qml" line="109"/>
-        <location filename="../qml/InGameOverlay.ui.qml" line="186"/>
+        <location filename="../qml/InGameOverlay.ui.qml" line="116"/>
+        <location filename="../qml/InGameOverlay.ui.qml" line="193"/>
         <source>Damage: %1</source>
         <translation>Урон: %1</translation>
     </message>
     <message>
-        <location filename="../qml/InGameOverlay.ui.qml" line="120"/>
-        <location filename="../qml/InGameOverlay.ui.qml" line="197"/>
+        <location filename="../qml/InGameOverlay.ui.qml" line="127"/>
+        <location filename="../qml/InGameOverlay.ui.qml" line="204"/>
         <source>Defense: %1</source>
         <translation>Защита: %1</translation>
     </message>
     <message>
-        <location filename="../qml/InGameOverlay.ui.qml" line="131"/>
-        <location filename="../qml/InGameOverlay.ui.qml" line="208"/>
+        <location filename="../qml/InGameOverlay.ui.qml" line="138"/>
+        <location filename="../qml/InGameOverlay.ui.qml" line="215"/>
         <source>Exp: %1</source>
         <translation>Опыт: %1</translation>
     </message>
     <message>
-        <location filename="../qml/InGameOverlay.ui.qml" line="163"/>
+        <location filename="../qml/InGameOverlay.ui.qml" line="170"/>
         <source>%1</source>
         <translation>%1</translation>
     </message>
@@ -138,8 +156,8 @@
     <name>MainMenu.ui</name>
     <message>
         <location filename="../qml/MainMenu.ui.qml" line="21"/>
-        <source>Aether</source>
-        <translation></translation>
+        <source>Math Dungeon</source>
+        <translation>Math Dungeon</translation>
     </message>
     <message>
         <location filename="../qml/MainMenu.ui.qml" line="37"/>
@@ -183,46 +201,43 @@
 <context>
     <name>SelectEquation.ui</name>
     <message>
-        <location filename="../qml/SelectEquation.ui.qml" line="20"/>
+        <location filename="../qml/SelectEquation.ui.qml" line="25"/>
         <source>Easy</source>
         <translation>Легкая</translation>
     </message>
     <message>
-        <location filename="../qml/SelectEquation.ui.qml" line="22"/>
+        <location filename="../qml/SelectEquation.ui.qml" line="27"/>
         <source>Medium</source>
         <translation>Средняя</translation>
     </message>
     <message>
-        <location filename="../qml/SelectEquation.ui.qml" line="24"/>
+        <location filename="../qml/SelectEquation.ui.qml" line="29"/>
         <source>Hard</source>
         <translation>Сложная</translation>
     </message>
     <message>
-        <location filename="../qml/SelectEquation.ui.qml" line="26"/>
+        <location filename="../qml/SelectEquation.ui.qml" line="31"/>
         <source>Insane</source>
         <translation>Безумная</translation>
     </message>
     <message>
-        <location filename="../qml/SelectEquation.ui.qml" line="28"/>
+        <location filename="../qml/SelectEquation.ui.qml" line="33"/>
         <source>Beyond</source>
         <translation>Запредельная</translation>
     </message>
     <message>
-        <location filename="../qml/SelectEquation.ui.qml" line="30"/>
+        <location filename="../qml/SelectEquation.ui.qml" line="35"/>
         <source>Unknown</source>
         <translation>Неизвестно</translation>
     </message>
     <message>
-        <location filename="../qml/SelectEquation.ui.qml" line="47"/>
+        <location filename="../qml/SelectEquation.ui.qml" line="67"/>
         <source>Select an expression</source>
         <translation>Выберите выражение</translation>
     </message>
     <message>
-        <location filename="../qml/SelectEquation.ui.qml" line="104"/>
-        <location filename="../qml/SelectEquation.ui.qml" line="165"/>
-        <location filename="../qml/SelectEquation.ui.qml" line="227"/>
         <source>Defence: %1</source>
-        <translation>Защита: %1</translation>
+        <translation type="vanished">Защита: %1</translation>
     </message>
     <message>
         <source>Select an equation</source>
@@ -233,18 +248,12 @@
         <translation type="vanished">Выберете уравнение</translation>
     </message>
     <message>
-        <location filename="../qml/SelectEquation.ui.qml" line="77"/>
-        <location filename="../qml/SelectEquation.ui.qml" line="138"/>
-        <location filename="../qml/SelectEquation.ui.qml" line="200"/>
         <source>Difficulty: %1</source>
-        <translation>Сложность: %1</translation>
+        <translation type="vanished">Сложность: %1</translation>
     </message>
     <message>
-        <location filename="../qml/SelectEquation.ui.qml" line="91"/>
-        <location filename="../qml/SelectEquation.ui.qml" line="152"/>
-        <location filename="../qml/SelectEquation.ui.qml" line="214"/>
         <source>Damage: %1</source>
-        <translation>Урон: %1</translation>
+        <translation type="vanished">Урон: %1</translation>
     </message>
 </context>
 <context>

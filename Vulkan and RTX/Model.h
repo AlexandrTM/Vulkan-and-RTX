@@ -60,12 +60,7 @@ struct Texture {
 
     uint64_t uniqueHash = 0;
 
-    Texture() { uniqueHash = generateRandomHash(); }
-
-    static uint64_t generateRandomHash() {
-        static std::mt19937_64 rng{ std::random_device{}() };
-        return rng();
-    }
+    Texture() { uniqueHash = randomHash64(); }
 
 	explicit operator bool() const {
 		return 

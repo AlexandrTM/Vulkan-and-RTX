@@ -6,6 +6,16 @@
 
 void AetherEngine::run()
 {
+	/*std::chrono::high_resolution_clock::time_point currentTime;
+	float deltaTime;
+	std::chrono::high_resolution_clock::time_point previousTime = std::chrono::high_resolution_clock::now();
+
+	currentTime = std::chrono::high_resolution_clock::now();
+	deltaTime = std::chrono::duration<double, std::chrono::seconds::period>(currentTime - previousTime).count();
+	if (deltaTime > 1e-9) {
+		std::cout << "time to create: " << deltaTime << "\n";
+	}*/
+
 	//Equations::debugEquations(10000, 1.0);
 
 	prepareUI();
@@ -32,21 +42,12 @@ void AetherEngine::prepareUI()
 	gameContext.requestedGameState = GameState::MAIN_MENU;
 	gameContext.requestedGameState = GameState::IN_GAME_TESTING;
 	gameContext.requestedGameState = GameState::DUNGEON_EXPLORATION;
+	gameContext.requestedGameState = GameState::PLAYER_DEAD;
 	gameContext.clearInputs();
 }
 
 void AetherEngine::prepareResources()
 {
-	//std::chrono::high_resolution_clock::time_point currentTime;
-	//float deltaTime;
-	//std::chrono::high_resolution_clock::time_point previousTime = std::chrono::high_resolution_clock::now();
-
-	/*currentTime = std::chrono::high_resolution_clock::now();
-	deltaTime = std::chrono::duration<double, std::chrono::seconds::period>(currentTime - previousTime).count();
-	if (deltaTime > 0.00001) {
-		std::cout << "time to create gpp: " << deltaTime << "\n";
-	}*/
-
 	createDescriptorSetLayout(descriptorSetLayout);
 
 	createPipelinesAndSwapchain();
@@ -58,10 +59,10 @@ void AetherEngine::prepareResources()
 	createCommandBuffers();
 	createSyncObjects();
 
-	loadTextureFromPath("textures/grass001.png", grassTexture);
-	loadTextureFromPath("textures/floor_background_floor_2.png", floor_background);
+	grassTexture = loadTextureFromPath("textures/grass001.png");
+	floor_background = loadTextureFromPath("textures/floor_background_floor_2.png");
 	createSolidColorTexture({ 0, 0, 0, 0 }, 1, 1, transparentTexture);
-	loadTextureFromPath("textures/notFoundTexture.png", notFoundTexture);
+	notFoundTexture = loadTextureFromPath("textures/notFoundTexture.png");
 
 	//loadModelsFromFolder("models", models);
 	
@@ -90,11 +91,8 @@ void AetherEngine::prepareResources()
 	}*/
 	createDescriptorPool(33 * 15 * 2, 33 * 15 * 2, descriptorPool);
 
-	recreateDungeonFloor(gameContext.currentFloor, 1);
-	gameContext.currentRoom = Dungeon::enterDungeonFloor(gameContext.dungeonFloor, character);
-
-	createUIElements();
-
+	loadUIElements();
+	
 	computeAABB_createVertexIndexBuffers(sky);
 	createDescriptorSets(sky, MAX_FRAMES_IN_FLIGHT);
 	createShaderBuffers(sky, MAX_FRAMES_IN_FLIGHT);
@@ -183,7 +181,7 @@ void AetherEngine::changeUIElementSize(
 	computeAABB_createVertexIndexBuffers(uiElement.model);
 	createDescriptorSets(uiElement.model, MAX_FRAMES_IN_FLIGHT);
 }
-void AetherEngine::createUIElements() {
+void AetherEngine::loadUIElements() {
 	uiMap[uiElementId::MainMenu] = createUIElement("qml/MainMenu.ui.qml", windowWidth, windowHeight, mainWindow);
 	uiMap[uiElementId::SettingsMenu] = createUIElement("qml/SettingsMenu.ui.qml", windowWidth, windowHeight, mainWindow);
 	uiMap[uiElementId::PauseMenu] = createUIElement("qml/PauseMenu.ui.qml", windowWidth, windowHeight, mainWindow);
@@ -478,6 +476,13 @@ void AetherEngine::mainLoop()
 			}
 		}
 
+		if (gameContext.keyboardKeys[Qt::Key_R]) {
+			//loadUIElements();
+			gameContext.requestedGameState = GameState::PLAYER_DEAD;
+		}
+
+		//std::cout << "inGameWindow->isActive(): " << inGameWindow->isActive() << "\n";
+
 		if (gameContext.requestedGameState != GameState::NONE) {
 			changeState(gameContext.requestedGameState);
 			gameContext.requestedGameState = GameState::NONE;
@@ -524,21 +529,17 @@ void AetherEngine::mainLoop()
 				inGameWindow->requestActivate();
 				isSelectEquationActivated = true;
 			}
+
 			/*if (gameContext.keyboardKeys[Qt::Key_Escape]) {
 				gameContext.requestedGameState = GameState::DUNGEON_EXPLORATION;
 			}*/
 
-			if (gameContext.keyboardKeys[Qt::Key_1]) {
-				gameContext.selectedEquation = &gameContext.equations[0];
-				gameContext.requestedGameState = GameState::COMBAT_PLAYER_SOLVE_EQUATION;
-			}
-			if (gameContext.keyboardKeys[Qt::Key_2]) {
-				gameContext.selectedEquation = &gameContext.equations[1];
-				gameContext.requestedGameState = GameState::COMBAT_PLAYER_SOLVE_EQUATION;
-			}
-			if (gameContext.keyboardKeys[Qt::Key_3]) {
-				gameContext.selectedEquation = &gameContext.equations[2];
-				gameContext.requestedGameState = GameState::COMBAT_PLAYER_SOLVE_EQUATION;
+			for (size_t i = 0; i < 3; ++i) {
+				if (gameContext.keyboardKeys[Qt::Key_1 + i]) {
+					gameContext.selectedEquation = &gameContext.equations[i];
+					gameContext.requestedGameState = GameState::COMBAT_PLAYER_SOLVE_EQUATION;
+					break;
+				}
 			}
 		}
 		if (gameContext.currentGameState == GameState::COMBAT_PLAYER_SOLVE_EQUATION) {
@@ -565,7 +566,7 @@ void AetherEngine::mainLoop()
 			}
 		}
 		if (gameContext.currentGameState == GameState::DUNGEON_ROOM_CLEANED) {
-			if (Dungeon::isDungeonFloorCleaned(gameContext.dungeonFloor)) {
+			if (Dungeon::isDungeonFloorClear(gameContext.dungeonFloor)) {
 				// loops from 0 to 2, than again 0
 				gameContext.currentFloor = (gameContext.currentFloor + 1) % 3;
 
@@ -619,7 +620,7 @@ void AetherEngine::mainLoop()
 }
 void AetherEngine::recreateDungeonFloor(int32_t floorNumber, float difficultyScale)
 {
-	// Step 1: Clear only dungeon models
+	// clear only dungeon models
 	vkDeviceWaitIdle(vkInit.device);
 	models.erase(std::remove_if(models.begin(), models.end(),
 		[this](Model& model) {
@@ -630,12 +631,21 @@ void AetherEngine::recreateDungeonFloor(int32_t floorNumber, float difficultySca
 			return false;
 		}), models.end());
 
-	// Step 2: Reset the dungeon floor
+	// reset the dungeon floor
 	gameContext.dungeonFloor = {};
 
-	if (dungeonTextures.empty()) {
+	//if (dungeonTextures.empty()) {
 		loadTexturesFromFolder("textures/dungeon", dungeonTextures);
-	}
+	//}
+	/*std::chrono::high_resolution_clock::time_point currentTime;
+	float deltaTime;
+	std::chrono::high_resolution_clock::time_point previousTime = std::chrono::high_resolution_clock::now();
+
+	currentTime = std::chrono::high_resolution_clock::now();
+	deltaTime = std::chrono::duration<double, std::chrono::seconds::period>(currentTime - previousTime).count();
+	if (deltaTime > 1e-9) {
+		std::cout << "time to create: " << deltaTime << "\n";
+	}*/
 
 	std::string wallKey = "stone_wall_floor_" + std::to_string(floorNumber);
 	std::string floorKey = "stone_floor_floor_" + std::to_string(floorNumber);

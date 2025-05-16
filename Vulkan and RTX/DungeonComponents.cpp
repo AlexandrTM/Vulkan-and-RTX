@@ -56,10 +56,10 @@ std::vector<Model> DungeonRoom::createDungeonRoomModels() {
     // Create the floor of the room
     models.push_back(ModelManager::createCuboid(
         position.x,
-        position.y - 0.1f,
+        position.y - 0.001f,
         position.z,
         metricLength,
-        0.1f,
+        0.001f,
         metricWidth,
         glm::vec3(1.0f),
         floorTexture,
