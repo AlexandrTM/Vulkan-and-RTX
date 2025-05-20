@@ -654,9 +654,10 @@ void AetherEngine::updateInGameOverlay() {
 	auto currentRoom = gameContext.currentRoom;
 	if (!currentRoom) return;
 
-	QVariantList roomList = gameContext.dungeonFloor.updateMinimapRoomList(*currentRoom);
 	if (cache->minimapContainer) {
-		QMetaObject::invokeMethod(cache->rootItem, "updateRooms", Q_ARG(QVariant, roomList));
+		QVariantList roomList = gameContext.dungeonFloor.updateMinimapRoomList(*currentRoom);
+		cache->rootItem->setProperty("roomList", roomList);
+		QMetaObject::invokeMethod(cache->rootItem, "updateRooms");
 		// flipped intentionally
 		cache->minimapContainer->setProperty("mapOffsetX", currentRoom->gridPosition.y);
 		cache->minimapContainer->setProperty("mapOffsetY", currentRoom->gridPosition.x);

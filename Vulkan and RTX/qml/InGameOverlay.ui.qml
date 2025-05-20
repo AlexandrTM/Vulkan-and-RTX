@@ -258,10 +258,17 @@ Rectangle {
         objectName: "minimapModel"
     }
 
-    function updateRooms(roomList) {
-        minimapModel.clear();
-        for (var i = 0; i < roomList.length; ++i) {
-            minimapModel.append(roomList[i]);
+    property var roomList: []
+
+    function updateRooms() {
+        if (!roomList) return;
+
+        const len = roomList.length;
+        for (let i = 0; i < len; ++i) {
+            if (i < minimapModel.count)
+                minimapModel.set(i, roomList[i]);
+            else
+                minimapModel.append(roomList[i]);
         }
     }
 
