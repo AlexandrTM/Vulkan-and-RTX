@@ -40,8 +40,8 @@ void AetherEngine::prepareUI()
 	gameContext.requestedGameState = GameState::COMBAT_PLAYER_SOLVE_EQUATION;
 	gameContext.requestedGameState = GameState::COMBAT_PLAYER_SELECT_EQUATION;
 	gameContext.requestedGameState = GameState::MAIN_MENU;
-	gameContext.requestedGameState = GameState::IN_GAME_TESTING;
 	gameContext.requestedGameState = GameState::DUNGEON_EXPLORATION;
+	gameContext.requestedGameState = GameState::IN_GAME_TESTING;
 	gameContext.requestedGameState = GameState::PLAYER_DEAD;
 	gameContext.clearInputs();
 }
@@ -66,7 +66,7 @@ void AetherEngine::prepareResources()
 	//loadModelsFromFolder("models", models);
 	
 	TerrainData terrainData = {
-		30, 30,   // chunkWidth, chunkLength
+		30, 30,    // chunkWidth, chunkLength
 		4, 4,     // chunkRows, chunkCols
 		8.0f,     // gridSize
 		0.1f,     // scale
@@ -91,6 +91,7 @@ void AetherEngine::prepareResources()
 	createDescriptorPool(33 * 15 * 2, 33 * 15 * 2, descriptorPool);
 
 	loadUIElements();
+	initializeInGameOverlayCache();
 	
 	computeAABB_createVertexIndexBuffers(sky);
 	createDescriptorSets(sky, MAX_FRAMES_IN_FLIGHT);
@@ -225,6 +226,32 @@ void AetherEngine::loadUIElements() {
 		rootItem, SIGNAL(answerSubmitted(QString)), 
 		solveEquationSlotHandler, SLOT(onAnswerSubmitted(QString))
 	);
+}
+void AetherEngine::initializeInGameOverlayCache() {
+	auto& uiElement = uiMap[uiElementId::InGameOverlay];
+
+	auto renderer = uiElement.renderer.get();
+	if (!renderer) return;
+	auto rootItem = renderer->getRootItem();
+	if (!rootItem) return;
+
+	auto cache = std::make_unique<InGameOverlayCache>();
+	cache->rootItem = rootItem;
+
+	cache->minimapContainer = rootItem->findChild<QObject*>("minimapContainer");
+
+	cache->playerHealth = rootItem->findChild<QObject*>("playerHealth");
+	cache->playerDamage = rootItem->findChild<QObject*>("playerDamage");
+	cache->playerDefense = rootItem->findChild<QObject*>("playerDefense");
+	cache->playerExperience = rootItem->findChild<QObject*>("playerExperience");
+
+	cache->mobTitle = rootItem->findChild<QObject*>("mobTitle");
+	cache->mobHealth = rootItem->findChild<QObject*>("mobHealth");
+	cache->mobDamage = rootItem->findChild<QObject*>("mobDamage");
+	cache->mobDefense = rootItem->findChild<QObject*>("mobDefense");
+	cache->mobExperience = rootItem->findChild<QObject*>("mobExperience");
+
+	uiElement.cache = std::move(cache);
 }
 
 void AetherEngine::createMainWindow()
@@ -518,7 +545,7 @@ void AetherEngine::mainLoop()
 		}
 		if (gameContext.currentGameState == GameState::DUNGEON_EXPLORATION) {
 			if (gameContext.currentRoom->hasMobs()) {
-				gameContext.requestedGameState = GameState::COMBAT_PLAYER_SELECT_EQUATION;
+				//gameContext.requestedGameState = GameState::COMBAT_PLAYER_SELECT_EQUATION;
 			}
 
 			character.handleDungeonExplorationPlayerInput();
@@ -603,6 +630,12 @@ void AetherEngine::mainLoop()
 				character.camera.setPosition(newPos);
 
 				if (t >= 1.0f) {
+					Dungeon::updateRoomsState(
+						*gameContext.targetRoom, 
+						*gameContext.currentRoom, 
+						gameContext.dungeonFloor.dungeonRooms, 2
+					);
+
 					gameContext.currentRoom = gameContext.targetRoom;
 					gameContext.targetRoom = nullptr;
 					gameContext.isCameraTransitioning = false;
@@ -652,7 +685,7 @@ void AetherEngine::recreateDungeonFloor(int32_t floorNumber, float difficultySca
 	Texture wallTexture = dungeonTextures.contains(wallKey) ? dungeonTextures[wallKey] : notFoundTexture;
 	Texture floorTexture = dungeonTextures.contains(floorKey) ? dungeonTextures[floorKey] : notFoundTexture;
 
-	std::vector<Model> dungeonModels = Dungeon::createDungeonFloor(
+	std::vector<Model> dungeonModels = Dungeon::generateRandomDungeonFloor(
 		floorNumber, difficultyScale,
 		gameContext.dungeonFloor,
 		floorTexture,

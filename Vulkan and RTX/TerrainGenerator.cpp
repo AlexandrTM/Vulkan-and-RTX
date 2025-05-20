@@ -44,8 +44,8 @@ void TerrainGenerator::generateTerrain(
     Material material{};
     material.diffuseTexture = terrainTexture;
 
-    for (size_t chunkX = 0; chunkX < terrainData.chunkCols; ++chunkX) {
-        for (size_t chunkZ = 0; chunkZ < terrainData.chunkRows; ++chunkZ) {
+    for (size_t chunkX = 0; chunkX < terrainData.chunkRows; ++chunkX) {
+        for (size_t chunkZ = 0; chunkZ < terrainData.chunkCols; ++chunkZ) {
             Mesh mesh;
 
             size_t chunkXoffset = chunkX * terrainData.chunkWidth;
@@ -71,7 +71,7 @@ void TerrainGenerator::generateTerrain(
             mesh.material = material;
 
             model.meshes.push_back(mesh);
-            model.isCollidable = true;
+            model.isCollidable = false;
         }
     }
 

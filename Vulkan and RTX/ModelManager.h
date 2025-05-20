@@ -6,7 +6,7 @@ namespace ModelManager
 {
 	std::vector<Model> generateCubicLandscape(
 		size_t landscapeWidth, size_t landscapeLenght,
-		float_t cubeSize,
+		float cubeSize,
 		glm::vec3 color,
 		Texture& texture,
 		ModelType modelType

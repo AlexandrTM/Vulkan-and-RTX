@@ -10,7 +10,7 @@ Rectangle {
 
     color: "#00000000"
     property color statColor: "#90ffd380"
-    property real defaultFontSize: Math.max(height * 0.0215, 11)
+    property real defaultFontSize: Math.max(height * 0.021, 11)
     property real statWidth: width * 0.14
     property real statHeight: height * 0.065
 
@@ -63,11 +63,11 @@ Rectangle {
 
     Text {
         id: textStyle
-        font.family: fontFamily
-        font.pointSize: defaultFontSize
+        font.family: pauseMenu.fontFamily
+        font.pointSize: pauseMenu.defaultFontSize
         horizontalAlignment: Text.AlignHCenter
         verticalAlignment: Text.AlignVCenter
-        color: fontColor
+        color: pauseMenu.fontColor
     }
 
     Rectangle {
@@ -249,6 +249,70 @@ Rectangle {
                 anchors.fill: parent
                 fillMode: Image.PreserveAspectFit
                 //smooth: true
+            }
+        }
+    }
+
+    ListModel {
+        id: minimapModel
+        objectName: "minimapModel"
+    }
+
+    function updateRooms(roomList) {
+        minimapModel.clear();
+        for (var i = 0; i < roomList.length; ++i) {
+            minimapModel.append(roomList[i]);
+        }
+    }
+
+    Item {
+        id: minimapContainer
+        objectName: "minimapContainer"
+        width: parent.height * 0.3
+        height: width
+        anchors.left: parent.left
+        anchors.top: parent.top
+
+        clip: true
+
+        property int cellSize: minimapContainer.width * 0.12
+
+        // Offset used to center the grid visually
+        property int mapOffsetX: 0
+        property int mapOffsetY: 0
+
+        Rectangle {
+            anchors.fill: parent
+            color: "#88777799"
+        }
+
+        // Minimap rooms
+        Repeater {
+            model: minimapModel
+
+            delegate: Rectangle {
+                id: minimapCell
+
+                width: minimapContainer.cellSize
+                height: width
+
+                // Position rooms on a grid — flip y to draw top-down
+                x: (model.x - minimapContainer.mapOffsetX) * width * 1.2 + (minimapContainer.width - width) / 2
+                y: (minimapContainer.mapOffsetY - model.y) * height * 1.2 + (minimapContainer.height - height) / 2
+
+                color: model.state === "current" ? "#ff008800"
+                     : model.state === "discovered" ? "#779999aa"
+                     : model.state === "undiscovered" ? "transparent"
+                     : "#ffff0000"
+
+                Rectangle {
+                    anchors.centerIn: parent
+                    width: parent.width * 0.5
+                    height: width
+                    visible: model.hasMob && (model.state === "current" || model.state === "discovered")
+                    color: "#ffbb6666"
+                    radius: width / 2
+                }
             }
         }
     }

@@ -144,6 +144,7 @@ private:
 		UserInterfaceElement& uiElement, size_t windowWidth, size_t windowHeight
 	);
 	void loadUIElements();
+	void initializeInGameOverlayCache();
 
 	void createMainWindow();
 	void createInGameWindow();

@@ -4,6 +4,13 @@
 #include "Mob.h"
 #include "ModelManager.h"
 
+struct RoomInfo
+{
+    RoomConnectionMask connectionMask;
+    size_t width;
+    size_t length;
+};
+
 struct DungeonRoom
 {
     glm::vec3 position;
@@ -48,6 +55,7 @@ struct DungeonFloor
     std::vector<DungeonRoom> dungeonRooms;
     DungeonRoom* entrance = nullptr;
 
+    QVariantList updateMinimapRoomList(DungeonRoom& currentRoom);
     std::vector<Model> createDungeonFloor(int32_t floorNumber, float difficultyScale);
 
     void addDungeonRoom(DungeonRoom dungeonRoom);
@@ -60,10 +68,11 @@ namespace Dungeon
 	void updateRoomsState(
 		DungeonRoom& targetRoom,
 		DungeonRoom& previousRoom,
-		std::vector<DungeonRoom>& floorRooms
+		std::vector<DungeonRoom>& floorRooms,
+        int32_t viewDistance
 	);
 
-	std::vector<Model> createDungeonFloor(
+	std::vector<Model> generateRandomDungeonFloor(
 		int32_t floorNumber, float difficultyScale,
 		DungeonFloor& dungeonFloor,
 		Texture& floorTexture, Texture& wallTexture
@@ -72,12 +81,12 @@ namespace Dungeon
 	void generateDungeonFloorGrid(
 		size_t& minRoomCount,
 		size_t& maxRoomCount,
-		std::unordered_map<glm::ivec2, RoomConnectionMask>& roomGrid
+		std::unordered_map<glm::ivec2, RoomInfo>& roomGrid
 	);
 
 	void createDungeonRoomsFromGrid(
 		DungeonFloor& dungeonFloor,
-		std::unordered_map<glm::ivec2, RoomConnectionMask>& roomGrid,
+		std::unordered_map<glm::ivec2, RoomInfo>& roomGrid,
 		float& cellSize, float& roomSpacing,
 		Texture& floorTexture, Texture& wallTexture
 	);

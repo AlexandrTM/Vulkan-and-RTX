@@ -28,10 +28,10 @@ inline bool hasConnection(RoomConnectionMask mask, RoomConnectionMask direction)
 }
 
 const std::unordered_map<RoomConnectionMask, glm::ivec2> directionOffsets = {
-    { RoomConnectionMask::NORTH, { -1,  0 } },
-    { RoomConnectionMask::SOUTH, {  1,  0 } },
-    { RoomConnectionMask::EAST,  {  0,  1 } },
-    { RoomConnectionMask::WEST,  {  0, -1 } },
+    { RoomConnectionMask::NORTH, {  1,  0 } },
+    { RoomConnectionMask::SOUTH, { -1,  0 } },
+    { RoomConnectionMask::EAST,  {  0, -1 } },
+    { RoomConnectionMask::WEST,  {  0,  1 } },
 };
 
 inline RoomConnectionMask oppositeDirection(RoomConnectionMask dir) {

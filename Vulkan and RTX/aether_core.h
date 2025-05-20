@@ -43,6 +43,12 @@ randomInt(IntType min, IntType max) {
 	boost::random::uniform_int_distribution<IntType> distribution(min, max);
 	return distribution(generator);
 }
+template<typename IntType>
+typename std::enable_if<std::is_integral<IntType>::value, IntType>::type
+randomOddInt(IntType minInclusive, IntType maxInclusive) {
+	IntType value = randomInt((minInclusive + 1) / 2, maxInclusive / 2);
+	return value * 2 - 1;
+}
 float randomReal(float min, float max);
 float randomRealOffset(float offset);
 float randomNormalizedReal();

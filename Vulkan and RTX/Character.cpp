@@ -87,23 +87,23 @@ void Character::handleDungeonRoomMovement()
 	RoomConnectionMask moveDirection = RoomConnectionMask::NONE;
 	if (gameContext.keyboardKeys[Qt::Key_W] || gameContext.keyboardKeys[Qt::Key_Up]) {
 		//std::cout << "w pressed\n";
-		moveDirection = RoomConnectionMask::SOUTH; // inverted
-		moveDirectionVector = directionOffsets.at(RoomConnectionMask::SOUTH);
+		moveDirection = RoomConnectionMask::NORTH; // inverted
+		moveDirectionVector = directionOffsets.at(RoomConnectionMask::NORTH);
 	}
 	if (gameContext.keyboardKeys[Qt::Key_A] || gameContext.keyboardKeys[Qt::Key_Left]) {
 		//std::cout << "a pressed\n";
-		moveDirection = RoomConnectionMask::WEST;
-		moveDirectionVector = directionOffsets.at(RoomConnectionMask::WEST);
+		moveDirection = RoomConnectionMask::EAST;
+		moveDirectionVector = directionOffsets.at(RoomConnectionMask::EAST);
 	}
 	if (gameContext.keyboardKeys[Qt::Key_S] || gameContext.keyboardKeys[Qt::Key_Down]) {
 		//std::cout << "s pressed\n";
-		moveDirection = RoomConnectionMask::NORTH;
-		moveDirectionVector = directionOffsets.at(RoomConnectionMask::NORTH);
+		moveDirection = RoomConnectionMask::SOUTH;
+		moveDirectionVector = directionOffsets.at(RoomConnectionMask::SOUTH);
 	}
 	if (gameContext.keyboardKeys[Qt::Key_D] || gameContext.keyboardKeys[Qt::Key_Right]) {
 		//std::cout << "d pressed\n";
-		moveDirection = RoomConnectionMask::EAST;
-		moveDirectionVector = directionOffsets.at(RoomConnectionMask::EAST);
+		moveDirection = RoomConnectionMask::WEST;
+		moveDirectionVector = directionOffsets.at(RoomConnectionMask::WEST);
 	}
 
 	if (moveDirectionVector != glm::ivec2(0, 0) and gameContext.currentRoom != nullptr) {
@@ -117,12 +117,9 @@ void Character::handleDungeonRoomMovement()
 			for (DungeonRoom& room : gameContext.dungeonFloor.dungeonRooms) {
 				if (room.gridPosition == targetGrid) {
 
-					Dungeon::updateRoomsState(
-						room, *gameContext.currentRoom, gameContext.dungeonFloor.dungeonRooms
-					);
-
 					gameContext.targetRoom = &room;
-
+					//std::cout << "current room position: " << glm::to_string(gameContext.currentRoom->position) << "\n";
+					//std::cout << "new room position: " << glm::to_string(room.position) << "\n";
 					gameContext.cameraStartPosition = camera.getPosition();
 					gameContext.cameraTargetPosition = room.cameraPosition;
 					gameContext.cameraCurrentTransitionTime = 0.0f;
@@ -140,7 +137,7 @@ DungeonRoom* Character::enterDungeonFloor(DungeonFloor& dungeonFloor)
 {
 	if (dungeonFloor.entrance != nullptr) {
 		Dungeon::updateRoomsState(
-			*dungeonFloor.entrance, *dungeonFloor.entrance, dungeonFloor.dungeonRooms
+			*dungeonFloor.entrance, *dungeonFloor.entrance, dungeonFloor.dungeonRooms, 2
 		);
 
 		this->camera.setPosition(dungeonFloor.entrance->cameraPosition);

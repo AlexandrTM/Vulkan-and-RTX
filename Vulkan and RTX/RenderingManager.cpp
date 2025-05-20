@@ -645,36 +645,38 @@ void AetherEngine::recordCommandBuffer(
 }
 
 void AetherEngine::updateInGameOverlay() {
-	if (!uiMap[uiElementId::InGameOverlay].renderer) return;
+	auto& uiElement = uiMap[uiElementId::InGameOverlay];
+	auto cache = dynamic_cast<InGameOverlayCache*>(uiElement.cache.get());
 
-	auto rootItem = uiMap[uiElementId::InGameOverlay].renderer->getRootItem();
-	if (!rootItem) return;
+	auto renderer = uiElement.renderer.get();
+	if (!renderer) return;
+	if (!cache->rootItem) return;
+	auto currentRoom = gameContext.currentRoom;
+	if (!currentRoom) return;
 
-	QObject* playerHealth = rootItem->findChild<QObject*>("playerHealth");
-	QObject* playerDamage = rootItem->findChild<QObject*>("playerDamage");
-	QObject* playerDefense = rootItem->findChild<QObject*>("playerDefense");
-	QObject* playerExperience = rootItem->findChild<QObject*>("playerExperience");
-	if (playerHealth) { playerHealth->setProperty("value", character.health); }
-	if (playerDamage) { playerDamage->setProperty("value", character.attackPower); }
-	if (playerDefense) { playerDefense->setProperty("value", character.defence); }
-	if (playerExperience) { playerExperience->setProperty("value", character.experience); }
+	QVariantList roomList = gameContext.dungeonFloor.updateMinimapRoomList(*currentRoom);
+	if (cache->minimapContainer) {
+		QMetaObject::invokeMethod(cache->rootItem, "updateRooms", Q_ARG(QVariant, roomList));
+		// flipped intentionally
+		cache->minimapContainer->setProperty("mapOffsetX", currentRoom->gridPosition.y);
+		cache->minimapContainer->setProperty("mapOffsetY", currentRoom->gridPosition.x);
+	}
 
-	QObject* mobTitle = rootItem->findChild<QObject*>("mobTitle");
-	QObject* mobHealth = rootItem->findChild<QObject*>("mobHealth");
-	QObject* mobDamage = rootItem->findChild<QObject*>("mobDamage");
-	QObject* mobDefense = rootItem->findChild<QObject*>("mobDefense");
-	QObject* mobExperience = rootItem->findChild<QObject*>("mobExperience");
+	if (cache->playerHealth) { cache->playerHealth->setProperty("value", character.health); }
+	if (cache->playerDamage) { cache->playerDamage->setProperty("value", character.attackPower); }
+	if (cache->playerDefense) { cache->playerDefense->setProperty("value", character.defence); }
+	if (cache->playerExperience) { cache->playerExperience->setProperty("value", character.experience); }
 
-	if (gameContext.currentRoom->hasMobs()) {
-		Mob& mob = gameContext.currentRoom->mobs[0];
-		if (mobTitle) { mobTitle->setProperty("value", mob.id); }
-		if (mobHealth) { mobHealth->setProperty("value", mob.health); }
-		if (mobDamage) { mobDamage->setProperty("value", mob.attackPower); }
-		if (mobDefense) { mobDefense->setProperty("value", mob.defence); }
-		if (mobExperience) { mobExperience->setProperty("value", mob.experienceReward); }
+	if (currentRoom->hasMobs()) {
+		Mob& mob = currentRoom->mobs[0];
+		if (cache->mobTitle) { cache->mobTitle->setProperty("value", mob.id); }
+		if (cache->mobHealth) { cache->mobHealth->setProperty("value", mob.health); }
+		if (cache->mobDamage) { cache->mobDamage->setProperty("value", mob.attackPower); }
+		if (cache->mobDefense) { cache->mobDefense->setProperty("value", mob.defence); }
+		if (cache->mobExperience) { cache->mobExperience->setProperty("value", mob.experienceReward); }
 	}
 	else {
-		mobHealth->setProperty("value", 0); // making invisible
+		cache->mobHealth->setProperty("value", 0); // making invisible
 	}
 }
 void AetherEngine::updateSelectEquation(size_t amountOfEquations) {
@@ -771,6 +773,13 @@ void AetherEngine::updateSolveEquationOverlay() {
 		timeRemaining->setProperty("dynamicColor", color);
 	}
 }
+void AetherEngine::clearSolveEquationInput() {
+	auto renderer = uiMap[uiElementId::SolveEquation].renderer.get();
+	QQuickItem* rootItem = renderer->getRootItem();
+	QObject* answerInput = rootItem->findChild<QObject*>("answerInput");
+	if (answerInput) { answerInput->setProperty("text", ""); }
+	renderer->getQuickWindow()->contentItem()->setFocus(false);
+}
 QColor AetherEngine::interpolateColor(const QColor& from, const QColor& to, double t) {
 	t = std::clamp(t, 0.0, 1.0);
 	int r = static_cast<int>(from.red() * (1.0 - t) + to.red() * t);
@@ -778,12 +787,6 @@ QColor AetherEngine::interpolateColor(const QColor& from, const QColor& to, doub
 	int b = static_cast<int>(from.blue() * (1.0 - t) + to.blue() * t);
 	int a = static_cast<int>(from.alpha() * (1.0 - t) + to.alpha() * t);
 	return QColor(r, g, b, a);
-}
-void AetherEngine::clearSolveEquationInput() {
-	auto rootItem = uiMap[uiElementId::SolveEquation].renderer->getRootItem();
-	QObject* answerInput = rootItem->findChild<QObject*>("answerInput");
-	if (answerInput) { answerInput->setProperty("text", ""); }
-	uiMap[uiElementId::SolveEquation].renderer->getQuickWindow()->contentItem()->setFocus(false);
 }
 
 void AetherEngine::recordUiElementToCommandBuffer(UserInterfaceElement& uiElement, VkCommandBuffer commandBuffer)

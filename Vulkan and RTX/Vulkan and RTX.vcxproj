@@ -207,6 +207,7 @@
     <ClCompile Include="MainWindow.cpp" />
     <ClCompile Include="Mob.cpp" />
     <ClCompile Include="Model.cpp" />
+    <ClCompile Include="ui_core.cpp" />
     <ClCompile Include="UserInterfaceElement.cpp" />
     <ClCompile Include="UserInterfaceRenderer.cpp" />
     <ClCompile Include="pch.cpp">
@@ -264,6 +265,7 @@
     <QtMoc Include="SettingsMenuSlotHandler.h" />
     <ClInclude Include="StellarCalculations.h" />
     <ClInclude Include="TerrainGenerator.h" />
+    <ClInclude Include="ui_core.h" />
     <ClInclude Include="UserInterfaceElement.h" />
     <ClInclude Include="Vertex.h" />
     <QtMoc Include="AetherEngine.h" />
