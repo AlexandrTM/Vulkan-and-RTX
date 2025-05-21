@@ -44,10 +44,6 @@ struct DungeonRoom
     );
 
     std::vector<Model> createDungeonRoomModels();
-    static std::vector<std::string> createRoomLayoutFromMask(
-        RoomConnectionMask mask,
-        size_t width, size_t length
-    );
 };
 
 struct DungeonFloor
@@ -56,7 +52,8 @@ struct DungeonFloor
     DungeonRoom* entrance = nullptr;
 
     QVariantList updateMinimapRoomList(DungeonRoom& currentRoom);
-    std::vector<Model> createDungeonFloor(int32_t floorNumber, float difficultyScale);
+    std::vector<Model> createDungeonFloorModels();
+    void setEntrance();
 
     void addDungeonRoom(DungeonRoom dungeonRoom);
 };
@@ -83,6 +80,9 @@ namespace Dungeon
 		size_t& maxRoomCount,
 		std::unordered_map<glm::ivec2, RoomInfo>& roomGrid
 	);
+    void generateDungeonFloorMobs(
+        DungeonFloor& dungeonFloor, int32_t floorNumber, float difficultyScale
+    );
 
 	void createDungeonRoomsFromGrid(
 		DungeonFloor& dungeonFloor,
@@ -90,4 +90,6 @@ namespace Dungeon
 		float& cellSize, float& roomSpacing,
 		Texture& floorTexture, Texture& wallTexture
 	);
+
+    std::vector<std::string> createDungeonRoomLayout(const RoomInfo& roomInfo);
 }

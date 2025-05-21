@@ -41,7 +41,7 @@ std::vector<Equation> Equations::generateEquations(size_t amount, double difficu
 		//	0.122 * real_difficulty * real_difficulty +
 		//	0.307 * real_difficulty/* + 0.2*/,
 		//	0.0), 7.0));
-		defence = randomReal(0.0f + real_difficulty * 0.2, std::max(real_difficulty, 1.0));
+		defence = randomReal(0.0f + real_difficulty * 0.25, std::max(real_difficulty * 1.1, 1.25));
 		
 		double rawAnswerPenalty = std::max(
 			0.025 * real_difficulty * real_difficulty +
@@ -163,7 +163,12 @@ bool Equations::isLinearAcceptable(int32_t x, int32_t a, int32_t b, int32_t c, d
 void Equations::debugEquations(size_t amount, double difficultyScale)
 {
 	std::vector<Equation> equations = generateEquations(amount, difficultyScale);
+
 	double totalAnswer = 0.0;
+	int32_t totalDamage = 0;
+	int32_t totalDefence = 0;
+	double totalPenalty = 0.0;
+	double totalTimeToSolve = 0.0;
 
 	size_t count_0_0___1_5 = 0;
 	size_t count_1_5___3_0 = 0;
@@ -187,6 +192,10 @@ void Equations::debugEquations(size_t amount, double difficultyScale)
 									   else count_6_0___inf++;
 
 		totalAnswer += std::abs(equation.answer);
+		totalDamage += equation.damage;
+		totalDefence += equation.defence;
+		totalPenalty += equation.wrongAnswerPenalty;
+		totalTimeToSolve += equation.timeToSolve;
 
 		if (equation.difficulty >= 10.0) {
 			std::cout
@@ -206,7 +215,12 @@ void Equations::debugEquations(size_t amount, double difficultyScale)
 	std::cout << "[3, 4.5):  " << count_3_0___4_5 << " (" << fraction(count_3_0___4_5) << "%)\n";
 	std::cout << "[4.5, 6):  " << count_4_5___6_0 << " (" << fraction(count_4_5___6_0) << "%)\n";
 	std::cout << "[6, +inf): " << count_6_0___inf << " (" << fraction(count_6_0___inf) << "%)\n";
-	std::cout << "Average answer: " << std::fixed << std::setprecision(4) << totalAnswer / equations.size() << "\n";
+	
+	std::cout << "Average answer:        " << std::fixed << std::setprecision(4) << totalAnswer / equations.size() << "\n";
+	std::cout << "Average damage:        " << totalDamage / static_cast<double>(equations.size()) << "\n";
+	std::cout << "Average defence:       " << totalDefence / static_cast<double>(equations.size()) << "\n";
+	std::cout << "Average wrong penalty: " << totalPenalty / equations.size() << "s\n";
+	std::cout << "Average time to solve: " << totalTimeToSolve / equations.size() << "s\n";
 
 	std::vector<float> fractions = {
 		fraction(count_0_0___1_5),

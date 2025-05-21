@@ -10,13 +10,15 @@ void AetherEngine::run()
 	float deltaTime;
 	std::chrono::high_resolution_clock::time_point previousTime = std::chrono::high_resolution_clock::now();
 
+
+
 	currentTime = std::chrono::high_resolution_clock::now();
 	deltaTime = std::chrono::duration<double, std::chrono::seconds::period>(currentTime - previousTime).count();
 	if (deltaTime > 1e-9) {
 		std::cout << "time to create: " << deltaTime << "\n";
 	}*/
 
-	//Equations::debugEquations(10000, 1.0);
+	//Equations::debugEquations(1000, 1.0);
 
 	prepareUI();
 	vkInit.initializeVulkan(&qVulkanInstance);
@@ -81,7 +83,7 @@ void AetherEngine::prepareResources()
 		models, floor_background, 8.0f,
 		1
 	);
-
+	
 	ModelManager::createSkyModel(sky);
 
 	/*size_t meshesNum = 0;
@@ -91,7 +93,6 @@ void AetherEngine::prepareResources()
 	createDescriptorPool(33 * 15 * 2, 33 * 15 * 2, descriptorPool);
 
 	loadUIElements();
-	initializeInGameOverlayCache();
 	
 	computeAABB_createVertexIndexBuffers(sky);
 	createDescriptorSets(sky, MAX_FRAMES_IN_FLIGHT);
@@ -188,6 +189,8 @@ void AetherEngine::loadUIElements() {
 	uiMap[uiElementId::InGameOverlay] = createUIElement("qml/InGameOverlay.ui.qml", windowWidth, windowHeight, mainWindow);
 	uiMap[uiElementId::SelectEquation] = createUIElement("qml/SelectEquation.ui.qml", windowWidth, windowHeight, mainWindow);
 	uiMap[uiElementId::SolveEquation] = createUIElement("qml/SolveEquation.ui.qml", windowWidth, windowHeight, mainWindow);
+
+	initializeInGameOverlayCache();
 
 	inGameWindow->setMainMenuRenderer(uiMap[uiElementId::MainMenu].renderer.get());
 	inGameWindow->setSettingsMenuRenderer(uiMap[uiElementId::SettingsMenu].renderer.get());
@@ -556,9 +559,9 @@ void AetherEngine::mainLoop()
 				isSelectEquationActivated = true;
 			}
 
-			/*if (gameContext.keyboardKeys[Qt::Key_Escape]) {
+			if (gameContext.keyboardKeys[Qt::Key_Escape]) {
 				gameContext.requestedGameState = GameState::DUNGEON_EXPLORATION;
-			}*/
+			}
 
 			for (size_t i = 0; i < 3; ++i) {
 				if (gameContext.keyboardKeys[Qt::Key_1 + i]) {

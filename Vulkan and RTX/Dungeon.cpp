@@ -90,67 +90,28 @@ std::vector<Model> DungeonRoom::createDungeonRoomModels() {
     return models;
 }
 
-std::vector<std::string> DungeonRoom::createRoomLayoutFromMask(
-    RoomConnectionMask mask,
-    size_t width, size_t length
-)
-{
-    std::vector<std::string> layout(length, std::string(width, 'a'));
-
-    // Place walls on borders
-    for (size_t x = 0; x < length; ++x) {
-        for (size_t y = 0; y < width; ++y) {
-            if (x == 0 || x == length - 1 || y == 0 || y == width - 1) {
-                layout[x][y] = 'w';
-            }
-        }
-    }
-
-    size_t midX = length / 2;
-    size_t midY = width / 2;
-
-    // Open passages based on mask
-    if (hasConnection(mask, RoomConnectionMask::NORTH)) {
-        layout[length - 1][midY] = 'a';
-    }
-    if (hasConnection(mask, RoomConnectionMask::SOUTH)) {
-        layout[0][midY] = 'a';
-    }
-    if (hasConnection(mask, RoomConnectionMask::WEST)) {
-        layout[midX][width - 1] = 'a';
-    }
-    if (hasConnection(mask, RoomConnectionMask::EAST)) {
-        layout[midX][0] = 'a';
-    }
-
-    return layout;
-}
-
-// Method to generate all rooms on the floor
-std::vector<Model> DungeonFloor::createDungeonFloor(int32_t floorNumber, float difficultyScale) {
+// Method to generate models for all rooms on the floor
+std::vector<Model> DungeonFloor::createDungeonFloorModels() {
     std::vector<Model> floorModels;
 
+    for (auto& room : dungeonRooms) {
+        std::vector<Model> roomModels = room.createDungeonRoomModels();
+
+        floorModels.insert(floorModels.end(), roomModels.begin(), roomModels.end());
+    }
+
+    return floorModels;
+}
+
+void DungeonFloor::setEntrance()
+{
     if (!dungeonRooms.empty()) {
         entrance = &dungeonRooms.front();
     }
     else {
         std::cout << "dungeon floor has no rooms\n";
     }
-
-    // Generate each room in the dungeon
-    for (auto& room : dungeonRooms) {
-        std::vector<Model> roomModels = room.createDungeonRoomModels();
-
-        floorModels.insert(floorModels.end(), roomModels.begin(), roomModels.end());
-
-        if (&room != entrance) {
-            room.mobs.push_back(Mob::generateRandomMob(room.centerPosition, floorNumber, difficultyScale));
-        }
-    }
-
-    return floorModels;
 }
-
 void DungeonFloor::addDungeonRoom(DungeonRoom dungeonRoom) {
     dungeonRooms.push_back(dungeonRoom);
 }
@@ -203,13 +164,16 @@ void Dungeon::updateRoomsState(
 
 	targetRoom.state = DungeonRoomState::CURRENT;
 
-    for (const auto& [dir, offset] : directionOffsets) {
+    for (const auto& [direction, offset] : directionOffsets) {
         glm::ivec2 neighborPos = targetRoom.gridPosition + offset;
 
         for (DungeonRoom& neighbor : floorRooms) {
             if (neighbor.gridPosition == neighborPos &&
-                neighbor.state == DungeonRoomState::UNDISCOVERED) {
-                neighbor.state = DungeonRoomState::DISCOVERED;
+                hasConnection(targetRoom.connectionMask, direction)) {
+                if (neighbor.state == DungeonRoomState::UNDISCOVERED) {
+                    neighbor.state = DungeonRoomState::DISCOVERED;
+                }
+                break;
             }
         }
     }
@@ -259,6 +223,39 @@ void Dungeon::updateRoomsState(
     }*/
 }
 
+std::vector<std::string> Dungeon::createDungeonRoomLayout(const RoomInfo& roomInfo)
+{
+    std::vector<std::string> layout(roomInfo.length, std::string(roomInfo.width, 'a'));
+
+    // Place walls on borders
+    for (size_t x = 0; x < roomInfo.length; ++x) {
+        for (size_t y = 0; y < roomInfo.width; ++y) {
+            if (x == 0 || x == roomInfo.length - 1 || y == 0 || y == roomInfo.width - 1) {
+                layout[x][y] = 'w';
+            }
+        }
+    }
+
+    size_t midX = roomInfo.length / 2;
+    size_t midY = roomInfo.width / 2;
+
+    // Open passages based on mask
+    if (hasConnection(roomInfo.connectionMask, RoomConnectionMask::NORTH)) {
+        layout[roomInfo.length - 1][midY] = 'a';
+    }
+    if (hasConnection(roomInfo.connectionMask, RoomConnectionMask::SOUTH)) {
+        layout[0][midY] = 'a';
+    }
+    if (hasConnection(roomInfo.connectionMask, RoomConnectionMask::WEST)) {
+        layout[midX][roomInfo.width - 1] = 'a';
+    }
+    if (hasConnection(roomInfo.connectionMask, RoomConnectionMask::EAST)) {
+        layout[midX][0] = 'a';
+    }
+
+    return layout;
+}
+
 std::vector<Model> Dungeon::generateRandomDungeonFloor(
 	int32_t floorNumber, float difficultyScale, 
 	DungeonFloor& dungeonFloor,
@@ -279,8 +276,10 @@ std::vector<Model> Dungeon::generateRandomDungeonFloor(
 		cellSize, roomSpacing, 
 		floorTexture, wallTexture
 	);
+    dungeonFloor.setEntrance();
+    generateDungeonFloorMobs(dungeonFloor, floorNumber, difficultyScale);
 
-	return dungeonFloor.createDungeonFloor(floorNumber, difficultyScale);
+	return dungeonFloor.createDungeonFloorModels();
 }
 
 void Dungeon::generateDungeonFloorGrid(
@@ -291,9 +290,11 @@ void Dungeon::generateDungeonFloorGrid(
 {
 	std::queue<glm::ivec2> frontier;
 
+    size_t roomWidth;
+    size_t roomLength;
 	while (roomGrid.size() < minRoomCount) {
-        size_t roomWidth = randomOddInt(9, 13);
-        size_t roomLength = roomWidth;
+        roomWidth = randomOddInt(9, 13);
+        roomLength = roomWidth;
 
 		// clean generation if failed
 		frontier.push({ 0, 0 });
@@ -347,6 +348,17 @@ void Dungeon::generateDungeonFloorGrid(
 	}
 }
 
+void Dungeon::generateDungeonFloorMobs(
+    DungeonFloor& dungeonFloor, int32_t floorNumber, float difficultyScale
+)
+{
+    for (auto& room : dungeonFloor.dungeonRooms) {
+        if (&room != dungeonFloor.entrance) {
+            room.mobs.push_back(Mob::generateRandomMob(room.centerPosition, floorNumber, difficultyScale));
+        }
+    }
+}
+
 void Dungeon::createDungeonRoomsFromGrid(
 	DungeonFloor& dungeonFloor, 
 	std::unordered_map<glm::ivec2, RoomInfo>& roomGrid,
@@ -357,18 +369,18 @@ void Dungeon::createDungeonRoomsFromGrid(
 	for (const auto& [gridPosition, roomInfo] : roomGrid) {
 		glm::vec3 worldPosition = glm::vec3(gridPosition.x * roomSpacing, 0.0f, gridPosition.y * roomSpacing);
 
-		std::vector<std::string> layout = DungeonRoom::createRoomLayoutFromMask(
-            roomInfo.connectionMask, roomInfo.width, roomInfo.length
+		std::vector<std::string> layout = createDungeonRoomLayout(roomInfo);
+
+        DungeonRoom room(
+            worldPosition,
+            gridPosition,
+            layout,
+            roomInfo.connectionMask,
+            cellSize,
+            floorTexture,
+            wallTexture
         );
 
-		dungeonFloor.addDungeonRoom(DungeonRoom(
-			worldPosition,
-			gridPosition,
-			layout,
-			roomInfo.connectionMask,
-			cellSize,
-			floorTexture,
-			wallTexture
-		));
+        dungeonFloor.addDungeonRoom(std::move(room));
 	}
 }

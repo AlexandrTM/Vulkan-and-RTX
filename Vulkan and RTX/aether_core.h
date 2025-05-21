@@ -45,9 +45,21 @@ randomInt(IntType min, IntType max) {
 }
 template<typename IntType>
 typename std::enable_if<std::is_integral<IntType>::value, IntType>::type
-randomOddInt(IntType minInclusive, IntType maxInclusive) {
-	IntType value = randomInt((minInclusive + 1) / 2, maxInclusive / 2);
-	return value * 2 - 1;
+randomOddInt(IntType min, IntType max) {
+	// make odd numbers
+	if (min % 2 == 0) min += 1;
+	if (max % 2 == 0) max -= 1;
+
+	return randomInt(min / 2, max / 2) * 2 + 1;
+}
+template<typename IntType>
+typename std::enable_if<std::is_integral<IntType>::value, IntType>::type
+randomEvenInt(IntType min, IntType max) {
+	// make even numbers
+	if (min % 2 != 0) min += 1;
+	if (max % 2 != 0) max -= 1;
+
+	return randomInt(min / 2, max / 2) * 2;
 }
 float randomReal(float min, float max);
 float randomRealOffset(float offset);
