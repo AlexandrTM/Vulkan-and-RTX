@@ -52,6 +52,7 @@ DungeonRoom::DungeonRoom(
 
 std::vector<Model> DungeonRoom::createDungeonRoomModels() {
     std::vector<Model> models{};
+    float floorThickness = 0.001f;
     // Generate walls based on the room layout
     for (size_t x = 0; x < layout.size(); ++x) {
         for (size_t y = 0; y < layout[x].length(); ++y) {
@@ -77,11 +78,13 @@ std::vector<Model> DungeonRoom::createDungeonRoomModels() {
     // Create the floor of the room
     models.push_back(ModelManager::createCuboid(
         position.x,
-        position.y - 0.001f,
+        position.y - floorThickness,
         position.z,
+
         metricWidth,
-        0.001f,
+        floorThickness,
         metricLength,
+
         glm::vec3(1.0f),
         floorTexture,
         ModelType::DUNGEON

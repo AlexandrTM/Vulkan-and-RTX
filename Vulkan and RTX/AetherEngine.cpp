@@ -183,12 +183,12 @@ void AetherEngine::changeUIElementSize(
 	createDescriptorSets(uiElement.model, MAX_FRAMES_IN_FLIGHT);
 }
 void AetherEngine::loadUIElements() {
-	uiMap[uiElementId::MainMenu] = createUIElement("qml/MainMenu.ui.qml", windowWidth, windowHeight, mainWindow);
-	uiMap[uiElementId::SettingsMenu] = createUIElement("qml/SettingsMenu.ui.qml", windowWidth, windowHeight, mainWindow);
-	uiMap[uiElementId::PauseMenu] = createUIElement("qml/PauseMenu.ui.qml", windowWidth, windowHeight, mainWindow);
-	uiMap[uiElementId::InGameOverlay] = createUIElement("qml/InGameOverlay.ui.qml", windowWidth, windowHeight, mainWindow);
-	uiMap[uiElementId::SelectEquation] = createUIElement("qml/SelectEquation.ui.qml", windowWidth, windowHeight, mainWindow);
-	uiMap[uiElementId::SolveEquation] = createUIElement("qml/SolveEquation.ui.qml", windowWidth, windowHeight, mainWindow);
+	uiMap[uiElementId::MainMenu] = createUIElement("qml/MainMenu.qml", windowWidth, windowHeight, mainWindow);
+	uiMap[uiElementId::SettingsMenu] = createUIElement("qml/SettingsMenu.qml", windowWidth, windowHeight, mainWindow);
+	uiMap[uiElementId::PauseMenu] = createUIElement("qml/PauseMenu.qml", windowWidth, windowHeight, mainWindow);
+	uiMap[uiElementId::InGameOverlay] = createUIElement("qml/InGameOverlay.qml", windowWidth, windowHeight, mainWindow);
+	uiMap[uiElementId::SelectEquation] = createUIElement("qml/SelectEquation.qml", windowWidth, windowHeight, mainWindow);
+	uiMap[uiElementId::SolveEquation] = createUIElement("qml/SolveEquation.qml", windowWidth, windowHeight, mainWindow);
 
 	initializeInGameOverlayCache();
 
