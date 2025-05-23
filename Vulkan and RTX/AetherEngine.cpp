@@ -10,7 +10,7 @@ void AetherEngine::run()
 	float deltaTime;
 	std::chrono::high_resolution_clock::time_point previousTime = std::chrono::high_resolution_clock::now();
 
-
+	
 
 	currentTime = std::chrono::high_resolution_clock::now();
 	deltaTime = std::chrono::duration<double, std::chrono::seconds::period>(currentTime - previousTime).count();
@@ -474,6 +474,7 @@ void AetherEngine::handleEquationSolving() {
 		gameContext.isAnswerSubmitted = false;
 	}
 }
+
 void AetherEngine::mainLoop()
 {
 	std::chrono::high_resolution_clock::time_point previousTime = std::chrono::high_resolution_clock::now();
@@ -657,14 +658,7 @@ void AetherEngine::recreateDungeonFloor(int32_t floorNumber, float difficultySca
 {
 	// clear only dungeon models
 	vkDeviceWaitIdle(vkInit.device);
-	models.erase(std::remove_if(models.begin(), models.end(),
-		[this](Model& model) {
-			if (model.type == ModelType::DUNGEON) {
-				cleanupModel(model);
-				return true;
-			}
-			return false;
-		}), models.end());
+	cleanupModelsByType(models, { ModelType::DUNGEON });
 
 	// reset the dungeon floor
 	gameContext.dungeonFloor = {};
@@ -722,7 +716,7 @@ void AetherEngine::cleanupMemory()
 	deletedTextureHashes.clear();
 
 	if (vkInit.enableValidationLayers) {
-		std::cout << "createdBuffers: " << createdBuffers << "\n";
+		std::cout << "createdVmaAllocations:   " << createdVmaAllocations << "\n";
 		std::cout << "destroyedVmaAllocations: " << destroyedVmaAllocations << "\n";
 	}
 
@@ -750,6 +744,19 @@ void AetherEngine::cleanupMemory()
 		vkDestroySurfaceKHR(vkInit.instance, vkInit.surface, nullptr);
 		vkInit.surface = VK_NULL_HANDLE;
 	}*/
+}
+void AetherEngine::cleanupModelsByType(
+	std::vector<Model>& models, const std::unordered_set<ModelType>& types
+) const {
+	models.erase(std::remove_if(models.begin(), models.end(),
+		[this, &types](Model& model) {
+			if (types.count(model.type)) {
+				cleanupModel(model);
+				return true;
+			}
+			return false;
+		}), models.end()
+	);
 }
 void AetherEngine::cleanupModels(std::vector<Model>& models) const
 {
@@ -903,6 +910,7 @@ void AetherEngine::restrictCharacterMovement(Camera& camera)
 	}
 }
 
+// old method
 std::string AetherEngine::createPuzzleEquation(std::string name, int32_t& answer)
 {
 	std::stringstream puzzleEquation;
@@ -1015,7 +1023,7 @@ uint32_t AetherEngine::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags
 	throw std::runtime_error("failed to find suitable memory type!");
 }
 
-// Creating fences and semaphores
+// creating fences and semaphores
 void AetherEngine::createSyncObjects()
 {
 	imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
@@ -1040,7 +1048,7 @@ void AetherEngine::createSyncObjects()
 	}
 }
 
-// wrapping shader
+// wrapping shader in shader module
 VkShaderModule AetherEngine::createShaderModule(const std::vector<char>& code) const
 {
 	VkShaderModuleCreateInfo createInfo{};

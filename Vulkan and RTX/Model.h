@@ -97,7 +97,7 @@ struct Mesh
 {
     std::vector<Vertex>                     vertices;
     std::vector<uint32_t>                   indices;
-    glm::mat4                               transform             = glm::mat4(1.0f);
+    glm::mat4                               transform              = glm::mat4(1.0f);
     Cuboid                                  aabb;
 
     Material                                material;
@@ -125,8 +125,7 @@ struct Model {
     glm::quat                               rotation;
 
     // bounding box for frustum culling
-    glm::vec3                               minBounds;
-    glm::vec3                               maxBounds;
+    Cuboid                                  bounds;
 
     std::vector<std::vector<Mesh>>          lodLevels;
 

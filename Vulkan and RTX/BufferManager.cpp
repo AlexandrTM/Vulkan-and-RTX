@@ -106,7 +106,7 @@ void AetherEngine::createBuffer(
 		throw std::runtime_error("failed to allocate buffer memory with VMA!");
 	}
 	else {
-		createdBuffers += 1;
+		createdVmaAllocations += 1;
 	}
 }
 // create multiple command buffers
