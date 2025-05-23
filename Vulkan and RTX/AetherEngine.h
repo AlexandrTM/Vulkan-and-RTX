@@ -57,12 +57,6 @@ private:
 
 	std::unique_ptr<TerrainGenerator> terrainGenerator;
 
-	int32_t puzzleInput = 0;
-	bool puzzleGenerated = false;
-	int32_t puzzleAnswer = 0;
-	std::string puzzleEquation;
-	float timeToSolvePuzzle = 0.0f;
-
 	VkSwapchainKHR			   swapchain;
 	std::vector<VkImage>	   swapchainImages;
 	VkFormat				   swapchainImageFormat;
@@ -104,8 +98,7 @@ private:
 	Texture depthTexture;
 	Texture msaaTexture;
 
-
-	size_t createdBuffers = 0;
+	size_t createdVmaAllocations = 0;
 	mutable size_t destroyedVmaAllocations = 0;
 
 private slots:
@@ -157,6 +150,9 @@ private:
 	void mainLoop();
 
 	void recreateDungeonFloor(int32_t floorNumber, float difficultyScale);
+	void cleanupModelsByType(
+		std::vector<Model>& models, const std::unordered_set<ModelType>& types
+	) const;
 	void cleanupModels(std::vector<Model>& models) const;
 	void cleanupModel(Model& model) const;
 	void cleanupMesh(Mesh& mesh) const; 

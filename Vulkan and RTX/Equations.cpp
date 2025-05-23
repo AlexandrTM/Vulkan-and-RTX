@@ -164,17 +164,14 @@ void Equations::debugEquations(size_t amount, double difficultyScale)
 {
 	std::vector<Equation> equations = generateEquations(amount, difficultyScale);
 
+	std::vector<double> thresholds = { 0.0, 1.5, 3.0, 4.5, 6.0 }; // Start inclusive, last bin is [6.0, +inf)
+	std::vector<size_t> binCounts(thresholds.size(), 0);
+
 	double totalAnswer = 0.0;
 	int32_t totalDamage = 0;
 	int32_t totalDefence = 0;
 	double totalPenalty = 0.0;
 	double totalTimeToSolve = 0.0;
-
-	size_t count_0_0___1_5 = 0;
-	size_t count_1_5___3_0 = 0;
-	size_t count_3_0___4_5 = 0;
-	size_t count_4_5___6_0 = 0;
-	size_t count_6_0___inf = 0;
 
 	auto fraction = [amount](size_t count) {
 		return static_cast<float>(count) / amount;
@@ -185,11 +182,17 @@ void Equations::debugEquations(size_t amount, double difficultyScale)
 	});
 
 	for (const Equation& equation : equations) {
-			 if (equation.difficulty < 1.5)	count_0_0___1_5++;
-		else if (equation.difficulty < 3.0) count_1_5___3_0++;
-		else if (equation.difficulty < 4.5) count_3_0___4_5++;
-		else if (equation.difficulty < 6.0) count_4_5___6_0++;
-									   else count_6_0___inf++;
+		bool counted = false;
+		for (size_t i = 1; i < thresholds.size(); ++i) { // start from second threshold
+			if (equation.difficulty < thresholds[i]) {
+				binCounts[i - 1]++;
+				counted = true;
+				break;
+			}
+		}
+		if (!counted) {
+			binCounts.back()++; // Last bin [thresholds.back(), +inf)
+		}
 
 		totalAnswer += std::abs(equation.answer);
 		totalDamage += equation.damage;
@@ -209,26 +212,27 @@ void Equations::debugEquations(size_t amount, double difficultyScale)
 		}
 	}
 
-	std::cout << "\nEquation difficulty distribution:\n";
-	std::cout << "[0, 1.5):  " << count_0_0___1_5 << " (" << std::fixed << std::setprecision(4) << fraction(count_0_0___1_5) << "%)\n";
-	std::cout << "[1.5, 3):  " << count_1_5___3_0 << " (" << fraction(count_1_5___3_0) << "%)\n";
-	std::cout << "[3, 4.5):  " << count_3_0___4_5 << " (" << fraction(count_3_0___4_5) << "%)\n";
-	std::cout << "[4.5, 6):  " << count_4_5___6_0 << " (" << fraction(count_4_5___6_0) << "%)\n";
-	std::cout << "[6, +inf): " << count_6_0___inf << " (" << fraction(count_6_0___inf) << "%)\n";
-	
-	std::cout << "Average answer:        " << std::fixed << std::setprecision(4) << totalAnswer / equations.size() << "\n";
-	std::cout << "Average damage:        " << totalDamage / static_cast<double>(equations.size()) << "\n";
-	std::cout << "Average defence:       " << totalDefence / static_cast<double>(equations.size()) << "\n";
-	std::cout << "Average wrong penalty: " << totalPenalty / equations.size() << "s\n";
-	std::cout << "Average time to solve: " << totalTimeToSolve / equations.size() << "s\n";
+	std::vector<float> fractions;
+	for (size_t count : binCounts) {
+		fractions.push_back(fraction(count));
+	}
 
-	std::vector<float> fractions = {
-		fraction(count_0_0___1_5),
-		fraction(count_1_5___3_0),
-		fraction(count_3_0___4_5),
-		fraction(count_4_5___6_0),
-		fraction(count_6_0___inf)
-	};
+	// Print difficulty distribution
+	std::cout << "\nEquation difficulty distribution:\n" << std::fixed << std::setprecision(4);
+	for (size_t i = 1; i < thresholds.size(); ++i) {
+		std::cout << "[" << thresholds[i - 1] << ", " << thresholds[i] << "): "
+			<< binCounts[i - 1] << " ("
+			<< fractions[i - 1] << "%)\n";
+	}
+	std::cout << "[" << thresholds.back() << ", +inf): "
+		<< binCounts.back() << " (" << fractions.back() << "%)\n";
+
+	std::cout << "\n***Average stats***\n";
+	std::cout << "answer:        " << std::fixed << std::setprecision(4) << totalAnswer / equations.size() << "\n";
+	std::cout << "damage:        " << totalDamage / static_cast<double>(equations.size()) << "\n";
+	std::cout << "defence:       " << totalDefence / static_cast<double>(equations.size()) << "\n";
+	std::cout << "wrong penalty: " << totalPenalty / equations.size() << "s\n";
+	std::cout << "time to solve: " << totalTimeToSolve / equations.size() << "s\n";
 
 	std::vector<float> invWeights;
 

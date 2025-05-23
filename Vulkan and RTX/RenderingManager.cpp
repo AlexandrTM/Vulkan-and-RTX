@@ -546,7 +546,7 @@ void AetherEngine::updateShaderBuffers(uint32_t currentImage, double timeSinceLa
 				}
 
 				vmaMapMemory(vmaAllocator, mesh.boneSSBOAllocations[currentImage], &data);
-				memcpy(data, boneSSBO.boneTransforms.data(), sizeof(glm::mat4)* MAX_BONES_NUM);
+				memcpy(data, boneSSBO.boneTransforms.data(), sizeof(glm::mat4) * MAX_BONES_NUM);
 				vmaUnmapMemory(vmaAllocator, mesh.boneSSBOAllocations[currentImage]);
 
 				/*glm::mat4* mappedMatrices = reinterpret_cast<glm::mat4*>(data);

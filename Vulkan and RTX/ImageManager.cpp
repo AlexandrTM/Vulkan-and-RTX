@@ -280,7 +280,7 @@ void AetherEngine::createImage(uint32_t width, uint32_t height, uint32_t mipLeve
 		throw std::runtime_error("failed to create image with VMA!");
 	}
 	else {
-		createdBuffers += 1;
+		createdVmaAllocations += 1;
 	}
 }
 
