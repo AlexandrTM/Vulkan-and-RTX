@@ -44,6 +44,7 @@ bool InGameWindow::sendEventToUI(QEvent* event) {
     if (forwardMatchingEvents(selectEquationRenderer, GameState::COMBAT_PLAYER_SELECT_EQUATION)) return true;
 
     if (solveEquationRenderer && gameContext.currentGameState == GameState::COMBAT_PLAYER_SOLVE_EQUATION) {
+        solveEquationRenderer->forwardEvent(event);
         switch (eventType) {
         case QEvent::MouseButtonPress:
         case QEvent::MouseButtonRelease:

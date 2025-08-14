@@ -25,22 +25,22 @@
     <Filter Include="characteristics\secondary_chars">
       <UniqueIdentifier>{95369772-87a9-4215-974a-6a0dc710d8ac}</UniqueIdentifier>
     </Filter>
-    <Filter Include="source\main class split">
-      <UniqueIdentifier>{50fde218-f769-4b55-bca6-7e00c2973f72}</UniqueIdentifier>
-    </Filter>
     <Filter Include="headers\precompiled\implementation macros">
       <UniqueIdentifier>{11f1ff4e-c158-4bc5-b19f-0398e6c2a40e}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="source\UI">
-      <UniqueIdentifier>{e2285b90-6be4-4805-866d-d525c4a2b86c}</UniqueIdentifier>
     </Filter>
     <Filter Include="headers\main class split">
       <UniqueIdentifier>{de084a3b-a4e2-4278-a55a-aee89a6477f3}</UniqueIdentifier>
     </Filter>
-    <Filter Include="source\Procedural">
+    <Filter Include="source\engine">
+      <UniqueIdentifier>{50fde218-f769-4b55-bca6-7e00c2973f72}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\procedural">
       <UniqueIdentifier>{6988ee90-9663-4551-90be-79c49d0c8de4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="source\UI\Elements">
+    <Filter Include="source\ui">
+      <UniqueIdentifier>{e2285b90-6be4-4805-866d-d525c4a2b86c}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="source\ui\elements">
       <UniqueIdentifier>{21ceaff3-24ca-4ecc-8dd4-777ec1896a53}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
@@ -69,20 +69,20 @@
     <ClCompile Include="Vertex.cpp">
       <Filter>source</Filter>
     </ClCompile>
-    <ClCompile Include="SwapchainManager.cpp">
-      <Filter>source\main class split</Filter>
+    <ClCompile Include="AetherSwapchain.cpp">
+      <Filter>source\engine</Filter>
     </ClCompile>
     <ClCompile Include="ImageManager.cpp">
-      <Filter>source\main class split</Filter>
+      <Filter>source\engine</Filter>
     </ClCompile>
     <ClCompile Include="VulkanInitializer.cpp">
-      <Filter>source\main class split</Filter>
+      <Filter>source\engine</Filter>
     </ClCompile>
     <ClCompile Include="AetherEngine.cpp">
-      <Filter>source\main class split</Filter>
+      <Filter>source\engine</Filter>
     </ClCompile>
     <ClCompile Include="ModelManager.cpp">
-      <Filter>source\main class split</Filter>
+      <Filter>source\engine</Filter>
     </ClCompile>
     <ClCompile Include="stb_image_implementation.cpp">
       <Filter>headers\precompiled\implementation macros</Filter>
@@ -97,13 +97,13 @@
       <Filter>headers\precompiled\implementation macros</Filter>
     </ClCompile>
     <ClCompile Include="BufferManager.cpp">
-      <Filter>source\main class split</Filter>
+      <Filter>source\engine</Filter>
     </ClCompile>
     <ClCompile Include="Model.cpp">
       <Filter>source</Filter>
     </ClCompile>
     <ClCompile Include="RenderingManager.cpp">
-      <Filter>source\main class split</Filter>
+      <Filter>source\engine</Filter>
     </ClCompile>
     <ClCompile Include="StellarCalculations.cpp">
       <Filter>source</Filter>
@@ -127,13 +127,13 @@
       <Filter>source</Filter>
     </ClCompile>
     <ClCompile Include="UserInterfaceRenderer.cpp">
-      <Filter>source\UI</Filter>
+      <Filter>source\ui</Filter>
     </ClCompile>
     <ClCompile Include="Aether.cpp">
-      <Filter>source\main class split</Filter>
+      <Filter>source\engine</Filter>
     </ClCompile>
     <ClCompile Include="Dungeon.cpp">
-      <Filter>source\Procedural</Filter>
+      <Filter>source\procedural</Filter>
     </ClCompile>
     <ClCompile Include="Mob.cpp">
       <Filter>source</Filter>
@@ -145,22 +145,22 @@
       <Filter>headers\precompiled</Filter>
     </ClCompile>
     <ClCompile Include="Equations.cpp">
-      <Filter>source\Procedural</Filter>
+      <Filter>source\procedural</Filter>
     </ClCompile>
     <ClCompile Include="gamecontext_instance.cpp">
       <Filter>headers\precompiled</Filter>
     </ClCompile>
     <ClCompile Include="UserInterfaceElement.cpp">
-      <Filter>source\UI</Filter>
+      <Filter>source\ui</Filter>
     </ClCompile>
     <ClCompile Include="InGameWindow.cpp">
-      <Filter>source\UI\Elements</Filter>
+      <Filter>source\ui\elements</Filter>
     </ClCompile>
     <ClCompile Include="MainWindow.cpp">
-      <Filter>source\UI\Elements</Filter>
+      <Filter>source\ui\elements</Filter>
     </ClCompile>
     <ClCompile Include="ui_core.cpp">
-      <Filter>source\UI</Filter>
+      <Filter>source\ui</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
@@ -219,13 +219,13 @@
       <Filter>headers\main class split</Filter>
     </ClInclude>
     <ClInclude Include="dungeon_core.h">
-      <Filter>source\Procedural</Filter>
+      <Filter>source\procedural</Filter>
     </ClInclude>
     <ClInclude Include="ModelManager.h">
       <Filter>headers\main class split</Filter>
     </ClInclude>
     <ClInclude Include="Dungeon.h">
-      <Filter>source\Procedural</Filter>
+      <Filter>source\procedural</Filter>
     </ClInclude>
     <ClInclude Include="Mob.h">
       <Filter>headers</Filter>
@@ -234,16 +234,25 @@
       <Filter>headers</Filter>
     </ClInclude>
     <ClInclude Include="Equations.h">
-      <Filter>source\Procedural</Filter>
+      <Filter>source\procedural</Filter>
     </ClInclude>
     <ClInclude Include="gamecontext_instance.h">
       <Filter>headers\precompiled</Filter>
     </ClInclude>
     <ClInclude Include="UserInterfaceElement.h">
-      <Filter>source\UI</Filter>
+      <Filter>source\ui</Filter>
     </ClInclude>
     <ClInclude Include="ui_core.h">
-      <Filter>source\UI</Filter>
+      <Filter>source\ui</Filter>
+    </ClInclude>
+    <ClInclude Include="AetherSwapchain.h">
+      <Filter>source\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="ImageManager.h">
+      <Filter>source\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="BufferManager.h">
+      <Filter>source\engine</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -261,28 +270,28 @@
       <Filter>headers\main class split</Filter>
     </QtMoc>
     <QtMoc Include="UserInterfaceRenderer.h">
-      <Filter>source\UI</Filter>
+      <Filter>source\ui</Filter>
     </QtMoc>
     <QtMoc Include="InGameWindow.h">
-      <Filter>source\UI\Elements</Filter>
+      <Filter>source\ui\elements</Filter>
     </QtMoc>
     <QtMoc Include="MainWindow.h">
-      <Filter>source\UI\Elements</Filter>
+      <Filter>source\ui\elements</Filter>
     </QtMoc>
     <QtMoc Include="PauseMenuSlotHandler.h">
-      <Filter>source\UI\Elements</Filter>
+      <Filter>source\ui\elements</Filter>
     </QtMoc>
     <QtMoc Include="SelectEquationSlotHandler.h">
-      <Filter>source\UI\Elements</Filter>
+      <Filter>source\ui\elements</Filter>
     </QtMoc>
     <QtMoc Include="SolveEquationSlotHandler.h">
-      <Filter>source\UI\Elements</Filter>
+      <Filter>source\ui\elements</Filter>
     </QtMoc>
     <QtMoc Include="SettingsMenuSlotHandler.h">
-      <Filter>source\UI\Elements</Filter>
+      <Filter>source\ui\elements</Filter>
     </QtMoc>
     <QtMoc Include="MainMenuSlotHandler.h">
-      <Filter>source\UI\Elements</Filter>
+      <Filter>source\ui\elements</Filter>
     </QtMoc>
   </ItemGroup>
 </Project>

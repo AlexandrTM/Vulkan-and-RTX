@@ -1,41 +1,11 @@
 #include "pch.h"
 #include "AetherEngine.h"
+#include "BufferManager.h"
 
-void AetherEngine::initVMA() {
-	VmaVulkanFunctions vulkanFunctions = {};
-	vulkanFunctions.vkGetInstanceProcAddr = vkGetInstanceProcAddr;
-	vulkanFunctions.vkGetDeviceProcAddr = vkGetDeviceProcAddr;
-	vulkanFunctions.vkGetPhysicalDeviceProperties = vkGetPhysicalDeviceProperties;
-	vulkanFunctions.vkGetPhysicalDeviceMemoryProperties = vkGetPhysicalDeviceMemoryProperties;
-	vulkanFunctions.vkAllocateMemory = vkAllocateMemory;
-	vulkanFunctions.vkFreeMemory = vkFreeMemory;
-	vulkanFunctions.vkMapMemory = vkMapMemory;
-	vulkanFunctions.vkUnmapMemory = vkUnmapMemory;
-	vulkanFunctions.vkFlushMappedMemoryRanges = vkFlushMappedMemoryRanges;
-	vulkanFunctions.vkInvalidateMappedMemoryRanges = vkInvalidateMappedMemoryRanges;
-	vulkanFunctions.vkBindBufferMemory = vkBindBufferMemory;
-	vulkanFunctions.vkBindImageMemory = vkBindImageMemory;
-	vulkanFunctions.vkGetBufferMemoryRequirements = vkGetBufferMemoryRequirements;
-	vulkanFunctions.vkGetImageMemoryRequirements = vkGetImageMemoryRequirements;
-	vulkanFunctions.vkCreateBuffer = vkCreateBuffer;
-	vulkanFunctions.vkDestroyBuffer = vkDestroyBuffer;
-	vulkanFunctions.vkCreateImage = vkCreateImage;
-	vulkanFunctions.vkDestroyImage = vkDestroyImage;
-	vulkanFunctions.vkCmdCopyBuffer = vkCmdCopyBuffer;
-
-	VmaAllocatorCreateInfo allocatorInfo{};
-	allocatorInfo.physicalDevice = vkInit.physicalDevice;
-	allocatorInfo.device = vkInit.device;
-	allocatorInfo.instance = vkInit.instance;
-	allocatorInfo.pVulkanFunctions = &vulkanFunctions;
-
-	if (vmaCreateAllocator(&allocatorInfo, &vmaAllocator) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create VMA allocator!");
-	}
-}
+BufferManager::BufferManager(VulkanInitializer& vkInitRef) : vkInit(vkInitRef) {}
 
 // allocating and beginning command buffer helper function
-VkCommandBuffer AetherEngine::beginSingleTimeCommands() const
+VkCommandBuffer BufferManager::beginSingleTimeCommands() const
 {
 	VkCommandBufferAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -55,7 +25,7 @@ VkCommandBuffer AetherEngine::beginSingleTimeCommands() const
 	return commandBuffer;
 }
 // ending and submitting command buffer helper function
-void AetherEngine::endSingleTimeCommands(VkCommandBuffer commandBuffer) const
+void BufferManager::endSingleTimeCommands(VkCommandBuffer commandBuffer) const
 {
 	vkEndCommandBuffer(commandBuffer);
 
@@ -72,8 +42,7 @@ void AetherEngine::endSingleTimeCommands(VkCommandBuffer commandBuffer) const
 
 //size_t totalSize = 0;
 //size_t totalAllocationSize = 0;
-std::map<size_t, size_t> bufferSizeCounts;
-void AetherEngine::createBuffer(
+void BufferManager::createBuffer(
 	VkDeviceSize size, VkBufferUsageFlags usage, 
 	VkMemoryPropertyFlags properties, bool isMappingRequired,
 	VkBuffer& buffer, VmaAllocation& vmaAllocation
@@ -98,19 +67,19 @@ void AetherEngine::createBuffer(
 			VMA_ALLOCATION_CREATE_MAPPED_BIT;
 	}
 
-	if (vmaCreateBuffer(vmaAllocator, &bufferInfo, &allocCreateInfo, &buffer, &vmaAllocation, nullptr) != VK_SUCCESS) {
+	if (vmaCreateBuffer(vkInit.vmaAllocator, &bufferInfo, &allocCreateInfo, &buffer, &vmaAllocation, nullptr) != VK_SUCCESS) {
 		std::cout << "=== Unique Buffer Size Stats ===\n";
-		for (const auto& [sz, count] : bufferSizeCounts) {
-			std::cout << "Size: " << sz << " bytes - Count: " << count << "\n";
+		for (const auto& [size, count] : bufferSizeCounts) {
+			std::cout << "Size: " << size << " bytes - Count: " << count << "\n";
 		}
 		throw std::runtime_error("failed to allocate buffer memory with VMA!");
 	}
 	else {
-		createdVmaAllocations += 1;
+		gameContext.createdVmaAllocations += 1;
 	}
 }
 // create multiple command buffers
-void AetherEngine::createCommandBuffers()
+void BufferManager::createCommandBuffers(std::vector<VkCommandBuffer>& commandBuffers)
 {
 	commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
 
@@ -126,7 +95,7 @@ void AetherEngine::createCommandBuffers()
 }
 
 // copying contents of one buffer to another
-void AetherEngine::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size)
+void BufferManager::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) const
 {
 	VkCommandBuffer commandBuffer = beginSingleTimeCommands();
 
@@ -138,7 +107,7 @@ void AetherEngine::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSi
 
 	endSingleTimeCommands(commandBuffer);
 }
-void AetherEngine::createVertexBuffer(Mesh& mesh)
+void BufferManager::createVertexBuffer(Mesh& mesh)
 {
 	if (mesh.vertexBuffer != VK_NULL_HANDLE) {
 		//std::cout << "mesh already have vertex buffer\n";
@@ -158,7 +127,7 @@ void AetherEngine::createVertexBuffer(Mesh& mesh)
 	);
 	
 	void* data;
-	vmaMapMemory(vmaAllocator, stagingAllocation, &data);
+	vmaMapMemory(vkInit.vmaAllocator, stagingAllocation, &data);
 	memcpy(data, mesh.vertices.data(), (size_t)bufferSize);
 
 	// Validation Step: Check bone data
@@ -190,7 +159,7 @@ void AetherEngine::createVertexBuffer(Mesh& mesh)
 		}
 	}*/
 
-	vmaUnmapMemory(vmaAllocator, stagingAllocation);
+	vmaUnmapMemory(vkInit.vmaAllocator, stagingAllocation);
 
 	// giving perfomance boost by using device local memory
 	createBuffer(
@@ -202,10 +171,10 @@ void AetherEngine::createVertexBuffer(Mesh& mesh)
 
 	copyBuffer(stagingBuffer, mesh.vertexBuffer, bufferSize);
 
-	vmaDestroyBuffer(vmaAllocator, stagingBuffer, stagingAllocation);
-	destroyedVmaAllocations += 1;
+	vmaDestroyBuffer(vkInit.vmaAllocator, stagingBuffer, stagingAllocation);
+	gameContext.destroyedVmaAllocations += 1;
 }
-void AetherEngine::createIndexBuffer(Mesh& mesh)
+void BufferManager::createIndexBuffer(Mesh& mesh)
 {
 	if (mesh.indexBuffer != VK_NULL_HANDLE) {
 		//std::cout << "mesh already have index buffer\n";
@@ -225,9 +194,9 @@ void AetherEngine::createIndexBuffer(Mesh& mesh)
 	);
 
 	void* data;
-	vmaMapMemory(vmaAllocator, stagingAllocation, &data);
+	vmaMapMemory(vkInit.vmaAllocator, stagingAllocation, &data);
 	memcpy(data, mesh.indices.data(), (size_t)bufferSize);
-	vmaUnmapMemory(vmaAllocator, stagingAllocation);
+	vmaUnmapMemory(vkInit.vmaAllocator, stagingAllocation);
 
 	createBuffer(
 		bufferSize, 
@@ -238,42 +207,42 @@ void AetherEngine::createIndexBuffer(Mesh& mesh)
 
 	copyBuffer(stagingBuffer, mesh.indexBuffer, bufferSize);
 
-	vmaDestroyBuffer(vmaAllocator, stagingBuffer, stagingAllocation);
-	destroyedVmaAllocations += 1;
+	vmaDestroyBuffer(vkInit.vmaAllocator, stagingBuffer, stagingAllocation);
+	gameContext.destroyedVmaAllocations += 1;
 }
 
-void AetherEngine::computeAABB_createVertexIndexBuffers(std::vector<Model>& models) 
+void BufferManager::computeAABB_createVertexIndexBuffers(std::vector<Model>& models)
 {
 	for (Model& model : models) {
 		computeAABB_createVertexIndexBuffers(model);
 	}
 }
-void AetherEngine::computeAABB_createVertexIndexBuffers(Model& model) 
+void BufferManager::computeAABB_createVertexIndexBuffers(Model& model)
 {
 	for (Mesh& mesh : model.meshes) {
 		computeAABB_createVertexIndexBuffers(mesh);
 	}
 }
-void AetherEngine::computeAABB_createVertexIndexBuffers(Mesh& mesh) 
+void BufferManager::computeAABB_createVertexIndexBuffers(Mesh& mesh)
 {
 	createVertexBuffer(mesh);
 	createIndexBuffer(mesh);
 	computeAABB(mesh);
 }
 
-void AetherEngine::createShaderBuffers(std::vector<Model>& models, size_t swapchainImageCount)
+void BufferManager::createShaderBuffers(std::vector<Model>& models, size_t swapchainImageCount)
 {
 	for (Model& model : models) {
 		createShaderBuffers(model, swapchainImageCount);
 	}
 }
-void AetherEngine::createShaderBuffers(Model& model, size_t swapchainImageCount)
+void BufferManager::createShaderBuffers(Model& model, size_t swapchainImageCount)
 {
 	for (Mesh& mesh : model.meshes) {
 		createShaderBuffers(mesh, swapchainImageCount);
 	}
 }
-void AetherEngine::createShaderBuffers(Mesh& mesh, size_t swapchainImageCount)
+void BufferManager::createShaderBuffers(Mesh& mesh, size_t swapchainImageCount)
 {
 	for (size_t frameIndex = 0; frameIndex < swapchainImageCount; ++frameIndex) {
 		if (mesh.UBOBuffers[frameIndex] == VK_NULL_HANDLE) {

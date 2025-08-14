@@ -28,13 +28,15 @@ struct VulkanInitializer
     VkDevice device; // logical device
     VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 
-    VkDebugUtilsMessengerEXT debugMessenger;
-    VkSurfaceKHR surface;
+    VmaAllocator vmaAllocator;
 
     VkQueue graphicsQueue;
     VkQueue presentQueue;
     QueueFamilyIndices queueFamilyIndices;
     VkCommandPool commandPool;
+    VkSurfaceKHR surface;
+
+    VkDebugUtilsMessengerEXT debugMessenger;
 
     VkSampleCountFlagBits colorSamples;
     VkSampleCountFlagBits depthSamples;
@@ -47,6 +49,8 @@ struct VulkanInitializer
     #endif
 
     void initializeVulkan(QVulkanInstance* qInstance);
+
+    void initVMA();
 
     void createInstance();
     void setupDebugMessenger();
@@ -89,7 +93,10 @@ struct VulkanInitializer
 
     // function for debugging callbacks(checking warnings, errors etc)
     // VKAPI_ATTR and VKAPI_CALL ensures that this function signature suitable for Vulkan
-    static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-        VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-        void* pUserData);
+    static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
+        VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+        VkDebugUtilsMessageTypeFlagsEXT messageType, 
+        const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+        void* pUserData
+    );
 };

@@ -1,7 +1,7 @@
+#ifndef AETHER_ENGINE_H
+#define AETHER_ENGINE_H
+
 #include "pch.h"
-	
-#ifndef VULKAN_AND_RTX_H
-#define VULKAN_AND_RTX_H
 
 #include "VulkanInitializer.h"
 
@@ -17,6 +17,8 @@
 #include "SolveEquationSlotHandler.h"
 
 #include "ModelManager.h"
+#include "ImageManager.h"
+#include "BufferManager.h"
 #include "gamecontext_instance.h"
 #include "Model.h"
 #include "TerrainGenerator.h"
@@ -31,7 +33,7 @@ class AetherEngine : public QObject {
 private:
 #pragma region
 	VulkanInitializer vkInit;
-	VmaAllocator vmaAllocator;
+	BufferManager bufferManager{ vkInit };
 
 	float gravity = 9.81f;
 	Character character;
@@ -97,9 +99,6 @@ private:
 
 	Texture depthTexture;
 	Texture msaaTexture;
-
-	size_t createdVmaAllocations = 0;
-	mutable size_t destroyedVmaAllocations = 0;
 
 private slots:
 	void onMainWindowResized(int width, int height);
@@ -208,7 +207,6 @@ private:
 
 	// how to sample through texels of the texture for drawing them on 3D model
 	void createTextureSampler(uint32_t& mipLevels, VkSampler& textureSampler) const;
-	VkImageView createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, uint32_t mipLevels) const;
 	void transitionImageLayout(
 		VkImage image, VkFormat format, VkImageAspectFlags aspectMask,
 		VkImageLayout oldLayout, VkImageLayout newLayout,
@@ -224,43 +222,21 @@ private:
 
 	VkFormat findDepthFormat() const;
 	// finding most desirable format of color for a given situation
-	VkFormat findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling,
-		VkFormatFeatureFlags features) const;
-
-	// allocating and beginning command buffer helper function
-	VkCommandBuffer beginSingleTimeCommands() const;
-	// ending and submitting command buffer helper function
-	void endSingleTimeCommands(VkCommandBuffer commandBuffer) const;
+	VkFormat findSupportedFormat(
+		const std::vector<VkFormat>& candidates,
+		VkImageTiling tiling, VkFormatFeatureFlags features
+	) const;
 
 	// finding most appropriate memory type depending on buffer and application properties
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
 
 	void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
-	// copying contents of one buffer to another
-	void copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
-
-	void createBuffer(
-		VkDeviceSize size, VkBufferUsageFlags usage, 
-		VkMemoryPropertyFlags properties, bool isMappingRequired,
-		VkBuffer& buffer, VmaAllocation& vmaAllocation
-	);
-
-	void createVertexBuffer(Mesh& mesh);
-	void createIndexBuffer(Mesh& mesh);
-
-	void computeAABB_createVertexIndexBuffers(std::vector<Model>& models);
-	void computeAABB_createVertexIndexBuffers(Model& model);
-	void computeAABB_createVertexIndexBuffers(Mesh& mesh);
-
-	void createShaderBuffers(std::vector<Model>& models, size_t swapchainImageCount);
-	void createShaderBuffers(Model& model, size_t swapchainImageCount);
-	void createShaderBuffers(Mesh& mesh, size_t swapchainImageCount);
 
 	void createDescriptorSets(std::vector<Model>& models, size_t swapchainImageCount);
 	void createDescriptorSets(Model& model, size_t swapchainImageCount);
 	void createDescriptorSets(Mesh& mesh, size_t swapchainImageCount);
 
-	void createDescriptorPool(size_t modelsNum, size_t meshesNum, VkDescriptorPool& pDescriptorPool);
+	void createDescriptorPool(size_t modelsNum, size_t meshesNum, VkDescriptorPool& pDescriptorPool) const;
 	void createDescriptorSetLayout(VkDescriptorSetLayout& descriptorSetLayout) const;
 	void createDescriptorSet(VkDescriptorSet& descriptorSet);
 	void addTextureToDescriptorSet(
@@ -284,10 +260,6 @@ private:
 	// Creating frames for presentation
 	void drawFrame(double timeSinceLaunch, double deltaTime/*, ImDrawData* draw_data*/);
 
-	void initVMA();
-
-	// create multiple command buffers
-	void createCommandBuffers();
 	// record commands to the command buffer
 	void recordCommandBuffer(
 		VkCommandBuffer commandBuffer, uint32_t imageIndex,
@@ -296,16 +268,17 @@ private:
 	);
 	void recordModelsToCommandBuffer(const std::vector<Model>& models, VkCommandBuffer commandBuffer);
 	void recordModelToCommandBuffer(const Model& model, VkCommandBuffer commandBuffer);
-
+	
 	// creating swap chain with the best properties for current device
-	void createSwapchain();
+	//inGameWindow->size()
+	void createSwapchain(const QSize windowSize);
 	void createSwapchainImageViews();
 	// creating framebuffer from each swap chain image view
 	void createSwapchainFramebuffers();
 	// choosing best present mode for window surface
 	VkPresentModeKHR chooseSwapchainPresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
 	// choosing best swap chain extent(resolution of the images)
-	VkExtent2D chooseSwapchainExtent(const VkSurfaceCapabilitiesKHR& capabilities);
+	VkExtent2D chooseSwapchainExtent(const VkSurfaceCapabilitiesKHR& capabilities, const QSize windowSize);
 	// choosing best surface format(color space and number of bits) for the swap chain
 	VkSurfaceFormatKHR chooseSwapchainSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
 

@@ -34,4 +34,7 @@ struct GameContext
 	glm::vec3 cameraTargetPosition;
 	float cameraCurrentTransitionTime = 0.0f;
 	const float cameraTransitionDuration = 0.5f;
+
+	size_t createdVmaAllocations = 0;
+	mutable size_t destroyedVmaAllocations = 0;
 };

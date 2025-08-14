@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "AetherEngine.h"
+#include "ImageManager.h"
 
 // finding most appropriate format for the depth test
 VkFormat AetherEngine::findDepthFormat() const
@@ -12,8 +13,10 @@ VkFormat AetherEngine::findDepthFormat() const
 }
 
 // finding most desirable format of color for a given situation
-VkFormat AetherEngine::findSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling,
-	VkFormatFeatureFlags features) const
+VkFormat AetherEngine::findSupportedFormat(
+	const std::vector<VkFormat>& candidates, 
+	VkImageTiling tiling, VkFormatFeatureFlags features
+) const
 {
 	for (VkFormat format : candidates) {
 		VkFormatProperties props;
@@ -72,8 +75,10 @@ void AetherEngine::createTextureSampler(uint32_t& mipLevels, VkSampler& textureS
 		throw std::runtime_error("failed to create texture sampler!");
 	}
 }
-VkImageView AetherEngine::createImageView(VkImage image, VkFormat format,
-	VkImageAspectFlags aspectFlags, uint32_t mipLevels) const
+VkImageView ImageManager::createImageView(
+	VulkanInitializer& vkInit, VkImage image, VkFormat format,
+	VkImageAspectFlags aspectFlags, uint32_t mipLevels
+)
 {
 	VkImageViewCreateInfo viewInfo{};
 	viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -105,7 +110,7 @@ void AetherEngine::generateMipmaps(VkImage image, VkFormat imageFormat,
 		throw std::runtime_error("texture image format does not support linear blitting!");
 	}
 
-	VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+	VkCommandBuffer commandBuffer = bufferManager.beginSingleTimeCommands();
 
 	VkImageMemoryBarrier barrier{};
 	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -184,7 +189,7 @@ void AetherEngine::generateMipmaps(VkImage image, VkFormat imageFormat,
 		0, nullptr,
 		1, &barrier);
 
-	endSingleTimeCommands(commandBuffer);
+	bufferManager.endSingleTimeCommands(commandBuffer);
 }
 
 // transitioning image to the right layout
@@ -194,7 +199,7 @@ void AetherEngine::transitionImageLayout(
 	uint32_t mipLevels
 )
 {
-	VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+	VkCommandBuffer commandBuffer = bufferManager.beginSingleTimeCommands();
 
 	VkImageMemoryBarrier barrier{};
 	barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
@@ -250,7 +255,7 @@ void AetherEngine::transitionImageLayout(
 		1, &barrier
 	);
 
-	endSingleTimeCommands(commandBuffer);
+	bufferManager.endSingleTimeCommands(commandBuffer);
 }
 
 void AetherEngine::createImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkSampleCountFlagBits numSamples,
@@ -276,17 +281,17 @@ void AetherEngine::createImage(uint32_t width, uint32_t height, uint32_t mipLeve
 	allocCreateInfo.usage = VMA_MEMORY_USAGE_AUTO; // or AUTO_PREFER_DEVICE / AUTO_PREFER_HOST
 	allocCreateInfo.requiredFlags = properties;
 
-	if (vmaCreateImage(vmaAllocator, &imageInfo, &allocCreateInfo, &image, &vmaAllocation, nullptr) != VK_SUCCESS) {
+	if (vmaCreateImage(vkInit.vmaAllocator, &imageInfo, &allocCreateInfo, &image, &vmaAllocation, nullptr) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create image with VMA!");
 	}
 	else {
-		createdVmaAllocations += 1;
+		gameContext.createdVmaAllocations += 1;
 	}
 }
 
 void AetherEngine::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
 {
-	VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+	VkCommandBuffer commandBuffer = bufferManager.beginSingleTimeCommands();
 
 	VkBufferImageCopy region{};
 	region.bufferOffset = 0;
@@ -310,5 +315,5 @@ void AetherEngine::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t wi
 		&region
 	);
 
-	endSingleTimeCommands(commandBuffer);
+	bufferManager.endSingleTimeCommands(commandBuffer);
 }

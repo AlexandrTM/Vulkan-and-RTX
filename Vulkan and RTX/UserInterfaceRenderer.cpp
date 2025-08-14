@@ -40,7 +40,7 @@ UserInterfaceRenderer::~UserInterfaceRenderer() {
     delete quickWindow;
     delete engine;
     delete component;
-    delete fbo;
+    deleteFbo();
 
     if (context) {
         context->doneCurrent();
@@ -58,15 +58,6 @@ void UserInterfaceRenderer::forwardEvent(QEvent* event) {
     //QCoreApplication::postEvent(quickWindow, event);
 }
 
-//void UserInterfaceRenderer::forwardKeyEvent(QKeyEvent* event) {
-//    QCoreApplication::sendEvent(quickWindow, event);
-//}
-//void UserInterfaceRenderer::forwardInputMethodEvent(QInputMethodEvent* event) {
-//    QCoreApplication::sendEvent(quickWindow, event);
-//}
-//void UserInterfaceRenderer::forwardFocusEvent(QFocusEvent* event) {
-//    QCoreApplication::sendEvent(quickWindow, event);
-//}
 //void UserInterfaceRenderer::forwardMouseEvent(QMouseEvent* event) {
 //    QCoreApplication::sendEvent(quickWindow, event);
 //
@@ -77,11 +68,8 @@ void UserInterfaceRenderer::forwardEvent(QEvent* event) {
 //        }
 //    }
 //}
-//void UserInterfaceRenderer::forwardHoverEvent(QHoverEvent* event) {
-//    QCoreApplication::sendEvent(quickWindow, event);
-//}
 
-void UserInterfaceRenderer::initialize(const QSize& size, const QString& qmlPath) {
+void UserInterfaceRenderer::loadQml(const QSize& size, const QString& qmlPath) {
     component = new QQmlComponent(engine, QUrl::fromLocalFile(qmlPath));
 
     rootItem = qobject_cast<QQuickItem*>(component->create());
@@ -96,6 +84,7 @@ void UserInterfaceRenderer::initialize(const QSize& size, const QString& qmlPath
 
     surfaceSize = size;
 
+    deleteFbo();
     createFbo(size);
 }
 
@@ -106,12 +95,7 @@ void UserInterfaceRenderer::resize(const QSize& size) {
     quickWindow->resize(size);
     surfaceSize = size;
 
-    if (fbo) {
-        context->makeCurrent(offscreenSurface);
-        delete fbo;
-        fbo = nullptr;
-    }
-
+    deleteFbo();
     createFbo(size);
 }
 
@@ -134,6 +118,15 @@ void UserInterfaceRenderer::createFbo(const QSize& size) {
     qDebug() << "Texture target:" << fbo->format().textureTarget();
     qDebug() << "Internal texture format:" << fbo->format().internalTextureFormat();
     qDebug() << "Samples:" << fbo->format().samples();*/
+}
+
+void UserInterfaceRenderer::deleteFbo()
+{
+    if (fbo) {
+        context->makeCurrent(offscreenSurface);
+        delete fbo;
+        fbo = nullptr;
+    }
 }
 
 void UserInterfaceRenderer::render() {

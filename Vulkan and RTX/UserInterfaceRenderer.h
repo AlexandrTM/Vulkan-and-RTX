@@ -7,20 +7,17 @@ public:
     UserInterfaceRenderer();
     ~UserInterfaceRenderer();
 
-    void initialize(const QSize& size, const QString& qmlPath);
+    void loadQml(const QSize& size, const QString& qmlPath);
     void render();
     void resize(const QSize& size);
     void createFbo(const QSize& size);
+    void deleteFbo();
     QImage grabImage(); // taking screenshot
     QOpenGLFramebufferObject* getFbo() const { return fbo; }
     QQuickWindow* getQuickWindow() const { return quickWindow; }
 
     void forwardEvent(QEvent* event);
-    void forwardKeyEvent(QKeyEvent* event);
-    void forwardInputMethodEvent(QInputMethodEvent* event);
-    void forwardFocusEvent(QFocusEvent* event);
     void forwardMouseEvent(QMouseEvent* event);
-    void forwardHoverEvent(QHoverEvent* event);
     QQuickItem* getRootItem() const { return rootItem; }
 
 private:

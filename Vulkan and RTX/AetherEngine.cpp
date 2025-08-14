@@ -22,7 +22,6 @@ void AetherEngine::run()
 
 	prepareUI();
 	vkInit.initializeVulkan(&qVulkanInstance);
-	initVMA();
 	prepareResources();
 	mainLoop();
 	cleanupMemory();
@@ -57,7 +56,7 @@ void AetherEngine::prepareResources()
 	createColorTexture(msaaTexture);
 	createDepthTexture(depthTexture);
 	createSwapchainFramebuffers();
-	createCommandBuffers();
+	bufferManager.createCommandBuffers(commandBuffers);
 	createSyncObjects();
 
 	grassTexture = loadTextureFromPath("textures/grass001.png");
@@ -68,7 +67,7 @@ void AetherEngine::prepareResources()
 	//loadModelsFromFolder("models", models);
 	
 	TerrainData terrainData = {
-		30, 30,    // chunkWidth, chunkLength
+		30, 30,   // chunkWidth, chunkLength
 		4, 4,     // chunkRows, chunkCols
 		8.0f,     // gridSize
 		0.1f,     // scale
@@ -94,12 +93,12 @@ void AetherEngine::prepareResources()
 
 	loadUIElements();
 	
-	computeAABB_createVertexIndexBuffers(sky);
+	bufferManager.computeAABB_createVertexIndexBuffers(sky);
+	bufferManager.createShaderBuffers(sky, MAX_FRAMES_IN_FLIGHT);
 	createDescriptorSets(sky, MAX_FRAMES_IN_FLIGHT);
-	createShaderBuffers(sky, MAX_FRAMES_IN_FLIGHT);
 
-	computeAABB_createVertexIndexBuffers(models);
-	createShaderBuffers(models, MAX_FRAMES_IN_FLIGHT);
+	bufferManager.computeAABB_createVertexIndexBuffers(models);
+	bufferManager.createShaderBuffers(models, MAX_FRAMES_IN_FLIGHT);
 	createDescriptorSets(models, MAX_FRAMES_IN_FLIGHT);
 }
 
@@ -153,11 +152,11 @@ UserInterfaceElement AetherEngine::createUIElement(
 		glm::vec3(0.5f),
 		uiElement.texture
 	);
-	computeAABB_createVertexIndexBuffers(uiElement.model);
+	bufferManager.computeAABB_createVertexIndexBuffers(uiElement.model);
 	createDescriptorSets(uiElement.model, MAX_FRAMES_IN_FLIGHT);
 
 	uiElement.renderer = std::make_unique<UserInterfaceRenderer>();
-	uiElement.renderer->initialize(QSize(windowWidth, windowHeight), qmlPath);
+	uiElement.renderer->loadQml(QSize(windowWidth, windowHeight), qmlPath);
 	uiElement.renderer->setParent(parent);
 
 	return uiElement;
@@ -165,10 +164,7 @@ UserInterfaceElement AetherEngine::createUIElement(
 void AetherEngine::changeUIElementSize(
 	UserInterfaceElement& uiElement, size_t windowWidth, size_t windowHeight
 ) {
-	/*cleanupTexture(pauseMenuTexture);
-	cleanupTexture(inGameOverlayTexture);
-	cleanupTexture(selectEquationTexture);
-	cleanupTexture(solveEquationTexture);*/
+	/*cleanupTexture(pauseMenuTexture);*/
 
 	cleanupModel(uiElement.model);
 	
@@ -179,7 +175,7 @@ void AetherEngine::changeUIElementSize(
 		glm::vec3(0.5f),
 		uiElement.texture
 	);
-	computeAABB_createVertexIndexBuffers(uiElement.model);
+	bufferManager.computeAABB_createVertexIndexBuffers(uiElement.model);
 	createDescriptorSets(uiElement.model, MAX_FRAMES_IN_FLIGHT);
 }
 void AetherEngine::loadUIElements() {
@@ -252,7 +248,7 @@ void AetherEngine::initializeInGameOverlayCache() {
 	cache->mobHealth = rootItem->findChild<QObject*>("mobHealth");
 	cache->mobDamage = rootItem->findChild<QObject*>("mobDamage");
 	cache->mobDefense = rootItem->findChild<QObject*>("mobDefense");
-	cache->mobExperience = rootItem->findChild<QObject*>("mobExperience");
+	cache->mobExperienceReward = rootItem->findChild<QObject*>("mobExperience");
 
 	uiElement.cache = std::move(cache);
 }
@@ -293,7 +289,7 @@ void AetherEngine::createInGameWindow()
 	if (!qVulkanInstance.create()) {
 		throw std::runtime_error("Failed to create Vulkan instance in Qt.");
 	}
-
+	
 	inGameWindow = new InGameWindow(&qVulkanInstance, character);
 	inGameWindow->setParent(mainWindow->windowHandle());
 	inGameWindow->setFlags(Qt::FramelessWindowHint);
@@ -437,7 +433,6 @@ void AetherEngine::handleRightAnswer(Equation& selectedEquation) {
 		//gameContext.requestedGameState = GameState::COMBAT_PLAYER_SELECT_EQUATION;
 	}
 	else {
-		//gameContext.requestedGameState = GameState::DUNGEON_EXPLORATION
 		gameContext.requestedGameState = GameState::DUNGEON_ROOM_CLEANED;
 	}
 
@@ -477,15 +472,15 @@ void AetherEngine::handleEquationSolving() {
 
 void AetherEngine::mainLoop()
 {
-	std::chrono::high_resolution_clock::time_point previousTime = std::chrono::high_resolution_clock::now();
-	std::chrono::high_resolution_clock::time_point currentTime;
-	double deltaTime;
-	double timeSinceLaunch = 0.0f;
-
 	bool fpsMenu = 0;
 	uint32_t counter = 0;
 	double accumulator = 0.0;
 	double fps = 0.0;
+
+	double deltaTime = 0.0;
+	double timeSinceLaunch = 0.0;
+	std::chrono::high_resolution_clock::time_point currentTime;
+	std::chrono::high_resolution_clock::time_point previousTime = std::chrono::high_resolution_clock::now();
 
 	while (gameContext.currentGameState != GameState::EXIT) {
 		currentTime = std::chrono::high_resolution_clock::now();
@@ -549,7 +544,7 @@ void AetherEngine::mainLoop()
 		}
 		if (gameContext.currentGameState == GameState::DUNGEON_EXPLORATION) {
 			if (gameContext.currentRoom->hasMobs()) {
-				//gameContext.requestedGameState = GameState::COMBAT_PLAYER_SELECT_EQUATION;
+				gameContext.requestedGameState = GameState::COMBAT_PLAYER_SELECT_EQUATION;
 			}
 
 			character.handleDungeonExplorationPlayerInput();
@@ -561,7 +556,7 @@ void AetherEngine::mainLoop()
 			}
 
 			if (gameContext.keyboardKeys[Qt::Key_Escape]) {
-				gameContext.requestedGameState = GameState::DUNGEON_EXPLORATION;
+				//gameContext.requestedGameState = GameState::DUNGEON_EXPLORATION;
 			}
 
 			for (size_t i = 0; i < 3; ++i) {
@@ -688,8 +683,8 @@ void AetherEngine::recreateDungeonFloor(int32_t floorNumber, float difficultySca
 		floorTexture,
 		wallTexture
 	);
-	computeAABB_createVertexIndexBuffers(dungeonModels);
-	createShaderBuffers(dungeonModels, MAX_FRAMES_IN_FLIGHT);
+	bufferManager.computeAABB_createVertexIndexBuffers(dungeonModels);
+	bufferManager.createShaderBuffers(dungeonModels, MAX_FRAMES_IN_FLIGHT);
 	createDescriptorSets(dungeonModels, MAX_FRAMES_IN_FLIGHT);
 
 	models.insert(models.end(), dungeonModels.begin(), dungeonModels.end());
@@ -716,8 +711,8 @@ void AetherEngine::cleanupMemory()
 	deletedTextureHashes.clear();
 
 	if (vkInit.enableValidationLayers) {
-		std::cout << "createdVmaAllocations:   " << createdVmaAllocations << "\n";
-		std::cout << "destroyedVmaAllocations: " << destroyedVmaAllocations << "\n";
+		std::cout << "createdVmaAllocations:   " << gameContext.createdVmaAllocations << "\n";
+		std::cout << "destroyedVmaAllocations: " << gameContext.destroyedVmaAllocations << "\n";
 	}
 
 	// will free all allocated descriptor sets from this pool
@@ -730,7 +725,7 @@ void AetherEngine::cleanupMemory()
 		vkDestroyFence(vkInit.device, inFlightFences[i], nullptr);
 	}
 	
-	vmaDestroyAllocator(vmaAllocator);
+	vmaDestroyAllocator(vkInit.vmaAllocator);
 	vkDestroyCommandPool(vkInit.device, vkInit.commandPool, nullptr);
 
 	vkDestroyDevice(vkInit.device, nullptr);
@@ -791,17 +786,17 @@ void AetherEngine::cleanupMesh(Mesh& mesh) const
 		mesh.descriptorSets = std::vector<VkDescriptorSet>(MAX_FRAMES_IN_FLIGHT, VK_NULL_HANDLE);
 	}
 	if (mesh.vertexBufferAllocation != VK_NULL_HANDLE) {
-		vmaDestroyBuffer(vmaAllocator, mesh.vertexBuffer, mesh.vertexBufferAllocation);
+		vmaDestroyBuffer(vkInit.vmaAllocator, mesh.vertexBuffer, mesh.vertexBufferAllocation);
 		mesh.vertexBuffer = VK_NULL_HANDLE;
 		mesh.vertexBufferAllocation = VK_NULL_HANDLE;
-		destroyedVmaAllocations += 1;
+		gameContext.destroyedVmaAllocations += 1;
 	}
 
 	if (mesh.indexBufferAllocation != VK_NULL_HANDLE) {
-		vmaDestroyBuffer(vmaAllocator, mesh.indexBuffer, mesh.indexBufferAllocation);
+		vmaDestroyBuffer(vkInit.vmaAllocator, mesh.indexBuffer, mesh.indexBufferAllocation);
 		mesh.indexBuffer = VK_NULL_HANDLE;
 		mesh.indexBufferAllocation = VK_NULL_HANDLE;
-		destroyedVmaAllocations += 1;
+		gameContext.destroyedVmaAllocations += 1;
 	}
 
 	cleanupShaderBuffers(mesh);
@@ -831,10 +826,10 @@ void AetherEngine::cleanupTexture(Texture& texture) const
 			texture.sampler = VK_NULL_HANDLE;
 		}
 		if (texture.image || texture.vmaAllocation) {
-			vmaDestroyImage(vmaAllocator, texture.image, texture.vmaAllocation);
+			vmaDestroyImage(vkInit.vmaAllocator, texture.image, texture.vmaAllocation);
 			texture.image = VK_NULL_HANDLE;
 			texture.vmaAllocation = VK_NULL_HANDLE;
-			destroyedVmaAllocations += 1;
+			gameContext.destroyedVmaAllocations += 1;
 		}
 
 		texture.width = 0;
@@ -862,17 +857,17 @@ void AetherEngine::cleanupShaderBuffers(Mesh& mesh) const
 {
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 		if (mesh.UBOAllocations[i] != VK_NULL_HANDLE) {
-			vmaDestroyBuffer(vmaAllocator, mesh.UBOBuffers[i], mesh.UBOAllocations[i]);
+			vmaDestroyBuffer(vkInit.vmaAllocator, mesh.UBOBuffers[i], mesh.UBOAllocations[i]);
 			mesh.UBOBuffers[i] = VK_NULL_HANDLE;
 			mesh.UBOAllocations[i] = VK_NULL_HANDLE;
-			destroyedVmaAllocations += 1;
+			gameContext.destroyedVmaAllocations += 1;
 		}
 
 		if (mesh.boneSSBOAllocations[i] != VK_NULL_HANDLE) {
-			vmaDestroyBuffer(vmaAllocator, mesh.boneSSBOBuffers[i], mesh.boneSSBOAllocations[i]);
+			vmaDestroyBuffer(vkInit.vmaAllocator, mesh.boneSSBOBuffers[i], mesh.boneSSBOAllocations[i]);
 			mesh.boneSSBOBuffers[i] = VK_NULL_HANDLE;
 			mesh.boneSSBOAllocations[i] = VK_NULL_HANDLE;
-			destroyedVmaAllocations += 1;
+			gameContext.destroyedVmaAllocations += 1;
 		}
 	}
 }

@@ -2,16 +2,16 @@
 #include "AetherEngine.h"
 
 // creating swap chain with the best properties for current device
-void AetherEngine::createSwapchain()
+void AetherEngine::createSwapchain(const QSize windowSize)
 {
 	SwapchainSupportDetails swapchainSupport = vkInit.querySwapchainSupport(vkInit.physicalDevice);
 
 	VkSurfaceFormatKHR surfaceFormat = chooseSwapchainSurfaceFormat(swapchainSupport.formats);
 	VkPresentModeKHR presentMode = chooseSwapchainPresentMode(swapchainSupport.presentModes);
-	VkExtent2D extent = chooseSwapchainExtent(swapchainSupport.capabilities);
+	VkExtent2D extent = chooseSwapchainExtent(swapchainSupport.capabilities, windowSize);
 
-	/*std::cout << 
-		"current present mode: " << presentMode << "\n" << 
+	/*std::cout <<
+		"current present mode: " << presentMode << "\n" <<
 		"extent: " << extent.width << " " << extent.height << "\n";*/
 
 	uint32_t imageCount = swapchainSupport.capabilities.minImageCount + 1;
@@ -60,6 +60,8 @@ void AetherEngine::createSwapchain()
 	swapchainImages.resize(imageCount);
 	// getting images from the swap chain
 	vkGetSwapchainImagesKHR(vkInit.device, swapchain, &imageCount, swapchainImages.data());
+
+	createSwapchainImageViews();
 }
 
 void AetherEngine::createSwapchainImageViews()
@@ -67,8 +69,11 @@ void AetherEngine::createSwapchainImageViews()
 	swapchainImageViews.resize(swapchainImages.size());
 
 	for (uint32_t i = 0; i < swapchainImages.size(); i++) {
-		swapchainImageViews[i] = createImageView(swapchainImages[i], swapchainImageFormat,
-			VK_IMAGE_ASPECT_COLOR_BIT, 1);
+		swapchainImageViews[i] = ImageManager::createImageView(
+			vkInit,
+			swapchainImages[i], swapchainImageFormat,
+			VK_IMAGE_ASPECT_COLOR_BIT, 1
+		);
 	}
 }
 
@@ -115,14 +120,14 @@ void AetherEngine::recreateSwapchain()
 	createColorTexture(msaaTexture);
 	createDepthTexture(depthTexture);
 	createSwapchainFramebuffers();
-	createCommandBuffers();
+	bufferManager.createCommandBuffers(commandBuffers);
 
 	for (auto& [id, elem] : uiMap) {
 		changeUIElementSize(elem, windowWidth, windowHeight);
 	}
 
-	createShaderBuffers(sky, MAX_FRAMES_IN_FLIGHT);
-	createShaderBuffers(models, MAX_FRAMES_IN_FLIGHT);
+	bufferManager.createShaderBuffers(sky, MAX_FRAMES_IN_FLIGHT);
+	bufferManager.createShaderBuffers(models, MAX_FRAMES_IN_FLIGHT);
 }
 
 void AetherEngine::cleanupSwapchain()
@@ -176,25 +181,23 @@ VkPresentModeKHR AetherEngine::chooseSwapchainPresentMode(const std::vector<VkPr
 }
 
 // choosing best swap chain extent(resolution of the images)
-VkExtent2D AetherEngine::chooseSwapchainExtent(const VkSurfaceCapabilitiesKHR& capabilities)
+VkExtent2D AetherEngine::chooseSwapchainExtent(const VkSurfaceCapabilitiesKHR& capabilities, const QSize windowSize)
 {
 	if (capabilities.currentExtent.width != UINT32_MAX) {
 		return capabilities.currentExtent;
 	}
 	else {
-		QSize windowSize = inGameWindow->size();
-
 		VkExtent2D actualExtent = {
 			static_cast<uint32_t>(windowSize.width()),
 			static_cast<uint32_t>(windowSize.height())
 		};
 
 		actualExtent.width = std::clamp(
-			actualExtent.width, 
+			actualExtent.width,
 			capabilities.minImageExtent.width, capabilities.maxImageExtent.width
 		);
 		actualExtent.height = std::clamp(
-			actualExtent.height, 
+			actualExtent.height,
 			capabilities.minImageExtent.height, capabilities.maxImageExtent.height
 		);
 

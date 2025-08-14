@@ -19,5 +19,5 @@ struct InGameOverlayCache : UiCache
 	QObject* mobHealth = nullptr;
 	QObject* mobDamage = nullptr;
 	QObject* mobDefense = nullptr;
-	QObject* mobExperience = nullptr;
+	QObject* mobExperienceReward = nullptr;
 };

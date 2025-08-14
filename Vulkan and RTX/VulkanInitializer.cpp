@@ -53,6 +53,7 @@ void VulkanInitializer::initializeVulkan(QVulkanInstance* qInstance)
 	queueFamilyIndices = findQueueFamilies(physicalDevice);
 	createLogicalDevice();
 	createCommandPool();
+	initVMA();
 }
 
 void VulkanInitializer::createInstance()
@@ -93,6 +94,39 @@ void VulkanInitializer::createInstance()
 	if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create instance!");
 	}*/
+}
+
+void VulkanInitializer::initVMA() {
+	VmaVulkanFunctions vulkanFunctions = {};
+	vulkanFunctions.vkGetInstanceProcAddr = vkGetInstanceProcAddr;
+	vulkanFunctions.vkGetDeviceProcAddr = vkGetDeviceProcAddr;
+	vulkanFunctions.vkGetPhysicalDeviceProperties = vkGetPhysicalDeviceProperties;
+	vulkanFunctions.vkGetPhysicalDeviceMemoryProperties = vkGetPhysicalDeviceMemoryProperties;
+	vulkanFunctions.vkAllocateMemory = vkAllocateMemory;
+	vulkanFunctions.vkFreeMemory = vkFreeMemory;
+	vulkanFunctions.vkMapMemory = vkMapMemory;
+	vulkanFunctions.vkUnmapMemory = vkUnmapMemory;
+	vulkanFunctions.vkFlushMappedMemoryRanges = vkFlushMappedMemoryRanges;
+	vulkanFunctions.vkInvalidateMappedMemoryRanges = vkInvalidateMappedMemoryRanges;
+	vulkanFunctions.vkBindBufferMemory = vkBindBufferMemory;
+	vulkanFunctions.vkBindImageMemory = vkBindImageMemory;
+	vulkanFunctions.vkGetBufferMemoryRequirements = vkGetBufferMemoryRequirements;
+	vulkanFunctions.vkGetImageMemoryRequirements = vkGetImageMemoryRequirements;
+	vulkanFunctions.vkCreateBuffer = vkCreateBuffer;
+	vulkanFunctions.vkDestroyBuffer = vkDestroyBuffer;
+	vulkanFunctions.vkCreateImage = vkCreateImage;
+	vulkanFunctions.vkDestroyImage = vkDestroyImage;
+	vulkanFunctions.vkCmdCopyBuffer = vkCmdCopyBuffer;
+
+	VmaAllocatorCreateInfo allocatorInfo{};
+	allocatorInfo.physicalDevice = physicalDevice;
+	allocatorInfo.device = device;
+	allocatorInfo.instance = instance;
+	allocatorInfo.pVulkanFunctions = &vulkanFunctions;
+
+	if (vmaCreateAllocator(&allocatorInfo, &vmaAllocator) != VK_SUCCESS) {
+		throw std::runtime_error("failed to create VMA allocator!");
+	}
 }
 
 // picking most wanted GPU for "instance", it also can be CPU or something
@@ -393,9 +427,12 @@ void VulkanInitializer::populateDebugMessengerCreateInfo(VkDebugUtilsMessengerCr
 
 // function for debugging callbacks(checking warnings, errors etc)
 // VKAPI_ATTR and VKAPI_CALL ensures that this function signature suitable for Vulkan
-VKAPI_ATTR VkBool32 VKAPI_CALL VulkanInitializer::debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
-	VkDebugUtilsMessageTypeFlagsEXT messageType, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
-	void* pUserData)
+VKAPI_ATTR VkBool32 VKAPI_CALL VulkanInitializer::debugCallback(
+	VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
+	VkDebugUtilsMessageTypeFlagsEXT messageType, 
+	const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData,
+	void* pUserData
+)
 {
 	std::cerr << "\033[91m";
 	std::cerr << pCallbackData->pMessage << "\n\n";

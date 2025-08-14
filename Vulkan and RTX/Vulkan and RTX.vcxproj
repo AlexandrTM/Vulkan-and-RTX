@@ -180,7 +180,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>O:\SDKforeverything\VulkanSDK\Lib;O:\SDKforeverything\glfw-3.3.8\lib-vc2019;O:\SDKforeverything\boost_1_85_0\stage\lib;O:\SDKforeverything\assimp\lib;O:\SDKforeverything\meshoptimizer\Debug;O:\SDKforeverything\NoesisGUI\Lib;O:\SDKforeverything\Qt\6.8.1\msvc2022_64\lib</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>O:\SDKforeverything\VulkanSDK\Lib;O:\SDKforeverything\glfw-3.3.8\lib-vc2019;O:\SDKforeverything\boost_1_85_0\stage\lib;O:\SDKforeverything\assimp\lib;O:\SDKforeverything\meshoptimizer\Release;O:\SDKforeverything\NoesisGUI\Lib;O:\SDKforeverything\Qt\6.8.1\msvc2022_64\lib</AdditionalLibraryDirectories>
       <AdditionalDependencies>vulkan-1.lib;glfw3.lib;windows_x86_64\NoesisApp.lib;windows_x86_64\Noesis.lib;Qt6Core.lib;Qt6Gui.lib;Qt6Widgets.lib;Qt6Qml.lib;Qt6QuickWidgets.lib;Qt6Quick.lib;Qt6QuickControls2.lib;Qt6OpenGL.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;opengl32.lib;Release\assimp-vc143-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
     </Link>
@@ -225,7 +225,7 @@
     <ClCompile Include="stb_image_implementation.cpp" />
     <ClCompile Include="stb_image_write_implementation.cpp" />
     <ClCompile Include="StellarCalculations.cpp" />
-    <ClCompile Include="SwapchainManager.cpp" />
+    <ClCompile Include="AetherSwapchain.cpp" />
     <ClCompile Include="TerrainGenerator.cpp" />
     <ClCompile Include="tiny_gltf_implementation.cpp" />
     <ClCompile Include="tiny_obj_loader_implementation.cpp" />
@@ -235,6 +235,8 @@
     <ClCompile Include="InGameWindow.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="AetherSwapchain.h" />
+    <ClInclude Include="BufferManager.h" />
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Character.h" />
     <ClInclude Include="CollisionManager.h" />
@@ -246,6 +248,7 @@
     <QtMoc Include="UserInterfaceRenderer.h" />
     <ClInclude Include="aether_core.h" />
     <ClInclude Include="gamecontext_instance.h" />
+    <ClInclude Include="ImageManager.h" />
     <ClInclude Include="InteractableVolume.h" />
     <ClInclude Include="IsEntity.h" />
     <ClInclude Include="HasExperienceLevel.h" />

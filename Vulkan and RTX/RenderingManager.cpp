@@ -406,9 +406,8 @@ void AetherEngine::createGraphicsPipeline(
 
 void AetherEngine::createPipelinesAndSwapchain()
 {
-	createSwapchain();
-	createSwapchainImageViews();
 	createObjectRenderPass(objectRenderPass);
+	createSwapchain(inGameWindow->size());
 	createUiRenderPass(uiRenderPass);
 	createGraphicsPipeline(
 		PipelineType::OBJECT,
@@ -529,9 +528,9 @@ void AetherEngine::updateShaderBuffers(uint32_t currentImage, double timeSinceLa
 
 	void* data;
 	for (Mesh& mesh : sky.meshes) {
-		vmaMapMemory(vmaAllocator, mesh.UBOAllocations[currentImage], &data);
+		vmaMapMemory(vkInit.vmaAllocator, mesh.UBOAllocations[currentImage], &data);
 		memcpy(data, &skyUBO, sizeof(UniformBufferObject));
-		vmaUnmapMemory(vmaAllocator, mesh.UBOAllocations[currentImage]);
+		vmaUnmapMemory(vkInit.vmaAllocator, mesh.UBOAllocations[currentImage]);
 	}
 
 	// Update per-mesh shader buffers
@@ -545,9 +544,9 @@ void AetherEngine::updateShaderBuffers(uint32_t currentImage, double timeSinceLa
 					//std::cout << glm::to_string(boneUBO.boneTransforms[i]) << "\n";
 				}
 
-				vmaMapMemory(vmaAllocator, mesh.boneSSBOAllocations[currentImage], &data);
+				vmaMapMemory(vkInit.vmaAllocator, mesh.boneSSBOAllocations[currentImage], &data);
 				memcpy(data, boneSSBO.boneTransforms.data(), sizeof(glm::mat4) * MAX_BONES_NUM);
-				vmaUnmapMemory(vmaAllocator, mesh.boneSSBOAllocations[currentImage]);
+				vmaUnmapMemory(vkInit.vmaAllocator, mesh.boneSSBOAllocations[currentImage]);
 
 				/*glm::mat4* mappedMatrices = reinterpret_cast<glm::mat4*>(data);
 				for (size_t i = 0; i < MAX_BONES_NUM; ++i) {
@@ -562,9 +561,9 @@ void AetherEngine::updateShaderBuffers(uint32_t currentImage, double timeSinceLa
 			meshUBO.sun = sun;
 			meshUBO.observer = character.camera.getPosition();
 
-			vmaMapMemory(vmaAllocator, mesh.UBOAllocations[currentImage], &data);
+			vmaMapMemory(vkInit.vmaAllocator, mesh.UBOAllocations[currentImage], &data);
 			memcpy(data, &meshUBO, sizeof(UniformBufferObject));
-			vmaUnmapMemory(vmaAllocator, mesh.UBOAllocations[currentImage]);
+			vmaUnmapMemory(vkInit.vmaAllocator, mesh.UBOAllocations[currentImage]);
 		}
 	}
 }
@@ -674,7 +673,7 @@ void AetherEngine::updateInGameOverlay() {
 		if (cache->mobHealth) { cache->mobHealth->setProperty("value", mob.health); }
 		if (cache->mobDamage) { cache->mobDamage->setProperty("value", mob.attackPower); }
 		if (cache->mobDefense) { cache->mobDefense->setProperty("value", mob.defence); }
-		if (cache->mobExperience) { cache->mobExperience->setProperty("value", mob.experienceReward); }
+		if (cache->mobExperienceReward) { cache->mobExperienceReward->setProperty("value", mob.experienceReward); }
 	}
 	else {
 		cache->mobHealth->setProperty("value", 0); // making invisible
@@ -729,9 +728,9 @@ void AetherEngine::updateSolveEquationOverlay() {
 
 	if (!renderer || !rootItem) return;
 
-	if (!contentItem->hasFocus()) {
+	/*if (!contentItem->hasFocus()) {
 		contentItem->setFocus(true);
-	}
+	}*/
 	if (inGameWindow->isActive() && gameContext.mouseKeys[Qt::LeftButton]) {
 		renderer->getQuickWindow()->requestActivate();
 		//inGameWindow->requestActivate();
@@ -741,8 +740,8 @@ void AetherEngine::updateSolveEquationOverlay() {
 		isSolveEquationTextFieldActivated = true;
 	}
 
-	QObject* answerInput = rootItem->findChild<QObject*>("answerInput");
-	if (answerInput) { answerInput->setProperty("focus", true); }
+	//QObject* answerInput = rootItem->findChild<QObject*>("answerInput");
+	//if (answerInput) { answerInput->setProperty("focus", true); }
 
 	QObject* expression = rootItem->findChild<QObject*>("expression");
 	QObject* timeRemaining = rootItem->findChild<QObject*>("timeRemaining");
@@ -865,7 +864,7 @@ void AetherEngine::recordModelToCommandBuffer(const Model& model, VkCommandBuffe
 	}
 }
 
-void AetherEngine::createDescriptorPool(size_t modelsNum, size_t meshesNum, VkDescriptorPool& descriptorPool)
+void AetherEngine::createDescriptorPool(size_t modelsNum, size_t meshesNum, VkDescriptorPool& descriptorPool) const
 {
 	std::array<VkDescriptorPoolSize, 3> poolSizes{};
 

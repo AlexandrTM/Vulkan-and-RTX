@@ -123,8 +123,8 @@ void Character::handleDungeonRoomMovement()
 					gameContext.cameraStartPosition = camera.getPosition();
 					gameContext.cameraTargetPosition = room.cameraPosition;
 					gameContext.cameraCurrentTransitionTime = 0.0f;
-
 					gameContext.isCameraTransitioning = true;
+
 					gameContext.isRoomMovementHandled = true;
 					break;
 				}

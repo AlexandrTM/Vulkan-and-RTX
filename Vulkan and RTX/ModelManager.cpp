@@ -635,7 +635,13 @@ void AetherEngine::createColorTexture(Texture& texture)
 		texture.image, texture.vmaAllocation
 	);
 
-	texture.imageView = createImageView(texture.image, colorFormat, VK_IMAGE_ASPECT_COLOR_BIT, mipLevels);
+	texture.imageView = ImageManager::createImageView(
+		vkInit,
+		texture.image, 
+		colorFormat, 
+		VK_IMAGE_ASPECT_COLOR_BIT, 
+		mipLevels
+	);
 }
 void AetherEngine::createDepthTexture(Texture& texture)
 {
@@ -654,7 +660,13 @@ void AetherEngine::createDepthTexture(Texture& texture)
 		texture.image, texture.vmaAllocation
 	);
 
-	texture.imageView = createImageView(texture.image, depthFormat, VK_IMAGE_ASPECT_DEPTH_BIT, mipLevels);
+	texture.imageView = ImageManager::createImageView(
+		vkInit,
+		texture.image, 
+		depthFormat, 
+		VK_IMAGE_ASPECT_DEPTH_BIT, 
+		mipLevels
+	);
 
 	transitionImageLayout(
 		texture.image, depthFormat,
@@ -671,7 +683,7 @@ void AetherEngine::uploadRawDataToTexture(void* rawImage, uint32_t width, uint32
 	VmaAllocation stagingAllocation;
 	VkDeviceSize imageSize = sizeof(uint8_t) * 4 * width * height;
 
-	createBuffer(
+	bufferManager.createBuffer(
 		imageSize,
 		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, true,
@@ -679,9 +691,9 @@ void AetherEngine::uploadRawDataToTexture(void* rawImage, uint32_t width, uint32
 	);
 
 	void* data;
-	vmaMapMemory(vmaAllocator, stagingAllocation, &data);
+	vmaMapMemory(vkInit.vmaAllocator, stagingAllocation, &data);
 	memcpy(data, rawImage, static_cast<size_t>(imageSize));
-	vmaUnmapMemory(vmaAllocator, stagingAllocation);
+	vmaUnmapMemory(vkInit.vmaAllocator, stagingAllocation);
 
 	transitionImageLayout(
 		texture.image, VK_FORMAT_R8G8B8A8_SRGB,
@@ -701,8 +713,8 @@ void AetherEngine::uploadRawDataToTexture(void* rawImage, uint32_t width, uint32
 		texture.mipLevels
 	);
 
-	vmaDestroyBuffer(vmaAllocator, stagingBuffer, stagingAllocation);
-	destroyedVmaAllocations += 1;
+	vmaDestroyBuffer(vkInit.vmaAllocator, stagingBuffer, stagingAllocation);
+	gameContext.destroyedVmaAllocations += 1;
 }
 void AetherEngine::createSolidColorTexture(
 	std::array<uint8_t, 4> color, uint32_t width, uint32_t height, Texture& texture
@@ -720,7 +732,7 @@ void AetherEngine::createSolidColorTexture(
 	texture.width = width;
 	texture.height = height;
 
-	createBuffer(
+	bufferManager.createBuffer(
 		imageSize, 
 		VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, true,
@@ -734,9 +746,9 @@ void AetherEngine::createSolidColorTexture(
 	}
 
 	void* data;
-	vmaMapMemory(vmaAllocator, stagingAllocation, &data);
+	vmaMapMemory(vkInit.vmaAllocator, stagingAllocation, &data);
 	memcpy(data, pixelData.data(), static_cast<size_t>(imageSize));
-	vmaUnmapMemory(vmaAllocator, stagingAllocation);
+	vmaUnmapMemory(vkInit.vmaAllocator, stagingAllocation);
 
 	createImage(
 		width, height, texture.mipLevels, VK_SAMPLE_COUNT_1_BIT,
@@ -759,8 +771,8 @@ void AetherEngine::createSolidColorTexture(
 		width, height
 	);
 
-	vmaDestroyBuffer(vmaAllocator, stagingBuffer, stagingAllocation);
-	destroyedVmaAllocations += 1;
+	vmaDestroyBuffer(vkInit.vmaAllocator, stagingBuffer, stagingAllocation);
+	gameContext.destroyedVmaAllocations += 1;
 
 	transitionImageLayout(
 		texture.image, VK_FORMAT_R8G8B8A8_SRGB,
@@ -770,7 +782,8 @@ void AetherEngine::createSolidColorTexture(
 		texture.mipLevels
 	);
 
-	texture.imageView = createImageView(
+	texture.imageView = ImageManager::createImageView(
+		vkInit,
 		texture.image,
 		VK_FORMAT_R8G8B8A8_SRGB,
 		VK_IMAGE_ASPECT_COLOR_BIT,
@@ -797,7 +810,7 @@ Texture AetherEngine::loadTextureFromPath(const std::string& texturePath)
 	texture.width = texWidth;
 	texture.height = texHeight;
 
-	createBuffer(
+	bufferManager.createBuffer(
 		imageSize, 
 		VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, true,
@@ -805,9 +818,9 @@ Texture AetherEngine::loadTextureFromPath(const std::string& texturePath)
 	);
 
 	void* data;
-	vmaMapMemory(vmaAllocator, stagingAllocation, &data);
+	vmaMapMemory(vkInit.vmaAllocator, stagingAllocation, &data);
 	memcpy(data, pixels, static_cast<size_t>(imageSize));
-	vmaUnmapMemory(vmaAllocator, stagingAllocation);
+	vmaUnmapMemory(vkInit.vmaAllocator, stagingAllocation);
 
 	stbi_image_free(pixels);
 
@@ -832,12 +845,13 @@ Texture AetherEngine::loadTextureFromPath(const std::string& texturePath)
 		static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight)
 	);
 
-	vmaDestroyBuffer(vmaAllocator, stagingBuffer, stagingAllocation);
-	destroyedVmaAllocations += 1;
+	vmaDestroyBuffer(vkInit.vmaAllocator, stagingBuffer, stagingAllocation);
+	gameContext.destroyedVmaAllocations += 1;
 
 	generateMipmaps(texture.image, VK_FORMAT_R8G8B8A8_SRGB, texWidth, texHeight, texture.mipLevels);
 
-	texture.imageView = createImageView(
+	texture.imageView = ImageManager::createImageView(
+		vkInit,
 		texture.image,
 		VK_FORMAT_R8G8B8A8_SRGB,
 		VK_IMAGE_ASPECT_COLOR_BIT,
@@ -890,7 +904,7 @@ void AetherEngine::createTextureFromEmbedded(
 	texture.width = texWidth;
 	texture.height = texHeight;
 
-	createBuffer(
+	bufferManager.createBuffer(
 		imageSize, 
 		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, true,
@@ -898,9 +912,9 @@ void AetherEngine::createTextureFromEmbedded(
 	);
 
 	void* data;
-	vmaMapMemory(vmaAllocator, stagingAllocation, &data);
+	vmaMapMemory(vkInit.vmaAllocator, stagingAllocation, &data);
 	memcpy(data, pixels, static_cast<size_t>(imageSize));
-	vmaUnmapMemory(vmaAllocator, stagingAllocation);
+	vmaUnmapMemory(vkInit.vmaAllocator, stagingAllocation);
 
 	if (embeddedTexture->mHeight == 0) {
 		stbi_image_free(pixels);
@@ -926,12 +940,13 @@ void AetherEngine::createTextureFromEmbedded(
 		static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight)
 	);
 
-	vmaDestroyBuffer(vmaAllocator, stagingBuffer, stagingAllocation);
-	destroyedVmaAllocations += 1;
+	vmaDestroyBuffer(vkInit.vmaAllocator, stagingBuffer, stagingAllocation);
+	gameContext.destroyedVmaAllocations += 1;
 
 	generateMipmaps(texture.image, VK_FORMAT_R8G8B8A8_SRGB, texWidth, texHeight, texture.mipLevels);
 
-	texture.imageView = createImageView(
+	texture.imageView = ImageManager::createImageView(
+		vkInit,
 		texture.image,
 		VK_FORMAT_R8G8B8A8_SRGB,
 		VK_IMAGE_ASPECT_COLOR_BIT,
