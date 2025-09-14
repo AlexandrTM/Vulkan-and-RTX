@@ -8,7 +8,7 @@ TerrainGenerator::TerrainGenerator()
     std::iota(permutation.begin(), permutation.end(), 0);
 
     // Shuffle the permutation vector
-    std::shuffle(permutation.begin(), permutation.end(), gen);
+    std::shuffle(permutation.begin(), permutation.end(), generator_32);
 
     // Duplicate the permutation vector
     permutation.insert(permutation.end(), permutation.begin(), permutation.end());
@@ -37,7 +37,7 @@ void TerrainGenerator::generateTerrain(
     float startX, float startY, float startZ,
     const TerrainData& terrainData,
     std::vector<Model>& models, Texture& terrainTexture, float metricTextureSize,
-    size_t seed
+    size_t seed // not used
 ) {
     Model model{};
 

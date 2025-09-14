@@ -202,7 +202,7 @@ Model ModelManager::createQuad(
 	Mesh mesh{};
 	Material material{};
 	material.diffuseTexture = texture;
-	//material.diffuseTexture.uniqueHash = material.diffuseTexture.randomHash64();
+	//material.diffuseTexture.hash = material.diffuseTexture.randomHash64();
 
 	// Quad corners in tangent space
 	/*vertices[0].position = origin;
@@ -620,14 +620,14 @@ static glm::mat4 setScaleToOne(const glm::mat4& matrix) {
 // creating texture for MSAA sampling
 void AetherEngine::createColorTexture(Texture& texture)
 {
-	if (texture.uniqueHash == 0) {
-		texture.uniqueHash = randomHash64();
+	if (texture.hash == 0) {
+		texture.hash = randomHash64();
 	}
 
 	VkFormat colorFormat = swapchainImageFormat;
 	uint32_t mipLevels = 1;
 
-	createImage(
+	imageManager.createImage(
 		swapchainExtent.width, swapchainExtent.height, mipLevels, vkInit.colorSamples, colorFormat,
 		VK_IMAGE_TILING_OPTIMAL,
 		VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
@@ -635,7 +635,7 @@ void AetherEngine::createColorTexture(Texture& texture)
 		texture.image, texture.vmaAllocation
 	);
 
-	texture.imageView = ImageManager::createImageView(
+	texture.imageView = imageManager.createImageView(
 		vkInit,
 		texture.image, 
 		colorFormat, 
@@ -645,14 +645,14 @@ void AetherEngine::createColorTexture(Texture& texture)
 }
 void AetherEngine::createDepthTexture(Texture& texture)
 {
-	if (texture.uniqueHash == 0) {
-		texture.uniqueHash = randomHash64();
+	if (texture.hash == 0) {
+		texture.hash = randomHash64();
 	}
 
-	VkFormat depthFormat = findDepthFormat();
+	VkFormat depthFormat = imageManager.findDepthFormat();
 	uint32_t mipLevels = 1;
 
-	createImage(
+	imageManager.createImage(
 		swapchainExtent.width, swapchainExtent.height, mipLevels, vkInit.colorSamples, depthFormat,
 		VK_IMAGE_TILING_OPTIMAL,
 		VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
@@ -660,7 +660,7 @@ void AetherEngine::createDepthTexture(Texture& texture)
 		texture.image, texture.vmaAllocation
 	);
 
-	texture.imageView = ImageManager::createImageView(
+	texture.imageView = imageManager.createImageView(
 		vkInit,
 		texture.image, 
 		depthFormat, 
@@ -668,7 +668,7 @@ void AetherEngine::createDepthTexture(Texture& texture)
 		mipLevels
 	);
 
-	transitionImageLayout(
+	imageManager.transitionImageLayout(
 		texture.image, depthFormat,
 		VK_IMAGE_ASPECT_DEPTH_BIT,
 		VK_IMAGE_LAYOUT_UNDEFINED,
@@ -676,7 +676,6 @@ void AetherEngine::createDepthTexture(Texture& texture)
 		mipLevels
 	);
 }
-
 void AetherEngine::uploadRawDataToTexture(void* rawImage, uint32_t width, uint32_t height, Texture& texture)
 {
 	VkBuffer stagingBuffer;
@@ -695,7 +694,7 @@ void AetherEngine::uploadRawDataToTexture(void* rawImage, uint32_t width, uint32
 	memcpy(data, rawImage, static_cast<size_t>(imageSize));
 	vmaUnmapMemory(vkInit.vmaAllocator, stagingAllocation);
 
-	transitionImageLayout(
+	imageManager.transitionImageLayout(
 		texture.image, VK_FORMAT_R8G8B8A8_SRGB,
 		VK_IMAGE_ASPECT_COLOR_BIT,
 		VK_IMAGE_LAYOUT_UNDEFINED,
@@ -703,9 +702,9 @@ void AetherEngine::uploadRawDataToTexture(void* rawImage, uint32_t width, uint32
 		texture.mipLevels
 	);
 
-	copyBufferToImage(stagingBuffer, texture.image, width, height);
+	imageManager.copyBufferToImage(stagingBuffer, texture.image, width, height);
 
-	transitionImageLayout(
+	imageManager.transitionImageLayout(
 		texture.image, VK_FORMAT_R8G8B8A8_SRGB,
 		VK_IMAGE_ASPECT_COLOR_BIT,
 		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
@@ -716,148 +715,106 @@ void AetherEngine::uploadRawDataToTexture(void* rawImage, uint32_t width, uint32
 	vmaDestroyBuffer(vkInit.vmaAllocator, stagingBuffer, stagingAllocation);
 	gameContext.destroyedVmaAllocations += 1;
 }
-void AetherEngine::createSolidColorTexture(
-	std::array<uint8_t, 4> color, uint32_t width, uint32_t height, Texture& texture
-)
-{
-	if (texture.uniqueHash == 0) {
-		texture.uniqueHash = randomHash64();
+
+void AetherEngine::createTextureFromPixelData(
+	const void* pixelData,
+	uint32_t width,
+	uint32_t height,
+	uint32_t mipLevels,
+	Texture& texture
+) {
+	if (texture.hash == 0) {
+		texture.hash = randomHash64();
 	}
 
-	VkBuffer stagingBuffer;
-	VmaAllocation stagingAllocation;
-
-	VkDeviceSize imageSize = sizeof(uint8_t) * 4 * width * height;
-	texture.mipLevels = 1;
+	texture.mipLevels = mipLevels;
 	texture.width = width;
 	texture.height = height;
+	VkDeviceSize imageSize = sizeof(uint8_t) * 4 * width * height;
 
+	// Create staging buffer
+	VkBuffer stagingBuffer;
+	VmaAllocation stagingAllocation;
 	bufferManager.createBuffer(
-		imageSize, 
-		VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
+		imageSize,
+		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, true,
 		stagingBuffer, stagingAllocation
 	);
-	
-	// filing whole buffer with the same color
-	std::vector<uint8_t> pixelData(imageSize);
-	for (size_t i = 0; i < static_cast<size_t>(width * height); ++i) {
-		std::memcpy(&pixelData[i * 4], color.data(), 4);
-	}
 
+	// Copy pixels to staging buffer
 	void* data;
 	vmaMapMemory(vkInit.vmaAllocator, stagingAllocation, &data);
-	memcpy(data, pixelData.data(), static_cast<size_t>(imageSize));
+	memcpy(data, pixelData, static_cast<size_t>(imageSize));
 	vmaUnmapMemory(vkInit.vmaAllocator, stagingAllocation);
 
-	createImage(
-		width, height, texture.mipLevels, VK_SAMPLE_COUNT_1_BIT,
+	imageManager.createImage(
+		width, height, mipLevels, VK_SAMPLE_COUNT_1_BIT,
 		VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL,
 		VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
 		texture.image, texture.vmaAllocation
 	);
 
-	transitionImageLayout(
-		texture.image, VK_FORMAT_R8G8B8A8_SRGB,
+	imageManager.transitionImageLayout(
+		texture.image, VK_FORMAT_R8G8B8A8_SRGB, 
 		VK_IMAGE_ASPECT_COLOR_BIT,
-		VK_IMAGE_LAYOUT_UNDEFINED,
-		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-		texture.mipLevels
+		VK_IMAGE_LAYOUT_UNDEFINED, 
+		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 
+		mipLevels
 	);
 
-	copyBufferToImage(
-		stagingBuffer, texture.image,
-		width, height
-	);
+	imageManager.copyBufferToImage(stagingBuffer, texture.image, width, height);
 
 	vmaDestroyBuffer(vkInit.vmaAllocator, stagingBuffer, stagingAllocation);
 	gameContext.destroyedVmaAllocations += 1;
 
-	transitionImageLayout(
-		texture.image, VK_FORMAT_R8G8B8A8_SRGB,
-		VK_IMAGE_ASPECT_COLOR_BIT,
-		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-		VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-		texture.mipLevels
-	);
+	if (mipLevels > 1) {
+		imageManager.generateMipmaps(texture.image, VK_FORMAT_R8G8B8A8_SRGB, width, height, mipLevels);
+	}
+	else {
+		imageManager.transitionImageLayout(
+			texture.image, VK_FORMAT_R8G8B8A8_SRGB, 
+			VK_IMAGE_ASPECT_COLOR_BIT,
+			VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 
+			VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, 
+			mipLevels
+		);
+	}
 
-	texture.imageView = ImageManager::createImageView(
+	// Create view + sampler
+	texture.imageView = imageManager.createImageView(
 		vkInit,
 		texture.image,
 		VK_FORMAT_R8G8B8A8_SRGB,
 		VK_IMAGE_ASPECT_COLOR_BIT,
-		texture.mipLevels);
-	createTextureSampler(texture.mipLevels, texture.sampler);
+		mipLevels
+	);
+	imageManager.createTextureSampler(texture.mipLevels, texture.sampler);
+}
+void AetherEngine::createSolidColorTexture(
+	std::array<uint8_t, 4> color, uint32_t width, uint32_t height, Texture& texture
+)
+{
+	VkDeviceSize imageSize = sizeof(uint8_t) * 4 * width * height;
+	std::vector<uint8_t> pixelData(imageSize);
+	for (size_t i = 0; i < static_cast<size_t>(width * height); ++i) {
+		std::memcpy(&pixelData[i * 4], color.data(), 4);
+	}
+	createTextureFromPixelData(pixelData.data(), width, height, 1, texture);
 }
 Texture AetherEngine::loadTextureFromPath(const std::string& texturePath)
 {
 	Texture texture;
-
-	VkBuffer stagingBuffer;
-	VmaAllocation stagingAllocation;
-
 	int texWidth, texHeight, texChannels;
 	stbi_uc* pixels = stbi_load(texturePath.c_str(), &texWidth, &texHeight, &texChannels, STBI_rgb_alpha);
 	
-	if (!pixels) {
-		std::cout << texturePath;
-		throw std::runtime_error("failed to load texture image!");
-	}
+	if (!pixels) throw std::runtime_error("Failed to load texture: " + texturePath);
 
-	VkDeviceSize imageSize = texWidth * texHeight * 4;
-	texture.mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
-	texture.width = texWidth;
-	texture.height = texHeight;
+	uint32_t mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
 
-	bufferManager.createBuffer(
-		imageSize, 
-		VK_BUFFER_USAGE_TRANSFER_SRC_BIT, 
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, true,
-		stagingBuffer, stagingAllocation
-	);
-
-	void* data;
-	vmaMapMemory(vkInit.vmaAllocator, stagingAllocation, &data);
-	memcpy(data, pixels, static_cast<size_t>(imageSize));
-	vmaUnmapMemory(vkInit.vmaAllocator, stagingAllocation);
-
+	createTextureFromPixelData(pixels, texWidth, texHeight, mipLevels, texture);
 	stbi_image_free(pixels);
-
-	createImage(
-		texWidth, texHeight, texture.mipLevels, VK_SAMPLE_COUNT_1_BIT, 
-		VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL, 
-		VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, 
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
-		texture.image, texture.vmaAllocation
-	);
-
-	transitionImageLayout(
-		texture.image, VK_FORMAT_R8G8B8A8_SRGB, 
-		VK_IMAGE_ASPECT_COLOR_BIT,
-		VK_IMAGE_LAYOUT_UNDEFINED,
-		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 
-		texture.mipLevels
-	);
-
-	copyBufferToImage(
-		stagingBuffer, texture.image,
-		static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight)
-	);
-
-	vmaDestroyBuffer(vkInit.vmaAllocator, stagingBuffer, stagingAllocation);
-	gameContext.destroyedVmaAllocations += 1;
-
-	generateMipmaps(texture.image, VK_FORMAT_R8G8B8A8_SRGB, texWidth, texHeight, texture.mipLevels);
-
-	texture.imageView = ImageManager::createImageView(
-		vkInit,
-		texture.image,
-		VK_FORMAT_R8G8B8A8_SRGB,
-		VK_IMAGE_ASPECT_COLOR_BIT,
-		texture.mipLevels
-	);
-	createTextureSampler(texture.mipLevels, texture.sampler);
 
 	return texture;
 }
@@ -865,18 +822,8 @@ void AetherEngine::createTextureFromEmbedded(
 	const std::string& embeddedTextureName,
 	const aiScene* scene, Texture& texture
 ) {
-	if (texture.uniqueHash == 0) {
-		texture.uniqueHash = randomHash64();
-	}
-
 	const aiTexture* embeddedTexture = scene->GetEmbeddedTexture(embeddedTextureName.c_str());
-
-	if (!embeddedTexture) {
-		throw std::runtime_error("Failed to find embedded texture: " + embeddedTextureName);
-	}
-
-	VkBuffer stagingBuffer;
-	VmaAllocation stagingAllocation;
+	if (!embeddedTexture) throw std::runtime_error("Embedded texture not found: " + embeddedTextureName);
 
 	// Decode the embedded texture
 	stbi_uc* pixels = nullptr;
@@ -895,64 +842,13 @@ void AetherEngine::createTextureFromEmbedded(
 		texChannels = 4;  // Assuming RGBA
 	}
 
-	if (!pixels) {
-		throw std::runtime_error("Failed to load embedded texture!");
-	}
+	if (!pixels) throw std::runtime_error("Failed to decode embedded texture: " + embeddedTextureName);
+	
+	uint32_t mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
 
-	VkDeviceSize imageSize = texWidth * texHeight * 4; // 4 bytes per pixel for RGBA
-	texture.mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(texWidth, texHeight)))) + 1;
-	texture.width = texWidth;
-	texture.height = texHeight;
+	createTextureFromPixelData(pixels, texWidth, texHeight, mipLevels, texture);
 
-	bufferManager.createBuffer(
-		imageSize, 
-		VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT, true,
-		stagingBuffer, stagingAllocation
-	);
-
-	void* data;
-	vmaMapMemory(vkInit.vmaAllocator, stagingAllocation, &data);
-	memcpy(data, pixels, static_cast<size_t>(imageSize));
-	vmaUnmapMemory(vkInit.vmaAllocator, stagingAllocation);
-
-	if (embeddedTexture->mHeight == 0) {
-		stbi_image_free(pixels);
-	}
-
-	createImage(
-		texWidth, texHeight, texture.mipLevels, VK_SAMPLE_COUNT_1_BIT,
-		VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_TILING_OPTIMAL,
-		VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, 
-		texture.image, texture.vmaAllocation
-	);
-
-	transitionImageLayout(
-		texture.image, VK_FORMAT_R8G8B8A8_SRGB, 
-		VK_IMAGE_ASPECT_COLOR_BIT,
-		VK_IMAGE_LAYOUT_UNDEFINED,
-		VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 
-		texture.mipLevels
-	);
-	copyBufferToImage(
-		stagingBuffer, texture.image, 
-		static_cast<uint32_t>(texWidth), static_cast<uint32_t>(texHeight)
-	);
-
-	vmaDestroyBuffer(vkInit.vmaAllocator, stagingBuffer, stagingAllocation);
-	gameContext.destroyedVmaAllocations += 1;
-
-	generateMipmaps(texture.image, VK_FORMAT_R8G8B8A8_SRGB, texWidth, texHeight, texture.mipLevels);
-
-	texture.imageView = ImageManager::createImageView(
-		vkInit,
-		texture.image,
-		VK_FORMAT_R8G8B8A8_SRGB,
-		VK_IMAGE_ASPECT_COLOR_BIT,
-		texture.mipLevels
-	);
-	createTextureSampler(texture.mipLevels, texture.sampler);
+	if (embeddedTexture->mHeight == 0) stbi_image_free(pixels);
 
 	/*std::cout << "Embedded Texture Loaded:\n";
 	std::cout << " - Name: " << embeddedTextureName << "\n";
@@ -962,6 +858,7 @@ void AetherEngine::createTextureFromEmbedded(
 	std::cout << " - Mip Levels: " << texture.mipLevels << "\n";
 	std::cout << " - Compression: " << (embeddedTexture->mHeight == 0 ? "Yes" : "No") << "\n";*/
 }
+
 Texture AetherEngine::loadTextureForModel(const std::string& texturePath, const aiScene* scene) 
 {
 	Texture texture;

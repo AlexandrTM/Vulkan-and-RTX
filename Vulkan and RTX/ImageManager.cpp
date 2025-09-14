@@ -2,8 +2,11 @@
 #include "AetherEngine.h"
 #include "ImageManager.h"
 
+ImageManager::ImageManager(VulkanInitializer& vkInitRef, BufferManager& bufferManagerRef)
+	: vkInit(vkInitRef), bufferManager(bufferManagerRef) {}
+
 // finding most appropriate format for the depth test
-VkFormat AetherEngine::findDepthFormat() const
+VkFormat ImageManager::findDepthFormat() const
 {
 	return findSupportedFormat(
 		{ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
@@ -13,7 +16,7 @@ VkFormat AetherEngine::findDepthFormat() const
 }
 
 // finding most desirable format of color for a given situation
-VkFormat AetherEngine::findSupportedFormat(
+VkFormat ImageManager::findSupportedFormat(
 	const std::vector<VkFormat>& candidates, 
 	VkImageTiling tiling, VkFormatFeatureFlags features
 ) const
@@ -34,7 +37,7 @@ VkFormat AetherEngine::findSupportedFormat(
 }
 
 // check if the format has stencil component
-bool AetherEngine::hasStencilComponent(VkFormat format)
+bool ImageManager::hasStencilComponent(VkFormat format)
 {
 	return format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT;
 }
@@ -43,7 +46,7 @@ bool AetherEngine::hasStencilComponent(VkFormat format)
 
 // how to sample through texels of the 
 // for drawing them on 3D model
-void AetherEngine::createTextureSampler(uint32_t& mipLevels, VkSampler& textureSampler) const
+void ImageManager::createTextureSampler(uint32_t& mipLevels, VkSampler& textureSampler) const
 {
 	VkPhysicalDeviceProperties properties{};
 	vkGetPhysicalDeviceProperties(vkInit.physicalDevice, &properties);
@@ -99,8 +102,10 @@ VkImageView ImageManager::createImageView(
 	return imageView;
 }
 
-void AetherEngine::generateMipmaps(VkImage image, VkFormat imageFormat,
-	int32_t texWidth, int32_t texHeight, uint32_t mipLevels)
+void ImageManager::generateMipmaps(
+	VkImage image, VkFormat imageFormat,
+	int32_t texWidth, int32_t texHeight, uint32_t mipLevels
+)
 {
 	// Check if image format supports linear blitting
 	VkFormatProperties formatProperties;
@@ -193,7 +198,7 @@ void AetherEngine::generateMipmaps(VkImage image, VkFormat imageFormat,
 }
 
 // transitioning image to the right layout
-void AetherEngine::transitionImageLayout(
+void ImageManager::transitionImageLayout(
 	VkImage image, VkFormat format, VkImageAspectFlags aspectMask,
 	VkImageLayout oldLayout, VkImageLayout newLayout,
 	uint32_t mipLevels
@@ -258,9 +263,11 @@ void AetherEngine::transitionImageLayout(
 	bufferManager.endSingleTimeCommands(commandBuffer);
 }
 
-void AetherEngine::createImage(uint32_t width, uint32_t height, uint32_t mipLevels, VkSampleCountFlagBits numSamples,
+void ImageManager::createImage(
+	uint32_t width, uint32_t height, uint32_t mipLevels, VkSampleCountFlagBits numSamples,
 	VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties,
-	VkImage& image, VmaAllocation& vmaAllocation)
+	VkImage& image, VmaAllocation& vmaAllocation
+)
 {
 	VkImageCreateInfo imageInfo{};
 	imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
@@ -289,7 +296,9 @@ void AetherEngine::createImage(uint32_t width, uint32_t height, uint32_t mipLeve
 	}
 }
 
-void AetherEngine::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
+void ImageManager::copyBufferToImage(
+	VkBuffer buffer, VkImage image, uint32_t width, uint32_t height
+)
 {
 	VkCommandBuffer commandBuffer = bufferManager.beginSingleTimeCommands();
 

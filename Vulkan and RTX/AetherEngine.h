@@ -17,8 +17,8 @@
 #include "SolveEquationSlotHandler.h"
 
 #include "ModelManager.h"
-#include "ImageManager.h"
 #include "BufferManager.h"
+#include "ImageManager.h"
 #include "gamecontext_instance.h"
 #include "Model.h"
 #include "TerrainGenerator.h"
@@ -34,6 +34,7 @@ private:
 #pragma region
 	VulkanInitializer vkInit;
 	BufferManager bufferManager{ vkInit };
+	ImageManager imageManager{ vkInit, bufferManager };
 
 	float gravity = 9.81f;
 	Character character;
@@ -189,6 +190,14 @@ private:
 	);
 
 	void uploadRawDataToTexture(void* rawImage, uint32_t width, uint32_t height, Texture& texture);
+
+	void createTextureFromPixelData(
+		const void* pixelData,
+		uint32_t texWidth,
+		uint32_t texHeight,
+		uint32_t mipLevels,
+		Texture& texture
+	);
 	void createSolidColorTexture(
 		std::array<uint8_t, 4> color, uint32_t width, uint32_t height, Texture& texture
 	);
@@ -197,40 +206,14 @@ private:
 		const std::string& embeddedTextureName, 
 		const aiScene* scene, Texture& texture
 	);
-	void createImage(
-		uint32_t width, uint32_t height, uint32_t mipLevels, VkSampleCountFlagBits numSamples,
-		VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties,
-		VkImage& image, VmaAllocation& vmaAllocation
-	);
-	void generateMipmaps(VkImage image, VkFormat imageFormat, int32_t texWidth, int32_t texHeight, uint32_t mipLevels);
 	QColor interpolateColor(const QColor& from, const QColor& to, double t);
-
-	// how to sample through texels of the texture for drawing them on 3D model
-	void createTextureSampler(uint32_t& mipLevels, VkSampler& textureSampler) const;
-	void transitionImageLayout(
-		VkImage image, VkFormat format, VkImageAspectFlags aspectMask,
-		VkImageLayout oldLayout, VkImageLayout newLayout,
-		uint32_t mipLevels
-	);
 
 	// creating image for MSAA sampling
 	void createColorTexture(Texture& texture);
 	void createDepthTexture(Texture& texture);
 
-	// check if the format has stencil component
-	bool hasStencilComponent(VkFormat format);
-
-	VkFormat findDepthFormat() const;
-	// finding most desirable format of color for a given situation
-	VkFormat findSupportedFormat(
-		const std::vector<VkFormat>& candidates,
-		VkImageTiling tiling, VkFormatFeatureFlags features
-	) const;
-
 	// finding most appropriate memory type depending on buffer and application properties
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
-
-	void copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 
 	void createDescriptorSets(std::vector<Model>& models, size_t swapchainImageCount);
 	void createDescriptorSets(Model& model, size_t swapchainImageCount);

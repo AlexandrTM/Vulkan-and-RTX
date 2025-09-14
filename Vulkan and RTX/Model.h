@@ -58,9 +58,9 @@ struct Texture {
     uint32_t                                width         = 0;
     uint32_t                                height        = 0;
 
-    uint64_t uniqueHash = 0;
+    uint64_t hash = 0;
 
-    Texture() { uniqueHash = randomHash64(); }
+    Texture() { hash = randomHash64(); }
 
 	explicit operator bool() const {
 		return 
@@ -71,7 +71,7 @@ struct Texture {
             mipLevels     != 0 &&
             width         != 0 &&
             height        != 0 &&
-            uniqueHash    != 0;
+            hash          != 0;
 	}
 };
 

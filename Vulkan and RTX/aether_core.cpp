@@ -1,31 +1,29 @@
 #include "pch.h"
 #include "aether_core.h"
 
-boost::random::mt19937 generator;
-boost::random::mt19937_64 generator64;
-std::default_random_engine gen;
+boost::random::mt19937 generator_32;
+boost::random::mt19937_64 generator_64;
 
 void seedRandomGenerator() {
 	std::random_device rd;  // Get a random seed from the system (if available)
-	generator.seed(rd());  // Seed the boost RNG with the random device
-	generator64.seed(rd());
-	srand(static_cast<unsigned>(time(0))); // seed std generator
+	generator_32.seed(rd());  // Seed the boost RNG with the random device
+	generator_64.seed(rd());
 }
 
 float randomReal(float min, float max) {
-	std::uniform_real_distribution<float> distribution(min, max);
-	return distribution(generator);
+	boost::random::uniform_real_distribution<float> distribution(min, max);
+	return distribution(generator_32);
 }
 float randomRealOffset(float offset) {
 	return randomReal(-offset, offset);
 }
 float randomNormalizedReal() {
 	boost::random::uniform_real_distribution<float> distribution(0.0f, 1.0f);
-	return distribution(generator);
+	return distribution(generator_32);
 }
 uint64_t randomHash64() {
 	boost::random::uniform_int_distribution<uint64_t> distribution;
-	return distribution(generator64);
+	return distribution(generator_64);
 }
 
 // Create weighted probability distribution for the intervals

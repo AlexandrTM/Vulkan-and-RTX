@@ -69,7 +69,7 @@ void AetherEngine::createSwapchainImageViews()
 	swapchainImageViews.resize(swapchainImages.size());
 
 	for (uint32_t i = 0; i < swapchainImages.size(); i++) {
-		swapchainImageViews[i] = ImageManager::createImageView(
+		swapchainImageViews[i] = imageManager.createImageView(
 			vkInit,
 			swapchainImages[i], swapchainImageFormat,
 			VK_IMAGE_ASPECT_COLOR_BIT, 1
@@ -147,7 +147,7 @@ void AetherEngine::cleanupSwapchain()
 	for (size_t i = 0; i < swapchainImageViews.size(); i++) {
 		vkDestroyImageView(vkInit.device, swapchainImageViews[i], nullptr);
 	}
-
+	
 	vkDestroySwapchainKHR(vkInit.device, swapchain, nullptr);
 }
 

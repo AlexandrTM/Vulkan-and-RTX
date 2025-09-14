@@ -20,7 +20,7 @@ void AetherEngine::createObjectRenderPass(VkRenderPass& renderPass) const
 	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
 	VkAttachmentDescription depthAttachment{};
-	depthAttachment.format = findDepthFormat();
+	depthAttachment.format = imageManager.findDepthFormat();
 	depthAttachment.samples = vkInit.colorSamples;
 	depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 	depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -188,10 +188,9 @@ void AetherEngine::createGraphicsPipeline(
 
 	auto bindingDescription = Vertex::getBindingDescription();
 	auto attributeDescriptions = Vertex::getAttributeDescriptions(
-		pipelineType == 
-			PipelineType::OBJECT ? VertexLayoutType::WHOLE : 
-			pipelineType == PipelineType::GUI ? VertexLayoutType::POSITION_TEXCOORDS : 
-			VertexLayoutType::POSITION_ONLY
+		pipelineType == PipelineType::OBJECT ? VertexLayoutType::WHOLE : 
+		pipelineType == PipelineType::GUI ? VertexLayoutType::POSITION_TEXCOORDS : 
+		VertexLayoutType::POSITION_ONLY
 	);
 
 	vertexInputInfo.vertexBindingDescriptionCount = 1;
@@ -407,8 +406,8 @@ void AetherEngine::createGraphicsPipeline(
 void AetherEngine::createPipelinesAndSwapchain()
 {
 	createObjectRenderPass(objectRenderPass);
-	createSwapchain(inGameWindow->size());
 	createUiRenderPass(uiRenderPass);
+	createSwapchain(inGameWindow->size());
 	createGraphicsPipeline(
 		PipelineType::OBJECT,
 		"object", "shaders/object.vert.spv", "shaders/object.frag.spv",

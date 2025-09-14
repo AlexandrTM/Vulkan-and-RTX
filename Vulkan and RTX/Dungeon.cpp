@@ -307,7 +307,7 @@ void Dungeon::generateDungeonFloorGrid(
 			directionOffsets.begin(),
 			directionOffsets.end()
 		);
-		std::shuffle(shuffledOffsets.begin(), shuffledOffsets.end(), gen);
+		std::shuffle(shuffledOffsets.begin(), shuffledOffsets.end(), generator_32);
 		size_t neighborChance = 15;
 
 		// try generate dungeon floor layout

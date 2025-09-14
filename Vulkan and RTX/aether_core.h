@@ -32,16 +32,15 @@ enum class Gamemode : uint32_t
 	SURVIVAL = 1,
 };
 
-extern boost::random::mt19937 generator;
-extern boost::random::mt19937_64 generator64;
-extern std::default_random_engine gen;
+extern boost::random::mt19937 generator_32;
+extern boost::random::mt19937_64 generator_64;
 void seedRandomGenerator();
 
 template<typename IntType>
 typename std::enable_if<std::is_integral<IntType>::value, IntType>::type
 randomInt(IntType min, IntType max) {
 	boost::random::uniform_int_distribution<IntType> distribution(min, max);
-	return distribution(generator);
+	return distribution(generator_32);
 }
 template<typename IntType>
 typename std::enable_if<std::is_integral<IntType>::value, IntType>::type

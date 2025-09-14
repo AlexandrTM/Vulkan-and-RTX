@@ -80,7 +80,7 @@ void AetherEngine::prepareResources()
 		-(terrainData.chunkLength * terrainData.chunkCols / 2 * terrainData.gridSize),
 		terrainData,
 		models, floor_background, 8.0f,
-		1
+		1 // not used
 	);
 	
 	ModelManager::createSkyModel(sky);
@@ -136,6 +136,7 @@ void AetherEngine::setWindowSize()
 {
 	//QRect screenGeometry = QApplication::primaryScreen()->geometry();
 	QRect screenGeometry = QApplication::primaryScreen()->availableGeometry();
+	//std::cout << "screen name: " << QApplication::screens()[0]->name().toStdString() << "\n";
 	windowWidth = screenGeometry.width() / 1.5;
 	windowHeight = screenGeometry.height() / 1.5;
 }
@@ -812,11 +813,11 @@ void AetherEngine::cleanupMaterial(Material& material) const
 }
 void AetherEngine::cleanupTexture(Texture& texture) const
 {
-	if (!texture || texture.uniqueHash == 0) {
+	if (!texture || texture.hash == 0) {
 		return;
 	}
 
-	if (deletedTextureHashes.insert(texture.uniqueHash).second) {
+	if (deletedTextureHashes.insert(texture.hash).second) {
 		if (texture.imageView) {
 			vkDestroyImageView(vkInit.device, texture.imageView, nullptr);
 			texture.imageView = VK_NULL_HANDLE;
@@ -835,10 +836,10 @@ void AetherEngine::cleanupTexture(Texture& texture) const
 		texture.width = 0;
 		texture.height = 0;
 		texture.mipLevels = 0;
-		texture.uniqueHash = 0;
+		texture.hash = 0;
 	}
 	/*else {
-		std::cout << "texture with this hash has already been deleted: " << texture.uniqueHash << "\n";
+		std::cout << "texture with this hash has already been deleted: " << texture.hash << "\n";
 	}*/
 }
 void AetherEngine::cleanupShaderBuffers(std::vector<Model>& models) const
