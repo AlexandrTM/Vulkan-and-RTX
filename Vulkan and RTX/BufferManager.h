@@ -1,8 +1,9 @@
 #pragma once
 
 #include "pch.h"
-#include "VulkanInitializer.h"
 #include "Model.h"
+#include "VulkanInitializer.h"
+#include "gamecontext_instance.h"
 
 class BufferManager
 {

@@ -1,0 +1,36 @@
+#pragma once
+
+#include "Model.h"
+
+namespace ModelPrimitives
+{
+	std::vector<Model> generateCubicLandscape(
+		size_t landscapeWidth, size_t landscapeLenght,
+		float cubeSize,
+		glm::vec3 color,
+		Texture& texture,
+		ModelType modelType
+	);
+	Model createCube(
+		float x, float y, float z, float cubeSize,
+		glm::vec3 color,
+		Texture& texture,
+		ModelType modelType
+	);
+	Model createCuboid(
+		float x, float y, float z,
+		float width, float height, float length,
+		glm::vec3 color,
+		Texture& texture,
+		ModelType modelType
+	);
+	Model createQuad(
+		glm::vec3 origin,
+		glm::vec2 size,
+		glm::vec3 normal,
+		glm::vec3 tangent,
+		glm::vec3 color,
+		Texture& texture
+	);
+	void createSkyModel(Model& model);
+}

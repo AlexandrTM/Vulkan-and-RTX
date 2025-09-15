@@ -1,5 +1,4 @@
 #include "pch.h"
-#include "AetherEngine.h"
 #include "ImageManager.h"
 
 ImageManager::ImageManager(VulkanInitializer& vkInitRef, BufferManager& bufferManagerRef)
@@ -142,7 +141,8 @@ void ImageManager::generateMipmaps(
 			VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT, 0,
 			0, nullptr,
 			0, nullptr,
-			1, &barrier);
+			1, &barrier
+		);
 
 		VkImageBlit blit{};
 		blit.srcOffsets[0] = { 0, 0, 0 };
@@ -163,7 +163,8 @@ void ImageManager::generateMipmaps(
 			image, VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL,
 			image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
 			1, &blit,
-			VK_FILTER_LINEAR);
+			VK_FILTER_LINEAR
+		);
 
 		barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_SRC_OPTIMAL;
 		barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
@@ -175,7 +176,8 @@ void ImageManager::generateMipmaps(
 			VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
 			0, nullptr,
 			0, nullptr,
-			1, &barrier);
+			1, &barrier
+		);
 
 		if (mipWidth > 1) mipWidth /= 2;
 		if (mipHeight > 1) mipHeight /= 2;
@@ -192,7 +194,8 @@ void ImageManager::generateMipmaps(
 		VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0,
 		0, nullptr,
 		0, nullptr,
-		1, &barrier);
+		1, &barrier
+	);
 
 	bufferManager.endSingleTimeCommands(commandBuffer);
 }

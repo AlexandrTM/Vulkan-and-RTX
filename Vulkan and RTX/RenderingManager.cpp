@@ -810,10 +810,10 @@ void AetherEngine::renderQmlToTexture(UserInterfaceRenderer* renderer, Texture& 
 		texture.height != static_cast<uint32_t>(image.height())) {
 		cleanupTexture(texture);
 
-		createSolidColorTexture({ 0, 0, 0, 0 }, image.width(), image.height(), texture);
+		modelManager.createSolidColorTexture({ 0, 0, 0, 0 }, image.width(), image.height(), texture);
 	}
 
-	uploadRawDataToTexture(image.bits(), image.width(), image.height(), texture);
+	modelManager.uploadRawDataToTexture(image.bits(), image.width(), image.height(), texture);
 }
 
 void AetherEngine::recordModelsToCommandBuffer(const std::vector<Model>& models, VkCommandBuffer commandBuffer)

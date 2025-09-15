@@ -1,5 +1,4 @@
 #include "pch.h"
-#include "AetherEngine.h"
 #include "BufferManager.h"
 
 BufferManager::BufferManager(VulkanInitializer& vkInitRef) : vkInit(vkInitRef) {}

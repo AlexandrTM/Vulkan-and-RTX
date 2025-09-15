@@ -2,6 +2,7 @@
 
 #include "pch.h"
 #include "VulkanInitializer.h"
+#include "BufferManager.h"
 
 class ImageManager
 {

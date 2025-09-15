@@ -1,568 +1,15 @@
 #include "pch.h"
-#include "ModelManager.h"
 #include "AetherEngine.h"
 #include "Vertex.h"
 
-std::vector<Model> ModelManager::generateCubicLandscape(
-	size_t landscapeWidth, size_t landscapeLenght, 
-	float cubeSize,
-	glm::vec3 color,
-	Texture& texture,
-	ModelType modelType
+ModelManager::ModelManager(
+	VulkanInitializer& vkInitRef, 
+	BufferManager& bufferManagerRef,
+	ImageManager& imageManagerRef
 )
-{
-	std::vector<Model> models;
-	for (size_t i = 0; i < landscapeWidth; i++)
-	{
-		for (size_t j = 0; j < landscapeLenght; j++)
-		{
-			float random_height = 0.01 * (rand() % 51);
-			models.push_back(createCube(
-				0.0f + (float)i * cubeSize - landscapeWidth / 4,
-				-2 + random_height,
-				0.0f + (float)j * cubeSize - landscapeLenght / 4,
-				cubeSize,
-				color,
-				texture,
-				modelType
-			));
-		}
-	}
-	return models;
-}
-Model ModelManager::createCube(
-	float x, float y, float z, 
-	float cubeSize,
-	glm::vec3 color,
-	Texture& texture,
-	ModelType modelType
-)
-{
-	return createCuboid(
-		x, y, z, 
-		cubeSize, cubeSize, cubeSize, 
-		color, 
-		texture,
-		modelType
-	);
-}
-Model ModelManager::createCuboid(
-	float x, float y, float z,
-	float width, float height, float length, 
-	glm::vec3 color,
-	Texture& texture,
-	ModelType modelType
-)
-{
-	std::vector<Vertex> localVertices(24);
-	Model model{};
-	model.type = modelType;
-	Mesh mesh{};
+	: vkInit(vkInitRef), bufferManager(bufferManagerRef), imageManager(imageManagerRef) {}
 
-	Material material{};
-	material.diffuseTexture = texture;
-
-#pragma region
-	localVertices[0].position = { glm::vec3(0.0f , 0.0f  , 0.0f) + glm::vec3(x, y, z) };
-	localVertices[1].position = { glm::vec3(width, 0.0f  , 0.0f) + glm::vec3(x, y, z) };
-	localVertices[2].position = { glm::vec3(width, height, 0.0f) + glm::vec3(x, y, z) };
-	localVertices[3].position = { glm::vec3(0.0f , height, 0.0f) + glm::vec3(x, y, z) };
-	localVertices[4].position = { glm::vec3(0.0f , 0.0f  , length) + glm::vec3(x, y, z) };
-	localVertices[5].position = { glm::vec3(width, 0.0f  , length) + glm::vec3(x, y, z) };
-	localVertices[6].position = { glm::vec3(width, height, length) + glm::vec3(x, y, z) };
-	localVertices[7].position = { glm::vec3(0.0f , height, length) + glm::vec3(x, y, z) };
-
-	localVertices[8].position  = { glm::vec3(0.0f , 0.0f  , 0.0f) + glm::vec3(x, y, z) };
-	localVertices[9].position  = { glm::vec3(width, 0.0f  , 0.0f) + glm::vec3(x, y, z) };
-	localVertices[10].position = { glm::vec3(width, height, 0.0f) + glm::vec3(x, y, z) };
-	localVertices[11].position = { glm::vec3(0.0f , height, 0.0f) + glm::vec3(x, y, z) };
-	localVertices[12].position = { glm::vec3(0.0f , 0.0f  , length) + glm::vec3(x, y, z) };
-	localVertices[13].position = { glm::vec3(width, 0.0f  , length) + glm::vec3(x, y, z) };
-	localVertices[14].position = { glm::vec3(width, height, length) + glm::vec3(x, y, z) };
-	localVertices[15].position = { glm::vec3(0.0f , height, length) + glm::vec3(x, y, z) };
-
-	localVertices[16].position = { glm::vec3(0.0f , 0.0f  , 0.0f) + glm::vec3(x, y, z) };
-	localVertices[17].position = { glm::vec3(width, 0.0f  , 0.0f) + glm::vec3(x, y, z) };
-	localVertices[18].position = { glm::vec3(width, height, 0.0f) + glm::vec3(x, y, z) };
-	localVertices[19].position = { glm::vec3(0.0f , height, 0.0f) + glm::vec3(x, y, z) };
-	localVertices[20].position = { glm::vec3(0.0f , 0.0f  , length) + glm::vec3(x, y, z) };
-	localVertices[21].position = { glm::vec3(width, 0.0f  , length) + glm::vec3(x, y, z) };
-	localVertices[22].position = { glm::vec3(width, height, length) + glm::vec3(x, y, z) };
-	localVertices[23].position = { glm::vec3(0.0f , height, length) + glm::vec3(x, y, z) };
-#pragma endregion // pos
-#pragma region
-	localVertices[0].normal = { glm::vec3(0.0f, 0.0f, -1.0f) };
-	localVertices[1].normal = { glm::vec3(0.0f, 0.0f, -1.0f) };
-	localVertices[2].normal = { glm::vec3(0.0f, 0.0f, -1.0f) };
-	localVertices[3].normal = { glm::vec3(0.0f, 0.0f, -1.0f) };
-	localVertices[4].normal = { glm::vec3(0.0f, 0.0f, 1.0f) };
-	localVertices[5].normal = { glm::vec3(0.0f, 0.0f, 1.0f) };
-	localVertices[6].normal = { glm::vec3(0.0f, 0.0f, 1.0f) };
-	localVertices[7].normal = { glm::vec3(0.0f, 0.0f, 1.0f) };
-
-	localVertices[8].normal = { glm::vec3(0.0f, -1.0f, 0.0f) };
-	localVertices[9].normal = { glm::vec3(0.0f, -1.0f, 0.0f) };
-	localVertices[10].normal = { glm::vec3(0.0f, 1.0f, 0.0f) };
-	localVertices[11].normal = { glm::vec3(0.0f, 1.0f, 0.0f) };
-	localVertices[12].normal = { glm::vec3(0.0f, -1.0f, 0.0f) };
-	localVertices[13].normal = { glm::vec3(0.0f, -1.0f, 0.0f) };
-	localVertices[14].normal = { glm::vec3(0.0f, 1.0f, 0.0f) };
-	localVertices[15].normal = { glm::vec3(0.0f, 1.0f, 0.0f) };
-
-	localVertices[16].normal = { glm::vec3(-1.0f, 0.0f, 0.0f) };
-	localVertices[17].normal = { glm::vec3(1.0f, 0.0f, 0.0f) };
-	localVertices[18].normal = { glm::vec3(1.0f, 0.0f, 0.0f) };
-	localVertices[19].normal = { glm::vec3(-1.0f, 0.0f, 0.0f) };
-	localVertices[20].normal = { glm::vec3(-1.0f, 0.0f, 0.0f) };
-	localVertices[21].normal = { glm::vec3(1.0f, 0.0f, 0.0f) };
-	localVertices[22].normal = { glm::vec3(1.0f, 0.0f, 0.0f) };
-	localVertices[23].normal = { glm::vec3(-1.0f, 0.0f, 0.0f) };
-#pragma endregion // normal
-#pragma region
-	for (size_t i = 0; i < localVertices.size(); ++i)
-	{
-		localVertices[i].color = color;
-	}
-#pragma endregion // color
-#pragma region
-	localVertices[0].texCoord0 = { glm::vec2(0.0f, 0.0f) };
-	localVertices[1].texCoord0 = { glm::vec2(1.0f, 0.0f) };
-	localVertices[2].texCoord0 = { glm::vec2(1.0f, 1.0f) };
-	localVertices[3].texCoord0 = { glm::vec2(0.0f, 1.0f) };
-	localVertices[4].texCoord0 = { glm::vec2(0.0f, 1.0f) };
-	localVertices[5].texCoord0 = { glm::vec2(1.0f, 1.0f) };
-	localVertices[6].texCoord0 = { glm::vec2(1.0f, 0.0f) };
-	localVertices[7].texCoord0 = { glm::vec2(0.0f, 0.0f) };
-
-	localVertices[8].texCoord0 = { glm::vec2(0.0f, 1.0f) };
-	localVertices[9].texCoord0 = { glm::vec2(1.0f, 1.0f) };
-	localVertices[10].texCoord0 = { glm::vec2(1.0f, 0.0f) };
-	localVertices[11].texCoord0 = { glm::vec2(0.0f, 0.0f) };
-	localVertices[12].texCoord0 = { glm::vec2(0.0f, 0.0f) };
-	localVertices[13].texCoord0 = { glm::vec2(1.0f, 0.0f) };
-	localVertices[14].texCoord0 = { glm::vec2(1.0f, 1.0f) };
-	localVertices[15].texCoord0 = { glm::vec2(0.0f, 1.0f) };
-
-	localVertices[16].texCoord0 = { glm::vec2(1.0f, 0.0f) };
-	localVertices[17].texCoord0 = { glm::vec2(0.0f, 0.0f) };
-	localVertices[18].texCoord0 = { glm::vec2(0.0f, 1.0f) };
-	localVertices[19].texCoord0 = { glm::vec2(1.0f, 1.0f) };
-	localVertices[20].texCoord0 = { glm::vec2(0.0f, 0.0f) };
-	localVertices[21].texCoord0 = { glm::vec2(1.0f, 0.0f) };
-	localVertices[22].texCoord0 = { glm::vec2(1.0f, 1.0f) };
-	localVertices[23].texCoord0 = { glm::vec2(0.0f, 1.0f) };
-#pragma endregion // texCoord
-	
-	std::vector<uint32_t> localIndices = {
-		0, 3, 1,
-		1, 3, 2,
-		4, 5, 7,
-		7, 5, 6,
-
-		11, 15, 10,
-		10, 15, 14,
-		12, 8, 13,
-		13, 8, 9,
-
-		20, 23, 16,
-		16, 23, 19,
-		17, 18, 21,
-		21, 18, 22
-	};
-	
-	// indices and vertices push back
-	for (size_t i = 0; i < localVertices.size(); i++)
-	{
-		mesh.vertices.push_back(localVertices[i]);
-	}
-	for (size_t i = 0; i < localIndices.size(); i++)
-	{
-		mesh.indices.push_back(localIndices[i]);
-	}
-
-	mesh.material = material;
-
-	model.meshes.push_back(mesh);
-	//model.isCollidable = true;
-	return model;
-}
-Model ModelManager::createQuad(
-	glm::vec3 origin,
-	glm::vec2 size,
-	glm::vec3 normal,
-	glm::vec3 tangent,
-	glm::vec3 color,
-	Texture& texture
-)
-{
-	glm::vec3 bitangent = glm::cross(normal, tangent);
-
-	std::vector<Vertex> vertices(4);
-	Model model{};
-	Mesh mesh{};
-	Material material{};
-	material.diffuseTexture = texture;
-	//material.diffuseTexture.hash = material.diffuseTexture.randomHash64();
-
-	// Quad corners in tangent space
-	/*vertices[0].position = origin;
-	vertices[1].position = origin + tangent * size.x;
-	vertices[2].position = origin + tangent * size.x + bitangent * size.y;
-	vertices[3].position = origin + bitangent * size.y;*/
-
-	vertices[0].position = origin;
-	vertices[1].position = origin + glm::vec3(size.x, 0.0f, 0.0f);
-	vertices[2].position = origin + glm::vec3(size.x, size.y, 0.0f);
-	vertices[3].position = origin + glm::vec3(0.0f, size.y, 0.0f);
-
-	// Set attributes
-	for (size_t i = 0; i < 4; ++i) {
-		vertices[i].normal = normal;
-		vertices[i].color = color;
-	}
-
-	// Texcoords (standard winding)
-	vertices[0].texCoord0 = { 0.0f, 0.0f };
-	vertices[1].texCoord0 = { 1.0f, 0.0f };
-	vertices[2].texCoord0 = { 1.0f, 1.0f };
-	vertices[3].texCoord0 = { 0.0f, 1.0f };
-
-	std::vector<uint32_t> indices = {
-		0, 3, 1,
-		1, 3, 2
-	};
-
-	mesh.vertices = std::move(vertices);
-	mesh.indices = std::move(indices);
-	mesh.material = material;
-
-	model.meshes.push_back(std::move(mesh));
-	return model;
-}
-void ModelManager::createSkyModel(Model& model)
-{
-	std::vector<Vertex> localVertices(24);
-	Mesh mesh;
-	
-#pragma region
-	localVertices[0].position  = { glm::vec3(-1.0f, -1.0f, -1.0f) };
-	localVertices[1].position  = { glm::vec3( 1.0f, -1.0f, -1.0f) };
-	localVertices[2].position  = { glm::vec3( 1.0f,  1.0f, -1.0f) };
-	localVertices[3].position  = { glm::vec3(-1.0f,  1.0f, -1.0f) };
-	localVertices[4].position  = { glm::vec3(-1.0f, -1.0f,  1.0f) };
-	localVertices[5].position  = { glm::vec3( 1.0f, -1.0f,  1.0f) };
-	localVertices[6].position  = { glm::vec3( 1.0f,  1.0f,  1.0f) };
-	localVertices[7].position  = { glm::vec3(-1.0f,  1.0f,  1.0f) };
-
-	localVertices[8].position  = { glm::vec3(-1.0f, -1.0f, -1.0f) };
-	localVertices[9].position  = { glm::vec3( 1.0f, -1.0f, -1.0f) };
-	localVertices[10].position = { glm::vec3( 1.0f,  1.0f, -1.0f) };
-	localVertices[11].position = { glm::vec3(-1.0f,  1.0f, -1.0f) };
-	localVertices[12].position = { glm::vec3(-1.0f, -1.0f,  1.0f) };
-	localVertices[13].position = { glm::vec3( 1.0f, -1.0f,  1.0f) };
-	localVertices[14].position = { glm::vec3( 1.0f,  1.0f,  1.0f) };
-	localVertices[15].position = { glm::vec3(-1.0f,  1.0f,  1.0f) };
-
-	localVertices[16].position = { glm::vec3(-1.0f, -1.0f, -1.0f) };
-	localVertices[17].position = { glm::vec3( 1.0f, -1.0f, -1.0f) };
-	localVertices[18].position = { glm::vec3( 1.0f,  1.0f, -1.0f) };
-	localVertices[19].position = { glm::vec3(-1.0f,  1.0f, -1.0f) };
-	localVertices[20].position = { glm::vec3(-1.0f, -1.0f,  1.0f) };
-	localVertices[21].position = { glm::vec3( 1.0f, -1.0f,  1.0f) };
-	localVertices[22].position = { glm::vec3( 1.0f,  1.0f,  1.0f) };
-	localVertices[23].position = { glm::vec3(-1.0f,  1.0f,  1.0f) };
-#pragma endregion // pos
-#pragma region
-	localVertices[0].normal = { glm::vec3(0.0f, 0.0f, -1.0f) };
-	localVertices[1].normal = { glm::vec3(0.0f, 0.0f, -1.0f) };
-	localVertices[2].normal = { glm::vec3(0.0f, 0.0f, -1.0f) };
-	localVertices[3].normal = { glm::vec3(0.0f, 0.0f, -1.0f) };
-	localVertices[4].normal = { glm::vec3(0.0f, 0.0f, 1.0f) };
-	localVertices[5].normal = { glm::vec3(0.0f, 0.0f, 1.0f) };
-	localVertices[6].normal = { glm::vec3(0.0f, 0.0f, 1.0f) };
-	localVertices[7].normal = { glm::vec3(0.0f, 0.0f, 1.0f) };
-
-	localVertices[8].normal = { glm::vec3(0.0f, -1.0f, 0.0f) };
-	localVertices[9].normal = { glm::vec3(0.0f, -1.0f, 0.0f) };
-	localVertices[10].normal = { glm::vec3(0.0f, 1.0f, 0.0f) };
-	localVertices[11].normal = { glm::vec3(0.0f, 1.0f, 0.0f) };
-	localVertices[12].normal = { glm::vec3(0.0f, -1.0f, 0.0f) };
-	localVertices[13].normal = { glm::vec3(0.0f, -1.0f, 0.0f) };
-	localVertices[14].normal = { glm::vec3(0.0f, 1.0f, 0.0f) };
-	localVertices[15].normal = { glm::vec3(0.0f, 1.0f, 0.0f) };
-
-	localVertices[16].normal = { glm::vec3(-1.0f, 0.0f, 0.0f) };
-	localVertices[17].normal = { glm::vec3(1.0f, 0.0f, 0.0f) };
-	localVertices[18].normal = { glm::vec3(1.0f, 0.0f, 0.0f) };
-	localVertices[19].normal = { glm::vec3(-1.0f, 0.0f, 0.0f) };
-	localVertices[20].normal = { glm::vec3(-1.0f, 0.0f, 0.0f) };
-	localVertices[21].normal = { glm::vec3(1.0f, 0.0f, 0.0f) };
-	localVertices[22].normal = { glm::vec3(1.0f, 0.0f, 0.0f) };
-	localVertices[23].normal = { glm::vec3(-1.0f, 0.0f, 0.0f) };
-#pragma endregion // normal
-#pragma region
-	for (size_t i = 0; i < localVertices.size(); ++i)
-	{
-		localVertices[i].color = glm::vec3(1.0f);
-	}
-#pragma endregion // color
-#pragma region
-	localVertices[0].texCoord0 = { glm::vec2(0.0f, 0.0f) };
-	localVertices[1].texCoord0 = { glm::vec2(1.0f, 0.0f) };
-	localVertices[2].texCoord0 = { glm::vec2(1.0f, 1.0f) };
-	localVertices[3].texCoord0 = { glm::vec2(0.0f, 1.0f) };
-	localVertices[4].texCoord0 = { glm::vec2(0.0f, 1.0f) };
-	localVertices[5].texCoord0 = { glm::vec2(1.0f, 1.0f) };
-	localVertices[6].texCoord0 = { glm::vec2(1.0f, 0.0f) };
-	localVertices[7].texCoord0 = { glm::vec2(0.0f, 0.0f) };
-
-	localVertices[8].texCoord0 = { glm::vec2(0.0f, 1.0f) };
-	localVertices[9].texCoord0 = { glm::vec2(1.0f, 1.0f) };
-	localVertices[10].texCoord0 = { glm::vec2(1.0f, 0.0f) };
-	localVertices[11].texCoord0 = { glm::vec2(0.0f, 0.0f) };
-	localVertices[12].texCoord0 = { glm::vec2(0.0f, 0.0f) };
-	localVertices[13].texCoord0 = { glm::vec2(1.0f, 0.0f) };
-	localVertices[14].texCoord0 = { glm::vec2(1.0f, 1.0f) };
-	localVertices[15].texCoord0 = { glm::vec2(0.0f, 1.0f) };
-
-	localVertices[16].texCoord0 = { glm::vec2(1.0f, 0.0f) };
-	localVertices[17].texCoord0 = { glm::vec2(0.0f, 0.0f) };
-	localVertices[18].texCoord0 = { glm::vec2(0.0f, 1.0f) };
-	localVertices[19].texCoord0 = { glm::vec2(1.0f, 1.0f) };
-	localVertices[20].texCoord0 = { glm::vec2(0.0f, 0.0f) };
-	localVertices[21].texCoord0 = { glm::vec2(1.0f, 0.0f) };
-	localVertices[22].texCoord0 = { glm::vec2(1.0f, 1.0f) };
-	localVertices[23].texCoord0 = { glm::vec2(0.0f, 1.0f) };
-#pragma endregion // texCoord
-	
-	std::vector<uint32_t> localIndices = {
-		1, 3, 0,
-		2, 3, 1,
-		7, 5, 4,
-		6, 5, 7,
-
-		10, 15, 11,
-		14, 15, 10,
-		13, 8, 12,
-		9, 8, 13,
-
-		16, 23, 20,
-		19, 23, 16,
-		21, 18, 17,
-		22, 18, 21
-	};
-
-	// indices and vertices push back
-	for (size_t i = 0; i < localVertices.size(); i++)
-	{
-		mesh.vertices.push_back(localVertices[i]);
-	}
-	for (size_t i = 0; i < localIndices.size(); i++)
-	{
-		mesh.indices.push_back(localIndices[i]);
-	}
-	model.meshes.push_back(mesh);
-}
-
-void ModelManager::loadObjModel(const std::string& modelPath, std::vector<Model>& models)
-{
-	Model model;
-
-	tinyobj::attrib_t attrib;
-	std::vector<tinyobj::shape_t> shapes;
-	std::vector<tinyobj::material_t> materials;
-	std::string warn, err;
-
-	if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, modelPath.c_str())) {
-		throw std::runtime_error(warn + err);
-	}
-
-	std::unordered_map<Vertex, uint32_t> uniqueVertices{};
-
-	for (const auto& shape : shapes) {
-		Mesh mesh;
-
-		for (const auto& index : shape.mesh.indices) {
-			Vertex vertex{};
-
-			vertex.position = {
-				attrib.vertices[3 * index.vertex_index + 0],
-				attrib.vertices[3 * index.vertex_index + 1],
-				attrib.vertices[3 * index.vertex_index + 2]
-			};
-
-			vertex.texCoord0 = {
-				attrib.texcoords[2 * index.texcoord_index + 0],
-				1 - attrib.texcoords[2 * index.texcoord_index + 1]
-			};
-
-			vertex.color = glm::vec3(1.0f);
-
-			vertex.normal = {
-				attrib.normals[index.normal_index * 3],
-				attrib.normals[index.normal_index * 3 + 1],
-				attrib.normals[index.normal_index * 3 + 2]
-			};
-
-			if (uniqueVertices.count(vertex) == 0) {
-				uniqueVertices[vertex] = static_cast<uint32_t>(mesh.vertices.size());
-				mesh.vertices.push_back(vertex);
-			}
-
-			mesh.indices.push_back(uniqueVertices[vertex]);
-		}
-		model.meshes.push_back(mesh);
-	}
-	models.push_back(model);
-}
-void ModelManager::loadGltfModel(const std::string& modelPath, std::vector<Model>& models) {
-	tinygltf::Model GLTFmodel;
-	tinygltf::TinyGLTF loader;
-	std::string error;
-	std::string warning;
-
-	Model model;
-
-	bool binary = false;
-	size_t extPos = modelPath.rfind('.', modelPath.length());
-	if (extPos != std::string::npos) {
-		binary = (modelPath.substr(extPos + 1, modelPath.length() - extPos - 1) == "glb");
-	}
-
-	bool result = binary ? loader.LoadBinaryFromFile(&GLTFmodel, &error, &warning, modelPath.c_str())
-		: loader.LoadASCIIFromFile(&GLTFmodel, &error, &warning, modelPath.c_str());
-
-	if (!result) {
-		std::cout << "rootModel not loaded: " + modelPath << "\n";
-		std::cout << error << "\n";
-	}
-
-	for (const auto& GLTFmesh : GLTFmodel.meshes) {
-		Mesh mesh;
-		for (const auto& primitive : GLTFmesh.primitives) {
-			size_t currentVertex = 0;
-			size_t currentIndex = 0;
-
-			const float* bufferPositions = nullptr;
-			const float* bufferNormals = nullptr;
-			const float* bufferTexCoordSet0 = nullptr;
-			const float* bufferTexCoordSet1 = nullptr;
-			const float* bufferColorSet0 = nullptr;
-			const void* bufferJoints = nullptr;
-			const float* bufferWeights = nullptr;
-
-			const auto& attributes = primitive.attributes;
-
-			// Extract POSITION
-			if (attributes.find("POSITION") != attributes.end()) {
-				const tinygltf::Accessor& positionAccessor = GLTFmodel.accessors[attributes.find("POSITION")->second];
-				const tinygltf::BufferView& posView = GLTFmodel.bufferViews[positionAccessor.bufferView];
-				bufferPositions = reinterpret_cast<const float*>(&(GLTFmodel.buffers[posView.buffer].data[positionAccessor.byteOffset + posView.byteOffset]));
-
-				// normals
-				if (attributes.find("NORMAL") != attributes.end()) {
-					const tinygltf::Accessor& normalAccessor = GLTFmodel.accessors[attributes.find("NORMAL")->second];
-					const tinygltf::BufferView& normalView = GLTFmodel.bufferViews[normalAccessor.bufferView];
-					bufferNormals = reinterpret_cast<const float*>(&(GLTFmodel.buffers[normalView.buffer].data[normalAccessor.byteOffset + normalView.byteOffset]));
-				}
-
-				// texCoords
-				if (attributes.find("TEXCOORD_0") != attributes.end()) {
-					const tinygltf::Accessor& texCoordsAccessor0 = GLTFmodel.accessors[attributes.find("TEXCOORD_0")->second];
-					const tinygltf::BufferView& texCoordsView0 = GLTFmodel.bufferViews[texCoordsAccessor0.bufferView];
-					bufferTexCoordSet0 = reinterpret_cast<const float*>(&(GLTFmodel.buffers[texCoordsView0.buffer].data[texCoordsAccessor0.byteOffset + texCoordsView0.byteOffset]));
-				}
-				if (attributes.find("TEXCOORD_1") != attributes.end()) {
-					const tinygltf::Accessor& texCoordsAccessor1 = GLTFmodel.accessors[attributes.find("TEXCOORD_1")->second];
-					const tinygltf::BufferView& texCoordsView1 = GLTFmodel.bufferViews[texCoordsAccessor1.bufferView];
-					bufferTexCoordSet1 = reinterpret_cast<const float*>(&(GLTFmodel.buffers[texCoordsView1.buffer].data[texCoordsAccessor1.byteOffset + texCoordsView1.byteOffset]));
-				}
-
-				// Extract INDICES
-				{
-					const tinygltf::Accessor& indicesAccessor = GLTFmodel.accessors[primitive.indices > -1 ? primitive.indices : 0];
-					const tinygltf::BufferView& indicesView = GLTFmodel.bufferViews[indicesAccessor.bufferView];
-					const tinygltf::Buffer& buffer = GLTFmodel.buffers[indicesView.buffer];
-
-					const unsigned char* indicesPreData =
-						&(buffer.data[indicesAccessor.byteOffset + indicesView.byteOffset]);
-
-					mesh.indices.resize(indicesAccessor.count);
-
-					switch (indicesAccessor.componentType)
-					{
-					case TINYGLTF_COMPONENT_TYPE_UNSIGNED_BYTE: {
-						const uint8_t* indicesData = reinterpret_cast<const uint8_t*>(indicesPreData);
-
-						for (size_t i = 0; i < indicesAccessor.count; i++) {
-							mesh.indices[currentIndex] = indicesData[i] + currentVertex;
-							currentIndex += 1;
-						}
-						break;
-					}
-					case TINYGLTF_COMPONENT_TYPE_UNSIGNED_SHORT: {
-						const uint16_t* indicesData = reinterpret_cast<const uint16_t*>(indicesPreData);
-						
-						for (size_t i = 0; i < indicesAccessor.count; i++) {
-							mesh.indices[currentIndex] = indicesData[i] + currentVertex;
-							currentIndex += 1;
-						}
-						break;
-					}
-					case TINYGLTF_COMPONENT_TYPE_UNSIGNED_INT: {
-						const uint32_t* indicesData = reinterpret_cast<const uint32_t*>(indicesPreData);
-
-						for (size_t i = 0; i < indicesAccessor.count; i++) {
-							mesh.indices[currentIndex] = indicesData[i] + currentVertex;
-							currentIndex += 1;
-						}
-						break;
-					}
-					default:
-						break;
-					}
-				}
-
-				// Iterate through vertices
-				for (size_t i = 0; i < positionAccessor.count; ++i) {
-					Vertex vertex{};
-
-					// Extract POSITION
-					vertex.position = glm::vec3(
-						bufferPositions[i * 3],
-						bufferPositions[i * 3 + 1],
-						bufferPositions[i * 3 + 2]);
-
-					// Extract NORMAL
-					vertex.normal = glm::normalize(glm::vec3(bufferNormals ? glm::vec3(
-						bufferNormals[i * 3],
-						bufferNormals[i * 3 + 1],
-						bufferNormals[i * 3 + 2]) : glm::vec3(0.0f)));
-
-					vertex.color = glm::vec3(1.0f);
-
-					vertex.texCoord0 = bufferTexCoordSet0 ? glm::vec2(
-						bufferTexCoordSet0[i * 2],
-						bufferTexCoordSet0[i * 2 + 1]) : glm::vec3(0.0f);
-					vertex.texCoord1 = bufferTexCoordSet1 ? glm::vec2(
-						bufferTexCoordSet1[i * 2],
-						bufferTexCoordSet1[i * 2 + 1]) : glm::vec3(0.0f);
-
-					mesh.vertices.push_back(vertex);
-					currentVertex += 1;
-				}
-			}
-		}
-		std::cout << 
-			"mesh name: " << GLTFmesh.name << " "
-			"vertices count: " << mesh.vertices.size() << "\n";
-		model.meshes.push_back(mesh);
-	}
-	models.push_back(model);
-	std::cout << "textures: " << GLTFmodel.textures.size() << "\n";
-}
-
-static std::vector<std::string> GetModelFiles(const std::string& directory) {
+std::vector<std::string> ModelManager::GetModelFiles(const std::string& directory) {
 	std::vector<std::string> modelFiles;
 
 	for (const auto& entry : std::filesystem::directory_iterator(directory)) {
@@ -576,7 +23,7 @@ static std::vector<std::string> GetModelFiles(const std::string& directory) {
 
 	return modelFiles;
 }
-static glm::mat4 assimpToGLMMat4(const aiMatrix4x4& from) {
+glm::mat4 ModelManager::assimpToGLMMat4(const aiMatrix4x4& from) {
 	glm::mat4 to{};
 	to[0][0] = from.a1; to[1][0] = from.a2; to[2][0] = from.a3; to[3][0] = from.a4;
 	to[0][1] = from.b1; to[1][1] = from.b2; to[2][1] = from.b3; to[3][1] = from.b4;
@@ -584,7 +31,7 @@ static glm::mat4 assimpToGLMMat4(const aiMatrix4x4& from) {
 	to[0][3] = from.d1; to[1][3] = from.d2; to[2][3] = from.d3; to[3][3] = from.d4;
 	return to;
 }
-static void decomposeTransform(const glm::mat4& transform, glm::vec3& position, glm::quat& rotation, glm::vec3& scale) {
+void ModelManager::decomposeTransform(const glm::mat4& transform, glm::vec3& position, glm::quat& rotation, glm::vec3& scale) {
 	// Extract the translation
 	position = glm::vec3(transform[3]);
 
@@ -603,7 +50,7 @@ static void decomposeTransform(const glm::mat4& transform, glm::vec3& position, 
 	);
 	rotation = glm::quat_cast(rotationMatrix);
 }
-static glm::mat4 setScaleToOne(const glm::mat4& matrix) {
+glm::mat4 ModelManager::setScaleToOne(const glm::mat4& matrix) {
 	glm::vec3 position, scale;
 	glm::quat rotation;
 
@@ -618,17 +65,17 @@ static glm::mat4 setScaleToOne(const glm::mat4& matrix) {
 }
 
 // creating texture for MSAA sampling
-void AetherEngine::createColorTexture(Texture& texture)
+void ModelManager::createColorTexture(VkFormat& imageFormat, uint32_t width, uint32_t height, Texture& texture)
 {
 	if (texture.hash == 0) {
 		texture.hash = randomHash64();
 	}
 
-	VkFormat colorFormat = swapchainImageFormat;
+	VkFormat colorFormat = imageFormat;
 	uint32_t mipLevels = 1;
 
 	imageManager.createImage(
-		swapchainExtent.width, swapchainExtent.height, mipLevels, vkInit.colorSamples, colorFormat,
+		width, height, mipLevels, vkInit.colorSamples, colorFormat,
 		VK_IMAGE_TILING_OPTIMAL,
 		VK_IMAGE_USAGE_TRANSIENT_ATTACHMENT_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
@@ -643,7 +90,7 @@ void AetherEngine::createColorTexture(Texture& texture)
 		mipLevels
 	);
 }
-void AetherEngine::createDepthTexture(Texture& texture)
+void ModelManager::createDepthTexture(uint32_t width, uint32_t height, Texture& texture)
 {
 	if (texture.hash == 0) {
 		texture.hash = randomHash64();
@@ -653,7 +100,7 @@ void AetherEngine::createDepthTexture(Texture& texture)
 	uint32_t mipLevels = 1;
 
 	imageManager.createImage(
-		swapchainExtent.width, swapchainExtent.height, mipLevels, vkInit.colorSamples, depthFormat,
+		width, height, mipLevels, vkInit.colorSamples, depthFormat,
 		VK_IMAGE_TILING_OPTIMAL,
 		VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
 		VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
@@ -676,7 +123,7 @@ void AetherEngine::createDepthTexture(Texture& texture)
 		mipLevels
 	);
 }
-void AetherEngine::uploadRawDataToTexture(void* rawImage, uint32_t width, uint32_t height, Texture& texture)
+void ModelManager::uploadRawDataToTexture(void* rawImage, uint32_t width, uint32_t height, Texture& texture)
 {
 	VkBuffer stagingBuffer;
 	VmaAllocation stagingAllocation;
@@ -716,7 +163,7 @@ void AetherEngine::uploadRawDataToTexture(void* rawImage, uint32_t width, uint32
 	gameContext.destroyedVmaAllocations += 1;
 }
 
-void AetherEngine::createTextureFromPixelData(
+void ModelManager::createTextureFromPixelData(
 	const void* pixelData,
 	uint32_t width,
 	uint32_t height,
@@ -792,7 +239,7 @@ void AetherEngine::createTextureFromPixelData(
 	);
 	imageManager.createTextureSampler(texture.mipLevels, texture.sampler);
 }
-void AetherEngine::createSolidColorTexture(
+void ModelManager::createSolidColorTexture(
 	std::array<uint8_t, 4> color, uint32_t width, uint32_t height, Texture& texture
 )
 {
@@ -803,7 +250,7 @@ void AetherEngine::createSolidColorTexture(
 	}
 	createTextureFromPixelData(pixelData.data(), width, height, 1, texture);
 }
-Texture AetherEngine::loadTextureFromPath(const std::string& texturePath)
+Texture ModelManager::loadTextureFromPath(const std::string& texturePath)
 {
 	Texture texture;
 	int texWidth, texHeight, texChannels;
@@ -818,7 +265,7 @@ Texture AetherEngine::loadTextureFromPath(const std::string& texturePath)
 
 	return texture;
 }
-void AetherEngine::createTextureFromEmbedded(
+void ModelManager::createTextureFromEmbedded(
 	const std::string& embeddedTextureName,
 	const aiScene* scene, Texture& texture
 ) {
@@ -859,7 +306,7 @@ void AetherEngine::createTextureFromEmbedded(
 	std::cout << " - Compression: " << (embeddedTexture->mHeight == 0 ? "Yes" : "No") << "\n";*/
 }
 
-Texture AetherEngine::loadTextureForModel(const std::string& texturePath, const aiScene* scene) 
+Texture ModelManager::loadTextureForModel(const std::string& texturePath, const aiScene* scene) 
 {
 	Texture texture;
 
@@ -873,7 +320,7 @@ Texture AetherEngine::loadTextureForModel(const std::string& texturePath, const 
 
 	return texture;
 }
-void AetherEngine::loadTexturesFromFolder(
+void ModelManager::loadTexturesFromFolder(
 	const std::string& texturePath,
 	std::unordered_map<std::string, Texture>& textures
 )
@@ -888,7 +335,7 @@ void AetherEngine::loadTexturesFromFolder(
 	}
 }
 
-Material AetherEngine::processMaterial(aiMaterial* aiMat, const aiScene* scene) 
+Material ModelManager::processMaterial(aiMaterial* aiMat, const aiScene* scene) 
 {
 	Material material{};
 
@@ -1092,7 +539,7 @@ static Mesh processMesh(
 	return processedMesh;
 }
 
-void AetherEngine::processNode(
+void ModelManager::processNode(
 	aiNode* node, const aiScene* scene, 
 	std::vector<Model>& models, 
 	Model& parentModel, 
@@ -1147,7 +594,7 @@ void AetherEngine::processNode(
 		//}
 	}
 }
-void AetherEngine::loadModelsFromFolder(
+void ModelManager::loadModelsFromFolder(
 	const std::string& directory, 
 	std::vector<Model>& models
 ) {

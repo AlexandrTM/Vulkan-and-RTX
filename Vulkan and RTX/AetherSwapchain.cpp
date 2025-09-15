@@ -117,8 +117,8 @@ void AetherEngine::recreateSwapchain()
 	cleanupTexture(msaaTexture);
 
 	createPipelinesAndSwapchain();
-	createColorTexture(msaaTexture);
-	createDepthTexture(depthTexture);
+	modelManager.createColorTexture(swapchainImageFormat, swapchainExtent.width, swapchainExtent.height, msaaTexture);
+	modelManager.createDepthTexture(swapchainExtent.width, swapchainExtent.height, depthTexture);
 	createSwapchainFramebuffers();
 	bufferManager.createCommandBuffers(commandBuffers);
 

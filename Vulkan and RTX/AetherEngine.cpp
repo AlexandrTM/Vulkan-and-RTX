@@ -53,16 +53,16 @@ void AetherEngine::prepareResources()
 
 	createPipelinesAndSwapchain();
 
-	createColorTexture(msaaTexture);
-	createDepthTexture(depthTexture);
+	modelManager.createColorTexture(swapchainImageFormat, swapchainExtent.width, swapchainExtent.height, msaaTexture);
+	modelManager.createDepthTexture(swapchainExtent.width, swapchainExtent.height, depthTexture);
 	createSwapchainFramebuffers();
 	bufferManager.createCommandBuffers(commandBuffers);
 	createSyncObjects();
 
-	grassTexture = loadTextureFromPath("textures/grass001.png");
-	floor_background = loadTextureFromPath("textures/floor_background_floor_2.png");
-	createSolidColorTexture({ 0, 0, 0, 0 }, 1, 1, transparentTexture);
-	notFoundTexture = loadTextureFromPath("textures/notFoundTexture.png");
+	grassTexture = modelManager.loadTextureFromPath("textures/grass001.png");
+	floor_background = modelManager.loadTextureFromPath("textures/floor_background_floor_2.png");
+	modelManager.createSolidColorTexture({ 0, 0, 0, 0 }, 1, 1, transparentTexture);
+	notFoundTexture = modelManager.loadTextureFromPath("textures/notFoundTexture.png");
 
 	//loadModelsFromFolder("models", models);
 	
@@ -83,7 +83,7 @@ void AetherEngine::prepareResources()
 		1 // not used
 	);
 	
-	ModelManager::createSkyModel(sky);
+	ModelPrimitives::createSkyModel(sky);
 
 	/*size_t meshesNum = 0;
 	for (const Model& model : models) {
@@ -146,8 +146,8 @@ UserInterfaceElement AetherEngine::createUIElement(
 ) {
 	UserInterfaceElement uiElement;
 
-	createSolidColorTexture({ 0, 0, 0, 0 }, windowWidth, windowHeight, uiElement.texture);
-	uiElement.model = ModelManager::createQuad(
+	modelManager.createSolidColorTexture({ 0, 0, 0, 0 }, windowWidth, windowHeight, uiElement.texture);
+	uiElement.model = ModelPrimitives::createQuad(
 		{ -1.0f, -1.0f, 0.0f }, { 2.0f, 2.0f },
 		{ 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f },
 		glm::vec3(0.5f),
@@ -169,8 +169,8 @@ void AetherEngine::changeUIElementSize(
 
 	cleanupModel(uiElement.model);
 	
-	createSolidColorTexture({ 0, 0, 0, 0 }, windowWidth, windowHeight, uiElement.texture);
-	uiElement.model = ModelManager::createQuad(
+	modelManager.createSolidColorTexture({ 0, 0, 0, 0 }, windowWidth, windowHeight, uiElement.texture);
+	uiElement.model = ModelPrimitives::createQuad(
 		{ -1.0f, -1.0f, 0.0f }, { 2.0f, 2.0f },
 		{ 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f },
 		glm::vec3(0.5f),
@@ -660,7 +660,7 @@ void AetherEngine::recreateDungeonFloor(int32_t floorNumber, float difficultySca
 	gameContext.dungeonFloor = {};
 
 	//if (dungeonTextures.empty()) {
-		loadTexturesFromFolder("textures/dungeon", dungeonTextures);
+		modelManager.loadTexturesFromFolder("textures/dungeon", dungeonTextures);
 	//}
 	/*std::chrono::high_resolution_clock::time_point currentTime;
 	float deltaTime;

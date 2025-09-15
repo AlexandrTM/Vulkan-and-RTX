@@ -58,7 +58,7 @@ std::vector<Model> DungeonRoom::createDungeonRoomModels() {
         for (size_t y = 0; y < layout[x].length(); ++y) {
             if (layout[x][y] == 'w') {
                 // Place wall cubes
-                models.push_back(ModelManager::createCube(
+                models.push_back(ModelPrimitives::createCube(
                     position.x + x * cellSize,
                     position.y,
                     position.z + y * cellSize,
@@ -76,7 +76,7 @@ std::vector<Model> DungeonRoom::createDungeonRoomModels() {
     }
 
     // Create the floor of the room
-    models.push_back(ModelManager::createCuboid(
+    models.push_back(ModelPrimitives::createCuboid(
         position.x,
         position.y - floorThickness,
         position.z,

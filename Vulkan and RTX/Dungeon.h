@@ -2,7 +2,7 @@
 
 #include "Model.h"
 #include "Mob.h"
-#include "ModelManager.h"
+#include "ModelPrimitives.h"
 
 struct RoomInfo
 {

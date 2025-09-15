@@ -1,8 +1,6 @@
 #pragma once
 
 #include "pch.h"
-#include "ImageManager.h"
-#include "VulkanInitializer.h"
 #include "Model.h"
 
 class AetherSwapchain

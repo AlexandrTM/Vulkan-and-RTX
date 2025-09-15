@@ -3,8 +3,6 @@
 
 #include "pch.h"
 
-#include "VulkanInitializer.h"
-
 #include "UserInterfaceElement.h"
 
 #include "InGameWindow.h"
@@ -16,10 +14,10 @@
 #include "SelectEquationSlotHandler.h"
 #include "SolveEquationSlotHandler.h"
 
-#include "ModelManager.h"
-#include "BufferManager.h"
-#include "ImageManager.h"
 #include "gamecontext_instance.h"
+#include "managers_instance.h" 
+#include "ModelPrimitives.h"
+
 #include "Model.h"
 #include "TerrainGenerator.h"
 #include "Character.h"
@@ -32,9 +30,10 @@ class AetherEngine : public QObject {
 
 private:
 #pragma region
-	VulkanInitializer vkInit;
-	BufferManager bufferManager{ vkInit };
-	ImageManager imageManager{ vkInit, bufferManager };
+	VulkanInitializer& vkInit = managers.vkInit;
+	BufferManager& bufferManager = managers.bufferManager;
+	ImageManager& imageManager = managers.imageManager;
+	ModelManager& modelManager = managers.modelManager;
 
 	float gravity = 9.81f;
 	Character character;
@@ -169,48 +168,7 @@ private:
 
 	// recreating swap chain in some special cases
 	void recreateSwapchain();
-
-	void loadModelsFromFolder(
-		const std::string& directory,
-		std::vector<Model>& models
-	);
-	Texture loadTextureForModel(const std::string& texturePath, const aiScene* scene);
-	void loadTexturesFromFolder(
-		const std::string& texturePath, 
-		std::unordered_map<std::string, Texture>& textures
-	);
-	Material processMaterial(aiMaterial* aiMat, const aiScene* scene);
-	void processNode(
-		aiNode* node, const aiScene* scene,
-		std::vector<Model>& models,
-		Model& parentModel,
-		glm::mat4 parentTransform, const glm::mat4 globalInverseTransform,
-		uint32_t& perModelVertexOffset,
-		int level
-	);
-
-	void uploadRawDataToTexture(void* rawImage, uint32_t width, uint32_t height, Texture& texture);
-
-	void createTextureFromPixelData(
-		const void* pixelData,
-		uint32_t texWidth,
-		uint32_t texHeight,
-		uint32_t mipLevels,
-		Texture& texture
-	);
-	void createSolidColorTexture(
-		std::array<uint8_t, 4> color, uint32_t width, uint32_t height, Texture& texture
-	);
-	Texture loadTextureFromPath(const std::string& texturePath);
-	void createTextureFromEmbedded(
-		const std::string& embeddedTextureName, 
-		const aiScene* scene, Texture& texture
-	);
 	QColor interpolateColor(const QColor& from, const QColor& to, double t);
-
-	// creating image for MSAA sampling
-	void createColorTexture(Texture& texture);
-	void createDepthTexture(Texture& texture);
 
 	// finding most appropriate memory type depending on buffer and application properties
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;

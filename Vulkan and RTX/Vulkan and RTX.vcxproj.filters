@@ -28,9 +28,6 @@
     <Filter Include="headers\precompiled\implementation macros">
       <UniqueIdentifier>{11f1ff4e-c158-4bc5-b19f-0398e6c2a40e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="headers\main class split">
-      <UniqueIdentifier>{de084a3b-a4e2-4278-a55a-aee89a6477f3}</UniqueIdentifier>
-    </Filter>
     <Filter Include="source\engine">
       <UniqueIdentifier>{50fde218-f769-4b55-bca6-7e00c2973f72}</UniqueIdentifier>
     </Filter>
@@ -162,6 +159,12 @@
     <ClCompile Include="ui_core.cpp">
       <Filter>source\ui</Filter>
     </ClCompile>
+    <ClCompile Include="managers_instance.cpp">
+      <Filter>headers\precompiled</Filter>
+    </ClCompile>
+    <ClCompile Include="ModelPrimitives.cpp">
+      <Filter>source\engine</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -215,14 +218,8 @@
     <ClInclude Include="GameContext.h">
       <Filter>headers</Filter>
     </ClInclude>
-    <ClInclude Include="VulkanInitializer.h">
-      <Filter>headers\main class split</Filter>
-    </ClInclude>
     <ClInclude Include="dungeon_core.h">
       <Filter>source\procedural</Filter>
-    </ClInclude>
-    <ClInclude Include="ModelManager.h">
-      <Filter>headers\main class split</Filter>
     </ClInclude>
     <ClInclude Include="Dungeon.h">
       <Filter>source\procedural</Filter>
@@ -254,6 +251,21 @@
     <ClInclude Include="BufferManager.h">
       <Filter>source\engine</Filter>
     </ClInclude>
+    <ClInclude Include="ModelManager.h">
+      <Filter>source\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanInitializer.h">
+      <Filter>source\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Managers.h">
+      <Filter>source\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="managers_instance.h">
+      <Filter>headers\precompiled</Filter>
+    </ClInclude>
+    <ClInclude Include="ModelPrimitives.h">
+      <Filter>source\engine</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Vulkan and RTX.rc">
@@ -266,9 +278,6 @@
     </Image>
   </ItemGroup>
   <ItemGroup>
-    <QtMoc Include="AetherEngine.h">
-      <Filter>headers\main class split</Filter>
-    </QtMoc>
     <QtMoc Include="UserInterfaceRenderer.h">
       <Filter>source\ui</Filter>
     </QtMoc>
@@ -292,6 +301,9 @@
     </QtMoc>
     <QtMoc Include="MainMenuSlotHandler.h">
       <Filter>source\ui\elements</Filter>
+    </QtMoc>
+    <QtMoc Include="AetherEngine.h">
+      <Filter>source\engine</Filter>
     </QtMoc>
   </ItemGroup>
 </Project>
