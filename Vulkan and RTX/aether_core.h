@@ -68,18 +68,24 @@ float randomNormalizedWeightedReal(std::vector<float>& weights);
 
 enum class GameState : uint32_t
 {
-	MAIN_MENU = 0,
-	SETTINGS_MENU = 1,
-	PAUSED = 2,
-	IN_GAME_TESTING = 3, // for testing purposes only
-	DUNGEON_EXPLORATION = 4,
-	COMBAT_PLAYER_SELECT_EQUATION = 5,
-	COMBAT_PLAYER_SOLVE_EQUATION = 6,
-	COMBAT_MOB_TURN = 7,
-	DUNGEON_ROOM_CLEANED = 8,
-	SHOP = 9,
-	HALL_OF_FAME = 10,
-	PLAYER_DEAD = 11,
+	MAIN_MENU,
+	SETTINGS_MENU,
+	PAUSED,
+	IN_GAME_TESTING, // for testing purposes only
+
+	ENTERING_DUNGEON,
+	DUNGEON_EXPLORATION,
+	DUNGEON_ROOM_CLEANED,
+	LEAVING_DUNGEON,
+
+	COMBAT_PLAYER_SELECT_EQUATION,
+	COMBAT_PLAYER_SOLVE_EQUATION,
+	COMBAT_MOB_TURN,
+
+	SHOP,
+	HALL_OF_FAME,
+	PLAYER_DEAD,
+
 	EXIT = std::numeric_limits<uint32_t>::max() - 1,
 	NONE = std::numeric_limits<uint32_t>::max(),
 };

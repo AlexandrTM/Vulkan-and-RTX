@@ -21,6 +21,12 @@ struct GameContext
 	DungeonRoom* targetRoom = nullptr;
 	bool isRoomMovementHandled = false;
 
+	bool isCameraTransitioning = false;
+	glm::vec3 cameraStartPosition;
+	glm::vec3 cameraTargetPosition;
+	float cameraCurrentTransitionTime = 0.0f;
+	const float cameraTransitionDuration = 0.5f;
+
 	std::vector<Equation> equations;
 	Equation* selectedEquation = nullptr;
 	double timeRemainingToSolveEquation = 0.0;
@@ -28,12 +34,6 @@ struct GameContext
 	double submittedAnswer = std::numeric_limits<double>::max();
 	bool isAnswerSubmitted = false;
 	bool answerSubmissionAllowed = false;
-
-	bool isCameraTransitioning = false;
-	glm::vec3 cameraStartPosition;
-	glm::vec3 cameraTargetPosition;
-	float cameraCurrentTransitionTime = 0.0f;
-	const float cameraTransitionDuration = 0.5f;
 
 	size_t createdVmaAllocations = 0;
 	mutable size_t destroyedVmaAllocations = 0;

@@ -37,14 +37,15 @@ void AetherEngine::prepareUI()
 	mainWindow->show();
 
 	inGameWindow->setKeyboardGrabEnabled(true);
+	stackedWidget->setCurrentWidget(inGameWidget);
 
+	gameContext.clearInputs();
 	gameContext.requestedGameState = GameState::COMBAT_PLAYER_SOLVE_EQUATION;
 	gameContext.requestedGameState = GameState::COMBAT_PLAYER_SELECT_EQUATION;
 	gameContext.requestedGameState = GameState::MAIN_MENU;
 	gameContext.requestedGameState = GameState::DUNGEON_EXPLORATION;
 	gameContext.requestedGameState = GameState::IN_GAME_TESTING;
 	gameContext.requestedGameState = GameState::PLAYER_DEAD;
-	gameContext.clearInputs();
 }
 
 void AetherEngine::prepareResources()
@@ -61,6 +62,7 @@ void AetherEngine::prepareResources()
 
 	grassTexture = modelManager.loadTextureFromPath("textures/grass001.png");
 	floor_background = modelManager.loadTextureFromPath("textures/floor_background_floor_2.png");
+	modelManager.createSolidColorTexture({ 0, 0, 0, 255 }, 1024, 1024, floor_background_2);
 	modelManager.createSolidColorTexture({ 0, 0, 0, 0 }, 1, 1, transparentTexture);
 	notFoundTexture = modelManager.loadTextureFromPath("textures/notFoundTexture.png");
 
@@ -79,7 +81,7 @@ void AetherEngine::prepareResources()
 		-0.01,
 		-(terrainData.chunkLength * terrainData.chunkCols / 2 * terrainData.gridSize),
 		terrainData,
-		models, floor_background, 8.0f,
+		models, floor_background_2, 8.0f,
 		1 // not used
 	);
 	
@@ -348,8 +350,8 @@ void AetherEngine::changeState(GameState newGameState) {
 		break;
 	}
 
-	/*std::cout << 
-		"currentGameState: " << static_cast<uint32_t>(gameContext.currentGameState) << 
+	/*std::cout <<
+		"currentGameState: " << static_cast<uint32_t>(gameContext.currentGameState) <<
 		" newGameState: "    << static_cast<uint32_t>(newGameState) << "\n";*/
 	gameContext.clearInputs();
 	gameContext.currentGameState = newGameState;
@@ -357,36 +359,29 @@ void AetherEngine::changeState(GameState newGameState) {
 	// entering new state
 	switch (newGameState) {
 	case GameState::MAIN_MENU:
-		stackedWidget->setCurrentWidget(inGameWidget);
 		break;
 	case GameState::SETTINGS_MENU:
-		stackedWidget->setCurrentWidget(inGameWidget);
 		break;
 	case GameState::IN_GAME_TESTING:
 		QApplication::setOverrideCursor(Qt::BlankCursor);
 		character.camera._isFirstMouse = true;
-		stackedWidget->setCurrentWidget(inGameWidget);
 		//if (!inGameWidget->hasFocus()) { inGameWidget->setFocus(); }
 		break;
 	case GameState::DUNGEON_EXPLORATION:
-		stackedWidget->setCurrentWidget(inGameWidget);
 		if (!inGameWindow->isActive()) { inGameWindow->requestActivate(); }
 		//if (!inGameWidget->hasFocus()) { inGameWidget->setFocus(); }
 		//if (!inGameWindow->isActive()) { inGameWindow->requestActivate(); }
 		break;
 	case GameState::COMBAT_PLAYER_SELECT_EQUATION:
-		stackedWidget->setCurrentWidget(inGameWidget);
 		updateSelectEquation(3);
 		//if (!inGameWidget->hasFocus()) { inGameWidget->setFocus(); }
 		break;
 	case GameState::COMBAT_PLAYER_SOLVE_EQUATION:
-		stackedWidget->setCurrentWidget(inGameWidget);
 		clearSolveEquationInput();
 		gameContext.timeRemainingToSolveEquation = gameContext.selectedEquation->timeToSolve;
 		//if (!inGameWidget->hasFocus()) { inGameWidget->setFocus(); }
 		break;
 	case GameState::PAUSED:
-		stackedWidget->setCurrentWidget(inGameWidget);
 		if (!inGameWindow->isActive()) { inGameWindow->requestActivate(); }
 		break;
 	case GameState::EXIT:
@@ -622,24 +617,7 @@ void AetherEngine::mainLoop()
 			gameContext.currentGameState == GameState::PAUSED) {
 
 			if (gameContext.isCameraTransitioning) {
-				gameContext.cameraCurrentTransitionTime += deltaTime;
-
-				float rawT = std::min(gameContext.cameraCurrentTransitionTime / gameContext.cameraTransitionDuration, 1.0f);
-				float t = std::min(rawT * rawT * (3.0f - 2.0f * rawT), 1.0f); // smoothstep easing
-				glm::vec3 newPos = glm::mix(gameContext.cameraStartPosition, gameContext.cameraTargetPosition, t);
-				character.camera.setPosition(newPos);
-
-				if (t >= 1.0f) {
-					Dungeon::updateRoomsState(
-						*gameContext.targetRoom, 
-						*gameContext.currentRoom, 
-						gameContext.dungeonFloor.dungeonRooms, 2
-					);
-
-					gameContext.currentRoom = gameContext.targetRoom;
-					gameContext.targetRoom = nullptr;
-					gameContext.isCameraTransitioning = false;
-				}
+				character.handleCameraTransition(deltaTime);
 			}
 
 			updateInGameOverlay();
@@ -702,6 +680,7 @@ void AetherEngine::cleanupMemory()
 
 	cleanupTexture(grassTexture);
 	cleanupTexture(floor_background);
+	cleanupTexture(floor_background_2);
 	cleanupTexture(transparentTexture);
 	cleanupTexture(notFoundTexture);
 	cleanupTexture(depthTexture);

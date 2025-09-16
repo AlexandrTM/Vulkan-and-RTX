@@ -59,6 +59,7 @@ public:
 	void handleInGamePlayerInput();
 	void handleDungeonExplorationPlayerInput();
 	void handleDungeonRoomMovement();
+	void handleCameraTransition(double deltaTime);
 
 	// ========== not used currently ==========
 	std::vector<InteractableVolume> interactableCuboids = {

@@ -67,14 +67,24 @@ void Character::handleDungeonExplorationPlayerInput()
 
 void Character::handleDungeonRoomMovement() 
 {
-	if (gameContext.isCameraTransitioning) { 
-		return; 
-	}
+	if (gameContext.isCameraTransitioning) return;
 
-	if (!gameContext.keyboardKeys[Qt::Key_W] && !gameContext.keyboardKeys[Qt::Key_Up] &&
-		!gameContext.keyboardKeys[Qt::Key_A] && !gameContext.keyboardKeys[Qt::Key_Left] &&
-		!gameContext.keyboardKeys[Qt::Key_S] && !gameContext.keyboardKeys[Qt::Key_Down] &&
-		!gameContext.keyboardKeys[Qt::Key_D] && !gameContext.keyboardKeys[Qt::Key_Right]) {
+	// Check if any movement key is pressed
+	auto isKeyPressed = [&](const std::vector<Qt::Key>& keys) {
+		return std::any_of(
+			keys.begin(), keys.end(),
+			[&](Qt::Key k) { return gameContext.keyboardKeys[k]; }
+		);
+	};
+
+	std::vector<Qt::Key> movementKeys = {
+		Qt::Key_W, Qt::Key_Up,
+		Qt::Key_A, Qt::Key_Left,
+		Qt::Key_S, Qt::Key_Down,
+		Qt::Key_D, Qt::Key_Right
+	};
+
+	if (!isKeyPressed(movementKeys)) {
 		gameContext.isRoomMovementHandled = false;
 	}
 
@@ -83,53 +93,71 @@ void Character::handleDungeonRoomMovement()
 		return;
 	}
 
-	glm::ivec2 moveDirectionVector = glm::ivec2(0, 0);
+	// Movement mapping
+	static const std::unordered_map<Qt::Key, RoomConnectionMask> keyToDirection = {
+		{Qt::Key_W, RoomConnectionMask::NORTH}, {Qt::Key_Up, RoomConnectionMask::NORTH},
+		{Qt::Key_A, RoomConnectionMask::EAST},  {Qt::Key_Left, RoomConnectionMask::EAST},
+		{Qt::Key_S, RoomConnectionMask::SOUTH}, {Qt::Key_Down, RoomConnectionMask::SOUTH},
+		{Qt::Key_D, RoomConnectionMask::WEST},  {Qt::Key_Right, RoomConnectionMask::WEST}
+	};
+
+	// Find pressed movement key
 	RoomConnectionMask moveDirection = RoomConnectionMask::NONE;
-	if (gameContext.keyboardKeys[Qt::Key_W] || gameContext.keyboardKeys[Qt::Key_Up]) {
-		//std::cout << "w pressed\n";
-		moveDirection = RoomConnectionMask::NORTH; // inverted
-		moveDirectionVector = directionOffsets.at(RoomConnectionMask::NORTH);
-	}
-	if (gameContext.keyboardKeys[Qt::Key_A] || gameContext.keyboardKeys[Qt::Key_Left]) {
-		//std::cout << "a pressed\n";
-		moveDirection = RoomConnectionMask::EAST;
-		moveDirectionVector = directionOffsets.at(RoomConnectionMask::EAST);
-	}
-	if (gameContext.keyboardKeys[Qt::Key_S] || gameContext.keyboardKeys[Qt::Key_Down]) {
-		//std::cout << "s pressed\n";
-		moveDirection = RoomConnectionMask::SOUTH;
-		moveDirectionVector = directionOffsets.at(RoomConnectionMask::SOUTH);
-	}
-	if (gameContext.keyboardKeys[Qt::Key_D] || gameContext.keyboardKeys[Qt::Key_Right]) {
-		//std::cout << "d pressed\n";
-		moveDirection = RoomConnectionMask::WEST;
-		moveDirectionVector = directionOffsets.at(RoomConnectionMask::WEST);
-	}
-
-	if (moveDirectionVector != glm::ivec2(0, 0) and gameContext.currentRoom != nullptr) {
-		if (hasConnection(gameContext.currentRoom->connectionMask, moveDirection)) {
-			/*std::cout << "move data: " <<
-				static_cast<uint32_t>(gameContext.currentRoom->connectionMask) << " " <<
-				glm::to_string(moveDirectionVector) << "\n";*/
-			glm::ivec2 targetGrid = gameContext.currentRoom->gridPosition + moveDirectionVector;
-
-			// Search for target room in dungeon
-			for (DungeonRoom& room : gameContext.dungeonFloor.dungeonRooms) {
-				if (room.gridPosition == targetGrid) {
-
-					gameContext.targetRoom = &room;
-					//std::cout << "current room position: " << glm::to_string(gameContext.currentRoom->position) << "\n";
-					//std::cout << "new room position: " << glm::to_string(room.position) << "\n";
-					gameContext.cameraStartPosition = camera.getPosition();
-					gameContext.cameraTargetPosition = room.cameraPosition;
-					gameContext.cameraCurrentTransitionTime = 0.0f;
-					gameContext.isCameraTransitioning = true;
-
-					gameContext.isRoomMovementHandled = true;
-					break;
-				}
-			}
+	for (const auto& [key, direction] : keyToDirection) {
+		if (gameContext.keyboardKeys[key]) {
+			moveDirection = direction;
+			break;
 		}
+	}
+
+	if (moveDirection == RoomConnectionMask::NONE || !gameContext.currentRoom ||
+		!hasConnection(gameContext.currentRoom->connectionMask, moveDirection)) {
+		return;
+	}
+
+	glm::ivec2 targetGrid = gameContext.currentRoom->gridPosition + directionOffsets.at(moveDirection);
+
+	/*std::cout << "move data: " <<
+		static_cast<uint32_t>(gameContext.currentRoom->connectionMask) << " " <<
+		glm::to_string(directionOffsets.at(moveDirection)) << "\n";*/
+
+	// Search for target room in dungeon
+	for (DungeonRoom& room : gameContext.dungeonFloor.dungeonRooms) {
+		if (room.gridPosition == targetGrid) {
+
+			gameContext.targetRoom = &room;
+			//std::cout << "current room position: " << glm::to_string(gameContext.currentRoom->position) << "\n";
+			//std::cout << "new room position: " << glm::to_string(room.position) << "\n";
+			gameContext.cameraStartPosition = camera.getPosition();
+			gameContext.cameraTargetPosition = room.cameraPosition;
+			gameContext.cameraCurrentTransitionTime = 0.0f;
+			gameContext.isCameraTransitioning = true;
+
+			gameContext.isRoomMovementHandled = true;
+			break;
+		}
+	}
+}
+
+void Character::handleCameraTransition(double deltaTime)
+{
+	gameContext.cameraCurrentTransitionTime += deltaTime;
+
+	float rawT = std::min(gameContext.cameraCurrentTransitionTime / gameContext.cameraTransitionDuration, 1.0f);
+	float t = std::min(rawT * rawT * (3.0f - 2.0f * rawT), 1.0f); // smoothstep easing
+	glm::vec3 newPos = glm::mix(gameContext.cameraStartPosition, gameContext.cameraTargetPosition, t);
+	camera.setPosition(newPos);
+
+	if (t >= 1.0f) {
+		Dungeon::updateRoomsState(
+			*gameContext.targetRoom,
+			*gameContext.currentRoom,
+			gameContext.dungeonFloor.dungeonRooms, 2
+		);
+
+		gameContext.currentRoom = gameContext.targetRoom;
+		gameContext.targetRoom = nullptr;
+		gameContext.isCameraTransitioning = false;
 	}
 }
 

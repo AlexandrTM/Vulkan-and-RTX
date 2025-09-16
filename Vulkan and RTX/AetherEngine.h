@@ -40,7 +40,6 @@ private:
 
 	uint32_t windowWidth = 0;
 	uint32_t windowHeight = 0;
-	double lastMousePosX, lastMousePosY;
 
 	MainWindow* mainWindow = nullptr;
 	QStackedWidget* stackedWidget = nullptr;
@@ -68,9 +67,9 @@ private:
 
 	VkRenderPass objectRenderPass;
 	VkRenderPass uiRenderPass;
-	VkPipelineLayout pipelineLayout;
 
 	std::unordered_map<std::string, VkPipeline> pipelines;
+	VkPipelineLayout pipelineLayout;
 
 	std::vector<VkCommandBuffer> commandBuffers;
 
@@ -94,6 +93,7 @@ private:
 
 	Texture grassTexture;
 	Texture floor_background;
+	Texture floor_background_2;
 	Texture	transparentTexture;
 	Texture	notFoundTexture;
 
