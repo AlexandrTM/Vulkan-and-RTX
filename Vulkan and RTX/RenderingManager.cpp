@@ -367,7 +367,7 @@ void AetherEngine::createGraphicsPipeline(
 	dynamicState.pDynamicStates = dynamicStates.data();
 #pragma endregion
 	
-	createPipelineLayout(descriptorSetLayout, pipelineLayout);
+	createPipelineLayout(vkInit.descriptorSetLayout, pipelineLayout);
 
 	// information about all stages
 	VkGraphicsPipelineCreateInfo pipelineInfo{};
@@ -1003,39 +1003,6 @@ void AetherEngine::addBufferToDescriptorSet(
 	descriptorWrite.pBufferInfo = &bufferInfo;
 
 	vkUpdateDescriptorSets(vkInit.device, 1, &descriptorWrite, 0, nullptr);
-}
-
-void AetherEngine::createDescriptorSets(std::vector<Model>& models, size_t swapchainImageCount)
-{
-	for (Model& model : models) {
-		createDescriptorSets(model, swapchainImageCount);
-	}
-}
-void AetherEngine::createDescriptorSets(Model& model, size_t swapchainImageCount)
-{
-	for (Mesh& mesh : model.meshes) {
-		createDescriptorSets(mesh, swapchainImageCount);
-	}
-}
-void AetherEngine::createDescriptorSets(Mesh& mesh, size_t swapchainImageCount)
-{
-	for (size_t frameIndex = 0; frameIndex < swapchainImageCount; ++frameIndex) {
-		if (mesh.descriptorSets[frameIndex] == VK_NULL_HANDLE) {
-			createDescriptorSet(mesh.descriptorSets[frameIndex]);
-		}
-	}
-}
-void AetherEngine::createDescriptorSet(VkDescriptorSet& descriptorSet)
-{
-	VkDescriptorSetAllocateInfo allocInfo{};
-	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-	allocInfo.descriptorPool = descriptorPool;  // Make sure you have a valid descriptor pool
-	allocInfo.descriptorSetCount = 1;
-	allocInfo.pSetLayouts = &descriptorSetLayout;  // Ensure the layout matches shader buffer binding requirements
-
-	if (vkAllocateDescriptorSets(vkInit.device, &allocInfo, &descriptorSet) != VK_SUCCESS) {
-		throw std::runtime_error("Failed to allocate descriptor set!");
-	}
 }
 
 /*void AetherEngine::bindVertexAndIndexBuffersToCommandBuffer(const Model& model, VkCommandBuffer commandBuffer)

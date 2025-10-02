@@ -117,9 +117,31 @@ struct Mesh
     std::vector<VmaAllocation>              boneSSBOAllocations    = std::vector<VmaAllocation>  (MAX_FRAMES_IN_FLIGHT, VK_NULL_HANDLE);
 };
 
+enum class ModelFlags : uint32_t
+{
+    NONE = 0,
+    NEED_VERTEX = 1 << 0,
+    NEED_INDEX = 1 << 1,
+    NEED_AABB = 1 << 2,
+    NEED_SHADERBUF = 1 << 3,
+};
+
+inline ModelFlags operator|(ModelFlags a, ModelFlags b) {
+    return static_cast<ModelFlags>(static_cast<uint32_t>(a) | static_cast<uint32_t>(b));
+}
+inline bool hasFlag(ModelFlags value, ModelFlags flag) {
+    return (static_cast<uint32_t>(value) & static_cast<uint32_t>(flag)) != 0;
+}
+
 struct Model {
-    ModelType                               type = ModelType::OTHER;
     std::vector<Mesh>                       meshes;
+    ModelType                               type = ModelType::OTHER;
+    ModelFlags flags =
+        ModelFlags::NEED_VERTEX |
+        ModelFlags::NEED_INDEX |
+        ModelFlags::NEED_AABB |
+        ModelFlags::NEED_SHADERBUF;
+
     glm::vec3                               position;
     glm::vec3                               scale;
     glm::quat                               rotation;

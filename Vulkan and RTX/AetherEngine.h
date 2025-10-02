@@ -49,9 +49,6 @@ private:
 
 	QVulkanInstance qVulkanInstance;
 
-	VkDescriptorPool          descriptorPool;
-	VkDescriptorSetLayout     descriptorSetLayout;
-
 	UniformBufferObject		  skyUBO;
 	UniformBufferObject		  meshUBO;
 	ShaderStorageBufferObject boneSSBO;
@@ -124,6 +121,7 @@ private:
 	void handleEquationSolving();
 	void handleRightAnswer(Equation& selectedEquation);
 	void handleWrongAnswer(const Equation& selectedEquation);
+	void measure_fps(double deltaTime);
 
 	std::string createPuzzleEquation(std::string name, int32_t& answer);
 
@@ -134,6 +132,11 @@ private:
 	);
 	void changeUIElementSize(
 		UserInterfaceElement& uiElement, size_t windowWidth, size_t windowHeight
+	);
+	Model createUIQuad(
+		size_t width, size_t height,
+		Texture& texture,
+		size_t swapchainImageCount
 	);
 	void loadUIElements();
 	void initializeInGameOverlayCache();
@@ -173,13 +176,8 @@ private:
 	// finding most appropriate memory type depending on buffer and application properties
 	uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
 
-	void createDescriptorSets(std::vector<Model>& models, size_t swapchainImageCount);
-	void createDescriptorSets(Model& model, size_t swapchainImageCount);
-	void createDescriptorSets(Mesh& mesh, size_t swapchainImageCount);
-
 	void createDescriptorPool(size_t modelsNum, size_t meshesNum, VkDescriptorPool& pDescriptorPool) const;
 	void createDescriptorSetLayout(VkDescriptorSetLayout& descriptorSetLayout) const;
-	void createDescriptorSet(VkDescriptorSet& descriptorSet);
 	void addTextureToDescriptorSet(
 		const Texture& texture,
 		VkDescriptorSet descriptorSet, uint32_t dstBinding

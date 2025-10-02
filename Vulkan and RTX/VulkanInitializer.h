@@ -36,6 +36,9 @@ struct VulkanInitializer
     VkCommandPool commandPool;
     VkSurfaceKHR surface;
 
+    VkDescriptorPool          descriptorPool;
+    VkDescriptorSetLayout     descriptorSetLayout;
+
     VkDebugUtilsMessengerEXT debugMessenger;
 
     VkSampleCountFlagBits colorSamples;

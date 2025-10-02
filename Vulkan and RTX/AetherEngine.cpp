@@ -38,19 +38,11 @@ void AetherEngine::prepareUI()
 
 	inGameWindow->setKeyboardGrabEnabled(true);
 	stackedWidget->setCurrentWidget(inGameWidget);
-
-	gameContext.clearInputs();
-	gameContext.requestedGameState = GameState::COMBAT_PLAYER_SOLVE_EQUATION;
-	gameContext.requestedGameState = GameState::COMBAT_PLAYER_SELECT_EQUATION;
-	gameContext.requestedGameState = GameState::MAIN_MENU;
-	gameContext.requestedGameState = GameState::DUNGEON_EXPLORATION;
-	gameContext.requestedGameState = GameState::IN_GAME_TESTING;
-	gameContext.requestedGameState = GameState::PLAYER_DEAD;
 }
 
 void AetherEngine::prepareResources()
 {
-	createDescriptorSetLayout(descriptorSetLayout);
+	createDescriptorSetLayout(vkInit.descriptorSetLayout);
 
 	createPipelinesAndSwapchain();
 
@@ -74,6 +66,8 @@ void AetherEngine::prepareResources()
 		8.0f,     // gridSize
 		0.1f,     // scale
 		0.0f,     // height
+		floor_background, // terrain texture
+		8.0f      // metric texture size
 	};
 	terrainGenerator = std::make_unique<TerrainGenerator>();
 	terrainGenerator->generateTerrain(
@@ -81,7 +75,7 @@ void AetherEngine::prepareResources()
 		-0.01,
 		-(terrainData.chunkLength * terrainData.chunkCols / 2 * terrainData.gridSize),
 		terrainData,
-		models, floor_background_2, 8.0f,
+		models,
 		1 // not used
 	);
 	
@@ -91,17 +85,20 @@ void AetherEngine::prepareResources()
 	for (const Model& model : models) {
 		meshesNum += model.meshes.size();
 	}*/
-	createDescriptorPool(33 * 15 * 2, 33 * 15 * 2, descriptorPool);
+	createDescriptorPool(33 * 15 * 2, 33 * 15 * 2, vkInit.descriptorPool);
 
 	loadUIElements();
 	
-	bufferManager.computeAABB_createVertexIndexBuffers(sky);
-	bufferManager.createShaderBuffers(sky, MAX_FRAMES_IN_FLIGHT);
-	createDescriptorSets(sky, MAX_FRAMES_IN_FLIGHT);
+	bufferManager.prepareModel(sky, MAX_FRAMES_IN_FLIGHT);
+	bufferManager.prepareModels(models, MAX_FRAMES_IN_FLIGHT);
 
-	bufferManager.computeAABB_createVertexIndexBuffers(models);
-	bufferManager.createShaderBuffers(models, MAX_FRAMES_IN_FLIGHT);
-	createDescriptorSets(models, MAX_FRAMES_IN_FLIGHT);
+	gameContext.clearInputs();
+	gameContext.requestedGameState = GameState::COMBAT_PLAYER_SOLVE_EQUATION;
+	gameContext.requestedGameState = GameState::COMBAT_PLAYER_SELECT_EQUATION;
+	gameContext.requestedGameState = GameState::MAIN_MENU;
+	gameContext.requestedGameState = GameState::DUNGEON_EXPLORATION;
+	gameContext.requestedGameState = GameState::IN_GAME_TESTING;
+	gameContext.requestedGameState = GameState::PLAYER_DEAD;
 }
 
 void AetherEngine::onMainWindowResized(int width, int height) {
@@ -148,15 +145,7 @@ UserInterfaceElement AetherEngine::createUIElement(
 ) {
 	UserInterfaceElement uiElement;
 
-	modelManager.createSolidColorTexture({ 0, 0, 0, 0 }, windowWidth, windowHeight, uiElement.texture);
-	uiElement.model = ModelPrimitives::createQuad(
-		{ -1.0f, -1.0f, 0.0f }, { 2.0f, 2.0f },
-		{ 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f },
-		glm::vec3(0.5f),
-		uiElement.texture
-	);
-	bufferManager.computeAABB_createVertexIndexBuffers(uiElement.model);
-	createDescriptorSets(uiElement.model, MAX_FRAMES_IN_FLIGHT);
+	uiElement.model = createUIQuad(windowWidth, windowHeight, uiElement.texture, MAX_FRAMES_IN_FLIGHT);
 
 	uiElement.renderer = std::make_unique<UserInterfaceRenderer>();
 	uiElement.renderer->loadQml(QSize(windowWidth, windowHeight), qmlPath);
@@ -171,15 +160,30 @@ void AetherEngine::changeUIElementSize(
 
 	cleanupModel(uiElement.model);
 	
-	modelManager.createSolidColorTexture({ 0, 0, 0, 0 }, windowWidth, windowHeight, uiElement.texture);
-	uiElement.model = ModelPrimitives::createQuad(
+	uiElement.model = createUIQuad(windowWidth, windowHeight, uiElement.texture, MAX_FRAMES_IN_FLIGHT);
+}
+Model AetherEngine::createUIQuad(
+	size_t width, size_t height,
+	Texture& texture,
+	size_t swapchainImageCount
+)
+{
+	// Create blank texture as render target for QML
+	modelManager.createSolidColorTexture({ 0, 0, 0, 0 }, width, height, texture);
+
+	// Quad from -1,-1 to +1,+1
+	Model model = ModelPrimitives::createQuad(
 		{ -1.0f, -1.0f, 0.0f }, { 2.0f, 2.0f },
 		{ 0.0f, 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f },
 		glm::vec3(0.5f),
-		uiElement.texture
+		texture
 	);
-	bufferManager.computeAABB_createVertexIndexBuffers(uiElement.model);
-	createDescriptorSets(uiElement.model, MAX_FRAMES_IN_FLIGHT);
+
+	// UI doesn’t need shader buffers
+	model.flags = ModelFlags::NEED_VERTEX | ModelFlags::NEED_INDEX | ModelFlags::NEED_AABB;
+	bufferManager.prepareModel(model, swapchainImageCount);
+
+	return model;
 }
 void AetherEngine::loadUIElements() {
 	uiMap[uiElementId::MainMenu] = createUIElement("qml/MainMenu.qml", windowWidth, windowHeight, mainWindow);
@@ -465,13 +469,25 @@ void AetherEngine::handleEquationSolving() {
 		gameContext.isAnswerSubmitted = false;
 	}
 }
+void AetherEngine::measure_fps(double deltaTime)
+{
+	static uint32_t counter = 0;
+	static double accumulator = 0.0;
+	static double fps = 0.0;
+
+	counter++;
+	accumulator += deltaTime;
+	if (accumulator >= 1.0) {
+		fps = 1 / (accumulator / counter);
+		counter = 0;
+		accumulator = 0;
+		std::cout << "fps: " << fps << "\n";
+	}
+}
 
 void AetherEngine::mainLoop()
 {
 	bool fpsMenu = 0;
-	uint32_t counter = 0;
-	double accumulator = 0.0;
-	double fps = 0.0;
 
 	double deltaTime = 0.0;
 	double timeSinceLaunch = 0.0;
@@ -487,19 +503,7 @@ void AetherEngine::mainLoop()
 		QCoreApplication::processEvents();
 
 		if (fpsMenu) {
-			counter++;
-			accumulator += deltaTime;
-			if (accumulator >= 1.0) {
-				fps = 1 / (accumulator / counter);
-				counter = 0;
-				accumulator = 0;
-				std::cout << "fps: " << fps << "\n";
-			}
-		}
-
-		if (gameContext.keyboardKeys[Qt::Key_R]) {
-			//loadUIElements();
-			gameContext.requestedGameState = GameState::PLAYER_DEAD;
+			measure_fps(deltaTime);
 		}
 
 		//std::cout << "inGameWindow->isActive(): " << inGameWindow->isActive() << "\n";
@@ -507,6 +511,11 @@ void AetherEngine::mainLoop()
 		if (gameContext.requestedGameState != GameState::NONE) {
 			changeState(gameContext.requestedGameState);
 			gameContext.requestedGameState = GameState::NONE;
+		}
+
+		if (gameContext.keyboardKeys[Qt::Key_R]) {
+			//loadUIElements();
+			gameContext.requestedGameState = GameState::PLAYER_DEAD;
 		}
 
 		if (gameContext.currentGameState == GameState::SETTINGS_MENU) {
@@ -662,9 +671,7 @@ void AetherEngine::recreateDungeonFloor(int32_t floorNumber, float difficultySca
 		floorTexture,
 		wallTexture
 	);
-	bufferManager.computeAABB_createVertexIndexBuffers(dungeonModels);
-	bufferManager.createShaderBuffers(dungeonModels, MAX_FRAMES_IN_FLIGHT);
-	createDescriptorSets(dungeonModels, MAX_FRAMES_IN_FLIGHT);
+	bufferManager.prepareModels(dungeonModels, MAX_FRAMES_IN_FLIGHT);
 
 	models.insert(models.end(), dungeonModels.begin(), dungeonModels.end());
 }
@@ -696,8 +703,8 @@ void AetherEngine::cleanupMemory()
 	}
 
 	// will free all allocated descriptor sets from this pool
-	vkDestroyDescriptorPool(vkInit.device, descriptorPool, nullptr);
-	vkDestroyDescriptorSetLayout(vkInit.device, descriptorSetLayout, nullptr);
+	vkDestroyDescriptorPool(vkInit.device, vkInit.descriptorPool, nullptr);
+	vkDestroyDescriptorSetLayout(vkInit.device, vkInit.descriptorSetLayout, nullptr);
 
 	for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
 		vkDestroySemaphore(vkInit.device, renderFinishedSemaphores[i], nullptr);
@@ -759,7 +766,7 @@ void AetherEngine::cleanupMesh(Mesh& mesh) const
 
 	if (mesh.descriptorSets != std::vector<VkDescriptorSet>(MAX_FRAMES_IN_FLIGHT, VK_NULL_HANDLE)) {
 		vkFreeDescriptorSets(
-			vkInit.device, descriptorPool, 
+			vkInit.device, vkInit.descriptorPool,
 			static_cast<uint32_t>(mesh.descriptorSets.size()), 
 			mesh.descriptorSets.data()
 		);

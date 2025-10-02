@@ -65,4 +65,16 @@ private:
 	glm::mat4 assimpToGLMMat4(const aiMatrix4x4& from);
 	void decomposeTransform(const glm::mat4& transform, glm::vec3& position, glm::quat& rotation, glm::vec3& scale);
 	glm::mat4 setScaleToOne(const glm::mat4& matrix);
+
+	void processAnimations(const aiScene* scene, Model& model);
+	aiNode* findNode(aiNode* rootNode, const std::string& name);
+	void processBones(aiMesh* mesh, const aiScene* scene, Mesh& processedMesh);
+	Mesh processMesh(
+		aiMesh* mesh,
+		Model& parentModel,
+		glm::mat4 globalTransform,
+		glm::mat4 globalInverseTransform,
+		uint32_t& perModelVertexOffset,
+		const aiScene* scene
+	);
 };

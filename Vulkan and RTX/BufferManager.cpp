@@ -77,35 +77,27 @@ void BufferManager::createBuffer(
 		gameContext.createdVmaAllocations += 1;
 	}
 }
-// create multiple command buffers
-void BufferManager::createCommandBuffers(std::vector<VkCommandBuffer>& commandBuffers)
+
+void BufferManager::prepareModel(Model& model, size_t swapchainImageCount) {
+    for (Mesh& mesh : model.meshes) {
+        if (hasFlag(model.flags, ModelFlags::NEED_VERTEX)) 
+			createVertexBuffer(mesh);
+        if (hasFlag(model.flags, ModelFlags::NEED_INDEX)) 
+			createIndexBuffer(mesh);
+        if (hasFlag(model.flags, ModelFlags::NEED_AABB))   
+			computeAABB(mesh);
+        if (hasFlag(model.flags, ModelFlags::NEED_SHADERBUF)) 
+            createShaderBuffers(mesh, swapchainImageCount);
+    }
+	createDescriptorSets(model, swapchainImageCount);
+}
+void BufferManager::prepareModels(std::vector<Model>& models, size_t swapchainImageCount)
 {
-	commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
-
-	VkCommandBufferAllocateInfo allocInfo{};
-	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	allocInfo.commandPool = vkInit.commandPool;
-	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	allocInfo.commandBufferCount = (uint32_t)commandBuffers.size();
-
-	if (vkAllocateCommandBuffers(vkInit.device, &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
-		throw std::runtime_error("failed to allocate command buffers!");
+	for (Model& model : models) {
+		prepareModel(model, swapchainImageCount);
 	}
 }
 
-// copying contents of one buffer to another
-void BufferManager::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) const
-{
-	VkCommandBuffer commandBuffer = beginSingleTimeCommands();
-
-	VkBufferCopy copyRegion{};
-	copyRegion.srcOffset = 0; // Optional
-	copyRegion.dstOffset = 0; // Optional
-	copyRegion.size = size;
-	vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
-
-	endSingleTimeCommands(commandBuffer);
-}
 void BufferManager::createVertexBuffer(Mesh& mesh)
 {
 	if (mesh.vertexBuffer != VK_NULL_HANDLE) {
@@ -210,25 +202,6 @@ void BufferManager::createIndexBuffer(Mesh& mesh)
 	gameContext.destroyedVmaAllocations += 1;
 }
 
-void BufferManager::computeAABB_createVertexIndexBuffers(std::vector<Model>& models)
-{
-	for (Model& model : models) {
-		computeAABB_createVertexIndexBuffers(model);
-	}
-}
-void BufferManager::computeAABB_createVertexIndexBuffers(Model& model)
-{
-	for (Mesh& mesh : model.meshes) {
-		computeAABB_createVertexIndexBuffers(mesh);
-	}
-}
-void BufferManager::computeAABB_createVertexIndexBuffers(Mesh& mesh)
-{
-	createVertexBuffer(mesh);
-	createIndexBuffer(mesh);
-	computeAABB(mesh);
-}
-
 void BufferManager::createShaderBuffers(std::vector<Model>& models, size_t swapchainImageCount)
 {
 	for (Model& model : models) {
@@ -263,5 +236,68 @@ void BufferManager::createShaderBuffers(Mesh& mesh, size_t swapchainImageCount)
 				mesh.boneSSBOAllocations[frameIndex]
 			);
 		}
+	}
+}
+
+// copying contents of one buffer to another
+void BufferManager::copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size) const
+{
+	VkCommandBuffer commandBuffer = beginSingleTimeCommands();
+
+	VkBufferCopy copyRegion{};
+	copyRegion.srcOffset = 0; // Optional
+	copyRegion.dstOffset = 0; // Optional
+	copyRegion.size = size;
+	vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+
+	endSingleTimeCommands(commandBuffer);
+}
+
+// create multiple command buffers
+void BufferManager::createCommandBuffers(std::vector<VkCommandBuffer>& commandBuffers)
+{
+	commandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+
+	VkCommandBufferAllocateInfo allocInfo{};
+	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+	allocInfo.commandPool = vkInit.commandPool;
+	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+	allocInfo.commandBufferCount = (uint32_t)commandBuffers.size();
+
+	if (vkAllocateCommandBuffers(vkInit.device, &allocInfo, commandBuffers.data()) != VK_SUCCESS) {
+		throw std::runtime_error("failed to allocate command buffers!");
+	}
+}
+
+void BufferManager::createDescriptorSets(std::vector<Model>& models, size_t swapchainImageCount)
+{
+	for (Model& model : models) {
+		createDescriptorSets(model, swapchainImageCount);
+	}
+}
+void BufferManager::createDescriptorSets(Model& model, size_t swapchainImageCount)
+{
+	for (Mesh& mesh : model.meshes) {
+		createDescriptorSets(mesh, swapchainImageCount);
+	}
+}
+void BufferManager::createDescriptorSets(Mesh& mesh, size_t swapchainImageCount)
+{
+	for (size_t frameIndex = 0; frameIndex < swapchainImageCount; ++frameIndex) {
+		if (mesh.descriptorSets[frameIndex] == VK_NULL_HANDLE) {
+			createDescriptorSet(mesh.descriptorSets[frameIndex]);
+		}
+	}
+}
+void BufferManager::createDescriptorSet(VkDescriptorSet& descriptorSet)
+{
+	VkDescriptorSetAllocateInfo allocInfo{};
+	allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+	allocInfo.descriptorPool = vkInit.descriptorPool;  // Make sure you have a valid descriptor pool
+	allocInfo.descriptorSetCount = 1;
+	allocInfo.pSetLayouts = &vkInit.descriptorSetLayout;  // Ensure the layout matches shader buffer binding requirements
+
+	if (vkAllocateDescriptorSets(vkInit.device, &allocInfo, &descriptorSet) != VK_SUCCESS) {
+		throw std::runtime_error("Failed to allocate descriptor set!");
 	}
 }

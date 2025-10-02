@@ -15,6 +15,8 @@ struct TerrainData
     float gridSize;
     float scale;
     float height;
+    Texture& terrainTexture;
+    float metricTextureSize;
 };
 
 class TerrainGenerator
@@ -35,7 +37,7 @@ public:
     void generateTerrain(
         float startX, float startY, float startZ,
         const TerrainData& terrainData,
-        std::vector<Model>& models, Texture& terrainTexture, float metricTextureSize,
+        std::vector<Model>& models,
         size_t seed
     );
 

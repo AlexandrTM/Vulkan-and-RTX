@@ -1,5 +1,4 @@
-#ifndef DUNGEON_CORE_H
-#define DUNGEON_CORE_H
+#pragma once
 
 enum class RoomConnectionMask : uint32_t
 {
@@ -43,5 +42,3 @@ inline RoomConnectionMask oppositeDirection(RoomConnectionMask dir) {
     default: return RoomConnectionMask::NONE;
     }
 }
-
-#endif // !DUNGEON_CORE_H

@@ -1,8 +1,6 @@
+#pragma once
+
 #include "pch.h"
-
-#ifndef CHARACTER_H
-#define CHARACTER_H
-
 #include "Camera.h"
 #include "CollisionManager.h"
 #include "InteractableVolume.h"
@@ -71,5 +69,3 @@ public:
 	InteractableVolume* isInteracting = nullptr;
 	// ========================================
 };
-
-#endif // !CHARACTER_H

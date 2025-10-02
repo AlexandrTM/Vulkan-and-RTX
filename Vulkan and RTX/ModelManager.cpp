@@ -366,7 +366,7 @@ Material ModelManager::processMaterial(aiMaterial* aiMat, const aiScene* scene)
 
 	return material;
 }
-static void processAnimations(const aiScene* scene, Model& model) {
+void ModelManager::processAnimations(const aiScene* scene, Model& model) {
 	if (scene->HasAnimations()) {
 		std::cout << "scene: " << scene->mName.C_Str() <<
 			" has animations: " << scene->mNumAnimations << "\n";
@@ -421,7 +421,7 @@ static void processAnimations(const aiScene* scene, Model& model) {
 	}
 }
 
-static aiNode* findNode(aiNode* rootNode, const std::string& name) {
+aiNode* ModelManager::findNode(aiNode* rootNode, const std::string& name) {
 	if (name == rootNode->mName.C_Str()) {
 		return rootNode;
 	}
@@ -433,7 +433,7 @@ static aiNode* findNode(aiNode* rootNode, const std::string& name) {
 	}
 	return nullptr;
 }
-static void processBones(aiMesh* mesh, const aiScene* scene, Mesh& processedMesh)
+void ModelManager::processBones(aiMesh* mesh, const aiScene* scene, Mesh& processedMesh)
 {
 	std::vector<uint32_t> boneCount(mesh->mNumVertices, 0);
 	for (size_t i = 0; i < mesh->mNumBones; i++) {
@@ -491,7 +491,7 @@ static void processBones(aiMesh* mesh, const aiScene* scene, Mesh& processedMesh
 	}
 }
 
-static Mesh processMesh(
+Mesh ModelManager::processMesh(
 	aiMesh* mesh,
 	Model& parentModel,
 	glm::mat4 globalTransform,

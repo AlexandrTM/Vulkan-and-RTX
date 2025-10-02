@@ -36,13 +36,13 @@ std::vector<std::vector<float>> TerrainGenerator::generateDiamondHeightMap(
 void TerrainGenerator::generateTerrain(
     float startX, float startY, float startZ,
     const TerrainData& terrainData,
-    std::vector<Model>& models, Texture& terrainTexture, float metricTextureSize,
+    std::vector<Model>& models,
     size_t seed // not used
 ) {
     Model model{};
 
     Material material{};
-    material.diffuseTexture = terrainTexture;
+    material.diffuseTexture = terrainData.terrainTexture;
 
     for (size_t chunkX = 0; chunkX < terrainData.chunkRows; ++chunkX) {
         for (size_t chunkZ = 0; chunkZ < terrainData.chunkCols; ++chunkZ) {
@@ -65,7 +65,7 @@ void TerrainGenerator::generateTerrain(
 
             createTerrainMesh(
                 chunkOffset,
-                heightmap, terrainData.gridSize, mesh, metricTextureSize
+                heightmap, terrainData.gridSize, mesh, terrainData.metricTextureSize
             );
 
             mesh.material = material;

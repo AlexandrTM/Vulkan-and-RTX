@@ -73,6 +73,8 @@ enum class GameState : uint32_t
 	PAUSED,
 	IN_GAME_TESTING, // for testing purposes only
 
+	WORLD_EXPLORATION,
+
 	ENTERING_DUNGEON,
 	DUNGEON_EXPLORATION,
 	DUNGEON_ROOM_CLEANED,
