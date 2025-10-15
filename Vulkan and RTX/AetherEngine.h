@@ -24,6 +24,7 @@
 #include "Vertex.h"
 #include "Dungeon.h"
 #include "Equations.h"
+#include "Market.h"
 
 class AetherEngine : public QObject {
 	Q_OBJECT

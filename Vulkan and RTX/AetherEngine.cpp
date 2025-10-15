@@ -19,7 +19,7 @@ void AetherEngine::run()
 	}*/
 
 	//Equations::debugEquations(1000, 1.0);
-	Equations::simulateMarket(1000, 60);
+	Market::simulateMarket(1000, 60);
 
 	/*prepareUI();
 	vkInit.initializeVulkan(&qVulkanInstance);

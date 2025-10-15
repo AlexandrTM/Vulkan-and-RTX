@@ -165,6 +165,9 @@
     <ClCompile Include="ModelPrimitives.cpp">
       <Filter>source\engine</Filter>
     </ClCompile>
+    <ClCompile Include="Market.cpp">
+      <Filter>source\procedural</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="pch.h">
@@ -265,6 +268,9 @@
     </ClInclude>
     <ClInclude Include="ModelPrimitives.h">
       <Filter>source\engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Market.h">
+      <Filter>source\procedural</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

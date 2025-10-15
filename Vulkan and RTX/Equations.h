@@ -40,7 +40,4 @@ namespace Equations
 		double tolerance = 1e-3, 
 		size_t maxIterations = 100
 	);
-
-	void simulateMarket(size_t traders, size_t months);
 }
-

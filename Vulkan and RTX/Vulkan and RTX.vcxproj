@@ -206,6 +206,7 @@
     <ClCompile Include="Item.cpp" />
     <ClCompile Include="MainWindow.cpp" />
     <ClCompile Include="managers_instance.cpp" />
+    <ClCompile Include="Market.cpp" />
     <ClCompile Include="Mob.cpp" />
     <ClCompile Include="Model.cpp" />
     <ClCompile Include="ModelPrimitives.cpp" />
@@ -260,6 +261,7 @@
     <QtMoc Include="MainMenuSlotHandler.h" />
     <ClInclude Include="Managers.h" />
     <ClInclude Include="managers_instance.h" />
+    <ClInclude Include="Market.h" />
     <ClInclude Include="Mob.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="ModelManager.h" />
