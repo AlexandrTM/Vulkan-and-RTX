@@ -33,53 +33,75 @@ void Market::simulateMarket(size_t tradersCount, size_t months)
 
 void Market::simulateOrderBook(std::vector<Trader>& traders, size_t steps)
 {
-	std::vector<MarketOrder> marketOrders;
-	marketOrders.reserve(traders.size());
-
 	const double sigma = 0.05; // volatility
 	std::normal_distribution<double> dist(0.0, sigma);
 
+	// clear previous orders
+	for (auto& t : traders) {
+		t.orders.clear();
+	}
+
 	// traders submit random buy/sell orders
-	for (size_t i = 0; i < traders.size(); ++i) {
+	for (auto& t : traders) {
 		bool isBuy = randomInt(0, 1);
 		double basePrice = 100.0;
 		double price = basePrice * (1.0 + dist(generator_32) * 0.1);  // ±10% fluctuation
-		double quantity = std::min(traders[i].wealth / basePrice, static_cast<double>(randomReal(0.1, 1.0)));
-		marketOrders.push_back({ i, price, quantity, isBuy });
+		double quantity = std::min(t.wealth / basePrice, static_cast<double>(randomReal(0.1, 1.0)));
+		t.orders.push_back({ price, quantity, isBuy });
 	}
 
 	// sort order book
-	std::vector<MarketOrder> bids, asks;
-	for (auto& o : marketOrders) {
-		(o.isBuy ? bids : asks).push_back(o);
+	std::vector<std::pair<size_t, MarketOrder>> bids, asks;
+	for (size_t i = 0; i < traders.size(); ++i) {
+		for (auto& o : traders[i].orders) {
+			(o.isBuy ? bids : asks).emplace_back(i, o);
+		}
 	}
 
-	std::sort(bids.begin(), bids.end(), [](auto& a, auto& b) { return a.price > b.price; });
-	std::sort(asks.begin(), asks.end(), [](auto& a, auto& b) { return a.price < b.price; });
+	std::sort(bids.begin(), bids.end(), [](auto& a, auto& b) { return a.second.price > b.second.price; });
+	std::sort(asks.begin(), asks.end(), [](auto& a, auto& b) { return a.second.price < b.second.price; });
 
 	// match orders
 	size_t i = 0, j = 0;
 	while (i < bids.size() && j < asks.size()) {
-		if (bids[i].price >= asks[j].price) {
-			double tradePrice = 0.5 * (bids[i].price + asks[j].price);
-			double tradeQty = std::min(bids[i].quantity, asks[j].quantity);
+		MarketOrder& bidOrder = bids[i].second;
+		MarketOrder& askOrder = asks[j].second;
+		if (bidOrder.price >= askOrder.price) {
+			double tradePrice = 0.5 * (bidOrder.price + askOrder.price);
+			double tradeQty = std::min(bidOrder.quantity, askOrder.quantity);
 			double tradeValue = tradePrice * tradeQty;
 
 			// friction (e.g., transaction fee)
 			//double fee = tradeValue * 0.001;
 			double fee = 0.0;
 
-			traders[bids[i].traderId].wealth -= tradeValue + fee;
-			traders[asks[j].traderId].wealth += tradeValue - fee;
+			traders[bids[i].first].wealth -= tradeValue + fee;
+			traders[asks[j].first].wealth += tradeValue - fee;
 
-			bids[i].quantity -= tradeQty;
-			asks[j].quantity -= tradeQty;
+			bidOrder.quantity -= tradeQty;
+			askOrder.quantity -= tradeQty;
 
-			if (bids[i].quantity <= 1e-5) ++i;
-			if (asks[j].quantity <= 1e-5) ++j;
+			if (bidOrder.quantity <= 1e-5) {
+				bidOrder.isMatched = true;
+				++i;
+			} 
+			if (askOrder.quantity <= 1e-5) {
+				askOrder.isMatched = true;
+				++j;
+			}
 		}
 		else break;
 	}
+
+	getOrderBook(bids, asks);
+	
+	//for (auto& t : traders) {
+	//	t.orders.erase(
+	//		std::remove_if(t.orders.begin(), t.orders.end(),
+	//			[](const MarketOrder& o) { return o.isMatched; }),
+	//		t.orders.end()
+	//	);
+	//}
 }
 
 void Market::findMarketStats(std::vector<Trader>& traders, size_t months)
@@ -125,4 +147,47 @@ void Market::findMarketStats(std::vector<Trader>& traders, size_t months)
 		std::cout << std::setw(3) << 100 - p << "% : " << std::fixed << std::setprecision(3)
 			<< traders[idx].wealth << "\n";
 	}
+}
+
+void Market::getOrderBook(Orders bids, Orders asks)
+{
+	const size_t N = 30;
+	std::cout << std::fixed << std::setprecision(3);
+
+	// Sort bids descending, asks ascending
+	std::sort(bids.begin(), bids.end(), [](auto& a, auto& b) { return a.second.price > b.second.price; });
+	std::sort(asks.begin(), asks.end(), [](auto& a, auto& b) { return a.second.price > b.second.price; });
+
+	Orders topAsks;
+
+	// collect last N unmatched asks
+	for (auto it = asks.rbegin(); it != asks.rend() && topAsks.size() < N; ++it) {
+		if (!it->second.isMatched) {
+			topAsks.push_back(*it);
+		}
+	}
+
+	// print them in descending order (highest price first)
+	std::reverse(topAsks.begin(), topAsks.end());
+
+	for (auto& entry : topAsks) {
+		const auto& order = entry.second;
+		std::cout << "ASK | Trader " << std::setw(3) << entry.first
+			<< " | Price: " << std::setw(8) << order.price
+			<< " | Qty: " << std::setw(8) << order.quantity << "\n";
+	}
+
+	// Print bids first (highest price at top)
+	size_t count = 0;
+	for (auto& entry : bids) {
+		const auto& order = entry.second;
+		if (!order.isMatched) {
+			std::cout << "BID | Trader " << std::setw(3) << entry.first
+				<< " | Price: " << std::setw(8) << order.price
+				<< " | Qty: " << std::setw(8) << order.quantity << "\n";
+			if (++count >= N) break;
+		}
+	}
+
+	std::cout << "\n";
 }
