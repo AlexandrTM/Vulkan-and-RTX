@@ -91,8 +91,8 @@ vec3 getSunColor(vec3 direction, vec3 sunDirection) {
     float t = direction.y * 0.5 + 0.5; // Map y from [-1, 1] to [0, 1]
     
     // Gradient from horizon to zenith
-    vec3 zenithColor = vec3(0.2, 0.5, 0.8); // Blueish color at the zenith
-    vec3 horizonColor = vec3(0.8, 0.5, 0.2); // Orange color at the horizon
+    vec3 zenithColor = vec3(0.5, 0.6, 0.8); // Blueish color at the zenith
+    vec3 horizonColor = vec3(0.8, 0.6, 0.5); // Orange color at the horizon
     vec3 baseColor = mix(horizonColor, zenithColor, t);
     
     // Atmospheric scattering

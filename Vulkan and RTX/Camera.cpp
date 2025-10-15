@@ -3,7 +3,7 @@
 
 Camera::Camera() 
 {
-	_position = glm::vec3(0.0f, 0.0f, 0.0f);
+	_position = glm::vec3(0.0f, 5.0f, 0.0f);
 	//_lookAt = _position + glm::vec3(1.0f, 0.0f, 0.0f);
 	//_cameraDirection = glm::normalize(_lookAt - _position);
 	_verticalWorldAxis = glm::vec3(0.0f, 1.0f, 0.0f);
@@ -16,11 +16,11 @@ Camera::Camera()
 	_lastYScreenPosition = _viewportHeight / 2;
 
 	_yaw = 0.0;
-	_pitch = -50.0;
+	_pitch = -10.0; // -50.0
 	_roll = 0.0;
 
 	_targetYaw = 0.0;
-	_targetPitch = -50.0;
+	_targetPitch = -10.0; // -50.0
 	_targetRoll = 0.0;
 
 	glm::vec3 front{};
@@ -137,6 +137,7 @@ void Camera::interpolateRotation(double lerpFactor) {
 	front.z = sin(glm::radians(_yaw)) * cos(glm::radians(_pitch));
 	_lookAt = _position + glm::normalize(front);
 	_cameraDirection = glm::normalize(front);
+	//std::cout << "_cameraDirection: " << glm::to_string(_cameraDirection) << "\n";
 }
 
 void Camera::addRotationDelta(double dx, double dy) {

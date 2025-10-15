@@ -1,7 +1,7 @@
-#include "pch.h"
-
 #ifndef VERTEX_H
 #define VERTEX_H
+
+#include "pch.h"
 
 struct Vertex {
 	alignas(16) glm::vec3 position;

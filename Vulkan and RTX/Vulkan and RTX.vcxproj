@@ -137,7 +137,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>GeneratedFiles\$(ConfigurationName);GeneratedFiles;O:\SDKforeverything\tinyobjloader-master;O:\SDKforeverything\stb-master;O:\SDKforeverything\VulkanSDK\Include;O:\SDKforeverything\glm-master\glm;O:\SDKforeverything\glfw-3.3.8\include;O:\SDKforeverything\tinygltf-2.8.18;O:\SDKforeverything\boost_1_85_0;O:\SDKforeverything\assimp\include;O:\SDKforeverything\meshoptimizer\src;O:\SDKforeverything\NoesisGUI\Include;O:\SDKforeverything\Qt\6.8.1\msvc2022_64\include;O:\SDKforeverything\solap position algorithm;O:\SDKforeverything\VulkanMemoryAllocator\include;O:\SDKforeverything\exprtk</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>GeneratedFiles\$(ConfigurationName);GeneratedFiles;O:\SDKforeverything\tinyobjloader-master;O:\SDKforeverything\stb-master;O:\SDKforeverything\VulkanSDK\Include;O:\SDKforeverything\glm-master\glm;O:\SDKforeverything\glfw-3.3.8\include;O:\SDKforeverything\tinygltf-2.8.18;O:\SDKforeverything\boost_1_85_0;O:\SDKforeverything\assimp\include;O:\SDKforeverything\meshoptimizer\src;O:\SDKforeverything\Qt\6.8.1\msvc2022_64\include;O:\SDKforeverything\solap position algorithm;O:\SDKforeverything\VulkanMemoryAllocator\include;O:\SDKforeverything\exprtk</AdditionalIncludeDirectories>
       <Optimization>Disabled</Optimization>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
@@ -152,8 +152,8 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;windows_x86_64\NoesisApp.lib;windows_x86_64\Noesis.lib;Qt6Cored.lib;Qt6Guid.lib;Qt6Widgetsd.lib;Qt6Qmld.lib;Qt6QuickWidgetsd.lib;Qt6Quickd.lib;Qt6QuickControls2d.lib;Qt6OpenGLd.lib;opengl32.lib;Debug\assimp-vc143-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>O:\SDKforeverything\VulkanSDK\Lib;O:\SDKforeverything\glfw-3.3.8\lib-vc2019;O:\SDKforeverything\boost_1_85_0\stage\lib;O:\SDKforeverything\assimp\lib;O:\SDKforeverything\meshoptimizer\Debug;O:\SDKforeverything\NoesisGUI\Lib;O:\SDKforeverything\Qt\6.8.1\msvc2022_64\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;Qt6Cored.lib;Qt6Guid.lib;Qt6Widgetsd.lib;Qt6Qmld.lib;Qt6QuickWidgetsd.lib;Qt6Quickd.lib;Qt6QuickControls2d.lib;Qt6OpenGLd.lib;opengl32.lib;Debug\assimp-vc143-mtd.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>O:\SDKforeverything\VulkanSDK\Lib;O:\SDKforeverything\glfw-3.3.8\lib-vc2019;O:\SDKforeverything\boost_1_85_0\stage\lib;O:\SDKforeverything\assimp\lib;O:\SDKforeverything\meshoptimizer\Debug;O:\SDKforeverything\Qt\6.8.1\msvc2022_64\lib</AdditionalLibraryDirectories>
       <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
     </Link>
   </ItemDefinitionGroup>
@@ -165,7 +165,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>GeneratedFiles\$(ConfigurationName);GeneratedFiles;O:\SDKforeverything\tinyobjloader-master;O:\SDKforeverything\stb-master;O:\SDKforeverything\VulkanSDK\Include;O:\SDKforeverything\glm-master\glm;O:\SDKforeverything\glfw-3.3.8\include;O:\SDKforeverything\tinygltf-2.8.18;O:\SDKforeverything\boost_1_85_0;O:\SDKforeverything\assimp\include;O:\SDKforeverything\meshoptimizer\src;O:\SDKforeverything\NoesisGUI\Include;O:\SDKforeverything\Qt\6.8.1\msvc2022_64\include;O:\SDKforeverything\solap position algorithm;O:\SDKforeverything\VulkanMemoryAllocator\include;O:\SDKforeverything\exprtk</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>GeneratedFiles\$(ConfigurationName);GeneratedFiles;O:\SDKforeverything\tinyobjloader-master;O:\SDKforeverything\stb-master;O:\SDKforeverything\VulkanSDK\Include;O:\SDKforeverything\glm-master\glm;O:\SDKforeverything\glfw-3.3.8\include;O:\SDKforeverything\tinygltf-2.8.18;O:\SDKforeverything\boost_1_85_0;O:\SDKforeverything\assimp\include;O:\SDKforeverything\meshoptimizer\src;O:\SDKforeverything\Qt\6.8.1\msvc2022_64\include;O:\SDKforeverything\solap position algorithm;O:\SDKforeverything\VulkanMemoryAllocator\include;O:\SDKforeverything\exprtk</AdditionalIncludeDirectories>
       <Optimization>MaxSpeed</Optimization>
       <FavorSizeOrSpeed>Speed</FavorSizeOrSpeed>
       <LanguageStandard>stdcpp20</LanguageStandard>
@@ -180,8 +180,8 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>O:\SDKforeverything\VulkanSDK\Lib;O:\SDKforeverything\glfw-3.3.8\lib-vc2019;O:\SDKforeverything\boost_1_85_0\stage\lib;O:\SDKforeverything\assimp\lib;O:\SDKforeverything\meshoptimizer\Release;O:\SDKforeverything\NoesisGUI\Lib;O:\SDKforeverything\Qt\6.8.1\msvc2022_64\lib</AdditionalLibraryDirectories>
-      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;windows_x86_64\NoesisApp.lib;windows_x86_64\Noesis.lib;Qt6Core.lib;Qt6Gui.lib;Qt6Widgets.lib;Qt6Qml.lib;Qt6QuickWidgets.lib;Qt6Quick.lib;Qt6QuickControls2.lib;Qt6OpenGL.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;opengl32.lib;Release\assimp-vc143-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>O:\SDKforeverything\VulkanSDK\Lib;O:\SDKforeverything\glfw-3.3.8\lib-vc2019;O:\SDKforeverything\boost_1_85_0\stage\lib;O:\SDKforeverything\assimp\lib;O:\SDKforeverything\meshoptimizer\Release;O:\SDKforeverything\Qt\6.8.1\msvc2022_64\lib</AdditionalLibraryDirectories>
+      <AdditionalDependencies>vulkan-1.lib;glfw3.lib;Qt6Core.lib;Qt6Gui.lib;Qt6Widgets.lib;Qt6Qml.lib;Qt6QuickWidgets.lib;Qt6Quick.lib;Qt6QuickControls2.lib;Qt6OpenGL.lib;kernel32.lib;user32.lib;gdi32.lib;winspool.lib;comdlg32.lib;advapi32.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;odbc32.lib;odbccp32.lib;opengl32.lib;Release\assimp-vc143-mt.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
     </Link>
   </ItemDefinitionGroup>

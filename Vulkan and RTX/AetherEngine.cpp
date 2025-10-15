@@ -19,12 +19,13 @@ void AetherEngine::run()
 	}*/
 
 	//Equations::debugEquations(1000, 1.0);
+	Equations::simulateMarket(1000, 60);
 
-	prepareUI();
+	/*prepareUI();
 	vkInit.initializeVulkan(&qVulkanInstance);
 	prepareResources();
 	mainLoop();
-	cleanupMemory();
+	cleanupMemory();*/
 }
 
 void AetherEngine::prepareUI() 
@@ -66,7 +67,7 @@ void AetherEngine::prepareResources()
 		8.0f,     // gridSize
 		0.1f,     // scale
 		0.0f,     // height
-		floor_background, // terrain texture
+		floor_background_2, // terrain texture
 		8.0f      // metric texture size
 	};
 	terrainGenerator = std::make_unique<TerrainGenerator>();
@@ -606,8 +607,7 @@ void AetherEngine::mainLoop()
 
 			gameContext.requestedGameState = GameState::DUNGEON_EXPLORATION;
 		}
-		if (gameContext.currentGameState == GameState::PLAYER_DEAD) {
-			character.health = character.maxHealth;
+		if (gameContext.currentGameState == GameState::ENTERING_DUNGEON) {
 
 			gameContext.currentFloor = 0;
 			recreateDungeonFloor(gameContext.currentFloor, 1);
@@ -615,6 +615,12 @@ void AetherEngine::mainLoop()
 
 			gameContext.requestedGameState = GameState::DUNGEON_EXPLORATION;
 		}
+		if (gameContext.currentGameState == GameState::PLAYER_DEAD) {
+			character.health = character.maxHealth;
+
+			gameContext.requestedGameState = GameState::ENTERING_DUNGEON;
+		}
+
 		if (gameContext.currentGameState == GameState::MAIN_MENU					 ||
 			gameContext.currentGameState == GameState::SETTINGS_MENU				 ||
 			gameContext.currentGameState == GameState::DUNGEON_EXPLORATION			 ||

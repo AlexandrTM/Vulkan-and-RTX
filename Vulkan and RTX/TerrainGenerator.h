@@ -1,8 +1,7 @@
-#include "pch.h"
-
 #ifndef TERRAIN_GENERATOR
 #define TERRAIN_GENERATOR
 
+#include "pch.h"
 #include "Model.h"
 #include "aether_core.h"
 
