@@ -5,23 +5,24 @@ void Market::simulateMarket(size_t tradersCount, size_t months)
 {
 	// set traders data
 	const double startWealth = 100.0;
+	double currentPrice = 100.0; // initial price
+
 	std::vector<Trader> traders(tradersCount);
 	for (auto& t : traders) {
 		t.wealth = startWealth;
-		t.skill = randomReal(-0.005, 0.005);
+		t.skill = randomReal(-0.0025, 0.0025);
+		t.positionLimit = randomReal(0.01, 1.0);
 	}
-	
-	const double redistribution = 0.01;
-	for (size_t m = 0; m < months; ++m) {
-		simulateOrderBook(traders, 1);
 
-		// redistribute wealth
+	for (size_t m = 0; m < months; ++m) {
+		simulateOrderBook(traders, currentPrice);
+
+		redistributeWealth(traders);
+
 		double totalWealth = 0.0;
 		for (auto& t : traders) totalWealth += t.wealth;
-		double meanWealth = totalWealth / tradersCount;
-		for (auto& t : traders) {
-			t.wealth = (1.0 - redistribution) * t.wealth + redistribution * meanWealth;
-		}
+		double wealthScalingFactor = totalWealth / (startWealth * tradersCount);
+		for (auto& t : traders) t.wealth /= wealthScalingFactor;
 	}
 
 	std::sort(traders.begin(), traders.end(), 
@@ -31,9 +32,9 @@ void Market::simulateMarket(size_t tradersCount, size_t months)
 	findMarketStats(traders, months);
 }
 
-void Market::simulateOrderBook(std::vector<Trader>& traders, size_t steps)
+void Market::simulateOrderBook(std::vector<Trader>& traders, double& currentPrice)
 {
-	const double sigma = 0.05; // volatility
+	const double sigma = 0.15; // volatility
 	std::normal_distribution<double> dist(0.0, sigma);
 
 	// clear previous orders
@@ -44,9 +45,10 @@ void Market::simulateOrderBook(std::vector<Trader>& traders, size_t steps)
 	// traders submit random buy/sell orders
 	for (auto& t : traders) {
 		bool isBuy = randomInt(0, 1);
-		double basePrice = 100.0;
-		double price = basePrice * (1.0 + dist(generator_32) * 0.1);  // ±10% fluctuation
-		double quantity = std::min(t.wealth / basePrice, static_cast<double>(randomReal(0.1, 1.0)));
+		double priceFluctuation = dist(generator_32);
+		double price = currentPrice * (1.0 + priceFluctuation + t.skill);
+		double maxAffordableQuantity = t.wealth / currentPrice;
+		double quantity = maxAffordableQuantity * randomReal(0.01, t.positionLimit);
 		t.orders.push_back({ price, quantity, isBuy });
 	}
 
@@ -63,13 +65,19 @@ void Market::simulateOrderBook(std::vector<Trader>& traders, size_t steps)
 
 	// match orders
 	size_t i = 0, j = 0;
+	double totalValue = 0.0, totalQty = 0.0;
 	while (i < bids.size() && j < asks.size()) {
 		MarketOrder& bidOrder = bids[i].second;
 		MarketOrder& askOrder = asks[j].second;
 		if (bidOrder.price >= askOrder.price) {
 			double tradePrice = 0.5 * (bidOrder.price + askOrder.price);
+			//currentPrice = tradePrice; // last traded price
+			//std::cout << currentPrice << "\n";
 			double tradeQty = std::min(bidOrder.quantity, askOrder.quantity);
 			double tradeValue = tradePrice * tradeQty;
+
+			totalValue += tradeValue;
+			totalQty += tradeQty;
 
 			// friction (e.g., transaction fee)
 			//double fee = tradeValue * 0.001;
@@ -92,8 +100,12 @@ void Market::simulateOrderBook(std::vector<Trader>& traders, size_t steps)
 		}
 		else break;
 	}
+	if (totalQty > 0) {
+		currentPrice = totalValue / totalQty;
+		//std::cout << totalValue / totalQty << "\n";
+	}
 
-	getOrderBook(bids, asks);
+	//getOrderBook(bids, asks, 10);
 	
 	//for (auto& t : traders) {
 	//	t.orders.erase(
@@ -102,6 +114,25 @@ void Market::simulateOrderBook(std::vector<Trader>& traders, size_t steps)
 	//		t.orders.end()
 	//	);
 	//}
+}
+
+void Market::redistributeWealth(std::vector<Trader>& traders)
+{
+	static const double baseRedistribution = 0.0035;
+
+	double totalWealth = 0.0;
+	for (auto& t : traders) totalWealth += t.wealth;
+	double meanWealth = totalWealth / traders.size();
+
+	for (auto& t : traders) {
+		double redistributionRate = baseRedistribution;
+		if (t.wealth >= 10.0 * meanWealth) {
+			// For very wealthy traders, apply a stronger redistribution
+			redistributionRate = baseRedistribution + 0.00005 * std::pow(log10(t.wealth / meanWealth), 10);
+		}
+
+		t.wealth = (1.0 - redistributionRate) * t.wealth + redistributionRate * meanWealth;
+	}
 }
 
 void Market::findMarketStats(std::vector<Trader>& traders, size_t months)
@@ -149,26 +180,22 @@ void Market::findMarketStats(std::vector<Trader>& traders, size_t months)
 	}
 }
 
-void Market::getOrderBook(Orders bids, Orders asks)
+void Market::getOrderBook(Orders bids, Orders asks, size_t N)
 {
-	const size_t N = 30;
-	std::cout << std::fixed << std::setprecision(3);
-
-	// Sort bids descending, asks ascending
-	std::sort(bids.begin(), bids.end(), [](auto& a, auto& b) { return a.second.price > b.second.price; });
-	std::sort(asks.begin(), asks.end(), [](auto& a, auto& b) { return a.second.price > b.second.price; });
-
 	Orders topAsks;
 
 	// collect last N unmatched asks
-	for (auto it = asks.rbegin(); it != asks.rend() && topAsks.size() < N; ++it) {
+	for (auto it = asks.begin(); it != asks.end(); ++it) {
 		if (!it->second.isMatched) {
 			topAsks.push_back(*it);
+			if (N > 0 && topAsks.size() >= N) break;
 		}
 	}
 
 	// print them in descending order (highest price first)
 	std::reverse(topAsks.begin(), topAsks.end());
+
+	std::cout << std::fixed << std::setprecision(3);
 
 	for (auto& entry : topAsks) {
 		const auto& order = entry.second;
@@ -185,7 +212,7 @@ void Market::getOrderBook(Orders bids, Orders asks)
 			std::cout << "BID | Trader " << std::setw(3) << entry.first
 				<< " | Price: " << std::setw(8) << order.price
 				<< " | Qty: " << std::setw(8) << order.quantity << "\n";
-			if (++count >= N) break;
+			if (N > 0 && ++count >= N) break;
 		}
 	}
 

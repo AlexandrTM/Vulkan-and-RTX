@@ -12,16 +12,17 @@ struct Trader
 {
 	double wealth;
 	double skill;
-
+	double positionLimit;
 	std::vector<MarketOrder> orders;
 };
 
 namespace Market
 {
 	void simulateMarket(size_t tradersCount, size_t months);
-	void simulateOrderBook(std::vector<Trader>& traders, size_t steps);
+	void simulateOrderBook(std::vector<Trader>& traders, double& currentPrice);
+	void redistributeWealth(std::vector<Trader>& traders);
 	void findMarketStats(std::vector<Trader>& traders, size_t months);
 	using Orders = std::vector<std::pair<size_t, MarketOrder>>;
-	void getOrderBook(Orders bids, Orders asks);
+	void getOrderBook(Orders bids, Orders asks, size_t N = 0);
 }
 
