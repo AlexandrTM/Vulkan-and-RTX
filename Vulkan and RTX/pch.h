@@ -27,6 +27,9 @@
 #include <gtx/hash.hpp>
 #include <gtx/string_cast.hpp>
 
+#define NOMINMAX
+#include <matplot/matplot.h>
+
 #include "aether_core.h"
 #include "dungeon_core.h"
 
