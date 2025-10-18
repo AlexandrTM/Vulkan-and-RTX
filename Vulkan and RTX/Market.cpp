@@ -1,28 +1,38 @@
 #include "pch.h"
 #include "Market.h"
 
-void Market::simulateMarket()
+void Market::simulateMarket(bool draw)
 {
-	//matplot::figure();
-	//matplot::hold(true);
+	if (draw) {
+		matplot::figure();
+		matplot::hold(true);
+	}
+
+	Security security{};
+	security.id = 0;
+	security.price = 100.0;
+	security.lotStep = 0.01;
+	security.priceStep = 0.05;
 
 	std::vector<double> priceHistory;
 	for (size_t i = 0; i < 1; ++i) {
-		priceHistory = Market::simulateSecurity(5000, 1000);
+		priceHistory = Market::simulateSecurity(250, 10000, security);
 	}
 
-	//matplot::plot(priceHistory);
-	//matplot::title("Price over Time");
-	//matplot::xlabel("Month");
-	//matplot::ylabel("Price");
-	//matplot::show();
+	if (draw) {
+		matplot::plot(priceHistory);
+		matplot::title("Price over Time");
+		matplot::xlabel("Month");
+		matplot::ylabel("Price");
+		matplot::show();
+	}
 }
 
-std::vector<double> Market::simulateSecurity(size_t tradersCount, size_t months)
+std::vector<double> Market::simulateSecurity(size_t tradersCount, size_t months, Security& security)
 {
 	const double startWealth = 100.0;
-	const double basePrice = 100.0;
-	double currentPrice = 100.0;
+	const double basePrice = security.price;
+	double currentPrice = basePrice;
 	std::vector<double> priceHistory;
 
 	const double startHoldings = startWealth / basePrice;
@@ -37,7 +47,7 @@ std::vector<double> Market::simulateSecurity(size_t tradersCount, size_t months)
 
 	priceHistory.push_back(currentPrice);
 	for (size_t m = 0; m < months; ++m) {
-		simulateOrderBook(traders, basePrice, currentPrice, priceHistory);
+		simulateOrderBook(traders, security, basePrice, priceHistory);
 
 		redistributeWealth(traders);
 
@@ -57,38 +67,41 @@ std::vector<double> Market::simulateSecurity(size_t tradersCount, size_t months)
 }
 void Market::simulateOrderBook(
 	std::vector<Trader>& traders,
+	Security& security,
 	const double& basePrice,
-	double& currentPrice,
 	std::vector<double>& priceHistory
 )
 {
 	static const double sigma = 0.1; // volatility
+	static const double mu = 0.0063; // expected return (drift)
+	static const double dt = 1.0; // time step
 	//static std::normal_distribution<double> dist(0.0, sigma);
-	static std::normal_distribution<double> dist(0.0, sigma);
+	static std::normal_distribution<double> dist(0.0, 1.0);
 
 	// clear previous orders
 	for (auto& t : traders) {
 		t.orders.clear();
 	}
 
-	// traders submit random buy/sell orders
 	for (auto& t : traders) {
 		bool isBuy = randomInt(0, 1);
 		//double priceFluctuation = std::tanh(dist(generator_32)) + 1;
-		//double priceFluctuation = std::exp(dist(generator_32));
-		double priceFluctuation = std::exp(dist(generator_32) - 0.5 * sigma * sigma);
+		//double priceFluctuation = std::exp(dist(generator_32) - 0.5 * sigma * sigma);
 		//double priceFluctuation = dist(generator_32) * basePrice;
-		//std::cout << priceFluctuation << "\n";
 		//double price = currentPrice + priceFluctuation * basePrice;
-		double price = currentPrice * priceFluctuation;
-		double maxAffordableQuantity = 0.0;
+		double Z = dist(generator_32);
+		// true GBM price step
+		double priceFluctuation = std::exp((mu - 0.5 * sigma * sigma) * dt + sigma * std::sqrt(dt) * Z);
+		double price = 
+			std::round(security.price * priceFluctuation / security.priceStep) * security.priceStep;
+		
+		double maxQuantity = 0.0;
 		if (isBuy)
-			maxAffordableQuantity = t.wealth / price;
+			maxQuantity = t.wealth / price;
 		else
-			maxAffordableQuantity = t.holdings;
-		//maxAffordableQuantity = t.wealth / price;
-		//maxAffordableQuantity = t.wealth / currentPrice;
-		double quantity = maxAffordableQuantity * randomReal(0.0, t.positionLimit);
+			maxQuantity = t.holdings;
+		double quantity = 
+			std::round(maxQuantity * randomReal(0.0, t.positionLimit) / security.lotStep) * security.lotStep;
 		t.orders.push_back({ price, quantity, isBuy });
 	}
 
@@ -112,8 +125,12 @@ void Market::simulateOrderBook(
 
 		Trader& buyer = traders[bids[i].first];
 		Trader& seller = traders[asks[j].first];
+
 		if (bidOrder.price >= askOrder.price) {
 			double tradePrice = 0.5 * (bidOrder.price + askOrder.price);
+			tradePrice = std::floor(tradePrice / security.priceStep) * security.priceStep;
+			//std::cout << std::floor(tradePrice / security.priceStep) * security.priceStep << "\n";
+			//std::cout << std::round(tradePrice / security.priceStep) * security.priceStep << "\n";
 			//currentPrice = tradePrice; // last traded price
 			//std::cout << currentPrice << "\n";
 			//priceHistory.push_back(tradePrice);
@@ -148,9 +165,9 @@ void Market::simulateOrderBook(
 		else break;
 	}
 	if (totalQty > 0) {
-		currentPrice = totalValue / totalQty;
+		security.price = totalValue / totalQty;
 		//currentPrice += (basePrice - currentPrice) * 0.01; // magnet to base price
-		priceHistory.push_back(currentPrice);
+		priceHistory.push_back(security.price);
 	}
 
 	//getOrderBook(bids, asks, 10);
@@ -221,8 +238,8 @@ void Market::findMarketStats(
 	double bestPercent = best / totalWealth * 100.0;
 	double endPrice = priceHistory.empty() ? 0.0 : priceHistory.back();
 
-	double investedWealth = totalHoldings * endPrice;
-	double investedPercent = (investedWealth / (totalWealth)) * 100.0;
+	double capitalization = totalHoldings * endPrice;
+	double investedPercent = (capitalization / (totalWealth)) * 100.0;
 
 	std::ostringstream oss;
 	oss << std::fixed << std::setprecision(3);
@@ -238,8 +255,8 @@ void Market::findMarketStats(
 	oss << "Top 10% share: " << (top10 / totalWealth * 100.0) << "%\n";
 	oss << "Bottom 50% share: " << (bottom50 / totalWealth * 100.0) << "%\n";
 	oss << "End price: " << endPrice << "\n";
-	oss << "Wealth invested in security: " << investedWealth
-		<< " (" << investedPercent << "% of total)\n\n";
+	oss << "Capitalization of security: " << capitalization
+		<< " (" << investedPercent << "% of wealth)\n\n";
 
 	oss << "Wealth by percentile:\n";
 	const size_t step = 5; // print every N%

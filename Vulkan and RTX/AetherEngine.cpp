@@ -20,13 +20,13 @@ void AetherEngine::run()
 
 	//Equations::debugEquations(1000, 1.0);
 
-	Market::simulateMarket();
+	//Market::simulateMarket();
 
-	/*prepareUI();
+	prepareUI();
 	vkInit.initializeVulkan(&qVulkanInstance);
 	prepareResources();
 	mainLoop();
-	cleanupMemory();*/
+	cleanupMemory();
 }
 
 void AetherEngine::prepareUI() 

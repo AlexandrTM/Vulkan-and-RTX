@@ -1,5 +1,13 @@
 #pragma once
 
+struct Security
+{
+	size_t id;
+	double price;
+	double lotStep;   // minimal tradable unit
+	double priceStep; // minimal price increment
+};
+
 struct MarketOrder
 {
 	double price;
@@ -19,12 +27,12 @@ struct Trader
 
 namespace Market
 {
-	void simulateMarket();
-	std::vector<double> simulateSecurity(size_t tradersCount, size_t months);
+	void simulateMarket(bool draw = false);
+	std::vector<double> simulateSecurity(size_t tradersCount, size_t months, Security& security);
 	void simulateOrderBook(
 		std::vector<Trader>& traders,
+		Security& security,
 		const double& basePrice,
-		double& currentPrice,
 		std::vector<double>& priceHistory
 	);
 	void redistributeWealth(std::vector<Trader>& traders);

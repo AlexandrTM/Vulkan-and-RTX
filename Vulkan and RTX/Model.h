@@ -1,8 +1,7 @@
+#pragma once
+
 #include "pch.h"
 #include "Vertex.h"
-
-#ifndef MODEL
-#define MODEL
 
 // Animation Key Types
 struct PositionKey {
@@ -158,5 +157,3 @@ struct Model {
 };
 
 void computeAABB(Mesh& mesh);
-
-#endif // !MODEL

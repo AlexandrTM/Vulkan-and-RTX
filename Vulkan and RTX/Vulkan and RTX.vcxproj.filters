@@ -5,17 +5,6 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="headers">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
-    </Filter>
-    <Filter Include="source">
-      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
-      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
-    </Filter>
-    <Filter Include="headers\precompiled">
-      <UniqueIdentifier>{8da335fb-c6d5-4390-b80c-45d9953ad136}</UniqueIdentifier>
-    </Filter>
     <Filter Include="characteristics">
       <UniqueIdentifier>{9ae7b37a-5193-48be-b7d8-2729c9900af6}</UniqueIdentifier>
     </Filter>
@@ -25,28 +14,33 @@
     <Filter Include="characteristics\secondary_chars">
       <UniqueIdentifier>{95369772-87a9-4215-974a-6a0dc710d8ac}</UniqueIdentifier>
     </Filter>
-    <Filter Include="headers\precompiled\implementation macros">
-      <UniqueIdentifier>{11f1ff4e-c158-4bc5-b19f-0398e6c2a40e}</UniqueIdentifier>
+    <Filter Include="engine">
+      <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
+      <Extensions>cpp;c;cc;cxx;c++;cppm;ixx;def;odl;idl;hpj;bat;asm;asmx</Extensions>
     </Filter>
-    <Filter Include="source\engine">
-      <UniqueIdentifier>{50fde218-f769-4b55-bca6-7e00c2973f72}</UniqueIdentifier>
-    </Filter>
-    <Filter Include="source\procedural">
+    <Filter Include="engine\procedural">
       <UniqueIdentifier>{6988ee90-9663-4551-90be-79c49d0c8de4}</UniqueIdentifier>
     </Filter>
-    <Filter Include="source\ui">
+    <Filter Include="engine\ui">
       <UniqueIdentifier>{e2285b90-6be4-4805-866d-d525c4a2b86c}</UniqueIdentifier>
     </Filter>
-    <Filter Include="source\ui\elements">
+    <Filter Include="engine\ui\elements">
       <UniqueIdentifier>{21ceaff3-24ca-4ecc-8dd4-777ec1896a53}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="engine\core">
+      <UniqueIdentifier>{50fde218-f769-4b55-bca6-7e00c2973f72}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="global">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    </Filter>
+    <Filter Include="global\implementation macros">
+      <UniqueIdentifier>{11f1ff4e-c158-4bc5-b19f-0398e6c2a40e}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="pch.cpp">
-      <Filter>headers\precompiled</Filter>
-    </ClCompile>
     <ClCompile Include="Camera.cpp">
-      <Filter>source</Filter>
+      <Filter>engine</Filter>
     </ClCompile>
     <ClCompile Include="HasExperienceLevel.cpp">
       <Filter>characteristics\primary_chars</Filter>
@@ -64,118 +58,118 @@
       <Filter>characteristics\secondary_chars</Filter>
     </ClCompile>
     <ClCompile Include="Vertex.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="AetherSwapchain.cpp">
-      <Filter>source\engine</Filter>
-    </ClCompile>
-    <ClCompile Include="ImageManager.cpp">
-      <Filter>source\engine</Filter>
-    </ClCompile>
-    <ClCompile Include="VulkanInitializer.cpp">
-      <Filter>source\engine</Filter>
+      <Filter>engine</Filter>
     </ClCompile>
     <ClCompile Include="AetherEngine.cpp">
-      <Filter>source\engine</Filter>
-    </ClCompile>
-    <ClCompile Include="ModelManager.cpp">
-      <Filter>source\engine</Filter>
+      <Filter>engine\core</Filter>
     </ClCompile>
     <ClCompile Include="stb_image_implementation.cpp">
-      <Filter>headers\precompiled\implementation macros</Filter>
+      <Filter>global\implementation macros</Filter>
     </ClCompile>
     <ClCompile Include="stb_image_write_implementation.cpp">
-      <Filter>headers\precompiled\implementation macros</Filter>
+      <Filter>global\implementation macros</Filter>
     </ClCompile>
     <ClCompile Include="tiny_gltf_implementation.cpp">
-      <Filter>headers\precompiled\implementation macros</Filter>
+      <Filter>global\implementation macros</Filter>
     </ClCompile>
     <ClCompile Include="tiny_obj_loader_implementation.cpp">
-      <Filter>headers\precompiled\implementation macros</Filter>
-    </ClCompile>
-    <ClCompile Include="BufferManager.cpp">
-      <Filter>source\engine</Filter>
+      <Filter>global\implementation macros</Filter>
     </ClCompile>
     <ClCompile Include="Model.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="RenderingManager.cpp">
-      <Filter>source\engine</Filter>
+      <Filter>engine</Filter>
     </ClCompile>
     <ClCompile Include="StellarCalculations.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="TerrainGenerator.cpp">
-      <Filter>source</Filter>
+      <Filter>engine</Filter>
     </ClCompile>
     <ClCompile Include="InteractableVolume.cpp">
-      <Filter>source</Filter>
+      <Filter>engine</Filter>
     </ClCompile>
     <ClCompile Include="Item.cpp">
       <Filter>characteristics</Filter>
     </ClCompile>
     <ClCompile Include="GameContext.cpp">
-      <Filter>source</Filter>
+      <Filter>engine</Filter>
     </ClCompile>
     <ClCompile Include="Character.cpp">
-      <Filter>source</Filter>
+      <Filter>engine</Filter>
     </ClCompile>
     <ClCompile Include="spa.c">
-      <Filter>source</Filter>
+      <Filter>engine</Filter>
     </ClCompile>
     <ClCompile Include="UserInterfaceRenderer.cpp">
-      <Filter>source\ui</Filter>
+      <Filter>engine\ui</Filter>
     </ClCompile>
     <ClCompile Include="Aether.cpp">
-      <Filter>source\engine</Filter>
+      <Filter>engine\core</Filter>
     </ClCompile>
     <ClCompile Include="Dungeon.cpp">
-      <Filter>source\procedural</Filter>
+      <Filter>engine\procedural</Filter>
     </ClCompile>
     <ClCompile Include="Mob.cpp">
-      <Filter>source</Filter>
+      <Filter>engine</Filter>
     </ClCompile>
     <ClCompile Include="CollisionManager.cpp">
-      <Filter>source</Filter>
-    </ClCompile>
-    <ClCompile Include="aether_core.cpp">
-      <Filter>headers\precompiled</Filter>
+      <Filter>engine</Filter>
     </ClCompile>
     <ClCompile Include="Equations.cpp">
-      <Filter>source\procedural</Filter>
-    </ClCompile>
-    <ClCompile Include="gamecontext_instance.cpp">
-      <Filter>headers\precompiled</Filter>
+      <Filter>engine\procedural</Filter>
     </ClCompile>
     <ClCompile Include="UserInterfaceElement.cpp">
-      <Filter>source\ui</Filter>
+      <Filter>engine\ui</Filter>
     </ClCompile>
     <ClCompile Include="InGameWindow.cpp">
-      <Filter>source\ui\elements</Filter>
+      <Filter>engine\ui\elements</Filter>
     </ClCompile>
     <ClCompile Include="MainWindow.cpp">
-      <Filter>source\ui\elements</Filter>
+      <Filter>engine\ui\elements</Filter>
     </ClCompile>
     <ClCompile Include="ui_core.cpp">
-      <Filter>source\ui</Filter>
-    </ClCompile>
-    <ClCompile Include="managers_instance.cpp">
-      <Filter>headers\precompiled</Filter>
-    </ClCompile>
-    <ClCompile Include="ModelPrimitives.cpp">
-      <Filter>source\engine</Filter>
+      <Filter>engine\ui</Filter>
     </ClCompile>
     <ClCompile Include="Market.cpp">
-      <Filter>source\procedural</Filter>
+      <Filter>engine\procedural</Filter>
+    </ClCompile>
+    <ClCompile Include="TerrainGenerator.cpp">
+      <Filter>engine\procedural</Filter>
+    </ClCompile>
+    <ClCompile Include="WorldGenerator.cpp">
+      <Filter>engine\procedural</Filter>
+    </ClCompile>
+    <ClCompile Include="ModelPrimitives.cpp">
+      <Filter>engine</Filter>
+    </ClCompile>
+    <ClCompile Include="aether_core.cpp">
+      <Filter>global</Filter>
+    </ClCompile>
+    <ClCompile Include="gamecontext_instance.cpp">
+      <Filter>global</Filter>
+    </ClCompile>
+    <ClCompile Include="managers_instance.cpp">
+      <Filter>global</Filter>
+    </ClCompile>
+    <ClCompile Include="pch.cpp">
+      <Filter>global</Filter>
+    </ClCompile>
+    <ClCompile Include="AetherSwapchain.cpp">
+      <Filter>engine\core</Filter>
+    </ClCompile>
+    <ClCompile Include="BufferManager.cpp">
+      <Filter>engine\core</Filter>
+    </ClCompile>
+    <ClCompile Include="ImageManager.cpp">
+      <Filter>engine\core</Filter>
+    </ClCompile>
+    <ClCompile Include="ModelManager.cpp">
+      <Filter>engine\core</Filter>
+    </ClCompile>
+    <ClCompile Include="RenderingManager.cpp">
+      <Filter>engine\core</Filter>
+    </ClCompile>
+    <ClCompile Include="VulkanInitializer.cpp">
+      <Filter>engine\core</Filter>
     </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="pch.h">
-      <Filter>headers\precompiled</Filter>
-    </ClInclude>
-    <ClInclude Include="resource.h">
-      <Filter>headers</Filter>
-    </ClInclude>
     <ClInclude Include="IsEntity.h">
       <Filter>characteristics\primary_chars</Filter>
     </ClInclude>
@@ -191,86 +185,95 @@
     <ClInclude Include="IsCreature.h">
       <Filter>characteristics\secondary_chars</Filter>
     </ClInclude>
-    <ClInclude Include="Camera.h">
-      <Filter>headers</Filter>
-    </ClInclude>
-    <ClInclude Include="Vertex.h">
-      <Filter>headers</Filter>
-    </ClInclude>
-    <ClInclude Include="Character.h">
-      <Filter>headers</Filter>
-    </ClInclude>
-    <ClInclude Include="Model.h">
-      <Filter>headers</Filter>
-    </ClInclude>
-    <ClInclude Include="StellarCalculations.h">
-      <Filter>headers</Filter>
-    </ClInclude>
-    <ClInclude Include="TerrainGenerator.h">
-      <Filter>headers</Filter>
-    </ClInclude>
-    <ClInclude Include="InteractableVolume.h">
-      <Filter>headers</Filter>
-    </ClInclude>
     <ClInclude Include="Item.h">
       <Filter>characteristics</Filter>
     </ClInclude>
-    <ClInclude Include="aether_core.h">
-      <Filter>headers\precompiled</Filter>
-    </ClInclude>
-    <ClInclude Include="GameContext.h">
-      <Filter>headers</Filter>
-    </ClInclude>
     <ClInclude Include="dungeon_core.h">
-      <Filter>source\procedural</Filter>
+      <Filter>engine\procedural</Filter>
     </ClInclude>
     <ClInclude Include="Dungeon.h">
-      <Filter>source\procedural</Filter>
-    </ClInclude>
-    <ClInclude Include="Mob.h">
-      <Filter>headers</Filter>
-    </ClInclude>
-    <ClInclude Include="CollisionManager.h">
-      <Filter>headers</Filter>
+      <Filter>engine\procedural</Filter>
     </ClInclude>
     <ClInclude Include="Equations.h">
-      <Filter>source\procedural</Filter>
-    </ClInclude>
-    <ClInclude Include="gamecontext_instance.h">
-      <Filter>headers\precompiled</Filter>
+      <Filter>engine\procedural</Filter>
     </ClInclude>
     <ClInclude Include="UserInterfaceElement.h">
-      <Filter>source\ui</Filter>
+      <Filter>engine\ui</Filter>
     </ClInclude>
     <ClInclude Include="ui_core.h">
-      <Filter>source\ui</Filter>
-    </ClInclude>
-    <ClInclude Include="AetherSwapchain.h">
-      <Filter>source\engine</Filter>
-    </ClInclude>
-    <ClInclude Include="ImageManager.h">
-      <Filter>source\engine</Filter>
-    </ClInclude>
-    <ClInclude Include="BufferManager.h">
-      <Filter>source\engine</Filter>
-    </ClInclude>
-    <ClInclude Include="ModelManager.h">
-      <Filter>source\engine</Filter>
-    </ClInclude>
-    <ClInclude Include="VulkanInitializer.h">
-      <Filter>source\engine</Filter>
-    </ClInclude>
-    <ClInclude Include="Managers.h">
-      <Filter>source\engine</Filter>
-    </ClInclude>
-    <ClInclude Include="managers_instance.h">
-      <Filter>headers\precompiled</Filter>
-    </ClInclude>
-    <ClInclude Include="ModelPrimitives.h">
-      <Filter>source\engine</Filter>
+      <Filter>engine\ui</Filter>
     </ClInclude>
     <ClInclude Include="Market.h">
-      <Filter>source\procedural</Filter>
+      <Filter>engine\procedural</Filter>
+    </ClInclude>
+    <ClInclude Include="TerrainGenerator.h">
+      <Filter>engine\procedural</Filter>
+    </ClInclude>
+    <ClInclude Include="Vertex.h">
+      <Filter>engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Character.h">
+      <Filter>engine</Filter>
+    </ClInclude>
+    <ClInclude Include="CollisionManager.h">
+      <Filter>engine</Filter>
+    </ClInclude>
+    <ClInclude Include="GameContext.h">
+      <Filter>engine</Filter>
+    </ClInclude>
+    <ClInclude Include="InteractableVolume.h">
+      <Filter>engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Mob.h">
+      <Filter>engine</Filter>
+    </ClInclude>
+    <ClInclude Include="Model.h">
+      <Filter>engine</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
+      <Filter>engine</Filter>
+    </ClInclude>
+    <ClInclude Include="StellarCalculations.h">
+      <Filter>engine</Filter>
+    </ClInclude>
+    <ClInclude Include="WorldGenerator.h">
+      <Filter>engine\procedural</Filter>
+    </ClInclude>
+    <ClInclude Include="ModelPrimitives.h">
+      <Filter>engine</Filter>
+    </ClInclude>
+    <ClInclude Include="aether_core.h">
+      <Filter>global</Filter>
+    </ClInclude>
+    <ClInclude Include="gamecontext_instance.h">
+      <Filter>global</Filter>
+    </ClInclude>
+    <ClInclude Include="managers_instance.h">
+      <Filter>global</Filter>
+    </ClInclude>
+    <ClInclude Include="pch.h">
+      <Filter>global</Filter>
+    </ClInclude>
+    <ClInclude Include="VulkanInitializer.h">
+      <Filter>engine\core</Filter>
+    </ClInclude>
+    <ClInclude Include="AetherSwapchain.h">
+      <Filter>engine\core</Filter>
+    </ClInclude>
+    <ClInclude Include="BufferManager.h">
+      <Filter>engine\core</Filter>
+    </ClInclude>
+    <ClInclude Include="ImageManager.h">
+      <Filter>engine\core</Filter>
+    </ClInclude>
+    <ClInclude Include="Managers.h">
+      <Filter>engine\core</Filter>
+    </ClInclude>
+    <ClInclude Include="ModelManager.h">
+      <Filter>engine\core</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -285,31 +288,31 @@
   </ItemGroup>
   <ItemGroup>
     <QtMoc Include="UserInterfaceRenderer.h">
-      <Filter>source\ui</Filter>
+      <Filter>engine\ui</Filter>
     </QtMoc>
     <QtMoc Include="InGameWindow.h">
-      <Filter>source\ui\elements</Filter>
+      <Filter>engine\ui\elements</Filter>
     </QtMoc>
     <QtMoc Include="MainWindow.h">
-      <Filter>source\ui\elements</Filter>
+      <Filter>engine\ui\elements</Filter>
     </QtMoc>
     <QtMoc Include="PauseMenuSlotHandler.h">
-      <Filter>source\ui\elements</Filter>
+      <Filter>engine\ui\elements</Filter>
     </QtMoc>
     <QtMoc Include="SelectEquationSlotHandler.h">
-      <Filter>source\ui\elements</Filter>
+      <Filter>engine\ui\elements</Filter>
     </QtMoc>
     <QtMoc Include="SolveEquationSlotHandler.h">
-      <Filter>source\ui\elements</Filter>
+      <Filter>engine\ui\elements</Filter>
     </QtMoc>
     <QtMoc Include="SettingsMenuSlotHandler.h">
-      <Filter>source\ui\elements</Filter>
+      <Filter>engine\ui\elements</Filter>
     </QtMoc>
     <QtMoc Include="MainMenuSlotHandler.h">
-      <Filter>source\ui\elements</Filter>
+      <Filter>engine\ui\elements</Filter>
     </QtMoc>
     <QtMoc Include="AetherEngine.h">
-      <Filter>source\engine</Filter>
+      <Filter>engine\core</Filter>
     </QtMoc>
   </ItemGroup>
 </Project>

@@ -1,5 +1,4 @@
-#ifndef TERRAIN_GENERATOR
-#define TERRAIN_GENERATOR
+#pragma once
 
 #include "pch.h"
 #include "Model.h"
@@ -62,5 +61,3 @@ private:
     float lerp(float t, float a, float b);
     float grad(size_t hash, float x, float y);
 };
-
-#endif // !TERRAIN_GENERATOR
