@@ -21,6 +21,8 @@ private:
 	double _yaw, _pitch, _roll;
 	double _targetYaw, _targetPitch, _targetRoll;
 
+	void updateCameraVectors();
+
 public:
 	bool _isFirstMouse = true;
 

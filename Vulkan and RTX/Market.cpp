@@ -1,6 +1,9 @@
 #include "pch.h"
 #include "Market.h"
 
+#define NOMINMAX
+#include <matplot/matplot.h>
+
 void Market::simulateMarket(bool draw)
 {
 	if (draw) {

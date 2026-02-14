@@ -1,7 +1,6 @@
-#include "pch.h"
+#pragma once
 
-#ifndef MAIN_WINDOW_H
-#define MAIN_WINDOW_H
+#include "pch.h"
 
 #include <QKeyEvent>
 #include <QMouseEvent>
@@ -36,6 +35,3 @@ protected:
     void mouseReleaseEvent(QMouseEvent* event) override;
 
 };
-
-
-#endif

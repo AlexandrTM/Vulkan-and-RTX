@@ -1,14 +1,6 @@
-#include "pch.h"
+#pragma once
 
-#ifndef VULKAN_QT_WINDOW_H
-#define VULKAN_QT_WINDOW_H
-
-#include <QKeyEvent>
-#include <QMouseEvent>
-#include <QWheelEvent>
-#include <QResizeEvent>
 #include "Character.h"
-#include "gamecontext_instance.h"
 #include "UserInterfaceRenderer.h"
 
 class InGameWindow : public QWindow
@@ -61,5 +53,3 @@ protected:
     void focusInEvent(QFocusEvent* event) override;
     void focusOutEvent(QFocusEvent* event) override;
 };
-
-#endif

@@ -1,7 +1,17 @@
 #include "pch.h"
 #include "Camera.h"
 
-Camera::Camera() 
+void Camera::updateCameraVectors()
+{
+	glm::vec3 front{};
+	front.x = cos(glm::radians(_yaw)) * cos(glm::radians(_pitch));
+	front.y = sin(glm::radians(_pitch));
+	front.z = sin(glm::radians(_yaw)) * cos(glm::radians(_pitch));
+	_lookAt = _position + glm::normalize(front);
+	_cameraDirection = glm::normalize(front);
+}
+
+Camera::Camera()
 {
 	_position = glm::vec3(0.0f, 5.0f, 0.0f);
 	//_lookAt = _position + glm::vec3(1.0f, 0.0f, 0.0f);
@@ -16,19 +26,14 @@ Camera::Camera()
 	_lastYScreenPosition = _viewportHeight / 2;
 
 	_yaw = 0.0;
-	_pitch = -10.0; // -50.0
+	_pitch = -50.0; // -50.0
 	_roll = 0.0;
 
 	_targetYaw = 0.0;
-	_targetPitch = -10.0; // -50.0
+	_targetPitch = -50.0; // -50.0
 	_targetRoll = 0.0;
 
-	glm::vec3 front{};
-	front.x = cos(glm::radians(_yaw)) * cos(glm::radians(_pitch));
-	front.y = sin(glm::radians(_pitch));
-	front.z = sin(glm::radians(_yaw)) * cos(glm::radians(_pitch));
-	_lookAt = _position + glm::normalize(front);
-	_cameraDirection = glm::normalize(front);
+	updateCameraVectors();
 }
 
 Camera::Camera(
@@ -98,12 +103,7 @@ void Camera::rotateAbsolute(double xpos, double ypos, double sensitivity)
 
 	_yaw = _yaw + xoffset;
 
-	glm::vec3 front{};
-	front.x = cos(glm::radians(_yaw)) * cos(glm::radians(_pitch));
-	front.y = sin(glm::radians(_pitch));
-	front.z = sin(glm::radians(_yaw)) * cos(glm::radians(_pitch));
-	_lookAt = _position + glm::normalize(front);
-	_cameraDirection = glm::normalize(front);
+	updateCameraVectors();
 }
 void Camera::rotateRelative(double dx, double dy, double sensitivity)
 {
@@ -114,12 +114,7 @@ void Camera::rotateRelative(double dx, double dy, double sensitivity)
 
 	_yaw = _yaw + dx;
 
-	glm::vec3 front{};
-	front.x = cos(glm::radians(_yaw)) * cos(glm::radians(_pitch));
-	front.y = sin(glm::radians(_pitch));
-	front.z = sin(glm::radians(_yaw)) * cos(glm::radians(_pitch));
-	_lookAt = _position + glm::normalize(front);
-	_cameraDirection = glm::normalize(front);
+	updateCameraVectors();
 }
 
 void Camera::interpolateRotation(double lerpFactor) {
@@ -131,12 +126,7 @@ void Camera::interpolateRotation(double lerpFactor) {
 
 	_pitch = std::clamp(_pitch, -89.99, 89.99);
 
-	glm::vec3 front{};
-	front.x = cos(glm::radians(_yaw)) * cos(glm::radians(_pitch));
-	front.y = sin(glm::radians(_pitch));
-	front.z = sin(glm::radians(_yaw)) * cos(glm::radians(_pitch));
-	_lookAt = _position + glm::normalize(front);
-	_cameraDirection = glm::normalize(front);
+	updateCameraVectors();
 	//std::cout << "_cameraDirection: " << glm::to_string(_cameraDirection) << "\n";
 }
 
