@@ -5,14 +5,15 @@
       <UniqueIdentifier>{67DA6AB6-F800-4c08-8B7A-83BB121AAD01}</UniqueIdentifier>
       <Extensions>rc;ico;cur;bmp;dlg;rc2;rct;bin;rgs;gif;jpg;jpeg;jpe;resx;tiff;tif;png;wav;mfcribbon-ms</Extensions>
     </Filter>
-    <Filter Include="characteristics">
-      <UniqueIdentifier>{9ae7b37a-5193-48be-b7d8-2729c9900af6}</UniqueIdentifier>
+    <Filter Include="global">
+      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
+      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
     </Filter>
-    <Filter Include="characteristics\primary_chars">
-      <UniqueIdentifier>{34cc5605-1550-4fdd-a6aa-ccf38eaa83ca}</UniqueIdentifier>
+    <Filter Include="global\implementation macros">
+      <UniqueIdentifier>{11f1ff4e-c158-4bc5-b19f-0398e6c2a40e}</UniqueIdentifier>
     </Filter>
-    <Filter Include="characteristics\secondary_chars">
-      <UniqueIdentifier>{95369772-87a9-4215-974a-6a0dc710d8ac}</UniqueIdentifier>
+    <Filter Include="entities">
+      <UniqueIdentifier>{efedd278-f369-48bc-aec5-5bba8eb93847}</UniqueIdentifier>
     </Filter>
     <Filter Include="engine">
       <UniqueIdentifier>{4FC737F1-C7A5-4376-A066-2A32D752A2FF}</UniqueIdentifier>
@@ -30,18 +31,20 @@
     <Filter Include="engine\core">
       <UniqueIdentifier>{50fde218-f769-4b55-bca6-7e00c2973f72}</UniqueIdentifier>
     </Filter>
-    <Filter Include="global">
-      <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
-      <Extensions>h;hh;hpp;hxx;h++;hm;inl;inc;ipp;xsd</Extensions>
+    <Filter Include="engine\resources">
+      <UniqueIdentifier>{f04fc820-9cc9-4146-98bd-2c748ef8dbd7}</UniqueIdentifier>
     </Filter>
-    <Filter Include="global\implementation macros">
-      <UniqueIdentifier>{11f1ff4e-c158-4bc5-b19f-0398e6c2a40e}</UniqueIdentifier>
+    <Filter Include="characteristics">
+      <UniqueIdentifier>{9ae7b37a-5193-48be-b7d8-2729c9900af6}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="characteristics\primary_chars">
+      <UniqueIdentifier>{34cc5605-1550-4fdd-a6aa-ccf38eaa83ca}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="characteristics\secondary_chars">
+      <UniqueIdentifier>{95369772-87a9-4215-974a-6a0dc710d8ac}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="Camera.cpp">
-      <Filter>engine</Filter>
-    </ClCompile>
     <ClCompile Include="HasExperienceLevel.cpp">
       <Filter>characteristics\primary_chars</Filter>
     </ClCompile>
@@ -56,9 +59,6 @@
     </ClCompile>
     <ClCompile Include="IsCreature.cpp">
       <Filter>characteristics\secondary_chars</Filter>
-    </ClCompile>
-    <ClCompile Include="Vertex.cpp">
-      <Filter>engine</Filter>
     </ClCompile>
     <ClCompile Include="AetherEngine.cpp">
       <Filter>engine\core</Filter>
@@ -75,26 +75,8 @@
     <ClCompile Include="tiny_obj_loader_implementation.cpp">
       <Filter>global\implementation macros</Filter>
     </ClCompile>
-    <ClCompile Include="Model.cpp">
-      <Filter>engine</Filter>
-    </ClCompile>
-    <ClCompile Include="StellarCalculations.cpp">
-      <Filter>engine</Filter>
-    </ClCompile>
-    <ClCompile Include="InteractableVolume.cpp">
-      <Filter>engine</Filter>
-    </ClCompile>
     <ClCompile Include="Item.cpp">
       <Filter>characteristics</Filter>
-    </ClCompile>
-    <ClCompile Include="GameContext.cpp">
-      <Filter>engine</Filter>
-    </ClCompile>
-    <ClCompile Include="Character.cpp">
-      <Filter>engine</Filter>
-    </ClCompile>
-    <ClCompile Include="spa.c">
-      <Filter>engine</Filter>
     </ClCompile>
     <ClCompile Include="UserInterfaceRenderer.cpp">
       <Filter>engine\ui</Filter>
@@ -104,12 +86,6 @@
     </ClCompile>
     <ClCompile Include="Dungeon.cpp">
       <Filter>engine\procedural</Filter>
-    </ClCompile>
-    <ClCompile Include="Mob.cpp">
-      <Filter>engine</Filter>
-    </ClCompile>
-    <ClCompile Include="CollisionManager.cpp">
-      <Filter>engine</Filter>
     </ClCompile>
     <ClCompile Include="Equations.cpp">
       <Filter>engine\procedural</Filter>
@@ -135,9 +111,6 @@
     <ClCompile Include="WorldGenerator.cpp">
       <Filter>engine\procedural</Filter>
     </ClCompile>
-    <ClCompile Include="ModelPrimitives.cpp">
-      <Filter>engine</Filter>
-    </ClCompile>
     <ClCompile Include="aether_core.cpp">
       <Filter>global</Filter>
     </ClCompile>
@@ -153,19 +126,52 @@
     <ClCompile Include="AetherSwapchain.cpp">
       <Filter>engine\core</Filter>
     </ClCompile>
-    <ClCompile Include="BufferManager.cpp">
-      <Filter>engine\core</Filter>
-    </ClCompile>
-    <ClCompile Include="ImageManager.cpp">
-      <Filter>engine\core</Filter>
-    </ClCompile>
-    <ClCompile Include="ModelManager.cpp">
-      <Filter>engine\core</Filter>
-    </ClCompile>
     <ClCompile Include="RenderingManager.cpp">
       <Filter>engine\core</Filter>
     </ClCompile>
     <ClCompile Include="VulkanInitializer.cpp">
+      <Filter>engine\core</Filter>
+    </ClCompile>
+    <ClCompile Include="GameContext.cpp">
+      <Filter>global</Filter>
+    </ClCompile>
+    <ClCompile Include="Vertex.cpp">
+      <Filter>engine\core</Filter>
+    </ClCompile>
+    <ClCompile Include="CollisionManager.cpp">
+      <Filter>engine\core</Filter>
+    </ClCompile>
+    <ClCompile Include="BufferManager.cpp">
+      <Filter>engine\resources</Filter>
+    </ClCompile>
+    <ClCompile Include="ImageManager.cpp">
+      <Filter>engine\resources</Filter>
+    </ClCompile>
+    <ClCompile Include="ModelPrimitives.cpp">
+      <Filter>engine\resources</Filter>
+    </ClCompile>
+    <ClCompile Include="ModelManager.cpp">
+      <Filter>engine\resources</Filter>
+    </ClCompile>
+    <ClCompile Include="Model.cpp">
+      <Filter>engine\core</Filter>
+    </ClCompile>
+    <ClCompile Include="Camera.cpp">
+      <Filter>entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Character.cpp">
+      <Filter>entities</Filter>
+    </ClCompile>
+    <ClCompile Include="Mob.cpp">
+      <Filter>entities</Filter>
+    </ClCompile>
+    <ClCompile Include="InteractableVolume.cpp">
+      <Filter>engine\core</Filter>
+    </ClCompile>
+    <ClCompile Include="StellarCalculations.cpp">
+      <Filter>engine\core</Filter>
+    </ClCompile>
+    <ClCompile Include="spa.c">
       <Filter>engine\core</Filter>
     </ClCompile>
   </ItemGroup>
@@ -209,41 +215,8 @@
     <ClInclude Include="TerrainGenerator.h">
       <Filter>engine\procedural</Filter>
     </ClInclude>
-    <ClInclude Include="Vertex.h">
-      <Filter>engine</Filter>
-    </ClInclude>
-    <ClInclude Include="Camera.h">
-      <Filter>engine</Filter>
-    </ClInclude>
-    <ClInclude Include="Character.h">
-      <Filter>engine</Filter>
-    </ClInclude>
-    <ClInclude Include="CollisionManager.h">
-      <Filter>engine</Filter>
-    </ClInclude>
-    <ClInclude Include="GameContext.h">
-      <Filter>engine</Filter>
-    </ClInclude>
-    <ClInclude Include="InteractableVolume.h">
-      <Filter>engine</Filter>
-    </ClInclude>
-    <ClInclude Include="Mob.h">
-      <Filter>engine</Filter>
-    </ClInclude>
-    <ClInclude Include="Model.h">
-      <Filter>engine</Filter>
-    </ClInclude>
-    <ClInclude Include="resource.h">
-      <Filter>engine</Filter>
-    </ClInclude>
-    <ClInclude Include="StellarCalculations.h">
-      <Filter>engine</Filter>
-    </ClInclude>
     <ClInclude Include="WorldGenerator.h">
       <Filter>engine\procedural</Filter>
-    </ClInclude>
-    <ClInclude Include="ModelPrimitives.h">
-      <Filter>engine</Filter>
     </ClInclude>
     <ClInclude Include="aether_core.h">
       <Filter>global</Filter>
@@ -263,16 +236,49 @@
     <ClInclude Include="AetherSwapchain.h">
       <Filter>engine\core</Filter>
     </ClInclude>
-    <ClInclude Include="BufferManager.h">
-      <Filter>engine\core</Filter>
-    </ClInclude>
-    <ClInclude Include="ImageManager.h">
-      <Filter>engine\core</Filter>
-    </ClInclude>
     <ClInclude Include="Managers.h">
       <Filter>engine\core</Filter>
     </ClInclude>
+    <ClInclude Include="GameContext.h">
+      <Filter>global</Filter>
+    </ClInclude>
+    <ClInclude Include="Vertex.h">
+      <Filter>engine\core</Filter>
+    </ClInclude>
+    <ClInclude Include="CollisionManager.h">
+      <Filter>engine\core</Filter>
+    </ClInclude>
+    <ClInclude Include="BufferManager.h">
+      <Filter>engine\resources</Filter>
+    </ClInclude>
+    <ClInclude Include="ImageManager.h">
+      <Filter>engine\resources</Filter>
+    </ClInclude>
+    <ClInclude Include="ModelPrimitives.h">
+      <Filter>engine\resources</Filter>
+    </ClInclude>
     <ClInclude Include="ModelManager.h">
+      <Filter>engine\resources</Filter>
+    </ClInclude>
+    <ClInclude Include="Model.h">
+      <Filter>engine\core</Filter>
+    </ClInclude>
+    <ClInclude Include="Camera.h">
+      <Filter>entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Character.h">
+      <Filter>entities</Filter>
+    </ClInclude>
+    <ClInclude Include="Mob.h">
+      <Filter>entities</Filter>
+    </ClInclude>
+    <ClInclude Include="InteractableVolume.h">
+      <Filter>engine\core</Filter>
+    </ClInclude>
+    <ClInclude Include="StellarCalculations.h">
+      <Filter>engine\core</Filter>
+    </ClInclude>
+    <ClInclude Include="resource.h">
       <Filter>engine\core</Filter>
     </ClInclude>
   </ItemGroup>
